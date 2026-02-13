@@ -13,6 +13,24 @@ type SubmitBody = {
   scope?: "half";
 };
 
+function getMeaningCandidates(value: string): string[] {
+  const normalizedWhole = normalizeKo(value);
+  const candidates = new Set<string>();
+
+  if (normalizedWhole) {
+    candidates.add(normalizedWhole);
+  }
+
+  for (const part of value.split(/[,:;\/|]+/g)) {
+    const normalizedPart = normalizeKo(part);
+    if (normalizedPart) {
+      candidates.add(normalizedPart);
+    }
+  }
+
+  return [...candidates];
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as SubmitBody;
@@ -40,10 +58,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Word is not eligible for half scope." }, { status: 400 });
     }
 
+    const meaningAnswerCandidates = getMeaningCandidates(userAnswer);
+    const meaningCorrectCandidates = new Set(getMeaningCandidates(word.ko));
+
     const correct =
       quizType === "WORD"
         ? normalizeEn(userAnswer) === normalizeEn(word.en)
-        : normalizeKo(userAnswer) === normalizeKo(word.ko);
+        : meaningAnswerCandidates.some((candidate) => meaningCorrectCandidates.has(candidate));
 
     const now = new Date();
     const nextStreak = word.progress.correctStreak + (correct ? 1 : 0);
