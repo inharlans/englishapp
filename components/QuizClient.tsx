@@ -100,17 +100,22 @@ export function QuizClient({ quizType }: { quizType: QuizType }) {
       if (!res.ok) {
         throw new Error(data.error ?? "Submit failed");
       }
+      if (data.correct) {
+        setAnswer("");
+        setResult(null);
+        setCursor((prev) => prev + 1);
+        return;
+      }
+
       setResult(data);
 
       // Wrong answer word is re-queued 10 questions later in this week queue.
-      if (!data.correct) {
-        setQueue((prev) => {
-          const copy = [...prev];
-          const insertIndex = Math.min(cursor + 11, copy.length);
-          copy.splice(insertIndex, 0, currentWord);
-          return copy;
-        });
-      }
+      setQueue((prev) => {
+        const copy = [...prev];
+        const insertIndex = Math.min(cursor + 11, copy.length);
+        copy.splice(insertIndex, 0, currentWord);
+        return copy;
+      });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Submit failed");
     } finally {
