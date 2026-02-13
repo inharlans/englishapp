@@ -1,0 +1,6 @@
+-- CreateTable
+CREATE TABLE "AppState" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "quizCounter" INTEGER NOT NULL DEFAULT 0,
+    "updatedAt" DATETIME NOT NULL
+);

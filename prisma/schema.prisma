@@ -1,0 +1,40 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Word {
+  id          Int         @id @default(autoincrement())
+  en          String
+  ko          String
+  createdAt   DateTime    @default(now())
+  progress    Progress?
+  resultState ResultState?
+}
+
+model Progress {
+  wordId                 Int      @id
+  correctStreak          Int      @default(0)
+  nextReviewAt           DateTime?
+  wrongActive            Boolean  @default(false)
+  wrongRecoveryRemaining Int      @default(0)
+  word                   Word     @relation(fields: [wordId], references: [id], onDelete: Cascade)
+}
+
+model ResultState {
+  wordId       Int        @id
+  everCorrect  Boolean    @default(false)
+  everWrong    Boolean    @default(false)
+  lastResult   LastResult?
+  updatedAt    DateTime   @updatedAt
+  word         Word       @relation(fields: [wordId], references: [id], onDelete: Cascade)
+}
+
+enum LastResult {
+  CORRECT
+  WRONG
+}
