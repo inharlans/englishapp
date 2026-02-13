@@ -8,7 +8,7 @@ const links: Array<{ href: Route; label: string }> = [
   { href: "/quiz-word", label: "Quiz Word" },
   { href: "/list-correct", label: "Correct List" },
   { href: "/list-wrong", label: "Wrong List" },
-  { href: "/list-half", label: "Half List" }
+  { href: "/list-half", label: "Recovered List" }
 ];
 
 export function AppNav() {
@@ -28,4 +28,3 @@ export function AppNav() {
     </nav>
   );
 }
-

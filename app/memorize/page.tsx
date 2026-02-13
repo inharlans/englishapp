@@ -11,10 +11,11 @@ type MemorizeResponse = {
   total: number;
   page: number;
   batch: number;
+  maxWeek?: number;
 };
 
 export default function MemorizePage() {
-  const [batch, setBatch] = useState(5);
+  const [batch, setBatch] = useState(4);
   const [hideCorrect, setHideCorrect] = useState(false);
   const [week, setWeek] = useState(1);
   const [page, setPage] = useState(0);
@@ -22,6 +23,7 @@ export default function MemorizePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [pageInput, setPageInput] = useState("1");
+  const maxWeek = Math.max(data?.maxWeek ?? 1, 1);
 
   useEffect(() => {
     const load = async () => {
@@ -54,6 +56,12 @@ export default function MemorizePage() {
     setPageInput(String(page + 1));
   }, [page]);
 
+  useEffect(() => {
+    if (week > maxWeek) {
+      setWeek(maxWeek);
+    }
+  }, [week, maxWeek]);
+
   const total = data?.total ?? 0;
   const words = data?.words ?? [];
   const maxPage = Math.max(Math.ceil(total / batch) - 1, 0);
@@ -68,6 +76,42 @@ export default function MemorizePage() {
     return Math.min((viewed / total) * 100, 100);
   }, [page, batch, total]);
   const isSingleCardView = batch === 1;
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Enter" || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) {
+        return;
+      }
+      const active = document.activeElement as HTMLElement | null;
+      const tagName = active?.tagName;
+      if (
+        tagName === "INPUT" ||
+        tagName === "TEXTAREA" ||
+        tagName === "SELECT" ||
+        tagName === "BUTTON" ||
+        active?.isContentEditable
+      ) {
+        return;
+      }
+      if (loading) {
+        return;
+      }
+      event.preventDefault();
+      if (page < maxPage) {
+        setPage((prev) => Math.min(prev + 1, maxPage));
+        return;
+      }
+      if (week < maxWeek) {
+        setWeek((prev) => Math.min(prev + 1, maxWeek));
+        setPage(0);
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [loading, page, maxPage, week, maxWeek]);
 
   const handleSaveMeaning = async (wordId: number, ko: string) => {
     const res = await fetch(`/api/words/${wordId}`, {
@@ -134,7 +178,7 @@ export default function MemorizePage() {
               onChange={(e) => setWeek(Number(e.target.value))}
               className="rounded-lg border border-slate-300 bg-white px-2 py-1 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
             >
-              {Array.from({ length: 30 }, (_, i) => i + 1).map((w) => (
+              {Array.from({ length: maxWeek }, (_, i) => i + 1).map((w) => (
                 <option key={w} value={w}>
                   week{w} ({(w - 1) * 50 + 1}-{w * 50})
                 </option>

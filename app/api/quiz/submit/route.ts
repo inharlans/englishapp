@@ -73,6 +73,13 @@ export async function POST(req: NextRequest) {
       quizType === "WORD"
         ? normalizeEn(userAnswer) === normalizeEn(word.en)
         : meaningAnswerCandidates.some((candidate) => meaningCorrectCandidates.has(candidate));
+    const isPartialMeaningCorrect =
+      quizType === "MEANING" &&
+      correct &&
+      meaningCorrectCandidates.size > 1 &&
+      ![...meaningCorrectCandidates].every((candidate) =>
+        meaningAnswerCandidates.includes(candidate)
+      );
 
     const now = new Date();
     const currentModeStreak =
@@ -126,6 +133,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       correct,
+      partial: isPartialMeaningCorrect,
       correctAnswer: {
         en: word.en,
         ko: word.ko

@@ -12,6 +12,7 @@ type WordListResponse = {
 
 type SubmitResponse = {
   correct: boolean;
+  partial?: boolean;
   correctAnswer: { en: string; ko: string };
 };
 
@@ -129,7 +130,13 @@ export function QuizClient({ quizType }: { quizType: QuizType }) {
   }, [cursor, currentWord, result, loading]);
 
   useEffect(() => {
-    if (!result || result.correct || loading || !currentWord || isEditingKo) {
+    if (
+      !result ||
+      (result.correct && !result.partial) ||
+      loading ||
+      !currentWord ||
+      isEditingKo
+    ) {
       return;
     }
 
@@ -214,7 +221,7 @@ export function QuizClient({ quizType }: { quizType: QuizType }) {
         throw new Error(data.error ?? "Submit failed");
       }
 
-      if (data.correct) {
+      if (data.correct && !data.partial) {
         setResult(data);
         setIsCorrectFlash(true);
         setCardMotion("swap-out");
@@ -230,6 +237,11 @@ export function QuizClient({ quizType }: { quizType: QuizType }) {
           setCardMotion("idle");
           setIsCorrectFlash(false);
         }, 420);
+        return;
+      }
+
+      if (data.correct && data.partial) {
+        setResult(data);
         return;
       }
 
@@ -254,7 +266,7 @@ export function QuizClient({ quizType }: { quizType: QuizType }) {
   };
 
   useEffect(() => {
-    if (!result || result.correct || !currentWord) {
+    if (!result || (result.correct && result.partial) || result.correct || !currentWord) {
       return;
     }
 
@@ -313,7 +325,7 @@ export function QuizClient({ quizType }: { quizType: QuizType }) {
   }, [result, currentWord]);
 
   const startKoEdit = () => {
-    if (!result || result.correct) {
+    if (!result || result.correct || result.partial) {
       return;
     }
     setKoDraft(result.correctAnswer.ko);
@@ -365,10 +377,10 @@ export function QuizClient({ quizType }: { quizType: QuizType }) {
     }
   };
 
-  const isWrong = result ? !result.correct : false;
+  const isRevealAnswer = result ? !result.correct || Boolean(result.partial) : false;
   const cardToneClass = isCorrectFlash
     ? "border-emerald-300 bg-emerald-50"
-    : isWrong
+    : isRevealAnswer
       ? "border-rose-300 bg-rose-50"
       : "border-slate-200 bg-white";
 
@@ -410,7 +422,7 @@ export function QuizClient({ quizType }: { quizType: QuizType }) {
 
         {scope === "half" ? (
           <p className="mt-3 inline-flex rounded-full border border-teal-200 bg-teal-50 px-3 py-1 text-xs font-medium text-teal-800">
-            Half list only quiz mode
+            Recovered list quiz mode
           </p>
         ) : null}
 
@@ -473,76 +485,88 @@ export function QuizClient({ quizType }: { quizType: QuizType }) {
 
             {result ? (
               <div className="mt-4 rounded-xl border border-slate-200 bg-white/90 p-3 text-sm shadow-sm">
-                <p className={result.correct ? "font-semibold text-emerald-700" : "font-semibold text-rose-700"}>
-                  {result.correct ? "Correct" : "Wrong"}
+                <p
+                  className={
+                    result.correct
+                      ? result.partial
+                        ? "font-semibold text-amber-700"
+                        : "font-semibold text-emerald-700"
+                      : "font-semibold text-rose-700"
+                  }
+                >
+                  {result.correct ? (result.partial ? "Correct (partial)" : "Correct") : "Wrong"}
                 </p>
-                {!result.correct ? (
+                {!result.correct || result.partial ? (
                   <>
                     <p className="mt-1 text-slate-700">
                       Answer: {result.correctAnswer.en} / {result.correctAnswer.ko}
                     </p>
-                    <div className="mt-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
-                      <p className="font-semibold text-slate-600">Google Translate (Reference)</p>
-                      {machineMeaningLoading ? (
-                        <p className="mt-1 text-slate-500">Loading...</p>
-                      ) : machineMeaningError ? (
-                        <p className="mt-1 text-rose-700">{machineMeaningError}</p>
-                      ) : machineMeaning ? (
-                        <p className="mt-1">{machineMeaning}</p>
-                      ) : (
-                        <p className="mt-1 text-slate-500">No translation available.</p>
-                      )}
-                    </div>
-                    <div className="mt-3 space-y-2">
-                      {isEditingKo ? (
-                        <div className="flex flex-wrap gap-2">
-                          <input
-                            ref={koInputRef}
-                            className="min-w-[260px] flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
-                            value={koDraft}
-                            onChange={(e) => setKoDraft(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key !== "Enter") {
-                                return;
-                              }
-                              e.preventDefault();
-                              void submitKoEdit();
-                            }}
-                            placeholder="Update meaning"
-                            disabled={koUpdateLoading}
-                          />
-                          <button
-                            type="button"
-                            className="rounded-lg bg-teal-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-teal-500 disabled:cursor-not-allowed disabled:opacity-60"
-                            onClick={() => void submitKoEdit()}
-                            disabled={koUpdateLoading}
-                          >
-                            Save meaning
-                          </button>
-                          <button
-                            type="button"
-                            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
-                            onClick={() => {
-                              setIsEditingKo(false);
-                              setKoDraft("");
-                              setKoUpdateMessage("");
-                            }}
-                            disabled={koUpdateLoading}
-                          >
-                            Cancel
-                          </button>
+                    {!result.partial ? (
+                      <>
+                        <div className="mt-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+                          <p className="font-semibold text-slate-600">Google Translate (Reference)</p>
+                          {machineMeaningLoading ? (
+                            <p className="mt-1 text-slate-500">Loading...</p>
+                          ) : machineMeaningError ? (
+                            <p className="mt-1 text-rose-700">{machineMeaningError}</p>
+                          ) : machineMeaning ? (
+                            <p className="mt-1">{machineMeaning}</p>
+                          ) : (
+                            <p className="mt-1 text-slate-500">No translation available.</p>
+                          )}
                         </div>
-                      ) : (
-                        <button
-                          type="button"
-                          className="rounded-lg border border-teal-300 bg-teal-50 px-3 py-1.5 text-xs font-semibold text-teal-800 transition hover:bg-teal-100"
-                          onClick={startKoEdit}
-                        >
-                          Edit meaning
-                        </button>
-                      )}
-                      {koUpdateMessage ? <p className="text-xs text-slate-600">{koUpdateMessage}</p> : null}
-                    </div>
+                        <div className="mt-3 space-y-2">
+                          {isEditingKo ? (
+                            <div className="flex flex-wrap gap-2">
+                              <input
+                                ref={koInputRef}
+                                className="min-w-[260px] flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+                                value={koDraft}
+                                onChange={(e) => setKoDraft(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key !== "Enter") {
+                                    return;
+                                  }
+                                  e.preventDefault();
+                                  void submitKoEdit();
+                                }}
+                                placeholder="Update meaning"
+                                disabled={koUpdateLoading}
+                              />
+                              <button
+                                type="button"
+                                className="rounded-lg bg-teal-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-teal-500 disabled:cursor-not-allowed disabled:opacity-60"
+                                onClick={() => void submitKoEdit()}
+                                disabled={koUpdateLoading}
+                              >
+                                Save meaning
+                              </button>
+                              <button
+                                type="button"
+                                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                onClick={() => {
+                                  setIsEditingKo(false);
+                                  setKoDraft("");
+                                  setKoUpdateMessage("");
+                                }}
+                                disabled={koUpdateLoading}
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              className="rounded-lg border border-teal-300 bg-teal-50 px-3 py-1.5 text-xs font-semibold text-teal-800 transition hover:bg-teal-100"
+                              onClick={startKoEdit}
+                            >
+                              Edit meaning
+                            </button>
+                          )}
+                          {koUpdateMessage ? <p className="text-xs text-slate-600">{koUpdateMessage}</p> : null}
+                        </div>
+                      </>
+                    ) : null}
                   </>
                 ) : null}
               </div>

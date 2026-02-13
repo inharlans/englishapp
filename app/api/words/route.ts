@@ -9,6 +9,8 @@ type WordWithState = {
   id: number;
   en: string;
   ko: string;
+  memorizeWeek?: number;
+  memorizePosition?: number;
   progress: {
     correctStreak: number;
     nextReviewAt: Date | null;
@@ -62,12 +64,32 @@ export async function GET(req: NextRequest) {
     },
     orderBy: { id: "asc" }
   });
+  const memorizeMetaById = new Map(
+    words.map((word, index) => [
+      word.id,
+      {
+        memorizeWeek: Math.floor(index / 50) + 1,
+        memorizePosition: (index % 50) + 1
+      }
+    ])
+  );
+
+  const withMemorizeMeta = (items: WordWithState[]): WordWithState[] =>
+    items.map((item) => {
+      const meta = memorizeMetaById.get(item.id);
+      return {
+        ...item,
+        memorizeWeek: meta?.memorizeWeek,
+        memorizePosition: meta?.memorizePosition
+      };
+    });
 
   const now = new Date();
   const byScope =
     scope === "half"
       ? words.filter((w) => w.resultState?.everCorrect && w.resultState?.everWrong)
       : words;
+  const maxWeek = Math.max(Math.ceil(byScope.length / 50), 1);
 
   const byWeek = (() => {
     if (!Number.isFinite(week) || week < 1) {
@@ -143,10 +165,11 @@ export async function GET(req: NextRequest) {
 
   if (mode === "listCorrect" || mode === "listWrong" || mode === "listHalf") {
     return NextResponse.json({
-      words: filtered,
+      words: withMemorizeMeta(filtered),
       total: filtered.length,
       page: 0,
-      batch: filtered.length || 1
+      batch: filtered.length || 1,
+      maxWeek
     });
   }
 
@@ -161,9 +184,10 @@ export async function GET(req: NextRequest) {
   const items = filtered.slice(start, start + safeBatch);
 
   return NextResponse.json({
-    words: items,
+    words: withMemorizeMeta(items),
     total: filtered.length,
     page: safePage,
-    batch: safeBatch
+    batch: safeBatch,
+    maxWeek
   });
 }

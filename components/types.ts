@@ -16,6 +16,8 @@ export type WordCardDto = {
   id: number;
   en: string;
   ko: string;
+  memorizeWeek?: number;
+  memorizePosition?: number;
   progress: ProgressDto | null;
   resultState: ResultStateDto | null;
 };

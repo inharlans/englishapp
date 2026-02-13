@@ -62,14 +62,14 @@ export default function HomePage() {
           className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_14px_34px_-24px_rgba(15,23,42,0.55)] transition hover:-translate-y-1 hover:border-amber-300"
         >
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-amber-700">
-            Half Learned
+            Recovered
           </p>
           <h2 className="mt-2 text-xl font-bold text-slate-900">Recovery List</h2>
           <p className="mt-2 text-sm text-slate-600">
             Revisit words that were once right and once wrong.
           </p>
           <p className="mt-4 text-xs font-semibold text-slate-500 group-hover:text-amber-700">
-            Open half list
+            Open recovered list
           </p>
         </Link>
 
