@@ -95,7 +95,7 @@ export function QuizClient({ quizType }: { quizType: QuizType }) {
       const url =
         scope === "half"
           ? "/api/words?mode=listHalf&batch=5&page=0"
-          : `/api/words?mode=memorize&week=${week}&batch=50&page=0&hideCorrect=false`;
+          : `/api/words?mode=memorize&week=${week}&batch=50&page=0&hideCorrect=false&forQuiz=true&quizType=${quizType}`;
       const res = await fetch(url);
       const data = (await res.json()) as WordListResponse & { error?: string };
       if (!res.ok) {

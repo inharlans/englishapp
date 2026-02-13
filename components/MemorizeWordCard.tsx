@@ -20,41 +20,67 @@ export function MemorizeWordCard({ word, onSaveMeaning }: Props) {
   }, [word.ko, word.id]);
 
   const handleSave = async () => {
+    const nextMeaning = koInput.trim();
+    if (!nextMeaning) {
+      setError("Meaning cannot be empty.");
+      setMessage("");
+      return;
+    }
+
     setSaving(true);
     setError("");
     setMessage("");
     try {
-      await onSaveMeaning(word.id, koInput);
-      setMessage("뜻이 저장되었습니다.");
+      await onSaveMeaning(word.id, nextMeaning);
+      setMessage("Meaning updated.");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "저장 실패");
+      setError(e instanceof Error ? e.message : "Save failed");
     } finally {
       setSaving(false);
     }
   };
 
+  const streak = word.progress?.correctStreak ?? 0;
+  const lastResult = word.resultState?.lastResult ?? "NONE";
+
   return (
-    <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-      <div className="mb-2 text-2xl font-semibold">{word.en}</div>
-      <div className="space-y-2">
-        <label className="block text-sm text-slate-600">뜻(수정 가능)</label>
+    <article className="rounded-2xl border border-slate-200/80 bg-white/90 p-4 shadow-[0_16px_36px_-24px_rgba(15,23,42,0.6)] backdrop-blur transition hover:-translate-y-0.5 hover:border-teal-300">
+      <h2 className="mb-3 text-2xl font-bold tracking-tight text-slate-900">{word.en}</h2>
+
+      <div className="space-y-2.5">
+        <label className="block text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+          Meaning
+        </label>
         <input
           value={koInput}
           onChange={(e) => setKoInput(e.target.value)}
-          className="w-full rounded-lg border border-slate-300 p-2"
+          onKeyDown={(e) => {
+            if (e.key !== "Enter") {
+              return;
+            }
+            e.preventDefault();
+            void handleSave();
+          }}
+          className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 outline-none transition focus:border-teal-500 focus:ring-4 focus:ring-teal-100"
         />
         <button
-          onClick={handleSave}
+          onClick={() => void handleSave()}
           disabled={saving}
-          className="rounded-lg bg-slate-900 px-3 py-1.5 text-sm text-white disabled:opacity-60"
+          className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {saving ? "저장 중..." : "뜻 저장"}
+          {saving ? "Saving..." : "Save meaning"}
         </button>
       </div>
-      <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-500">
-        <span>streak: {word.progress?.correctStreak ?? 0}</span>
-        <span>last: {word.resultState?.lastResult ?? "NONE"}</span>
+
+      <div className="mt-3 flex flex-wrap gap-2 text-xs">
+        <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 font-semibold text-emerald-700">
+          Streak {streak}
+        </span>
+        <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 font-semibold text-slate-700">
+          Last {lastResult}
+        </span>
       </div>
+
       {message ? <p className="mt-2 text-xs text-emerald-700">{message}</p> : null}
       {error ? <p className="mt-2 text-xs text-rose-700">{error}</p> : null}
     </article>

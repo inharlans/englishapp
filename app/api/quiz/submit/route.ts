@@ -2,6 +2,11 @@ import { LastResult } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
+import {
+  ensureQuizProgressTable,
+  getQuizProgressByWordId,
+  upsertQuizProgress
+} from "@/lib/quizProgress";
 import { computeNextReviewAt } from "@/lib/scheduling";
 import { normalizeEn, normalizeKo } from "@/lib/text";
 import type { QuizType } from "@/lib/types";
@@ -58,6 +63,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Word is not eligible for half scope." }, { status: 400 });
     }
 
+    await ensureQuizProgressTable(prisma);
+    const modeProgress = await getQuizProgressByWordId(prisma, wordId);
+
     const meaningAnswerCandidates = getMeaningCandidates(userAnswer);
     const meaningCorrectCandidates = new Set(getMeaningCandidates(word.ko));
 
@@ -67,14 +75,28 @@ export async function POST(req: NextRequest) {
         : meaningAnswerCandidates.some((candidate) => meaningCorrectCandidates.has(candidate));
 
     const now = new Date();
-    const nextStreak = word.progress.correctStreak + (correct ? 1 : 0);
-    const baseUpdate = {
-      correctStreak: nextStreak,
-      nextReviewAt: correct ? computeNextReviewAt(now, nextStreak) : word.progress.nextReviewAt
-    };
+    const currentModeStreak =
+      quizType === "MEANING"
+        ? modeProgress?.meaningCorrectStreak ?? 0
+        : modeProgress?.wordCorrectStreak ?? 0;
+    const nextModeStreak = currentModeStreak + (correct ? 1 : 0);
+    const nextModeReviewAt = correct ? computeNextReviewAt(now, nextModeStreak) : null;
+    await upsertQuizProgress(prisma, {
+      wordId,
+      quizType,
+      correct,
+      nextStreak: nextModeStreak,
+      nextReviewAt: nextModeReviewAt
+    });
+
+    const nextMeaningStreak =
+      quizType === "MEANING" ? nextModeStreak : modeProgress?.meaningCorrectStreak ?? 0;
+    const nextWordStreak = quizType === "WORD" ? nextModeStreak : modeProgress?.wordCorrectStreak ?? 0;
+    const commonCorrectStreak = Math.max(nextMeaningStreak, nextWordStreak);
 
     const progressUpdate = {
-      ...baseUpdate,
+      correctStreak: commonCorrectStreak,
+      nextReviewAt: nextModeReviewAt,
       wrongActive: false,
       wrongRecoveryRemaining: 0
     };

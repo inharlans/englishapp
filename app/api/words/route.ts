@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
+import { ensureQuizProgressTable, getQuizProgressMap } from "@/lib/quizProgress";
 import { ensureWordsSeeded } from "@/lib/seedWords";
-import type { ApiMode } from "@/lib/types";
+import type { ApiMode, QuizType } from "@/lib/types";
 
 type WordWithState = {
   id: number;
@@ -49,6 +50,10 @@ export async function GET(req: NextRequest) {
   const hideCorrect = (searchParams.get("hideCorrect") ?? "true") !== "false";
   const week = Number(searchParams.get("week") ?? "1");
   const scope = searchParams.get("scope");
+  const forQuiz = searchParams.get("forQuiz") === "true";
+  const quizTypeRaw = searchParams.get("quizType");
+  const quizType: QuizType | null =
+    quizTypeRaw === "MEANING" || quizTypeRaw === "WORD" ? quizTypeRaw : null;
 
   const words = await prisma.word.findMany({
     include: {
@@ -95,6 +100,33 @@ export async function GET(req: NextRequest) {
     filtered = hideCorrect
       ? byWeek.filter((w) => (w.progress?.correctStreak ?? 0) < 1)
       : byWeek;
+
+    if (forQuiz && quizType) {
+      await ensureQuizProgressTable(prisma);
+      const progressMap = await getQuizProgressMap(
+        prisma,
+        filtered.map((word) => word.id)
+      );
+
+      const parseDate = (value: Date | string | null | undefined) => {
+        if (!value) {
+          return null;
+        }
+        return value instanceof Date ? value : new Date(value);
+      };
+
+      filtered = filtered.filter((w) => {
+        const modeProgress = progressMap.get(w.id);
+        if (quizType === "MEANING") {
+          const streak = modeProgress?.meaningCorrectStreak ?? 0;
+          const reviewAt = parseDate(modeProgress?.meaningNextReviewAt);
+          return streak <= 0 || reviewAt === null || reviewAt <= now;
+        }
+        const streak = modeProgress?.wordCorrectStreak ?? 0;
+        const reviewAt = parseDate(modeProgress?.wordNextReviewAt);
+        return streak <= 0 || reviewAt === null || reviewAt <= now;
+      });
+    }
   }
 
   if (mode === "listCorrect") {
@@ -118,7 +150,12 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  const safeBatch = batch === 5 || batch === 50 ? batch : 1;
+  const safeBatch =
+    mode === "memorize"
+      ? Math.min(Math.max(Number.isFinite(batch) ? Math.floor(batch) : DEFAULT_BATCH, 1), 50)
+      : batch === 5 || batch === 50
+        ? batch
+        : 1;
   const safePage = Number.isFinite(page) && page >= 0 ? Math.floor(page) : 0;
   const start = safePage * safeBatch;
   const items = filtered.slice(start, start + safeBatch);
