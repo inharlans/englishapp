@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { AppNav } from "@/components/AppNav";
 import { KeyboardPageNavigator } from "@/components/KeyboardPageNavigator";
+import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 
 export const metadata: Metadata = {
   title: "English 1500 Memorizer",
@@ -18,6 +19,7 @@ export default function RootLayout({
     <html lang="ko">
       <body>
         <KeyboardPageNavigator />
+        <ServiceWorkerRegister />
         <main className="mx-auto min-h-screen w-full max-w-5xl p-6">
           <AppNav />
           {children}
@@ -26,4 +28,3 @@ export default function RootLayout({
     </html>
   );
 }
-

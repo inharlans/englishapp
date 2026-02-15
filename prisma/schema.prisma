@@ -8,43 +8,43 @@ datasource db {
 }
 
 model Word {
-  id          Int         @id @default(autoincrement())
-  en          String      @unique
-  ko          String
-  createdAt   DateTime    @default(now())
-  progress    Progress?
-  resultState ResultState?
+  id           Int           @id @default(autoincrement())
+  en           String        @unique
+  ko           String
+  createdAt    DateTime      @default(now())
+  progress     Progress?
+  resultState  ResultState?
   quizProgress QuizProgress?
 }
 
 model Progress {
-  wordId                 Int      @id
-  correctStreak          Int      @default(0)
+  wordId                 Int       @id
+  correctStreak          Int       @default(0)
   nextReviewAt           DateTime?
-  wrongActive            Boolean  @default(false)
-  wrongRecoveryRemaining Int      @default(0)
-  word                   Word     @relation(fields: [wordId], references: [id], onDelete: Cascade)
+  wrongActive            Boolean   @default(false)
+  wrongRecoveryRemaining Int       @default(0)
+  word                   Word      @relation(fields: [wordId], references: [id], onDelete: Cascade)
 }
 
 model ResultState {
-  wordId       Int        @id
-  everCorrect  Boolean    @default(false)
-  everWrong    Boolean    @default(false)
-  lastResult   LastResult?
-  updatedAt    DateTime   @updatedAt
-  word         Word       @relation(fields: [wordId], references: [id], onDelete: Cascade)
+  wordId      Int         @id
+  everCorrect Boolean     @default(false)
+  everWrong   Boolean     @default(false)
+  lastResult  LastResult?
+  updatedAt   DateTime    @updatedAt
+  word        Word        @relation(fields: [wordId], references: [id], onDelete: Cascade)
 }
 
 model QuizProgress {
-  wordId               Int        @id
-  meaningCorrectStreak Int        @default(0)
+  wordId               Int         @id
+  meaningCorrectStreak Int         @default(0)
   meaningNextReviewAt  DateTime?
   meaningLastResult    LastResult?
-  wordCorrectStreak    Int        @default(0)
+  wordCorrectStreak    Int         @default(0)
   wordNextReviewAt     DateTime?
   wordLastResult       LastResult?
-  updatedAt            DateTime   @updatedAt
-  word                 Word       @relation(fields: [wordId], references: [id], onDelete: Cascade)
+  updatedAt            DateTime    @updatedAt
+  word                 Word        @relation(fields: [wordId], references: [id], onDelete: Cascade)
 }
 
 model User {
@@ -52,6 +52,82 @@ model User {
   email        String   @unique
   passwordHash String
   createdAt    DateTime @default(now())
+
+  isAdmin  Boolean   @default(false)
+  plan     UserPlan  @default(FREE)
+  proUntil DateTime?
+
+  wordbooks Wordbook[]
+  downloads WordbookDownload[]
+  ratings   WordbookRating[]
+}
+
+model Wordbook {
+  id          Int     @id @default(autoincrement())
+  ownerId     Int
+  title       String
+  description String?
+  fromLang    String  @default("en")
+  toLang      String  @default("ko")
+  isPublic    Boolean @default(false)
+
+  downloadCount Int   @default(0)
+  ratingAvg     Float @default(0)
+  ratingCount   Int   @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  owner     User               @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  items     WordbookItem[]
+  downloads WordbookDownload[]
+  ratings   WordbookRating[]
+
+  @@index([ownerId, createdAt])
+  @@index([isPublic, ratingAvg, downloadCount, createdAt])
+}
+
+model WordbookItem {
+  id            Int      @id @default(autoincrement())
+  wordbookId    Int
+  term          String
+  meaning       String
+  pronunciation String?
+  position      Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  wordbook Wordbook @relation(fields: [wordbookId], references: [id], onDelete: Cascade)
+
+  @@index([wordbookId, position])
+}
+
+model WordbookDownload {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  wordbookId Int
+  createdAt  DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wordbook Wordbook @relation(fields: [wordbookId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, wordbookId])
+  @@index([wordbookId])
+}
+
+model WordbookRating {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  wordbookId Int
+  rating     Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wordbook Wordbook @relation(fields: [wordbookId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, wordbookId])
+  @@index([wordbookId, rating])
 }
 
 model RateLimitBucket {
@@ -63,4 +139,9 @@ model RateLimitBucket {
 enum LastResult {
   CORRECT
   WRONG
+}
+
+enum UserPlan {
+  FREE
+  PRO
 }

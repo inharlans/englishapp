@@ -1,8 +1,11 @@
-import type { Route } from "next";
 import Link from "next/link";
 
-const links: Array<{ href: Route; label: string }> = [
+const links: Array<{ href: string; label: string }> = [
   { href: "/", label: "Home" },
+  { href: "/wordbooks", label: "Wordbooks" },
+  { href: "/wordbooks/market", label: "Market" },
+  { href: "/offline", label: "Offline" },
+  { href: "/pricing", label: "Pricing" },
   { href: "/memorize", label: "Memorize" },
   { href: "/quiz-meaning", label: "Quiz Meaning" },
   { href: "/quiz-word", label: "Quiz Word" },
@@ -18,7 +21,7 @@ export function AppNav() {
         {links.map((link) => (
           <Link
             key={link.href}
-            href={link.href}
+            href={{ pathname: link.href }}
             className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm hover:bg-slate-50"
           >
             {link.label}

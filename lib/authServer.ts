@@ -3,7 +3,13 @@ import { getSessionCookieName, verifySessionToken } from "@/lib/authJwt";
 
 export async function getUserFromRequestCookies(cookies: {
   get(name: string): { value: string } | undefined;
-}): Promise<{ id: number; email: string } | null> {
+}): Promise<{
+  id: number;
+  email: string;
+  isAdmin: boolean;
+  plan: "FREE" | "PRO";
+  proUntil: Date | null;
+} | null> {
   const token = cookies.get(getSessionCookieName())?.value;
   if (!token) {
     return null;
@@ -21,8 +27,7 @@ export async function getUserFromRequestCookies(cookies: {
 
   const user = await prisma.user.findUnique({
     where: { id: Math.floor(userId) },
-    select: { id: true, email: true }
+    select: { id: true, email: true, isAdmin: true, plan: true, proUntil: true }
   });
   return user ?? null;
 }
-
