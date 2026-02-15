@@ -20,7 +20,7 @@ export async function PATCH(
   context: { params: Promise<{ id: string }> }
 ) {
   const ip = getClientIpFromHeaders(req.headers);
-  const limit = checkRateLimit({
+  const limit = await checkRateLimit({
     key: `wordPatch:${ip}`,
     limit: 60,
     windowMs: 60_000

@@ -47,7 +47,7 @@ function parseMode(rawMode: string | null): ApiMode {
 
 export async function GET(req: NextRequest) {
   const ip = getClientIpFromHeaders(req.headers);
-  const limit = checkRateLimit({
+  const limit = await checkRateLimit({
     key: `wordsGet:${ip}`,
     limit: 240,
     windowMs: 60_000

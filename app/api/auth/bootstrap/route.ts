@@ -11,7 +11,7 @@ type BootstrapBody = {
 
 export async function POST(req: NextRequest) {
   const ip = getClientIpFromHeaders(req.headers);
-  const limit = checkRateLimit({
+  const limit = await checkRateLimit({
     key: `authBootstrap:${ip}`,
     limit: 5,
     windowMs: 60_000
@@ -59,4 +59,3 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ ok: true, user });
 }
-

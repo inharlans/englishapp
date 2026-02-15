@@ -39,7 +39,7 @@ function getMeaningCandidates(value: string): string[] {
 
 export async function POST(req: NextRequest) {
   const ip = getClientIpFromHeaders(req.headers);
-  const limit = checkRateLimit({
+  const limit = await checkRateLimit({
     key: `quizSubmit:${ip}`,
     limit: 120,
     windowMs: 60_000

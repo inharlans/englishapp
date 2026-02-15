@@ -20,6 +20,8 @@
   "dependencies": {
     "@next/eslint-plugin-next": "^15.5.12",
     "@prisma/client": "^6.4.1",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.36.2",
     "bcryptjs": "^2.4.3",
     "jose": "^5.9.6",
     "next": "^15.5.12",
@@ -28,8 +30,8 @@
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
-    "@types/node": "^22.10.2",
     "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^22.10.2",
     "@types/react": "^19.0.2",
     "@types/react-dom": "^19.0.2",
     "autoprefixer": "^10.4.20",

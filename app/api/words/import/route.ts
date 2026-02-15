@@ -10,7 +10,7 @@ type ImportRequestBody = {
 
 export async function POST(req: NextRequest) {
   const ip = getClientIpFromHeaders(req.headers);
-  const limit = checkRateLimit({
+  const limit = await checkRateLimit({
     key: `wordsImport:${ip}`,
     limit: 10,
     windowMs: 60_000

@@ -12,7 +12,7 @@ type LoginBody = {
 
 export async function POST(req: NextRequest) {
   const ip = getClientIpFromHeaders(req.headers);
-  const limit = checkRateLimit({
+  const limit = await checkRateLimit({
     key: `authLogin:${ip}`,
     limit: 20,
     windowMs: 60_000

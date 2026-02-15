@@ -30,7 +30,7 @@ function decodeHtmlEntities(value: string): string {
 
 export async function POST(req: NextRequest) {
   const ip = getClientIpFromHeaders(req.headers);
-  const limit = checkRateLimit({
+  const limit = await checkRateLimit({
     key: `translate:${ip}`,
     limit: 30,
     windowMs: 60_000
