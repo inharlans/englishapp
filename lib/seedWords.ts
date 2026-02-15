@@ -9,6 +9,14 @@ type SeedRow = {
   ko: string;
 };
 
+function normalizeEnKey(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .replace(/[-_]+/g, " ")
+    .trim();
+}
+
 function parseWordsFile(filePath: string): SeedRow[] {
   const raw = fs.readFileSync(filePath, "utf8");
   const lines = raw
@@ -29,6 +37,7 @@ function parseWordsFile(filePath: string): SeedRow[] {
   }
 
   const rows: SeedRow[] = [];
+  const seenEn = new Set<string>();
   for (let i = 1; i < lines.length; i += 1) {
     const cols = lines[i].split("\t").map((cell) => cell.trim());
     const indexRaw = indexIdx >= 0 ? cols[indexIdx] : `${i}`;
@@ -37,6 +46,11 @@ function parseWordsFile(filePath: string): SeedRow[] {
     if (!en || !ko) {
       continue;
     }
+    const normalized = normalizeEnKey(en);
+    if (!normalized || seenEn.has(normalized)) {
+      continue;
+    }
+    seenEn.add(normalized);
     const index = Number(indexRaw);
     if (!Number.isFinite(index)) {
       continue;
@@ -59,39 +73,45 @@ export async function ensureWordsSeeded(): Promise<void> {
   }
 
   const count = await prisma.word.count();
-  if (count === rows.length) {
+  // In production we only seed an empty DB. Never delete existing rows here.
+  if (count > 0) {
     return;
   }
 
   await prisma.$transaction(async (tx) => {
-    await tx.resultState.deleteMany({});
-    await tx.progress.deleteMany({});
-    await tx.word.deleteMany({});
+    await tx.word.createMany({
+      data: rows.map((row) => ({ en: row.en, ko: row.ko })),
+      skipDuplicates: true
+    });
 
-    for (const row of rows) {
-      const created = await tx.word.create({
-        data: {
-          en: row.en,
-          ko: row.ko
-        },
-        select: { id: true }
-      });
-      await tx.progress.create({
-        data: {
-          wordId: created.id,
-          correctStreak: 0,
-          wrongActive: false,
-          wrongRecoveryRemaining: 0
-        }
-      });
-      await tx.resultState.create({
-        data: {
-          wordId: created.id,
-          everCorrect: false,
-          everWrong: false,
-          lastResult: null
-        }
-      });
+    const words = await tx.word.findMany({
+      select: { id: true },
+      orderBy: { id: "asc" }
+    });
+    if (words.length === 0) {
+      return;
     }
+
+    await tx.progress.createMany({
+      data: words.map((w) => ({
+        wordId: w.id,
+        correctStreak: 0,
+        wrongActive: false,
+        wrongRecoveryRemaining: 0
+      })),
+      skipDuplicates: true
+    });
+
+    const now = new Date();
+    await tx.resultState.createMany({
+      data: words.map((w) => ({
+        wordId: w.id,
+        everCorrect: false,
+        everWrong: false,
+        lastResult: null,
+        updatedAt: now
+      })),
+      skipDuplicates: true
+    });
   });
 }
