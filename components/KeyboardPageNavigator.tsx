@@ -23,6 +23,28 @@ export function KeyboardPageNavigator() {
       if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) {
         return;
       }
+
+      // Don't steal number keys while the user is typing in a form field.
+      const active = document.activeElement as HTMLElement | null;
+      const tagName = active?.tagName;
+      if (
+        tagName === "INPUT" ||
+        tagName === "TEXTAREA" ||
+        tagName === "SELECT" ||
+        tagName === "BUTTON" ||
+        active?.isContentEditable
+      ) {
+        return;
+      }
+
+      // Also ignore if the event originated from within an editable element.
+      const targetEl = event.target instanceof HTMLElement ? event.target : null;
+      if (
+        targetEl?.closest("input, textarea, select, button, [contenteditable='true']")
+      ) {
+        return;
+      }
+
       const target = pageByNumber[event.key];
       if (target && target !== pathname) {
         event.preventDefault();
