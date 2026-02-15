@@ -10,7 +10,8 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev --name init",
     "prisma:deploy": "prisma migrate deploy",
-    "start:railway": "prisma migrate deploy && next start -p ${PORT:-3000}"
+    "prisma:seed": "node prisma/seed.js",
+    "start:railway": "prisma migrate deploy && node prisma/seed.js && next start -p ${PORT:-3000}"
   },
   "dependencies": {
     "@prisma/client": "^6.4.1",
