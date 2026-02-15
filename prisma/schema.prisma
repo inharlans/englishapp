@@ -54,6 +54,12 @@ model User {
   createdAt    DateTime @default(now())
 }
 
+model RateLimitBucket {
+  id      String   @id
+  count   Int
+  resetAt DateTime
+}
+
 enum LastResult {
   CORRECT
   WRONG

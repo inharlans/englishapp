@@ -29,6 +29,11 @@ The app runs migrations before the web server starts.
 - `UPSTASH_REDIS_REST_URL` (optional; enable distributed rate limiting)
 - `UPSTASH_REDIS_REST_TOKEN` (optional; enable distributed rate limiting)
 
+### Rate limiting in production
+
+- If Upstash env vars are set, rate limits are stored in Upstash Redis (distributed).
+- If Upstash env vars are NOT set, rate limits fall back to PostgreSQL in production (still distributed across instances).
+
 ### Deployment flow
 
 1. Push this repository to GitHub.

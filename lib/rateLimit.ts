@@ -1,5 +1,8 @@
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
+import { Prisma } from "@prisma/client";
+
+import { prisma } from "@/lib/prisma";
 
 export type RateLimitResult =
   | { ok: true }
@@ -65,6 +68,50 @@ export function checkRateLimitLocal(input: {
   return { ok: true };
 }
 
+async function checkRateLimitPostgres(input: {
+  key: string;
+  limit: number;
+  windowMs: number;
+}): Promise<RateLimitResult> {
+  const seconds = Math.max(Math.round(input.windowMs / 1000), 1);
+
+  const rows = await prisma.$queryRaw<
+    Array<{
+      count: number;
+      resetAt: Date;
+    }>
+  >(
+    Prisma.sql`
+      INSERT INTO "RateLimitBucket" ("id", "count", "resetAt")
+      VALUES (${input.key}, 1, NOW() + (${seconds}::int * INTERVAL '1 second'))
+      ON CONFLICT ("id") DO UPDATE SET
+        "count" = CASE
+          WHEN "RateLimitBucket"."resetAt" <= NOW() THEN 1
+          ELSE "RateLimitBucket"."count" + 1
+        END,
+        "resetAt" = CASE
+          WHEN "RateLimitBucket"."resetAt" <= NOW() THEN NOW() + (${seconds}::int * INTERVAL '1 second')
+          ELSE "RateLimitBucket"."resetAt"
+        END
+      RETURNING "count", "resetAt";
+    `
+  );
+
+  const row = rows[0];
+  if (!row) {
+    return { ok: true };
+  }
+
+  if (row.count <= input.limit) {
+    return { ok: true };
+  }
+
+  return {
+    ok: false,
+    retryAfterSeconds: Math.max(Math.ceil((row.resetAt.getTime() - Date.now()) / 1000), 1)
+  };
+}
+
 function getUpstashRatelimit(input: { limit: number; windowMs: number }): Ratelimit | null {
   const url = process.env.UPSTASH_REDIS_REST_URL;
   const token = process.env.UPSTASH_REDIS_REST_TOKEN;
@@ -101,6 +148,11 @@ export async function checkRateLimit(input: {
 }): Promise<RateLimitResult> {
   const upstash = getUpstashRatelimit(input);
   if (!upstash) {
+    // For multi-instance deployments, Postgres provides a shared store without extra setup.
+    // In local dev, keep the in-memory path for speed.
+    if (process.env.NODE_ENV === "production") {
+      return checkRateLimitPostgres(input);
+    }
     return checkRateLimitLocal(input);
   }
 
