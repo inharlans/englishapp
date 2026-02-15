@@ -14,21 +14,8 @@ type QuizProgressRow = {
 };
 
 export async function ensureQuizProgressTable(db: DbClient) {
-  await db.$executeRaw`
-    CREATE TABLE IF NOT EXISTS "QuizProgress" (
-      "wordId" INTEGER NOT NULL PRIMARY KEY,
-      "meaningCorrectStreak" INTEGER NOT NULL DEFAULT 0,
-      "meaningNextReviewAt" DATETIME,
-      "meaningLastResult" TEXT,
-      "wordCorrectStreak" INTEGER NOT NULL DEFAULT 0,
-      "wordNextReviewAt" DATETIME,
-      "wordLastResult" TEXT,
-      "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      CONSTRAINT "QuizProgress_wordId_fkey"
-        FOREIGN KEY ("wordId") REFERENCES "Word" ("id")
-        ON DELETE CASCADE ON UPDATE CASCADE
-    );
-  `;
+  // Table is managed by Prisma migrations in deployment environments.
+  void db;
 }
 
 export async function getQuizProgressByWordId(

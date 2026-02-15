@@ -3,17 +3,18 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model Word {
   id          Int         @id @default(autoincrement())
-  en          String
+  en          String      @unique
   ko          String
   createdAt   DateTime    @default(now())
   progress    Progress?
   resultState ResultState?
+  quizProgress QuizProgress?
 }
 
 model Progress {
@@ -32,6 +33,18 @@ model ResultState {
   lastResult   LastResult?
   updatedAt    DateTime   @updatedAt
   word         Word       @relation(fields: [wordId], references: [id], onDelete: Cascade)
+}
+
+model QuizProgress {
+  wordId               Int        @id
+  meaningCorrectStreak Int        @default(0)
+  meaningNextReviewAt  DateTime?
+  meaningLastResult    LastResult?
+  wordCorrectStreak    Int        @default(0)
+  wordNextReviewAt     DateTime?
+  wordLastResult       LastResult?
+  updatedAt            DateTime   @updatedAt
+  word                 Word       @relation(fields: [wordId], references: [id], onDelete: Cascade)
 }
 
 enum LastResult {
