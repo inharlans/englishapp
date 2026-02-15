@@ -2,8 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
 import { ensureQuizProgressTable, getQuizProgressMap } from "@/lib/quizProgress";
+import { getMemorizeMetaById } from "@/lib/memorizeMeta";
+import { checkRateLimit, getClientIpFromHeaders } from "@/lib/rateLimit";
 import { ensureWordsSeeded } from "@/lib/seedWords";
 import type { ApiMode, QuizType } from "@/lib/types";
+import { LastResult } from "@prisma/client";
 
 type WordWithState = {
   id: number;
@@ -43,6 +46,19 @@ function parseMode(rawMode: string | null): ApiMode {
 }
 
 export async function GET(req: NextRequest) {
+  const ip = getClientIpFromHeaders(req.headers);
+  const limit = checkRateLimit({
+    key: `wordsGet:${ip}`,
+    limit: 240,
+    windowMs: 60_000
+  });
+  if (!limit.ok) {
+    return NextResponse.json(
+      { error: "Too many requests." },
+      { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } }
+    );
+  }
+
   await ensureWordsSeeded();
 
   const { searchParams } = new URL(req.url);
@@ -57,71 +73,97 @@ export async function GET(req: NextRequest) {
   const quizType: QuizType | null =
     quizTypeRaw === "MEANING" || quizTypeRaw === "WORD" ? quizTypeRaw : null;
 
-  const words = await prisma.word.findMany({
-    include: {
-      progress: true,
-      resultState: true
-    },
-    orderBy: { id: "asc" }
-  });
-  const memorizeMetaById = new Map(
-    words.map((word, index) => [
-      word.id,
-      {
-        memorizeWeek: Math.floor(index / 50) + 1,
-        memorizePosition: (index % 50) + 1
-      }
-    ])
-  );
-
-  const withMemorizeMeta = (items: WordWithState[]): WordWithState[] =>
-    items.map((item) => {
-      const meta = memorizeMetaById.get(item.id);
-      return {
-        ...item,
-        memorizeWeek: meta?.memorizeWeek,
-        memorizePosition: meta?.memorizePosition
-      };
-    });
-
   const now = new Date();
-  const byScope =
-    scope === "half"
-      ? words.filter((w) => w.resultState?.everCorrect && w.resultState?.everWrong)
-      : words;
-  const maxWeek = Math.max(Math.ceil(byScope.length / 50), 1);
 
-  const byWeek = (() => {
-    if (!Number.isFinite(week) || week < 1) {
-      return byScope;
-    }
-    const safeWeek = Math.floor(week);
-    const startIndex = (safeWeek - 1) * 50;
-    const endIndexExclusive = startIndex + 50;
-    return byScope.slice(startIndex, endIndexExclusive);
-  })();
+  const scopeWhere = scope === "half"
+    ? { resultState: { is: { everCorrect: true, everWrong: true } } }
+    : undefined;
+  const scopeCount = await prisma.word.count({ where: scopeWhere });
+  const maxWeek = Math.max(Math.ceil(scopeCount / 50), 1);
+  const safeWeek =
+    Number.isFinite(week) && week >= 1 ? Math.min(Math.floor(week), maxWeek) : 1;
+
+  const weekItems = await prisma.word.findMany({
+    where: scopeWhere,
+    include: { progress: true, resultState: true },
+    orderBy: { id: "asc" },
+    skip: (safeWeek - 1) * 50,
+    take: 50
+  });
 
   if (mode === "quiz") {
-    const priority2 = byWeek.filter((w) => {
+    const priority2 = weekItems.filter((w) => {
       const reviewAt = w.progress?.nextReviewAt;
       return reviewAt !== null && reviewAt !== undefined && reviewAt <= now;
     });
-    const priority3 = byWeek.filter((w) => (w.progress?.correctStreak ?? 0) === 0);
+    const priority3 = weekItems.filter((w) => (w.progress?.correctStreak ?? 0) === 0);
 
-    const candidatePool = priority2.length > 0 ? priority2 : priority3.length > 0 ? priority3 : byWeek;
+    const candidatePool =
+      priority2.length > 0 ? priority2 : priority3.length > 0 ? priority3 : weekItems;
     const selected =
       candidatePool.length > 0
         ? candidatePool[Math.floor(Math.random() * candidatePool.length)]
         : null;
-    return NextResponse.json({ word: selected });
+
+    if (!selected) {
+      return NextResponse.json({ word: null, maxWeek });
+    }
+
+    const metaMap = await getMemorizeMetaById([selected.id]);
+    const meta = metaMap.get(selected.id);
+    return NextResponse.json({
+      word: {
+        ...selected,
+        memorizeWeek: meta?.memorizeWeek,
+        memorizePosition: meta?.memorizePosition
+      },
+      maxWeek
+    });
   }
 
-  let filtered: WordWithState[] = byScope;
+  if (mode === "listCorrect" || mode === "listWrong" || mode === "listHalf") {
+    const where =
+      mode === "listHalf"
+        ? scopeWhere
+        : mode === "listCorrect"
+          ? {
+              ...(scopeWhere ?? {}),
+              resultState: { is: { lastResult: LastResult.CORRECT } }
+            }
+          : {
+              ...(scopeWhere ?? {}),
+              resultState: { is: { lastResult: LastResult.WRONG } }
+            };
+
+    const words = await prisma.word.findMany({
+      where,
+      include: { progress: true, resultState: true },
+      orderBy: { id: "asc" }
+    });
+
+    const metaMap = await getMemorizeMetaById(words.map((w) => w.id));
+    return NextResponse.json({
+      words: words.map((item) => {
+        const meta = metaMap.get(item.id);
+        return {
+          ...item,
+          memorizeWeek: meta?.memorizeWeek,
+          memorizePosition: meta?.memorizePosition
+        };
+      }),
+      total: words.length,
+      page: 0,
+      batch: words.length || 1,
+      maxWeek
+    });
+  }
+
+  let filtered: WordWithState[] = weekItems;
 
   if (mode === "memorize") {
     filtered = hideCorrect
-      ? byWeek.filter((w) => (w.progress?.correctStreak ?? 0) < 1)
-      : byWeek;
+      ? weekItems.filter((w) => (w.progress?.correctStreak ?? 0) < 1)
+      : weekItems;
 
     if (forQuiz && quizType) {
       await ensureQuizProgressTable(prisma);
@@ -151,28 +193,6 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  if (mode === "listCorrect") {
-    filtered = byScope.filter((w) => w.resultState?.lastResult === "CORRECT");
-  }
-
-  if (mode === "listWrong") {
-    filtered = byScope.filter((w) => w.resultState?.lastResult === "WRONG");
-  }
-
-  if (mode === "listHalf") {
-    filtered = byScope.filter((w) => w.resultState?.everCorrect && w.resultState?.everWrong);
-  }
-
-  if (mode === "listCorrect" || mode === "listWrong" || mode === "listHalf") {
-    return NextResponse.json({
-      words: withMemorizeMeta(filtered),
-      total: filtered.length,
-      page: 0,
-      batch: filtered.length || 1,
-      maxWeek
-    });
-  }
-
   const safeBatch =
     mode === "memorize"
       ? Math.min(Math.max(Number.isFinite(batch) ? Math.floor(batch) : DEFAULT_BATCH, 1), 50)
@@ -183,8 +203,17 @@ export async function GET(req: NextRequest) {
   const start = safePage * safeBatch;
   const items = filtered.slice(start, start + safeBatch);
 
+  const metaMap = await getMemorizeMetaById(items.map((w) => w.id));
+
   return NextResponse.json({
-    words: withMemorizeMeta(items),
+    words: items.map((item) => {
+      const meta = metaMap.get(item.id);
+      return {
+        ...item,
+        memorizeWeek: meta?.memorizeWeek,
+        memorizePosition: meta?.memorizePosition
+      };
+    }),
     total: filtered.length,
     page: safePage,
     batch: safeBatch,

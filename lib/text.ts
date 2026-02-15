@@ -23,10 +23,7 @@ export function normalizeKo(value: string): string {
   return collapseSpaces(value);
 }
 
-function parseWithDelimiter(
-  rawText: string,
-  delimiter: "\t" | ","
-): ParseSuccess | null {
+function parseWithDelimiter(rawText: string, delimiter: "\t" | ","): ParseSuccess | null {
   const lines = rawText
     .split(/\r?\n/)
     .map((line) => line.trimEnd())
@@ -36,9 +33,7 @@ function parseWithDelimiter(
     return { delimiter, rows: [] };
   }
 
-  const header = splitAndTrim(lines[0], delimiter).map((col) =>
-    col.toLowerCase()
-  );
+  const header = splitAndTrim(lines[0], delimiter).map((col) => col.toLowerCase());
   const enIdx = header.findIndex((h) => h === "en");
   const koIdx = header.findIndex((h) => h === "ko");
 
@@ -83,3 +78,4 @@ export function parseWords(rawText: string): ParseSuccess {
 
   throw new Error("헤더에서 en/ko 컬럼을 찾지 못했습니다.");
 }
+

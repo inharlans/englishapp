@@ -4,3 +4,8 @@ node_modules
 prisma/dev.db
 prisma/dev.db-journal
 dist
+
+# local temp
+/tmp
+*.tsbuildinfo
+

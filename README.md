@@ -24,6 +24,8 @@ The app runs migrations before the web server starts.
 
 - `DATABASE_URL` (Railway PostgreSQL or external PostgreSQL)
 - `GOOGLE_TRANSLATE_API_KEY` (optional)
+- `AUTH_SECRET` (required, 32+ chars recommended)
+- `AUTH_BOOTSTRAP_TOKEN` (required for first user creation via bootstrap API)
 
 ### Deployment flow
 
@@ -47,5 +49,18 @@ npm run start:railway
 
 This command does:
 
-1. `prisma migrate deploy`
-2. `next start -p $PORT`
+1. `prisma generate`
+2. `prisma migrate deploy`
+3. `node prisma/seed.js`
+4. `next start -p $PORT`
+
+## Auth bootstrap (first admin)
+
+1. Set `AUTH_BOOTSTRAP_TOKEN` and `AUTH_SECRET` in environment variables.
+2. Call `POST /api/auth/bootstrap` with header `x-bootstrap-token: $AUTH_BOOTSTRAP_TOKEN` and JSON body:
+
+```json
+{ "email": "admin@example.com", "password": "change-me-now" }
+```
+
+After that, use `/login` to sign in.

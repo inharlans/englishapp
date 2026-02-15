@@ -2,6 +2,7 @@ import { LastResult } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
+import { checkRateLimit, getClientIpFromHeaders } from "@/lib/rateLimit";
 import {
   ensureQuizProgressTable,
   getQuizProgressByWordId,
@@ -37,6 +38,19 @@ function getMeaningCandidates(value: string): string[] {
 }
 
 export async function POST(req: NextRequest) {
+  const ip = getClientIpFromHeaders(req.headers);
+  const limit = checkRateLimit({
+    key: `quizSubmit:${ip}`,
+    limit: 120,
+    windowMs: 60_000
+  });
+  if (!limit.ok) {
+    return NextResponse.json(
+      { error: "Too many requests." },
+      { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } }
+    );
+  }
+
   try {
     const body = (await req.json()) as SubmitBody;
     const wordId = body.wordId;

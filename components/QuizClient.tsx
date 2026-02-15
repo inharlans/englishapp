@@ -72,10 +72,32 @@ export function QuizClient({ quizType }: { quizType: QuizType }) {
     };
   }, []);
 
-  const addTimer = (callback: () => void, ms: number) => {
+  const addTimer = useCallback((callback: () => void, ms: number) => {
     const timer = window.setTimeout(callback, ms);
     timersRef.current.push(timer);
-  };
+  }, []);
+
+  const goNext = useCallback(() => {
+    if (!currentWord) {
+      return;
+    }
+    setAnswer("");
+    setResult(null);
+    setIsEditingKo(false);
+    setKoDraft("");
+    setKoUpdateMessage("");
+    setMachineMeaning("");
+    setMachineMeaningLoading(false);
+    setMachineMeaningError("");
+    setCardMotion("swap-out");
+    addTimer(() => {
+      setCursor((prev) => prev + 1);
+      setCardMotion("swap-in");
+    }, 120);
+    addTimer(() => {
+      setCardMotion("idle");
+    }, 320);
+  }, [addTimer, currentWord]);
 
   const loadWeekQueue = useCallback(async () => {
     setLoading(true);
@@ -109,7 +131,7 @@ export function QuizClient({ quizType }: { quizType: QuizType }) {
     } finally {
       setLoading(false);
     }
-  }, [scope, week]);
+  }, [scope, week, quizType]);
 
   useEffect(() => {
     loadWeekQueue();
@@ -152,7 +174,7 @@ export function QuizClient({ quizType }: { quizType: QuizType }) {
     return () => {
       window.removeEventListener("keydown", onKeyDown);
     };
-  }, [result, loading, currentWord, isEditingKo]);
+  }, [result, loading, currentWord, isEditingKo, goNext]);
 
   useEffect(() => {
     if (!isEditingKo) {
@@ -167,27 +189,7 @@ export function QuizClient({ quizType }: { quizType: QuizType }) {
     };
   }, [isEditingKo]);
 
-  const goNext = () => {
-    if (!currentWord) {
-      return;
-    }
-    setAnswer("");
-    setResult(null);
-    setIsEditingKo(false);
-    setKoDraft("");
-    setKoUpdateMessage("");
-    setMachineMeaning("");
-    setMachineMeaningLoading(false);
-    setMachineMeaningError("");
-    setCardMotion("swap-out");
-    addTimer(() => {
-      setCursor((prev) => prev + 1);
-      setCardMotion("swap-in");
-    }, 120);
-    addTimer(() => {
-      setCardMotion("idle");
-    }, 320);
-  };
+  // goNext is memoized above to keep effect dependencies correct.
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

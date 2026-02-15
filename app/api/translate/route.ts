@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { checkRateLimit, getClientIpFromHeaders } from "@/lib/rateLimit";
+
 type TranslateBody = {
   text?: string;
   source?: string;
@@ -27,6 +29,19 @@ function decodeHtmlEntities(value: string): string {
 }
 
 export async function POST(req: NextRequest) {
+  const ip = getClientIpFromHeaders(req.headers);
+  const limit = checkRateLimit({
+    key: `translate:${ip}`,
+    limit: 30,
+    windowMs: 60_000
+  });
+  if (!limit.ok) {
+    return NextResponse.json(
+      { error: "Too many requests." },
+      { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } }
+    );
+  }
+
   try {
     const body = (await req.json()) as TranslateBody;
     const text = (body.text ?? "").trim();

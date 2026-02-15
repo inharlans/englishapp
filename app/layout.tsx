@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
+
 import "./globals.css";
 import { AppNav } from "@/components/AppNav";
 import { KeyboardPageNavigator } from "@/components/KeyboardPageNavigator";
 
 export const metadata: Metadata = {
   title: "English 1500 Memorizer",
-  description: "영단어 암기/퀴즈 앱"
+  description: "Weekly memorize cards + quizzes with spaced repetition."
 };
 
 export default function RootLayout({
@@ -25,3 +26,4 @@ export default function RootLayout({
     </html>
   );
 }
+

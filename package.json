@@ -4,31 +4,40 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "postinstall": "prisma generate",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev --name init",
     "prisma:deploy": "prisma migrate deploy",
     "prisma:seed": "node prisma/seed.js",
-    "start:railway": "prisma migrate deploy && node prisma/seed.js && next start -p ${PORT:-3000}"
+    "start:railway": "prisma generate && prisma migrate deploy && node prisma/seed.js && next start -p ${PORT:-3000}"
   },
   "dependencies": {
+    "@next/eslint-plugin-next": "^15.5.12",
     "@prisma/client": "^6.4.1",
-    "next": "^15.1.11",
+    "bcryptjs": "^2.4.3",
+    "jose": "^5.9.6",
+    "next": "^15.5.12",
+    "prisma": "^6.4.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
+    "@types/bcryptjs": "^2.4.6",
     "@types/react": "^19.0.2",
     "@types/react-dom": "^19.0.2",
     "autoprefixer": "^10.4.20",
     "eslint": "^9.17.0",
-    "eslint-config-next": "^15.1.11",
+    "eslint-config-next": "^15.5.12",
     "postcss": "^8.4.49",
-    "prisma": "^6.4.1",
     "tailwindcss": "^3.4.17",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "vitest": "^4.0.18"
   }
 }

@@ -14,7 +14,7 @@ const links: Array<{ href: Route; label: string }> = [
 export function AppNav() {
   return (
     <nav className="mb-6 rounded-xl bg-white p-4 shadow-sm">
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         {links.map((link) => (
           <Link
             key={link.href}
@@ -24,6 +24,20 @@ export function AppNav() {
             {link.label}
           </Link>
         ))}
+        <div className="ml-auto flex items-center gap-2">
+          <Link
+            href="/login"
+            className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm hover:bg-slate-50"
+          >
+            Login
+          </Link>
+          <Link
+            href="/logout"
+            className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm hover:bg-slate-50"
+          >
+            Logout
+          </Link>
+        </div>
       </div>
     </nav>
   );

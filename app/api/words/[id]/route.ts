@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
+import { checkRateLimit, getClientIpFromHeaders } from "@/lib/rateLimit";
 
 type UpdateWordBody = {
   ko?: string;
@@ -18,6 +19,19 @@ export async function PATCH(
   req: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
+  const ip = getClientIpFromHeaders(req.headers);
+  const limit = checkRateLimit({
+    key: `wordPatch:${ip}`,
+    limit: 60,
+    windowMs: 60_000
+  });
+  if (!limit.ok) {
+    return NextResponse.json(
+      { error: "Too many requests." },
+      { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } }
+    );
+  }
+
   try {
     const { id: rawId } = await context.params;
     const id = parseId(rawId);
