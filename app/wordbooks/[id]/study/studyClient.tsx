@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { apiFetch } from "@/lib/clientApi";
 
@@ -109,10 +109,17 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
           </p>
         </div>
         <div className="ml-auto flex flex-wrap gap-2">
-          <Link href={{ pathname: `/wordbooks/${wordbookId}` }} className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50">
+          <Link
+            href={{ pathname: `/wordbooks/${wordbookId}` }}
+            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
+          >
             Back
           </Link>
-          <Link href={{ pathname: `/wordbooks/${wordbookId}/quiz` }} className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">
+          <Link
+            href={{ pathname: `/wordbooks/${wordbookId}/quiz` }}
+            data-testid="study-start-quiz"
+            className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+          >
             Start Quiz
           </Link>
         </div>
@@ -124,15 +131,26 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
           <span>{progressPercent}%</span>
         </div>
         <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
-          <div className="h-full rounded-full bg-gradient-to-r from-teal-500 to-emerald-500" style={{ width: `${progressPercent}%` }} />
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-teal-500 to-emerald-500"
+            style={{ width: `${progressPercent}%` }}
+          />
         </div>
       </div>
 
       {loading ? <p className="text-sm text-slate-600">Loading...</p> : null}
-      {error ? <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p> : null}
+      {error ? (
+        <p
+          className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700"
+          role="status"
+          aria-live="polite"
+        >
+          {error}
+        </p>
+      ) : null}
 
       <div className="grid gap-2">
-        {items.map((item) => {
+        {items.map((item, idx) => {
           const state = itemStates.get(item.id);
           return (
             <div key={item.id} className="rounded-xl border border-slate-200 bg-white p-3">
@@ -153,13 +171,26 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
                   ) : null}
                 </div>
                 <div className="flex flex-wrap gap-1">
-                  <button type="button" onClick={() => void mark(item.id, "CORRECT")} className="rounded border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-800 hover:bg-emerald-100">
+                  <button
+                    type="button"
+                    data-testid={idx === 0 ? "study-mark-correct-first" : undefined}
+                    onClick={() => void mark(item.id, "CORRECT")}
+                    className="rounded border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-800 hover:bg-emerald-100"
+                  >
                     Correct
                   </button>
-                  <button type="button" onClick={() => void mark(item.id, "WRONG")} className="rounded border border-amber-200 bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-800 hover:bg-amber-100">
+                  <button
+                    type="button"
+                    onClick={() => void mark(item.id, "WRONG")}
+                    className="rounded border border-amber-200 bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-800 hover:bg-amber-100"
+                  >
                     Wrong
                   </button>
-                  <button type="button" onClick={() => void mark(item.id, "RESET")} className="rounded border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50">
+                  <button
+                    type="button"
+                    onClick={() => void mark(item.id, "RESET")}
+                    className="rounded border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                  >
                     Reset
                   </button>
                 </div>
@@ -171,6 +202,4 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
     </section>
   );
 }
-
-
 

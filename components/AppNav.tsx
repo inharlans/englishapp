@@ -16,13 +16,14 @@ const links: Array<{ href: string; label: string }> = [
 
 export function AppNav() {
   return (
-    <nav className="mb-6 rounded-xl bg-white p-4 shadow-sm">
-      <div className="flex flex-wrap items-center gap-2">
+    <nav aria-label="주요 메뉴" className="mb-6 rounded-xl bg-white p-4 shadow-sm">
+      <div className="flex flex-wrap items-center gap-2" role="list">
         {links.map((link) => (
           <Link
             key={link.href}
             href={{ pathname: link.href }}
-            className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm hover:bg-slate-50"
+            className="rounded-lg border border-slate-200 px-3 py-2 text-sm hover:bg-slate-50"
+            role="listitem"
           >
             {link.label}
           </Link>
@@ -30,13 +31,13 @@ export function AppNav() {
         <div className="ml-auto flex items-center gap-2">
           <Link
             href="/login"
-            className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm hover:bg-slate-50"
+            className="rounded-lg border border-slate-200 px-3 py-2 text-sm hover:bg-slate-50"
           >
             Login
           </Link>
           <Link
             href="/logout"
-            className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm hover:bg-slate-50"
+            className="rounded-lg border border-slate-200 px-3 py-2 text-sm hover:bg-slate-50"
           >
             Logout
           </Link>

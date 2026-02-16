@@ -39,6 +39,7 @@ export function DownloadButton({ wordbookId, disabled }: Props) {
       <button
         type="button"
         onClick={onDownload}
+        data-testid="download-wordbook"
         disabled={loading || disabled}
         className="rounded-lg bg-slate-900 px-3 py-1.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
       >

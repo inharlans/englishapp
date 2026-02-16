@@ -222,12 +222,14 @@ export default async function WordbooksPage() {
                     <div className="mt-2 flex flex-wrap gap-2">
                       <Link
                         href={{ pathname: `/wordbooks/${d.wordbook.id}/study` }}
+                        data-testid="library-study-link"
                         className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold hover:bg-slate-50"
                       >
                         Study State
                       </Link>
                       <Link
                         href={{ pathname: `/wordbooks/${d.wordbook.id}/quiz` }}
+                        data-testid="library-quiz-link"
                         className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold hover:bg-slate-50"
                       >
                         Quiz

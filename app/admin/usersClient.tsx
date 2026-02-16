@@ -165,7 +165,7 @@ export function AdminUsersClient({ initialUsers }: { initialUsers: UserRow[] }) 
           </p>
         ) : (
           reports.map((r) => (
-            <div key={r.id} className="rounded-2xl border border-slate-200 bg-white p-4">
+            <div key={r.id} data-testid="admin-report-card" className="rounded-2xl border border-slate-200 bg-white p-4">
               <p className="text-sm font-black text-slate-900">
                 #{r.id} [{r.status}] {r.reason}
               </p>
@@ -189,6 +189,7 @@ export function AdminUsersClient({ initialUsers }: { initialUsers: UserRow[] }) 
                 <div className="mt-3 flex flex-wrap gap-2">
                   <button
                     type="button"
+                    data-testid="admin-report-resolve"
                     onClick={async () => {
                       await apiFetch(`/api/admin/reports/${r.id}`, {
                         method: "POST",
@@ -203,6 +204,7 @@ export function AdminUsersClient({ initialUsers }: { initialUsers: UserRow[] }) 
                   </button>
                   <button
                     type="button"
+                    data-testid="admin-report-dismiss"
                     onClick={async () => {
                       const note = window.prompt("Moderator note (optional):", "") ?? "";
                       await apiFetch(`/api/admin/reports/${r.id}`, {
@@ -218,6 +220,7 @@ export function AdminUsersClient({ initialUsers }: { initialUsers: UserRow[] }) 
                   </button>
                   <button
                     type="button"
+                    data-testid="admin-report-hide"
                     onClick={async () => {
                       const note = window.prompt("Hide this wordbook and resolve report. Note:", "") ?? "";
                       await apiFetch(`/api/admin/reports/${r.id}`, {

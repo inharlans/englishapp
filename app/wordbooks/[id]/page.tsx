@@ -174,6 +174,7 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
           {(isOwner || downloadedAt) && (
             <Link
               href={{ pathname: `/wordbooks/${id}/study` }}
+              data-testid="wordbook-study-link"
               className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
             >
               Study State
@@ -182,6 +183,7 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
           {(isOwner || downloadedAt) && (
             <Link
               href={{ pathname: `/wordbooks/${id}/quiz` }}
+              data-testid="wordbook-quiz-link"
               className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
             >
               Wordbook Quiz
@@ -211,12 +213,10 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
           {!isOwner && !downloadedAt ? (
             <p className="mt-2 text-xs text-slate-600">Download first to rate.</p>
           ) : null}
-          {!isOwner ? (
-            <div className="mt-3 flex flex-wrap gap-2">
-              <ReportWordbookButton wordbookId={id} />
-              <BlockOwnerButton wordbookId={id} ownerEmail={wordbook.owner.email} />
-            </div>
-          ) : null}
+          <div className="mt-3 flex flex-wrap gap-2">
+            <ReportWordbookButton wordbookId={id} />
+            {!isOwner ? <BlockOwnerButton wordbookId={id} ownerEmail={wordbook.owner.email} /> : null}
+          </div>
         </div>
       ) : null}
 

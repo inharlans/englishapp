@@ -130,6 +130,7 @@ export function AddItemsForm({ wordbookId }: Props) {
           <input
             value={term}
             onChange={(e) => setTerm(e.target.value)}
+            aria-label="Word"
             placeholder="word"
             className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
             disabled={loading}
@@ -137,6 +138,7 @@ export function AddItemsForm({ wordbookId }: Props) {
           <input
             value={meaning}
             onChange={(e) => setMeaning(e.target.value)}
+            aria-label="Meaning"
             placeholder="meaning"
             className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
             disabled={loading}
@@ -144,6 +146,7 @@ export function AddItemsForm({ wordbookId }: Props) {
           <input
             value={pron}
             onChange={(e) => setPron(e.target.value)}
+            aria-label="Pronunciation"
             placeholder="pronunciation (optional)"
             className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
             disabled={loading}
@@ -151,6 +154,7 @@ export function AddItemsForm({ wordbookId }: Props) {
           <input
             value={example}
             onChange={(e) => setExample(e.target.value)}
+            aria-label="Example"
             placeholder="example (optional)"
             className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
             disabled={loading}
@@ -158,6 +162,7 @@ export function AddItemsForm({ wordbookId }: Props) {
           <input
             value={exampleMeaning}
             onChange={(e) => setExampleMeaning(e.target.value)}
+            aria-label="Example meaning"
             placeholder="example ko (optional)"
             className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
             disabled={loading}
@@ -187,6 +192,7 @@ export function AddItemsForm({ wordbookId }: Props) {
           <textarea
             value={bulk}
             onChange={(e) => setBulk(e.target.value)}
+            aria-label="Bulk add lines"
             rows={6}
             placeholder={"apple\t사과\nbanana\t바나나\ncarry - 운반하다"}
             className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"

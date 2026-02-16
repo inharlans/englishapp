@@ -94,6 +94,7 @@ export function WordbookQuizClient({ wordbookId }: { wordbookId: number }) {
           <select
             value={mode}
             onChange={(e) => setMode(e.target.value === "WORD" ? "WORD" : "MEANING")}
+            data-testid="wordbook-quiz-mode"
             className="ml-2 rounded border border-slate-300 bg-white px-2 py-1"
           >
             <option value="MEANING">Meaning Quiz</option>
@@ -118,14 +119,21 @@ export function WordbookQuizClient({ wordbookId }: { wordbookId: number }) {
               </p>
             ) : null}
             <form onSubmit={onSubmit} className="mt-4 flex flex-wrap gap-2">
+              <label htmlFor="wordbook-quiz-answer" className="sr-only">
+                Answer
+              </label>
               <input
+                id="wordbook-quiz-answer"
                 value={answer}
                 onChange={(e) => setAnswer(e.target.value)}
+                data-testid="wordbook-quiz-answer"
+                aria-label="Answer"
                 placeholder={mode === "MEANING" ? "meaning" : "word"}
                 className="min-w-[240px] flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
               />
               <button
                 type="submit"
+                data-testid="wordbook-quiz-submit"
                 disabled={loading}
                 className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
               >
@@ -136,7 +144,11 @@ export function WordbookQuizClient({ wordbookId }: { wordbookId: number }) {
         )}
       </div>
 
-      {message ? <p className="text-sm text-slate-700">{message}</p> : null}
+      {message ? (
+        <p className="text-sm text-slate-700" role="status" aria-live="polite">
+          {message}
+        </p>
+      ) : null}
     </section>
   );
 }
