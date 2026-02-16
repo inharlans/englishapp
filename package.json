@@ -21,7 +21,8 @@
     "prisma:deploy": "prisma migrate deploy",
     "prisma:seed": "node prisma/seed.js",
     "wordbooks:recompute-rank": "node scripts/recompute-wordbook-rank.mjs",
-    "start:railway": "prisma generate && prisma migrate deploy && node prisma/seed.js && next start -p ${PORT:-3000}"
+    "start:railway": "prisma generate && prisma migrate deploy && next start -p ${PORT:-3000}",
+    "start:railway:seed": "prisma generate && prisma migrate deploy && node prisma/seed.js && next start -p ${PORT:-3000}"
   },
   "dependencies": {
     "@next/eslint-plugin-next": "^15.5.12",

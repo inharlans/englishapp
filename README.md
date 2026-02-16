@@ -159,8 +159,13 @@ npm run start:railway
 이 커맨드는 다음을 수행한다.
 1. `prisma generate`
 2. `prisma migrate deploy`
-3. `node prisma/seed.js`
-4. `next start -p $PORT`
+3. `next start -p $PORT`
+
+초기 데이터가 필요할 때만 시드 포함 시작 커맨드를 사용한다.
+
+```bash
+npm run start:railway:seed
+```
 
 ## 인증 bootstrap(최초 관리자)
 
