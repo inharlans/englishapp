@@ -242,6 +242,7 @@ export default async function MarketPage(props: {
                   {!isDownloaded ? (
                     <DownloadButton
                       wordbookId={wb.id}
+                      wordbookTitle={wb.title}
                       disabled={user.plan === "FREE" && myDownloadsUsed >= 3}
                     />
                   ) : null}

@@ -14,6 +14,9 @@ export async function GET(req: NextRequest) {
     orderBy: { createdAt: "desc" },
     select: {
       createdAt: true,
+      downloadedVersion: true,
+      snapshotItemCount: true,
+      syncedAt: true,
       wordbook: {
         select: {
           id: true,
@@ -25,6 +28,7 @@ export async function GET(req: NextRequest) {
           downloadCount: true,
           ratingAvg: true,
           ratingCount: true,
+          contentVersion: true,
           createdAt: true,
           updatedAt: true,
           owner: { select: { id: true, email: true } },
@@ -35,8 +39,15 @@ export async function GET(req: NextRequest) {
   });
 
   return NextResponse.json(
-    { wordbooks: downloaded.map((d) => ({ ...d.wordbook, downloadedAt: d.createdAt })) },
+    {
+      wordbooks: downloaded.map((d) => ({
+        ...d.wordbook,
+        downloadedAt: d.createdAt,
+        downloadedVersion: d.downloadedVersion,
+        snapshotItemCount: d.snapshotItemCount,
+        syncedAt: d.syncedAt
+      }))
+    },
     { status: 200 }
   );
 }
-

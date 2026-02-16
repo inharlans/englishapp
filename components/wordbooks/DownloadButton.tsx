@@ -4,13 +4,16 @@ import { apiFetch } from "@/lib/clientApi";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import type { Route } from "next";
 
 type Props = {
   wordbookId: number;
   disabled?: boolean;
+  wordbookTitle?: string;
+  redirectPath?: string;
 };
 
-export function DownloadButton({ wordbookId, disabled }: Props) {
+export function DownloadButton({ wordbookId, disabled, wordbookTitle, redirectPath = "/wordbooks" }: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -24,8 +27,19 @@ export function DownloadButton({ wordbookId, disabled }: Props) {
         headers: { "Content-Type": "application/json" },
         body: "{}"
       });
-      const json = (await res.json()) as { ok?: boolean; error?: string };
+      const json = (await res.json()) as { ok?: boolean; error?: string; wordbookTitle?: string };
       if (!res.ok) throw new Error(json.error ?? "Download failed.");
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(
+          "download_onboarding_pending",
+          JSON.stringify({
+            wordbookId,
+            title: json.wordbookTitle ?? wordbookTitle ?? "",
+            at: Date.now()
+          })
+        );
+      }
+      router.push(redirectPath as Route);
       router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Download failed.");

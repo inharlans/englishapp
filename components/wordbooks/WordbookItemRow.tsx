@@ -5,7 +5,9 @@ import { apiFetch } from "@/lib/clientApi";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { MeaningView } from "@/components/MeaningView";
 import { SpeakButton } from "@/components/wordbooks/SpeakButton";
+import { useMeaningViewMode } from "@/components/wordbooks/useMeaningViewMode";
 
 type Item = {
   id: number;
@@ -33,6 +35,7 @@ export function WordbookItemRow({ wordbookId, item, editable, speakLang }: Props
   const [exampleMeaning, setExampleMeaning] = useState(item.exampleMeaning ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const { mode } = useMeaningViewMode();
 
   const onSave = async () => {
     setSaving(true);
@@ -155,7 +158,7 @@ export function WordbookItemRow({ wordbookId, item, editable, speakLang }: Props
                 </span>
               ) : null}
             </p>
-            <p className="mt-1 text-sm text-slate-700">{item.meaning}</p>
+            <MeaningView value={item.meaning} mode={mode} className="mt-1 text-sm text-slate-700" />
             {item.example ? (
               <p className="mt-1 text-xs text-slate-500">
                 e.g. {item.example}
@@ -169,5 +172,3 @@ export function WordbookItemRow({ wordbookId, item, editable, speakLang }: Props
     </div>
   );
 }
-
-

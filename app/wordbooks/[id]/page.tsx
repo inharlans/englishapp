@@ -14,6 +14,10 @@ import { BlockOwnerButton } from "@/components/wordbooks/BlockOwnerButton";
 import { WordbookImportExportPanel } from "@/components/wordbooks/WordbookImportExportPanel";
 import { WordbookItemRow } from "@/components/wordbooks/WordbookItemRow";
 import { WordbookMetaEditor } from "@/components/wordbooks/WordbookMetaEditor";
+import { WordbookStudyTabs } from "@/components/wordbooks/WordbookStudyTabs";
+import { SyncDownloadButton } from "@/components/wordbooks/SyncDownloadButton";
+import { ResumeStudyButton } from "@/components/wordbooks/ResumeStudyButton";
+import { aggregateVersionLogs } from "@/lib/wordbookVersion";
 
 function parseId(raw: string): number | null {
   const n = Number(raw);
@@ -62,6 +66,7 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
       downloadCount: true,
       ratingAvg: true,
       ratingCount: true,
+      contentVersion: true,
       createdAt: true,
       updatedAt: true,
       owner: { select: { email: true } },
@@ -112,7 +117,7 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
   const [downloadRow, ratingRow, downloadsUsed] = await Promise.all([
     prisma.wordbookDownload.findUnique({
       where: { userId_wordbookId: { userId: user.id, wordbookId: id } },
-      select: { createdAt: true }
+      select: { createdAt: true, downloadedVersion: true, snapshotItemCount: true, syncedAt: true }
     }),
     prisma.wordbookRating.findUnique({
       where: { userId_wordbookId: { userId: user.id, wordbookId: id } },
@@ -124,10 +129,23 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
   ]);
 
   const downloadedAt = downloadRow?.createdAt ?? null;
+  const downloadedVersion = downloadRow?.downloadedVersion ?? null;
+  const snapshotItemCount = downloadRow?.snapshotItemCount ?? null;
+  const syncedAt = downloadRow?.syncedAt ?? null;
   const myRating = ratingRow?.rating ?? null;
   const speakLang = wordbook.fromLang.toLowerCase().startsWith("en") ? "en-US" : undefined;
   const freeLimitReached =
     user.plan === "FREE" && !downloadedAt && !isOwner && downloadsUsed >= 3;
+
+  const versionSummary =
+    downloadedVersion && wordbook.contentVersion > downloadedVersion
+      ? aggregateVersionLogs(
+          await prisma.wordbookVersionLog.findMany({
+            where: { wordbookId: id, version: { gt: downloadedVersion } },
+            select: { addedCount: true, updatedCount: true, deletedCount: true }
+          })
+        )
+      : { addedCount: 0, updatedCount: 0, deletedCount: 0 };
 
   return (
     <section className="space-y-6">
@@ -156,7 +174,7 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
             Back
           </Link>
           {!isOwner && wordbook.isPublic && !downloadedAt ? (
-            <DownloadButton wordbookId={id} disabled={freeLimitReached} />
+            <DownloadButton wordbookId={id} wordbookTitle={wordbook.title} disabled={freeLimitReached} />
           ) : null}
           {!isOwner &&
           wordbook.isPublic &&
@@ -171,48 +189,7 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
             </Link>
           ) : null}
           {!isOwner && downloadedAt ? <OfflineSaveButton wordbookId={id} /> : null}
-          {(isOwner || downloadedAt) && (
-            <>
-              <Link
-                href={{ pathname: `/wordbooks/${id}/memorize` }}
-                data-testid="wordbook-study-link"
-                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
-              >
-                Memorize
-              </Link>
-              <Link
-                href={{ pathname: `/wordbooks/${id}/quiz-meaning` }}
-                data-testid="wordbook-quiz-link"
-                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
-              >
-                Quiz Meaning
-              </Link>
-              <Link
-                href={{ pathname: `/wordbooks/${id}/quiz-word` }}
-                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
-              >
-                Quiz Word
-              </Link>
-              <Link
-                href={{ pathname: `/wordbooks/${id}/list-correct` }}
-                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
-              >
-                List Correct
-              </Link>
-              <Link
-                href={{ pathname: `/wordbooks/${id}/list-wrong` }}
-                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
-              >
-                List Wrong
-              </Link>
-              <Link
-                href={{ pathname: `/wordbooks/${id}/list-half` }}
-                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
-              >
-                List Half
-              </Link>
-            </>
-          )}
+          {(isOwner || downloadedAt) ? <ResumeStudyButton wordbookId={id} /> : null}
           {isOwner && user.plan === "PRO" ? (
             <PublishToggle wordbookId={id} isPublic={wordbook.isPublic} />
           ) : null}
@@ -243,6 +220,10 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
           </div>
         </div>
       ) : null}
+
+      {(isOwner || downloadedAt) && (
+        <WordbookStudyTabs wordbookId={id} active="memorize" />
+      )}
 
       {isOwner ? (
         <div className="grid gap-4 lg:grid-cols-2">
@@ -278,8 +259,32 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
           </div>
         </div>
       ) : (
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-          Downloaded wordbooks are read-only. You can still save them for offline study.
+        <div className="space-y-3">
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+            Downloaded wordbooks are read-only. You can still save them for offline study.
+          </div>
+          {downloadedVersion ? (
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700">
+              <p className="font-semibold text-slate-900">
+                내 버전 v{downloadedVersion} / 최신 v{wordbook.contentVersion}
+              </p>
+              <p className="mt-1 text-xs text-slate-600">
+                변경 요약: +{versionSummary.addedCount} / ~{versionSummary.updatedCount} / -
+                {versionSummary.deletedCount}
+              </p>
+              {snapshotItemCount !== null && syncedAt ? (
+                <p className="mt-1 text-xs text-slate-500">
+                  단어 수 변화: {snapshotItemCount} → {wordbook.items.length} / 최근 동기화{" "}
+                  {syncedAt.toISOString().slice(0, 10)}
+                </p>
+              ) : null}
+              {wordbook.contentVersion > downloadedVersion ? (
+                <div className="mt-3">
+                  <SyncDownloadButton wordbookId={id} />
+                </div>
+              ) : null}
+            </div>
+          ) : null}
         </div>
       )}
 

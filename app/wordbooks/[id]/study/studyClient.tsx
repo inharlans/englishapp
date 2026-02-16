@@ -2,10 +2,13 @@
 
 import { apiFetch } from "@/lib/clientApi";
 
-import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import type { Route } from "next";
 
 import { MeaningView } from "@/components/MeaningView";
+import { SessionRecapPanel } from "@/components/wordbooks/SessionRecapPanel";
+import { WordbookStudyTabs } from "@/components/wordbooks/WordbookStudyTabs";
+import { useMeaningViewMode } from "@/components/wordbooks/useMeaningViewMode";
 
 type Item = {
   id: number;
@@ -39,6 +42,8 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [sessionActions, setSessionActions] = useState(0);
+  const { mode, setMode } = useMeaningViewMode();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -72,6 +77,16 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
     return Math.round((studyState.correctCount / items.length) * 100);
   }, [items.length, studyState.correctCount]);
 
+  const halfCount = useMemo(() => {
+    let correct = 0;
+    let wrong = 0;
+    itemStates.forEach((s) => {
+      if (s.status === "CORRECT") correct += 1;
+      if (s.status === "WRONG") wrong += 1;
+    });
+    return Math.min(correct, wrong);
+  }, [itemStates]);
+
   const mark = async (itemId: number, result: "CORRECT" | "WRONG" | "RESET") => {
     try {
       const res = await apiFetch(`/api/wordbooks/${wordbookId}/study/items/${itemId}`, {
@@ -95,14 +110,37 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
         return next;
       });
       if (json.studyState) setStudyState(json.studyState);
+      setSessionActions((v) => v + 1);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to update.");
     }
   };
 
+  const recommendation =
+    studyState.wrongCount > studyState.correctCount
+      ? {
+          href: `/wordbooks/${wordbookId}/list-wrong` as Route,
+          label: "오답 리스트 복습",
+          eta: "5분",
+          reason: "오답이 정답보다 많아 우선 복습이 필요합니다."
+        }
+      : halfCount > 0
+        ? {
+            href: `/wordbooks/${wordbookId}/list-half` as Route,
+            label: "회복 리스트 점검",
+            eta: "4분",
+            reason: "반복 교차된 단어부터 안정화하면 효율이 좋습니다."
+          }
+        : {
+            href: `/wordbooks/${wordbookId}/quiz-meaning` as Route,
+            label: "의미 퀴즈 이어서",
+            eta: "3분",
+            reason: "현재 흐름을 퀴즈로 이어가면 회상 고정에 유리합니다."
+          };
+
   return (
     <section className="space-y-6">
-      <header className="flex flex-wrap items-end gap-3">
+      <header className="space-y-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Wordbook Memorize</p>
           <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-900">{title || "Wordbook"}</h1>
@@ -110,15 +148,28 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
             체크 {studyState.studiedCount} / 정답 {studyState.correctCount} / 오답 {studyState.wrongCount}
           </p>
         </div>
-        <div className="ml-auto flex flex-wrap gap-2">
-          <Link href={{ pathname: `/wordbooks/${wordbookId}/quiz-meaning` }} data-testid="study-start-quiz" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold hover:bg-slate-50">Quiz Meaning</Link>
-          <Link href={{ pathname: `/wordbooks/${wordbookId}/quiz-word` }} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold hover:bg-slate-50">Quiz Word</Link>
-          <Link href={{ pathname: `/wordbooks/${wordbookId}/list-correct` }} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold hover:bg-slate-50">List Correct</Link>
-          <Link href={{ pathname: `/wordbooks/${wordbookId}/list-wrong` }} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold hover:bg-slate-50">List Wrong</Link>
-          <Link href={{ pathname: `/wordbooks/${wordbookId}/list-half` }} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold hover:bg-slate-50">List Half</Link>
-          <Link href={{ pathname: `/wordbooks/${wordbookId}` }} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold hover:bg-slate-50">Back</Link>
-        </div>
+        <WordbookStudyTabs wordbookId={wordbookId} active="memorize" />
       </header>
+
+      <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-3">
+        <div className="text-xs text-slate-600">의미 표시</div>
+        <div className="inline-flex rounded-lg border border-slate-200 p-1 text-xs">
+          <button
+            type="button"
+            onClick={() => setMode("compact")}
+            className={mode === "compact" ? "rounded-md bg-slate-900 px-2 py-1 font-semibold text-white" : "rounded-md px-2 py-1 text-slate-700"}
+          >
+            간결
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode("detailed")}
+            className={mode === "detailed" ? "rounded-md bg-slate-900 px-2 py-1 font-semibold text-white" : "rounded-md px-2 py-1 text-slate-700"}
+          >
+            자세히
+          </button>
+        </div>
+      </div>
 
       <div className="rounded-2xl border border-slate-200 bg-white p-4">
         <div className="flex items-center justify-between text-xs text-slate-500">
@@ -152,7 +203,7 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <p className="text-sm font-semibold text-slate-900">{item.term}</p>
-                  <MeaningView value={item.meaning} className="mt-1 text-sm text-slate-700" />
+                  <MeaningView value={item.meaning} mode={mode} className="mt-1 text-sm text-slate-700" />
                   {item.example ? (
                     <p className="mt-1 text-xs text-slate-500">
                       e.g. {item.example}
@@ -194,6 +245,16 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
           );
         })}
       </div>
+
+      {sessionActions >= 5 ? (
+        <SessionRecapPanel
+          title="학습 흐름이 만들어졌습니다"
+          summary={`이번 세션에서 ${sessionActions}회 체크했습니다. 지금 이어서 다음 단계로 가면 기억 고정률이 더 좋아집니다.`}
+          suggestion={recommendation}
+          secondaryHref={`/wordbooks/${wordbookId}/list-correct` as Route}
+          secondaryLabel="정답 리스트 보기"
+        />
+      ) : null}
     </section>
   );
 }

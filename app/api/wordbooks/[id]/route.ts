@@ -4,6 +4,7 @@ import { getUserFromRequestCookies } from "@/lib/authServer";
 import { prisma } from "@/lib/prisma";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
 import { parseJsonWithSchema } from "@/lib/validation";
+import { bumpWordbookVersion } from "@/lib/wordbookVersion";
 import { z } from "zod";
 
 const patchWordbookSchema = z
@@ -145,22 +146,26 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     data.toLang = body.toLang.trim() || "ko";
   }
 
-  const wordbook = await prisma.wordbook.update({
-    where: { id },
-    data,
-    select: {
-      id: true,
-      title: true,
-      description: true,
-      fromLang: true,
-      toLang: true,
-      isPublic: true,
-      downloadCount: true,
-      ratingAvg: true,
-      ratingCount: true,
-      createdAt: true,
-      updatedAt: true
-    }
+  const wordbook = await prisma.$transaction(async (tx) => {
+    const next = await tx.wordbook.update({
+      where: { id },
+      data,
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        fromLang: true,
+        toLang: true,
+        isPublic: true,
+        downloadCount: true,
+        ratingAvg: true,
+        ratingCount: true,
+        createdAt: true,
+        updatedAt: true
+      }
+    });
+    await bumpWordbookVersion(tx, id, { updatedCount: 1 });
+    return next;
   });
 
   return NextResponse.json({ wordbook }, { status: 200 });

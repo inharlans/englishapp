@@ -101,6 +101,7 @@ model Wordbook {
   ratingCount   Int   @default(0)
   rankScore     Float @default(0)
   rankScoreUpdatedAt DateTime?
+  contentVersion Int  @default(1)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -112,6 +113,7 @@ model Wordbook {
   studyStates WordbookStudyState[]
   studyItemStates WordbookStudyItemState[]
   reports WordbookReport[]
+  versionLogs WordbookVersionLog[]
 
   @@index([ownerId, createdAt])
   @@index([isPublic, ratingAvg, downloadCount, createdAt])
@@ -141,12 +143,30 @@ model WordbookDownload {
   userId     Int
   wordbookId Int
   createdAt  DateTime @default(now())
+  downloadedVersion Int @default(1)
+  snapshotItemCount Int @default(0)
+  syncedAt DateTime @default(now())
 
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   wordbook Wordbook @relation(fields: [wordbookId], references: [id], onDelete: Cascade)
 
   @@unique([userId, wordbookId])
   @@index([wordbookId])
+}
+
+model WordbookVersionLog {
+  id Int @id @default(autoincrement())
+  wordbookId Int
+  version Int
+  addedCount Int @default(0)
+  updatedCount Int @default(0)
+  deletedCount Int @default(0)
+  createdAt DateTime @default(now())
+
+  wordbook Wordbook @relation(fields: [wordbookId], references: [id], onDelete: Cascade)
+
+  @@index([wordbookId, version])
+  @@index([wordbookId, createdAt])
 }
 
 model WordbookRating {

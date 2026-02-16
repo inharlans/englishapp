@@ -4,6 +4,7 @@ import { getUserFromRequestCookies } from "@/lib/authServer";
 import { prisma } from "@/lib/prisma";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
 import { parseJsonWithSchema } from "@/lib/validation";
+import { bumpWordbookVersion } from "@/lib/wordbookVersion";
 import { z } from "zod";
 
 const patchItemSchema = z
@@ -87,18 +88,22 @@ export async function PATCH(
     data.position = Math.max(0, Math.floor(body.position));
   }
 
-  const updated = await prisma.wordbookItem.update({
-    where: { id: itemId, wordbookId },
-    data,
-    select: {
-      id: true,
-      term: true,
-      meaning: true,
-      pronunciation: true,
-      example: true,
-      exampleMeaning: true,
-      position: true
-    }
+  const updated = await prisma.$transaction(async (tx) => {
+    const next = await tx.wordbookItem.update({
+      where: { id: itemId, wordbookId },
+      data,
+      select: {
+        id: true,
+        term: true,
+        meaning: true,
+        pronunciation: true,
+        example: true,
+        exampleMeaning: true,
+        position: true
+      }
+    });
+    await bumpWordbookVersion(tx, wordbookId, { updatedCount: 1 });
+    return next;
   });
 
   return NextResponse.json({ item: updated }, { status: 200 });
@@ -134,6 +139,9 @@ export async function DELETE(
     return NextResponse.json({ error: "Forbidden." }, { status: 403 });
   }
 
-  await prisma.wordbookItem.delete({ where: { id: itemId, wordbookId } });
+  await prisma.$transaction(async (tx) => {
+    await tx.wordbookItem.delete({ where: { id: itemId, wordbookId } });
+    await bumpWordbookVersion(tx, wordbookId, { deletedCount: 1 });
+  });
   return NextResponse.json({ ok: true }, { status: 200 });
 }

@@ -4,6 +4,7 @@ import { getUserFromRequestCookies } from "@/lib/authServer";
 import { prisma } from "@/lib/prisma";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
 import { parseJsonWithSchema } from "@/lib/validation";
+import { bumpWordbookVersion } from "@/lib/wordbookVersion";
 import { z } from "zod";
 
 function parseId(raw: string): number | null {
@@ -85,6 +86,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
         position: start + idx
       }))
     });
+    await bumpWordbookVersion(tx, id, { addedCount: cleaned.length });
 
     return tx.wordbookItem.findMany({
       where: { wordbookId: id },

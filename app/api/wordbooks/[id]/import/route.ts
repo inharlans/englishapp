@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { checkRateLimit, getClientIpFromHeaders } from "@/lib/rateLimit";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
 import { parseJsonWithSchema } from "@/lib/validation";
+import { bumpWordbookVersion } from "@/lib/wordbookVersion";
 import { z } from "zod";
 
 function parseId(raw: string): number | null {
@@ -67,7 +68,9 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   }
 
   await prisma.$transaction(async (tx) => {
+    let removed = 0;
     if (replaceAll) {
+      removed = await tx.wordbookItem.count({ where: { wordbookId } });
       await tx.wordbookItem.deleteMany({ where: { wordbookId } });
     }
 
@@ -86,6 +89,10 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
         exampleMeaning: row.exampleMeaning ?? null,
         position: start + idx
       }))
+    });
+    await bumpWordbookVersion(tx, wordbookId, {
+      addedCount: parsed.length,
+      deletedCount: removed
     });
   });
 

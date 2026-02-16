@@ -2,8 +2,13 @@
 
 import { apiFetch } from "@/lib/clientApi";
 
-import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import type { Route } from "next";
+
+import { MeaningView } from "@/components/MeaningView";
+import { SessionRecapPanel } from "@/components/wordbooks/SessionRecapPanel";
+import { WordbookStudyTabs } from "@/components/wordbooks/WordbookStudyTabs";
+import { useMeaningViewMode } from "@/components/wordbooks/useMeaningViewMode";
 
 type QuizItem = {
   id: number;
@@ -27,6 +32,10 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING", lockMo
   const [answer, setAnswer] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [attempts, setAttempts] = useState(0);
+  const [corrects, setCorrects] = useState(0);
+  const [wrongs, setWrongs] = useState(0);
+  const { mode: meaningMode, setMode: setMeaningMode } = useMeaningViewMode();
 
   const loadNext = useCallback(async () => {
     setLoading(true);
@@ -66,6 +75,12 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING", lockMo
         error?: string;
       };
       if (!res.ok) throw new Error(json.error ?? "Submit failed.");
+      setAttempts((v) => v + 1);
+      if (json.correct) {
+        setCorrects((v) => v + 1);
+      } else {
+        setWrongs((v) => v + 1);
+      }
       setMessage(
         json.correct
           ? "정답입니다."
@@ -79,48 +94,42 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING", lockMo
     }
   };
 
+  const activeTab = mode === "MEANING" ? "quiz-meaning" : "quiz-word";
+
+  const recommendation =
+    wrongs > corrects
+      ? {
+          href: `/wordbooks/${wordbookId}/list-wrong` as Route,
+          label: "오답 리스트 복습",
+          eta: "4분",
+          reason: "틀린 비율이 높아 먼저 취약 단어 보완이 필요합니다."
+        }
+      : {
+          href: `/wordbooks/${wordbookId}/memorize` as Route,
+          label: "Memorize 재점검",
+          eta: "3분",
+          reason: "퀴즈 직후 암기카드로 되짚으면 유지율이 높아집니다."
+        };
+
   return (
     <section className="space-y-4">
-      <header className="flex flex-wrap items-center justify-between gap-2">
+      <header className="space-y-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Wordbook Quiz</p>
           <h1 className="mt-2 text-2xl font-black tracking-tight text-slate-900">
             {mode === "MEANING" ? "의미 퀴즈" : "단어 퀴즈"}
           </h1>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Link
-            href={{ pathname: `/wordbooks/${wordbookId}/memorize` }}
-            className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold hover:bg-slate-50"
-          >
-            Memorize
-          </Link>
-          <Link
-            href={{ pathname: `/wordbooks/${wordbookId}/quiz-meaning` }}
-            className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold hover:bg-slate-50"
-          >
-            Quiz Meaning
-          </Link>
-          <Link
-            href={{ pathname: `/wordbooks/${wordbookId}/quiz-word` }}
-            className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold hover:bg-slate-50"
-          >
-            Quiz Word
-          </Link>
-          <Link
-            href={{ pathname: `/wordbooks/${wordbookId}/list-correct` }}
-            className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold hover:bg-slate-50"
-          >
-            List
-          </Link>
-          <Link
-            href={{ pathname: `/wordbooks/${wordbookId}` }}
-            className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold hover:bg-slate-50"
-          >
-            Back
-          </Link>
-        </div>
+        <WordbookStudyTabs wordbookId={wordbookId} active={activeTab} />
       </header>
+
+      <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-3">
+        <div className="text-xs text-slate-600">품사/의미 표시</div>
+        <div className="inline-flex rounded-lg border border-slate-200 p-1 text-xs">
+          <button type="button" onClick={() => setMeaningMode("compact")} className={meaningMode === "compact" ? "rounded-md bg-slate-900 px-2 py-1 font-semibold text-white" : "rounded-md px-2 py-1 text-slate-700"}>간결</button>
+          <button type="button" onClick={() => setMeaningMode("detailed")} className={meaningMode === "detailed" ? "rounded-md bg-slate-900 px-2 py-1 font-semibold text-white" : "rounded-md px-2 py-1 text-slate-700"}>자세히</button>
+        </div>
+      </div>
 
       {!lockMode ? (
         <div className="rounded-2xl border border-slate-200 bg-white p-4">
@@ -145,9 +154,9 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING", lockMo
         ) : (
           <>
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Question</p>
-            <p className="mt-2 text-3xl font-black tracking-tight text-slate-900">
-              {mode === "MEANING" ? item.term : item.meaning}
-            </p>
+            <div className="mt-2 text-3xl font-black tracking-tight text-slate-900">
+              {mode === "MEANING" ? item.term : <MeaningView value={item.meaning} mode={meaningMode} />}
+            </div>
             {item.example ? (
               <p className="mt-2 text-sm text-slate-500">
                 e.g. {item.example}
@@ -184,6 +193,16 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING", lockMo
         <p className="text-sm text-slate-700" role="status" aria-live="polite">
           {message}
         </p>
+      ) : null}
+
+      {attempts >= 5 ? (
+        <SessionRecapPanel
+          title="퀴즈 세션 요약"
+          summary={`총 ${attempts}문제 · 정답 ${corrects} · 오답 ${wrongs}. 지금 바로 다음 단계로 이어가면 학습 루프가 끊기지 않습니다.`}
+          suggestion={recommendation}
+          secondaryHref={`/wordbooks/${wordbookId}/list-half` as Route}
+          secondaryLabel="회복 목록 보기"
+        />
       ) : null}
     </section>
   );

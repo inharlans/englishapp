@@ -5,6 +5,9 @@ import { getUserFromRequestCookies } from "@/lib/authServer";
 import { prisma } from "@/lib/prisma";
 import { StarRating } from "@/components/wordbooks/StarRating";
 import { OfflineSaveButton } from "@/components/wordbooks/OfflineSaveButton";
+import { SyncDownloadButton } from "@/components/wordbooks/SyncDownloadButton";
+import { PostDownloadOnboardingBanner } from "@/components/wordbooks/PostDownloadOnboardingBanner";
+import { aggregateVersionLogs } from "@/lib/wordbookVersion";
 
 export default async function WordbooksPage() {
   const user = await getUserFromRequestCookies(await cookies());
@@ -38,6 +41,9 @@ export default async function WordbooksPage() {
       orderBy: { createdAt: "desc" },
       select: {
         createdAt: true,
+        downloadedVersion: true,
+        snapshotItemCount: true,
+        syncedAt: true,
         wordbook: {
           select: {
             id: true,
@@ -47,6 +53,7 @@ export default async function WordbooksPage() {
             downloadCount: true,
             ratingAvg: true,
             ratingCount: true,
+            contentVersion: true,
             owner: { select: { email: true } },
             updatedAt: true,
             _count: { select: { items: true } }
@@ -59,8 +66,34 @@ export default async function WordbooksPage() {
     })
   ]);
 
+  const downloadedWordbookIds = downloaded.map((d) => d.wordbook.id);
+  const minVersions = new Map<number, number>();
+  for (const d of downloaded) {
+    const prev = minVersions.get(d.wordbook.id);
+    if (prev === undefined || d.downloadedVersion < prev) {
+      minVersions.set(d.wordbook.id, d.downloadedVersion);
+    }
+  }
+
+  const logs = downloadedWordbookIds.length
+    ? await prisma.wordbookVersionLog.findMany({
+        where: {
+          wordbookId: { in: downloadedWordbookIds },
+          version: { gt: Math.min(...Array.from(minVersions.values())) }
+        },
+        select: { wordbookId: true, version: true, addedCount: true, updatedCount: true, deletedCount: true }
+      })
+    : [];
+
+  const summaryByWordbook = new Map<number, { addedCount: number; updatedCount: number; deletedCount: number }>();
+  for (const d of downloaded) {
+    const relevant = logs.filter((l) => l.wordbookId === d.wordbook.id && l.version > d.downloadedVersion);
+    summaryByWordbook.set(d.wordbook.id, aggregateVersionLogs(relevant));
+  }
+
   return (
     <section className="space-y-6">
+      <PostDownloadOnboardingBanner availableWordbookIds={downloadedWordbookIds} />
       <header className="flex flex-wrap items-end gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
@@ -219,20 +252,53 @@ export default async function WordbooksPage() {
                     <div className="mt-3">
                       <OfflineSaveButton wordbookId={d.wordbook.id} />
                     </div>
+                    <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
+                      <p>
+                        내 버전 v{d.downloadedVersion} / 최신 v{d.wordbook.contentVersion}
+                        {d.wordbook.contentVersion > d.downloadedVersion ? (
+                          <span className="ml-2 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 font-semibold text-amber-800">
+                            업데이트 가능
+                          </span>
+                        ) : (
+                          <span className="ml-2 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 font-semibold text-emerald-800">
+                            최신
+                          </span>
+                        )}
+                      </p>
+                      <p className="mt-1 text-[11px] text-slate-600">
+                        변경 요약: +{summaryByWordbook.get(d.wordbook.id)?.addedCount ?? 0} /
+                        ~{summaryByWordbook.get(d.wordbook.id)?.updatedCount ?? 0} /
+                        -{summaryByWordbook.get(d.wordbook.id)?.deletedCount ?? 0}
+                      </p>
+                      <p className="mt-1 text-[11px] text-slate-500">
+                        단어 수 변화: {d.snapshotItemCount} → {d.wordbook._count.items} / 최근 동기화 {d.syncedAt.toISOString().slice(0, 10)}
+                      </p>
+                      {d.wordbook.contentVersion > d.downloadedVersion ? (
+                        <div className="mt-2">
+                          <SyncDownloadButton wordbookId={d.wordbook.id} />
+                        </div>
+                      ) : null}
+                    </div>
                     <div className="mt-2 flex flex-wrap gap-2">
                       <Link
-                        href={{ pathname: `/wordbooks/${d.wordbook.id}/study` }}
+                        href={{ pathname: `/wordbooks/${d.wordbook.id}/memorize` }}
                         data-testid="library-study-link"
                         className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold hover:bg-slate-50"
                       >
-                        Study State
+                        Memorize
                       </Link>
                       <Link
-                        href={{ pathname: `/wordbooks/${d.wordbook.id}/quiz` }}
+                        href={{ pathname: `/wordbooks/${d.wordbook.id}/quiz-meaning` }}
                         data-testid="library-quiz-link"
                         className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold hover:bg-slate-50"
                       >
-                        Quiz
+                        Quiz Meaning
+                      </Link>
+                      <Link
+                        href={{ pathname: `/wordbooks/${d.wordbook.id}/quiz-word` }}
+                        className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold hover:bg-slate-50"
+                      >
+                        Quiz Word
                       </Link>
                     </div>
                   </div>

@@ -49,7 +49,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   const result = await prisma.$transaction(async (tx) => {
     const wordbook = await tx.wordbook.findUnique({
       where: { id },
-      select: { id: true, isPublic: true, hiddenByAdmin: true, downloadCount: true }
+      select: { id: true, title: true, isPublic: true, hiddenByAdmin: true, downloadCount: true, contentVersion: true }
     });
     if (!wordbook || !wordbook.isPublic || wordbook.hiddenByAdmin) {
       return { ok: false as const, status: 404, error: "Not found." };
@@ -65,7 +65,8 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
         ok: true as const,
         already: true,
         downloadedAt: existing.createdAt,
-        downloadCount: wordbook.downloadCount
+        downloadCount: wordbook.downloadCount,
+        wordbookTitle: wordbook.title
       };
     }
 
@@ -83,8 +84,16 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
       }
     }
 
+    const itemCount = await tx.wordbookItem.count({ where: { wordbookId: id } });
+
     const created = await tx.wordbookDownload.create({
-      data: { userId: user.id, wordbookId: id },
+      data: {
+        userId: user.id,
+        wordbookId: id,
+        downloadedVersion: wordbook.contentVersion,
+        snapshotItemCount: itemCount,
+        syncedAt: new Date()
+      },
       select: { createdAt: true }
     });
 
@@ -99,7 +108,8 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
       ok: true as const,
       already: false,
       downloadedAt: created.createdAt,
-      downloadCount: updated.downloadCount
+      downloadCount: updated.downloadCount,
+      wordbookTitle: wordbook.title
     };
   });
 
@@ -112,7 +122,8 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
       ok: true,
       already: result.already,
       downloadedAt: result.downloadedAt,
-      downloadCount: result.downloadCount
+      downloadCount: result.downloadCount,
+      wordbookTitle: result.wordbookTitle ?? null
     },
     { status: 200 }
   );
