@@ -309,3 +309,31 @@ Still pending (external integration keys required):
     - `E2E_EMAIL` (default: `admin@example.com`)
     - `E2E_PASSWORD` (default: `change-me-now-123`)
     - `AUTH_BOOTSTRAP_TOKEN` (optional, for bootstrap step)
+
+## TODO Refresh (2026-02-16)
+
+Status update for the previous TODO list:
+
+- [x] Downloaded wordbook personal study state
+- [x] Market ranking improvement
+- [x] Report/block/moderation tools
+- [x] Wordbook import/export + optional pronunciation autofill
+- [x] Sentence/example feature + wordbook quiz mode
+- [x] PWA install UX + stronger offline caching
+- [ ] Payment integration + automated plan lifecycle
+- [ ] OAuth login + account linking
+
+New backlog (based on direct server checks and feature analysis):
+
+- [ ] Fix remaining mojibake/encoding issues across Korean texts in legacy pages/docs.
+- [ ] Add `zod` (or equivalent) request schema validation for all write APIs.
+- [ ] Add CSRF token (double-submit or synchronizer token) in addition to current origin checks.
+- [ ] Add unblock flow UI (`BlockedOwner` management page) so users can reverse blocks.
+- [ ] Add moderator audit trail fields (before/after state, action reason code, actor IP hash).
+- [ ] Add abuse controls: report cooldown, duplicate report suppression, reporter trust score.
+- [ ] Expand E2E from HTTP smoke to UI flow tests (login -> market -> download -> study -> quiz -> report -> moderate).
+- [ ] Add CI pipeline step for `typecheck + test + test:e2e` with required env setup.
+- [ ] Add ranking maintenance job scheduling (daily recompute + drift monitor for stale scores).
+- [ ] Add observability stack (structured logs, error tracking, dashboard on 4xx/5xx and latency by route).
+- [ ] Add DB backup/restore runbook and migration rollback playbook.
+- [ ] Add accessibility and mobile QA pass (keyboard nav, focus order, contrast, screen reader labels).
