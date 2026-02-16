@@ -21,3 +21,8 @@ For implementation tasks that change behavior or code:
   - `npm run test:e2e:local:ui`
 - Do not run ad-hoc inline PowerShell `Start-Process ... npm run dev ...` test commands unless the user explicitly requests it.
 - Goal: keep command prefixes stable so approval rules remain reusable across new agent contexts.
+- If test strategy or CI pipeline changes, agents may update this fixed pattern by editing:
+  - `scripts/dev-and-test.ps1`
+  - `package.json` scripts
+  - CI workflow files and related docs (`README.md`, `AGENTS.md`)
+- When updating the pattern, keep it stable/reusable (avoid one-off command variants), and document why it changed.
