@@ -35,9 +35,10 @@ export function ResumeStudyButton({ wordbookId }: { wordbookId: number }) {
   return (
     <Link
       href={toHref(wordbookId, tab)}
-      className="rounded-xl border border-teal-300 bg-teal-50 px-4 py-2 text-sm font-semibold text-teal-900 hover:bg-teal-100"
+      className="rounded-xl border border-blue-300 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-900 hover:bg-blue-100"
     >
       마지막 학습 이어서
     </Link>
   );
 }
+

@@ -21,10 +21,7 @@ export function WordbookStudyTabs({
   showBack?: boolean;
 }) {
   return (
-    <nav
-      aria-label="Wordbook study tabs"
-      className="sticky top-2 z-20 rounded-2xl border border-slate-200/80 bg-white/90 p-2 shadow-sm backdrop-blur"
-    >
+    <nav aria-label="Wordbook study tabs" className="sticky top-2 z-20 ui-card p-2">
       <div className="flex flex-wrap gap-2">
         {tabs.map((tab) => {
           const isActive = tab.key === active;
@@ -40,9 +37,7 @@ export function WordbookStudyTabs({
               }}
               className={[
                 "rounded-lg px-3 py-2 text-xs font-semibold transition",
-                isActive
-                  ? "bg-slate-900 text-white"
-                  : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                isActive ? "ui-tab-active" : "ui-tab-inactive"
               ].join(" ")}
             >
               {tab.label}
@@ -50,10 +45,7 @@ export function WordbookStudyTabs({
           );
         })}
         {showBack ? (
-          <Link
-            href={{ pathname: `/wordbooks/${wordbookId}` }}
-            className="ml-auto rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-          >
+          <Link href={{ pathname: `/wordbooks/${wordbookId}` }} className="ml-auto ui-btn-secondary px-3 py-2 text-xs font-semibold">
             Back
           </Link>
         ) : null}

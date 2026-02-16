@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { apiFetch } from "@/lib/clientApi";
 
@@ -68,9 +68,9 @@ export function MarketRatingReviews({
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">Reviews</p>
           {loading ? <p className="mt-2 text-xs text-slate-500">Loading...</p> : null}
-          {error ? <p className="mt-2 text-xs text-rose-700">{error}</p> : null}
+          {error ? <p className="mt-2 text-xs text-blue-700">{error}</p> : null}
           {!loading && !error && reviews.length === 0 ? (
-            <p className="mt-2 text-xs text-slate-500">아직 등록된 리뷰가 없습니다.</p>
+            <p className="mt-2 text-xs text-slate-500">?꾩쭅 ?깅줉??由щ럭媛 ?놁뒿?덈떎.</p>
           ) : null}
           {!loading && !error ? (
             <div className="mt-2 space-y-2">
@@ -93,3 +93,5 @@ export function MarketRatingReviews({
     </div>
   );
 }
+
+

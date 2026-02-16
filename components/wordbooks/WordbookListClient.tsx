@@ -124,8 +124,8 @@ export function WordbookListClient({
               onClick={() => setMeaningMode("compact")}
               className={
                 meaningMode === "compact"
-                  ? "rounded-md bg-slate-900 px-2 py-1 font-semibold text-white"
-                  : "rounded-md px-2 py-1 text-slate-700"
+                  ? "rounded-md ui-tab-active px-2 py-1 font-semibold"
+                  : "rounded-md ui-tab-inactive px-2 py-1"
               }
             >
               媛꾧껐
@@ -135,8 +135,8 @@ export function WordbookListClient({
               onClick={() => setMeaningMode("detailed")}
               className={
                 meaningMode === "detailed"
-                  ? "rounded-md bg-slate-900 px-2 py-1 font-semibold text-white"
-                  : "rounded-md px-2 py-1 text-slate-700"
+                  ? "rounded-md ui-tab-active px-2 py-1 font-semibold"
+                  : "rounded-md ui-tab-inactive px-2 py-1"
               }
             >
               ?먯꽭??            </button>
@@ -169,8 +169,8 @@ export function WordbookListClient({
               className={[
                 "rounded-lg border px-3 py-1 text-left text-xs font-semibold",
                 p.partIndex === partIndex
-                  ? "border-slate-900 bg-slate-900 text-white"
-                  : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                  ? "ui-tab-active"
+                  : "ui-tab-inactive"
               ].join(" ")}
             >
               <span>Part {p.partIndex}</span>
@@ -183,7 +183,7 @@ export function WordbookListClient({
       </div>
 
             {error ? (
-        <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>
+        <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">{error}</p>
       ) : null}
 
       <div className="relative min-h-[220px]">
@@ -228,5 +228,6 @@ export function WordbookListClient({
     </section>
   );
 }
+
 
 

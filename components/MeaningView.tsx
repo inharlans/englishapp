@@ -136,7 +136,7 @@ export function MeaningView({
       <span className={`flex flex-col gap-1 ${className}`}>
         {groups.map((group) => (
           <span key={group.key} className="text-sm text-slate-700">
-            <span className="mr-2 text-xs font-semibold text-teal-800">{group.label}</span>
+            <span className="mr-2 text-xs font-semibold text-blue-800">{group.label}</span>
             {group.items.join(", ")}
           </span>
         ))}
@@ -170,3 +170,4 @@ export function MeaningView({
     </span>
   );
 }
+

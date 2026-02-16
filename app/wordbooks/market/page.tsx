@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { cookies } from "next/headers";
 
 import { DownloadButton } from "@/components/wordbooks/DownloadButton";
@@ -107,7 +107,7 @@ export default async function MarketPage(props: {
               <>
                 {" "}
                 - downloads used: <span className="font-semibold">{myDownloadsUsed}/3</span> -{" "}
-                <Link href={{ pathname: "/pricing" }} className="font-semibold text-teal-700 hover:underline">
+                <Link href={{ pathname: "/pricing" }} className="font-semibold text-blue-700 hover:underline">
                   upgrade
                 </Link>
               </>
@@ -129,7 +129,7 @@ export default async function MarketPage(props: {
               name="q"
               defaultValue={q}
               placeholder="title or description"
-              className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+              className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
           </label>
           <label className="block md:col-span-3">
@@ -137,7 +137,7 @@ export default async function MarketPage(props: {
             <select
               name="sort"
               defaultValue={sort}
-              className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+              className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             >
               <option value="top">Top</option>
               <option value="new">New</option>
@@ -180,10 +180,10 @@ export default async function MarketPage(props: {
 
       {wordbooks.length === 0 ? (
         <EmptyStateCard
-          title="검색 결과가 없습니다"
-          description="검색어를 줄이거나 정렬 기준을 바꿔 새 단어장을 찾아보세요."
-          primary={{ label: "필터 초기화", href: "/wordbooks/market?sort=top&page=0" }}
-          secondary={{ label: "내 라이브러리", href: "/wordbooks" }}
+          title="No results found"
+          description="Try a shorter query or change sorting to discover more wordbooks."
+          primary={{ label: "Reset filters", href: "/wordbooks/market?sort=top&page=0" }}
+          secondary={{ label: "My library", href: "/wordbooks" }}
         />
       ) : (
         <div className="grid gap-3 md:grid-cols-2">
@@ -198,7 +198,7 @@ export default async function MarketPage(props: {
                         {wb.title}
                       </Link>
                       {isDownloaded ? (
-                        <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-800">
+                        <span className="rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-800">
                           Downloaded
                         </span>
                       ) : null}
@@ -229,9 +229,9 @@ export default async function MarketPage(props: {
                       />
                     ) : null}
                     {!isDownloaded && user.plan === "FREE" && myDownloadsUsed >= 3 ? (
-                      <p className="mt-1 text-[11px] font-semibold text-amber-700">
+                      <p className="mt-1 text-[11px] font-semibold text-blue-700">
                         Limit reached -{" "}
-                        <Link href={{ pathname: "/pricing" }} className="text-teal-700 hover:underline">
+                        <Link href={{ pathname: "/pricing" }} className="text-blue-700 hover:underline">
                           upgrade
                         </Link>
                       </p>
@@ -246,3 +246,4 @@ export default async function MarketPage(props: {
     </section>
   );
 }
+

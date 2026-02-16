@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -49,14 +49,14 @@ export default function OfflineLibraryPage() {
         <div className="ml-auto flex flex-wrap gap-2">
           <Link
             href={{ pathname: "/wordbooks" }}
-            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
+            className="ui-btn-secondary px-4 py-2 text-sm"
           >
             Back
           </Link>
           <button
             type="button"
             onClick={() => void reload()}
-            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
+            className="ui-btn-secondary px-4 py-2 text-sm"
           >
             Refresh
           </button>
@@ -65,7 +65,7 @@ export default function OfflineLibraryPage() {
 
       {loading ? <p className="text-sm text-slate-600">Loading...</p> : null}
       {error ? (
-        <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+        <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
           {error}
         </p>
       ) : null}
@@ -85,14 +85,14 @@ export default function OfflineLibraryPage() {
                 <h2 className="truncate text-lg font-black text-slate-900">{wb.title}</h2>
                 <p className="mt-1 text-xs text-slate-500">
                   saved {wb.savedAt.slice(0, 10)}
-                  {wb.ownerEmail ? ` · by ${wb.ownerEmail}` : ""}
+                  {wb.ownerEmail ? ` 쨌 by ${wb.ownerEmail}` : ""}
                 </p>
                 <p className="mt-2 text-sm text-slate-600">{wb.items.length} items</p>
               </div>
               <button
                 type="button"
                 onClick={() => void onDelete(wb.id)}
-                className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-sm font-semibold text-rose-800 hover:bg-rose-100"
+                className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-sm font-semibold text-blue-800 hover:bg-blue-100"
               >
                 Remove
               </button>
@@ -100,7 +100,7 @@ export default function OfflineLibraryPage() {
             <div className="mt-4 flex flex-wrap gap-2">
               <Link
                 href={{ pathname: `/offline/wordbooks/${wb.id}` }}
-                className="rounded-lg bg-slate-900 px-3 py-1.5 text-sm font-semibold text-white hover:bg-slate-800"
+                className="ui-btn-primary px-3 py-1.5 text-sm"
               >
                 Study Offline
               </Link>
@@ -111,3 +111,5 @@ export default function OfflineLibraryPage() {
     </section>
   );
 }
+
+

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useMemo } from "react";
 
@@ -25,7 +25,7 @@ export function StarRating({ value, count, onChange, disabled }: Props) {
           const className = [
             "h-7 w-7 select-none text-lg leading-none",
             clickable ? "cursor-pointer hover:scale-105" : "cursor-default",
-            filled ? "text-amber-500" : "text-slate-300",
+            filled ? "text-blue-500" : "text-slate-300",
             disabled ? "opacity-60" : ""
           ].join(" ");
 
@@ -38,15 +38,13 @@ export function StarRating({ value, count, onChange, disabled }: Props) {
                 className={className}
                 aria-label={`${n} stars`}
               >
-                ★
-              </button>
+                ??              </button>
             );
           }
 
           return (
             <span key={n} className={className} aria-hidden="true">
-              ★
-            </span>
+              ??            </span>
           );
         })}
       </div>
@@ -57,3 +55,5 @@ export function StarRating({ value, count, onChange, disabled }: Props) {
     </div>
   );
 }
+
+

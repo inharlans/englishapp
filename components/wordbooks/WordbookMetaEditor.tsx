@@ -60,7 +60,7 @@ export function WordbookMetaEditor({ wordbookId, title, description, fromLang, t
           <input
             value={t}
             onChange={(e) => setT(e.target.value)}
-            className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+            className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             required
             disabled={loading}
           />
@@ -73,7 +73,7 @@ export function WordbookMetaEditor({ wordbookId, title, description, fromLang, t
             <input
               value={f}
               onChange={(e) => setF(e.target.value)}
-              className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+              className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               disabled={loading}
             />
           </label>
@@ -84,7 +84,7 @@ export function WordbookMetaEditor({ wordbookId, title, description, fromLang, t
             <input
               value={to}
               onChange={(e) => setTo(e.target.value)}
-              className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+              className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               disabled={loading}
             />
           </label>
@@ -98,7 +98,7 @@ export function WordbookMetaEditor({ wordbookId, title, description, fromLang, t
         <textarea
           value={d}
           onChange={(e) => setD(e.target.value)}
-          className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+          className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
           rows={3}
           disabled={loading}
         />
@@ -108,14 +108,16 @@ export function WordbookMetaEditor({ wordbookId, title, description, fromLang, t
         <button
           type="submit"
           disabled={loading}
-          className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+          className="ui-btn-primary px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-60"
         >
           {loading ? "Saving..." : "Save"}
         </button>
-        {error ? <p className="text-sm text-rose-700">{error}</p> : null}
+        {error ? <p className="text-sm text-blue-700">{error}</p> : null}
       </div>
     </form>
   );
 }
+
+
 
 

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 
@@ -53,7 +53,9 @@ export function SpeakButton({ text, lang, iconOnly = false, className = "" }: Pr
           "Speak"
         )}
       </button>
-      {error ? <span className="text-xs text-rose-700">{error}</span> : null}
+      {error ? <span className="text-xs text-blue-700">{error}</span> : null}
     </div>
   );
 }
+
+

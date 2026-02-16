@@ -87,7 +87,7 @@ export function WordbookItemRow({ wordbookId, item, editable, speakLang }: Props
             <input
               value={term}
               onChange={(e) => setTerm(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+              className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               disabled={saving}
             />
           </div>
@@ -95,7 +95,7 @@ export function WordbookItemRow({ wordbookId, item, editable, speakLang }: Props
             <input
               value={meaning}
               onChange={(e) => setMeaning(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+              className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               disabled={saving}
             />
           </div>
@@ -104,7 +104,7 @@ export function WordbookItemRow({ wordbookId, item, editable, speakLang }: Props
               value={pron}
               onChange={(e) => setPron(e.target.value)}
               placeholder="pron."
-              className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+              className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               disabled={saving}
             />
           </div>
@@ -113,7 +113,7 @@ export function WordbookItemRow({ wordbookId, item, editable, speakLang }: Props
               value={example}
               onChange={(e) => setExample(e.target.value)}
               placeholder="example (optional)"
-              className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+              className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               disabled={saving}
             />
           </div>
@@ -122,7 +122,7 @@ export function WordbookItemRow({ wordbookId, item, editable, speakLang }: Props
               value={exampleMeaning}
               onChange={(e) => setExampleMeaning(e.target.value)}
               placeholder="example ko"
-              className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+              className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               disabled={saving}
             />
           </div>
@@ -132,7 +132,7 @@ export function WordbookItemRow({ wordbookId, item, editable, speakLang }: Props
               type="button"
               onClick={onSave}
               disabled={saving}
-              className="rounded-lg bg-slate-900 px-3 py-1.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+              className="ui-btn-primary px-3 py-1.5 text-sm disabled:cursor-not-allowed disabled:opacity-60"
             >
               Save
             </button>
@@ -140,12 +140,12 @@ export function WordbookItemRow({ wordbookId, item, editable, speakLang }: Props
               type="button"
               onClick={onDelete}
               disabled={saving}
-              className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-sm font-semibold text-rose-800 hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-sm font-semibold text-blue-800 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
             >
               Del
             </button>
           </div>
-          {error ? <p className="md:col-span-12 text-xs text-rose-700">{error}</p> : null}
+          {error ? <p className="md:col-span-12 text-xs text-blue-700">{error}</p> : null}
         </div>
       ) : (
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -172,3 +172,5 @@ export function WordbookItemRow({ wordbookId, item, editable, speakLang }: Props
     </div>
   );
 }
+
+

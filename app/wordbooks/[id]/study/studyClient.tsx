@@ -179,14 +179,14 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
               <button
                 type="button"
                 onClick={() => setMode("compact")}
-                className={mode === "compact" ? "rounded-md bg-slate-900 px-2 py-1 font-semibold text-white" : "rounded-md px-2 py-1 text-slate-700"}
+                className={mode === "compact" ? "rounded-md ui-tab-active px-2 py-1 font-semibold" : "rounded-md ui-tab-inactive px-2 py-1"}
               >
                 媛꾧껐
               </button>
               <button
                 type="button"
                 onClick={() => setMode("detailed")}
-                className={mode === "detailed" ? "rounded-md bg-slate-900 px-2 py-1 font-semibold text-white" : "rounded-md px-2 py-1 text-slate-700"}
+                className={mode === "detailed" ? "rounded-md ui-tab-active px-2 py-1 font-semibold" : "rounded-md ui-tab-inactive px-2 py-1"}
               >
                 ?먯꽭??              </button>
             </div>
@@ -202,7 +202,7 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
         </div>
         <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-teal-500 to-emerald-500"
+            className="h-full rounded-full bg-gradient-to-r from-blue-500 to-blue-600"
             style={{ width: `${progressPercent}%` }}
           />
         </div>
@@ -210,7 +210,7 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
 
             {error ? (
         <p
-          className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700"
+          className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700"
           role="status"
           aria-live="polite"
         >
@@ -270,7 +270,7 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
               value={query}
               onChange={(e) => onQueryChange(e.target.value)}
               placeholder="Search words"
-              className="min-w-[180px] flex-1 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 outline-none ring-teal-500 focus:ring-2"
+              className="min-w-[180px] flex-1 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 outline-none ring-blue-500 focus:ring-2"
             />
             <span className="text-slate-500">媛쒖닔</span>
             <button
@@ -313,12 +313,12 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
               max={totalPages}
               value={pageInput}
               onChange={(e) => setPageInput(e.target.value)}
-              className="w-16 rounded-lg border border-slate-300 bg-white px-2 py-1 text-center text-sm text-slate-900 outline-none ring-teal-500 focus:ring-2"
+              className="w-16 rounded-lg border border-slate-300 bg-white px-2 py-1 text-center text-sm text-slate-900 outline-none ring-blue-500 focus:ring-2"
             />
             <button
               type="button"
               onClick={applyPageInput}
-              className="rounded-lg bg-slate-900 px-3 py-1 font-semibold text-white hover:bg-slate-800"
+              className="ui-btn-primary rounded-lg px-3 py-1"
             >
               ?대룞
             </button>
@@ -328,8 +328,8 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
               className={[
                 "rounded-lg border px-3 py-1 font-semibold",
                 hideCorrect
-                  ? "border-slate-900 bg-slate-900 text-white"
-                  : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+                  ? "ui-tab-active"
+                  : "ui-tab-inactive"
               ].join(" ")}
             >
               留욎텣 ?⑥뼱 ?④?
@@ -340,5 +340,6 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
     </section>
   );
 }
+
 
 

@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { cookies } from "next/headers";
 
 import { getUserFromRequestCookies } from "@/lib/authServer";
@@ -33,7 +33,7 @@ export default async function BlockedOwnersPage() {
         <p className="text-sm text-slate-600">
           Hidden creators will not appear in Market. You can unblock at any time.
         </p>
-        <Link href="/wordbooks" className="text-sm font-semibold text-teal-700 hover:underline">
+        <Link href="/wordbooks" className="text-sm font-semibold text-blue-700 hover:underline">
           Back to Library
         </Link>
       </header>
@@ -60,4 +60,5 @@ export default async function BlockedOwnersPage() {
     </section>
   );
 }
+
 

@@ -25,7 +25,7 @@ export function LearningDashboardHeader({
           <p className="ui-body mt-2">핵심 지표를 먼저 보고 바로 학습 액션으로 이동하세요.</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Link href={suggestedHref as Route} className="ui-btn-primary px-4 py-2 text-sm">
+          <Link href={suggestedHref as Route} className="ui-btn-accent px-4 py-2 text-sm">
             {suggestedLabel}
           </Link>
           <Link href="/wordbooks/market" className="ui-btn-secondary px-4 py-2 text-sm">

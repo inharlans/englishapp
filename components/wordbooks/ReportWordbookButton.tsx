@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 
@@ -53,7 +53,7 @@ export function ReportWordbookButton({ wordbookId }: Props) {
         data-testid="report-toggle"
         aria-expanded={open}
         aria-controls={`report-form-${wordbookId}`}
-        className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-800 hover:bg-rose-100 disabled:opacity-60"
+        className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-800 hover:bg-blue-100 disabled:opacity-60"
       >
         {open ? "Cancel Report" : "Report"}
       </button>
@@ -62,7 +62,7 @@ export function ReportWordbookButton({ wordbookId }: Props) {
         <form
           id={`report-form-${wordbookId}`}
           onSubmit={onSubmit}
-          className="space-y-2 rounded-xl border border-rose-100 bg-rose-50/40 p-3"
+          className="space-y-2 rounded-xl border border-blue-100 bg-blue-50/40 p-3"
         >
           <label className="block text-xs text-slate-700">
             <span className="font-semibold">Reason</span>
@@ -94,7 +94,7 @@ export function ReportWordbookButton({ wordbookId }: Props) {
             type="submit"
             data-testid="report-submit"
             disabled={loading}
-            className="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
+            className="ui-btn-primary px-3 py-1.5 text-xs disabled:opacity-60"
           >
             {loading ? "Reporting..." : "Submit Report"}
           </button>
@@ -109,4 +109,6 @@ export function ReportWordbookButton({ wordbookId }: Props) {
     </div>
   );
 }
+
+
 

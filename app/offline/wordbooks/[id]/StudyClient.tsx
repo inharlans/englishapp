@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -79,14 +79,14 @@ export function StudyClient({ id }: { id: number }) {
         <div className="ml-auto flex flex-wrap gap-2">
           <Link
             href={{ pathname: "/offline" }}
-            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
+            className="ui-btn-secondary px-4 py-2 text-sm"
           >
             Back
           </Link>
           <button
             type="button"
             onClick={() => setOrderSeed((v) => v + 1)}
-            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
+            className="ui-btn-secondary px-4 py-2 text-sm"
             disabled={!wb || items.length === 0}
           >
             Shuffle
@@ -96,7 +96,7 @@ export function StudyClient({ id }: { id: number }) {
 
       {loading ? <p className="text-sm text-slate-600">Loading...</p> : null}
       {error ? (
-        <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+        <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
           {error}
         </p>
       ) : null}
@@ -129,7 +129,7 @@ export function StudyClient({ id }: { id: number }) {
               <button
                 type="button"
                 onClick={() => setShowMeaning(true)}
-                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-4 text-left text-sm font-semibold text-slate-800 hover:bg-slate-50"
+                className="ui-btn-secondary w-full px-4 py-4 text-left text-sm"
               >
                 Tap to reveal meaning
               </button>
@@ -141,14 +141,14 @@ export function StudyClient({ id }: { id: number }) {
               type="button"
               onClick={prev}
               disabled={idx <= 0}
-              className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+              className="ui-btn-secondary px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-60"
             >
               Prev
             </button>
             <button
               type="button"
               onClick={() => setShowMeaning((v) => !v)}
-              className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
+              className="ui-btn-secondary px-4 py-2 text-sm"
             >
               {showMeaning ? "Hide" : "Reveal"}
             </button>
@@ -156,7 +156,7 @@ export function StudyClient({ id }: { id: number }) {
               type="button"
               onClick={next}
               disabled={idx >= items.length - 1}
-              className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+              className="ui-btn-primary px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-60"
             >
               Next
             </button>
@@ -166,4 +166,6 @@ export function StudyClient({ id }: { id: number }) {
     </section>
   );
 }
+
+
 

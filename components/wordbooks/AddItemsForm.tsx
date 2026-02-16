@@ -132,7 +132,7 @@ export function AddItemsForm({ wordbookId }: Props) {
             onChange={(e) => setTerm(e.target.value)}
             aria-label="Word"
             placeholder="word"
-            className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+            className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             disabled={loading}
           />
           <input
@@ -140,7 +140,7 @@ export function AddItemsForm({ wordbookId }: Props) {
             onChange={(e) => setMeaning(e.target.value)}
             aria-label="Meaning"
             placeholder="meaning"
-            className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+            className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             disabled={loading}
           />
           <input
@@ -148,7 +148,7 @@ export function AddItemsForm({ wordbookId }: Props) {
             onChange={(e) => setPron(e.target.value)}
             aria-label="Pronunciation"
             placeholder="pronunciation (optional)"
-            className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+            className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             disabled={loading}
           />
           <input
@@ -156,7 +156,7 @@ export function AddItemsForm({ wordbookId }: Props) {
             onChange={(e) => setExample(e.target.value)}
             aria-label="Example"
             placeholder="example (optional)"
-            className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+            className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             disabled={loading}
           />
           <input
@@ -164,14 +164,14 @@ export function AddItemsForm({ wordbookId }: Props) {
             onChange={(e) => setExampleMeaning(e.target.value)}
             aria-label="Example meaning"
             placeholder="example ko (optional)"
-            className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+            className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             disabled={loading}
           />
           <div className="md:col-span-5">
             <button
               type="submit"
               disabled={loading}
-              className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+              className="ui-btn-primary px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-60"
             >
               {loading ? "Adding..." : "Add"}
             </button>
@@ -195,13 +195,13 @@ export function AddItemsForm({ wordbookId }: Props) {
             aria-label="Bulk add lines"
             rows={6}
             placeholder={"apple\t사과\nbanana\t바나나\ncarry - 운반하다"}
-            className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+            className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             disabled={loading}
           />
           <button
             type="submit"
             disabled={loading}
-            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+            className="ui-btn-secondary px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading ? "Adding..." : "Add Lines"}
           </button>
@@ -209,12 +209,14 @@ export function AddItemsForm({ wordbookId }: Props) {
       </div>
 
       {error ? (
-        <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+        <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
           {error}
         </p>
       ) : null}
     </section>
   );
 }
+
+
 
 

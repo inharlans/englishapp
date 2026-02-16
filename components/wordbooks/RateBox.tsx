@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { apiFetch } from "@/lib/clientApi";
 
@@ -66,8 +66,8 @@ export function RateBox({ wordbookId, ratingAvg, ratingCount, myRating, myReview
           disabled={disabled || loading}
           rows={3}
           maxLength={1000}
-          placeholder="리뷰를 남겨주세요 (선택)"
-          className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100 disabled:opacity-60"
+          placeholder="由щ럭瑜??④꺼二쇱꽭??(?좏깮)"
+          className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:opacity-60"
         />
       </label>
 
@@ -76,13 +76,15 @@ export function RateBox({ wordbookId, ratingAvg, ratingCount, myRating, myReview
           type="button"
           onClick={() => void onSubmit()}
           disabled={disabled || loading || rating < 1 || rating > 5}
-          className="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+          className="ui-btn-primary px-3 py-1.5 text-xs disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {loading ? "Saving..." : "평점/리뷰 저장"}
+          {loading ? "Saving..." : "Save rating/review"}
         </button>
       </div>
 
-      {error ? <p className="mt-1 text-xs text-rose-700">{error}</p> : null}
+      {error ? <p className="mt-1 text-xs text-blue-700">{error}</p> : null}
     </div>
   );
 }
+
+

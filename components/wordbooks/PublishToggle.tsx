@@ -44,9 +44,11 @@ export function PublishToggle({ wordbookId, isPublic }: Props) {
       >
         {loading ? "Saving..." : isPublic ? "Unpublish" : "Publish"}
       </button>
-      {error ? <p className="mt-1 text-xs text-rose-700">{error}</p> : null}
+      {error ? <p className="mt-1 text-xs text-blue-700">{error}</p> : null}
     </div>
   );
 }
+
+
 
 

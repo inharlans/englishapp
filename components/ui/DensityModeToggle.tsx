@@ -16,7 +16,7 @@ export function DensityModeToggle({
   ];
 
   return (
-    <div className="inline-flex rounded-xl border border-slate-200 bg-white p-1 text-xs" aria-label="밀도 모드">
+    <div className="inline-flex rounded-xl border border-[var(--border)] bg-white p-1 text-xs" aria-label="밀도 모드">
       {options.map((opt) => (
         <button
           key={opt.key}
@@ -24,7 +24,7 @@ export function DensityModeToggle({
           onClick={() => onChange(opt.key)}
           className={[
             "rounded-lg px-2.5 py-1.5 font-semibold transition",
-            mode === opt.key ? "bg-slate-900 text-white" : "text-slate-700 hover:bg-slate-100"
+            mode === opt.key ? "ui-tab-active" : "ui-tab-inactive"
           ].join(" ")}
         >
           {opt.label}

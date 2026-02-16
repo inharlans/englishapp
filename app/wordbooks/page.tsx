@@ -152,7 +152,7 @@ export default async function WordbooksPage() {
                 uploads are forced public -{" "}
                 <Link
                   href={{ pathname: "/pricing" }}
-                  className="font-semibold text-teal-700 hover:underline"
+                  className="font-semibold text-blue-700 hover:underline"
                 >
                   upgrade
                 </Link>
@@ -164,7 +164,7 @@ export default async function WordbooksPage() {
                 -{" "}
                 <Link
                   href={{ pathname: "/admin" }}
-                  className="font-semibold text-teal-700 hover:underline"
+                  className="font-semibold text-blue-700 hover:underline"
                 >
                   admin
                 </Link>
@@ -175,25 +175,25 @@ export default async function WordbooksPage() {
         <div className="ml-auto flex flex-wrap gap-2">
           <Link
             href={{ pathname: "/wordbooks/new" }}
-            className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+            className="ui-btn-accent px-4 py-2 text-sm"
           >
             New
           </Link>
           <Link
             href={{ pathname: "/wordbooks/market" }}
-            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
+            className="ui-btn-secondary px-4 py-2 text-sm"
           >
             Market
           </Link>
           <Link
             href={{ pathname: "/offline" }}
-            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
+            className="ui-btn-secondary px-4 py-2 text-sm"
           >
             Offline
           </Link>
           <Link
             href={{ pathname: "/wordbooks/blocked" }}
-            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
+            className="ui-btn-secondary px-4 py-2 text-sm"
           >
             Blocked
           </Link>
@@ -217,7 +217,7 @@ export default async function WordbooksPage() {
               <Link
                 key={wb.id}
                 href={{ pathname: `/wordbooks/${wb.id}/memorize` }}
-                className="ui-card p-4 transition hover:-translate-y-0.5 hover:border-teal-300"
+                className="ui-card p-4 transition hover:-translate-y-0.5 hover:border-blue-300"
               >
                 <div className="flex items-start gap-3">
                   <div className="min-w-0 flex-1">
@@ -227,7 +227,7 @@ export default async function WordbooksPage() {
                         className={[
                           "rounded-full px-2 py-0.5 text-[11px] font-semibold",
                           wb.isPublic
-                            ? "border border-teal-200 bg-teal-50 text-teal-800"
+                            ? "border border-blue-200 bg-blue-50 text-blue-800"
                             : "border border-slate-200 bg-slate-50 text-slate-700"
                         ].join(" ")}
                       >
@@ -279,7 +279,7 @@ export default async function WordbooksPage() {
                       >
                         {d.wordbook.title}
                       </Link>
-                      <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-800">
+                      <span className="rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-800">
                         Downloaded
                       </span>
                     </div>
@@ -306,11 +306,11 @@ export default async function WordbooksPage() {
                       <p>
                         내 버전 v{d.downloadedVersion} / 최신 v{d.wordbook.contentVersion}
                         {d.wordbook.contentVersion > d.downloadedVersion ? (
-                          <span className="ml-2 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 font-semibold text-amber-800">
+                          <span className="ml-2 rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 font-semibold text-blue-800">
                             업데이트 가능
                           </span>
                         ) : (
-                          <span className="ml-2 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 font-semibold text-emerald-800">
+                          <span className="ml-2 rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 font-semibold text-blue-800">
                             최신
                           </span>
                         )}
@@ -333,20 +333,20 @@ export default async function WordbooksPage() {
                       <Link
                         href={{ pathname: `/wordbooks/${d.wordbook.id}/memorize` }}
                         data-testid="library-study-link"
-                        className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold hover:bg-slate-50"
+                        className="ui-btn-secondary px-3 py-1.5 text-xs"
                       >
                         Memorize
                       </Link>
                       <Link
                         href={{ pathname: `/wordbooks/${d.wordbook.id}/quiz-meaning` }}
                         data-testid="library-quiz-link"
-                        className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold hover:bg-slate-50"
+                        className="ui-btn-secondary px-3 py-1.5 text-xs"
                       >
                         Quiz Meaning
                       </Link>
                       <Link
                         href={{ pathname: `/wordbooks/${d.wordbook.id}/quiz-word` }}
-                        className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold hover:bg-slate-50"
+                        className="ui-btn-secondary px-3 py-1.5 text-xs"
                       >
                         Quiz Word
                       </Link>
@@ -361,3 +361,4 @@ export default async function WordbooksPage() {
     </section>
   );
 }
+

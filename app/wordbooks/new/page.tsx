@@ -53,7 +53,7 @@ export default function NewWordbookPage() {
         </p>
       </header>
 
-      <section className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+      <section className="ui-card p-5">
         <h2 className="text-sm font-black uppercase tracking-[0.14em] text-slate-800">
           Wordbook Guide
         </h2>
@@ -81,7 +81,7 @@ export default function NewWordbookPage() {
         </div>
       </section>
 
-      <div className="rounded-3xl border border-white/60 bg-white/85 p-6 shadow-[0_20px_50px_-30px_rgba(15,23,42,0.7)] backdrop-blur">
+      <div className="ui-card p-6">
         <form onSubmit={onSubmit} className="space-y-4">
           <label className="block">
             <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
@@ -90,7 +90,7 @@ export default function NewWordbookPage() {
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+              className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               required
               disabled={loading}
             />
@@ -104,7 +104,7 @@ export default function NewWordbookPage() {
               <input
                 value={fromLang}
                 onChange={(e) => setFromLang(e.target.value)}
-                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                 disabled={loading}
               />
             </label>
@@ -115,7 +115,7 @@ export default function NewWordbookPage() {
               <input
                 value={toLang}
                 onChange={(e) => setToLang(e.target.value)}
-                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                 disabled={loading}
               />
             </label>
@@ -129,7 +129,7 @@ export default function NewWordbookPage() {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={4}
-              className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+              className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               disabled={loading}
             />
           </label>
@@ -138,7 +138,7 @@ export default function NewWordbookPage() {
             <button
               type="submit"
               disabled={loading}
-              className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+              className="ui-btn-accent px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-60"
             >
               {loading ? "Creating..." : "Create"}
             </button>
@@ -146,14 +146,14 @@ export default function NewWordbookPage() {
               type="button"
               onClick={() => router.back()}
               disabled={loading}
-              className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+              className="ui-btn-secondary px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-60"
             >
               Cancel
             </button>
           </div>
 
           {error ? (
-            <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+            <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
               {error}
             </p>
           ) : null}
@@ -162,5 +162,7 @@ export default function NewWordbookPage() {
     </section>
   );
 }
+
+
 
 

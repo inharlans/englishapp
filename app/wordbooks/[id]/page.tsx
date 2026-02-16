@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { cookies } from "next/headers";
 
 import { getUserFromRequestCookies } from "@/lib/authServer";
@@ -34,7 +34,7 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
         <h1 className="text-2xl font-black tracking-tight text-slate-900">Invalid wordbook</h1>
         <Link
           href={{ pathname: "/wordbooks" }}
-          className="text-sm font-semibold text-teal-700 hover:underline"
+          className="text-sm font-semibold text-blue-700 hover:underline"
         >
           Back
         </Link>
@@ -91,7 +91,7 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
         <h1 className="text-2xl font-black tracking-tight text-slate-900">Not found</h1>
         <Link
           href={{ pathname: "/wordbooks" }}
-          className="text-sm font-semibold text-teal-700 hover:underline"
+          className="text-sm font-semibold text-blue-700 hover:underline"
         >
           Back
         </Link>
@@ -106,7 +106,7 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
         <h1 className="text-2xl font-black tracking-tight text-slate-900">Not found</h1>
         <Link
           href={{ pathname: "/wordbooks" }}
-          className="text-sm font-semibold text-teal-700 hover:underline"
+          className="text-sm font-semibold text-blue-700 hover:underline"
         >
           Back
         </Link>
@@ -170,7 +170,7 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
         <div className="ml-auto flex flex-wrap items-center gap-2">
           <Link
             href={{ pathname: "/wordbooks" }}
-            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
+            className="ui-btn-secondary px-4 py-2 text-sm"
           >
             Back
           </Link>
@@ -184,7 +184,7 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
           downloadsUsed >= 3 ? (
             <Link
               href={{ pathname: "/pricing" }}
-              className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-900 hover:bg-amber-100"
+              className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-900 hover:bg-blue-100"
             >
               Upgrade (limit reached)
             </Link>
@@ -198,7 +198,7 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
       </header>
 
       {isOwner && user.plan === "FREE" ? (
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+        <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
           Free plan uploads are forced public. Upgrade to PRO to make wordbooks private.
         </div>
       ) : null}
@@ -262,21 +262,21 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
         </div>
       ) : (
         <div className="space-y-3">
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+          <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
             Downloaded wordbooks are read-only. You can still save them for offline study.
           </div>
           {downloadedVersion ? (
             <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700">
               <p className="font-semibold text-slate-900">
-                내 버전 v{downloadedVersion} / 최신 v{wordbook.contentVersion}
+                ??踰꾩쟾 v{downloadedVersion} / 理쒖떊 v{wordbook.contentVersion}
               </p>
               <p className="mt-1 text-xs text-slate-600">
-                변경 요약: +{versionSummary.addedCount} / ~{versionSummary.updatedCount} / -
+                蹂寃??붿빟: +{versionSummary.addedCount} / ~{versionSummary.updatedCount} / -
                 {versionSummary.deletedCount}
               </p>
               {snapshotItemCount !== null && syncedAt ? (
                 <p className="mt-1 text-xs text-slate-500">
-                  단어 수 변화: {snapshotItemCount} → {wordbook.items.length} / 최근 동기화{" "}
+                  Word count change: {snapshotItemCount} to {wordbook.items.length} / last sync{" "}
                   {syncedAt.toISOString().slice(0, 10)}
                 </p>
               ) : null}
@@ -311,4 +311,6 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
     </section>
   );
 }
+
+
 

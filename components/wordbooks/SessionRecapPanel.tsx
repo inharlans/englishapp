@@ -40,8 +40,8 @@ export function SessionRecapPanel({
   );
 
   return (
-    <aside className="rounded-2xl border border-teal-200 bg-teal-50/70 p-4">
-      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal-700">Session Recap</p>
+    <aside className="rounded-2xl border border-blue-200 bg-blue-50/70 p-4">
+      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-700">Session Recap</p>
       <h3 className="mt-1 text-lg font-black text-slate-900">{title}</h3>
       <p className="mt-1 text-sm text-slate-700">{summary}</p>
 
@@ -51,14 +51,14 @@ export function SessionRecapPanel({
         <div className="mt-2 flex flex-wrap gap-2">
           <Link
             href={suggestion.href}
-            className="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800"
+            className="ui-btn-primary px-3 py-1.5 text-xs"
           >
             바로 이동
           </Link>
           {secondaryHref && secondaryLabel ? (
             <Link
               href={secondaryHref}
-              className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+              className="ui-btn-secondary px-3 py-1.5 text-xs"
             >
               {secondaryLabel}
             </Link>
@@ -77,7 +77,7 @@ export function SessionRecapPanel({
               window.localStorage.setItem("daily_study_reminder", next ? "1" : "0");
             }
           }}
-          className="h-4 w-4 accent-teal-600"
+          className="h-4 w-4 accent-blue-600"
         />
         내일 같은 시간 알림
       </label>
@@ -85,3 +85,4 @@ export function SessionRecapPanel({
     </aside>
   );
 }
+

@@ -119,6 +119,29 @@ npm run prisma:migrate
 npm run dev
 ```
 
+## Recent Update (2026-02-16)
+
+- Applied a global 2-color design system with tokens in `app/globals.css`:
+  - Primary blue: `#1E88E5`
+  - Accent orange: `#FFB300`
+  - Neutrals: background/card/border/text tokens
+- Standardized shared UI classes:
+  - `ui-btn-primary`, `ui-btn-accent`, `ui-btn-secondary`, `ui-btn-ghost`
+  - `ui-tab-active`, `ui-tab-inactive`
+- Refactored key pages/components to use token-based buttons/tabs without layout changes:
+  - Navbar, wordbook tabs, density toggle, wordbook library, market, pricing, login, offline, and study/quiz surfaces.
+- Enforced CTA mapping:
+  - Main CTA buttons use orange only where intended (e.g. download CTA, recommended pricing badge context).
+  - Active/selected and navigation emphasis use blue.
+- Fixed broken JSX/string issues introduced during prior style churn:
+  - `app/wordbooks/[id]/quiz/quizClient.tsx`
+  - `app/wordbooks/market/page.tsx`
+  - `app/wordbooks/[id]/page.tsx`
+  - `components/wordbooks/RateBox.tsx`
+- Validation:
+  - `npm run typecheck` passed
+  - `npm run build` passed
+
 ## Railway 배포(권장)
 
 이 저장소에는 `railway.json`이 포함되어 있고, 서버 시작 전에 마이그레이션을 실행한다.

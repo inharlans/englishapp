@@ -4,8 +4,8 @@ export default function HomePage() {
   return (
     <section className="space-y-6">
       <div className="relative overflow-hidden rounded-3xl border border-white/70 bg-white/90 p-7 shadow-[0_24px_55px_-30px_rgba(15,23,42,0.7)] backdrop-blur">
-        <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-teal-300/35 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-16 left-10 h-52 w-52 rounded-full bg-cyan-300/30 blur-3xl" />
+        <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-blue-300/35 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-16 left-10 h-52 w-52 rounded-full bg-blue-300/30 blur-3xl" />
 
         <div className="relative">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Englishapp</p>
@@ -19,10 +19,10 @@ export default function HomePage() {
           </p>
 
           <div className="mt-6 flex flex-wrap gap-3">
-            <Link href="/wordbooks" className="rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-slate-800">
+            <Link href="/wordbooks" className="ui-btn-primary px-5 py-2.5 text-sm transition hover:-translate-y-0.5">
               내 단어장 열기
             </Link>
-            <Link href="/wordbooks/market" className="rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-900 transition hover:-translate-y-0.5 hover:bg-slate-50">
+            <Link href="/wordbooks/market" className="ui-btn-secondary px-5 py-2.5 text-sm transition hover:-translate-y-0.5">
               마켓 둘러보기
             </Link>
           </div>
@@ -32,9 +32,9 @@ export default function HomePage() {
       <div className="grid gap-4 md:grid-cols-2">
         <Link
           href="/wordbooks"
-          className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_14px_34px_-24px_rgba(15,23,42,0.55)] transition hover:-translate-y-1 hover:border-teal-300"
+          className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_14px_34px_-24px_rgba(15,23,42,0.55)] transition hover:-translate-y-1 hover:border-blue-300"
         >
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-teal-500/20 to-cyan-400/15 opacity-70" />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-blue-500/20 to-blue-400/15 opacity-70" />
           <div className="relative">
             <h2 className="text-xl font-bold text-slate-900">내 단어장</h2>
             <p className="mt-2 text-sm text-slate-700">다운로드한 단어장을 선택해 암기/퀴즈/리스트로 이동합니다.</p>
@@ -43,9 +43,9 @@ export default function HomePage() {
 
         <Link
           href="/wordbooks/market"
-          className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_14px_34px_-24px_rgba(15,23,42,0.55)] transition hover:-translate-y-1 hover:border-teal-300"
+          className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_14px_34px_-24px_rgba(15,23,42,0.55)] transition hover:-translate-y-1 hover:border-blue-300"
         >
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-amber-500/20 to-orange-400/15 opacity-70" />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-blue-500/20 to-blue-400/15 opacity-70" />
           <div className="relative">
             <h2 className="text-xl font-bold text-slate-900">Wordbook Market</h2>
             <p className="mt-2 text-sm text-slate-700">공개 단어장을 다운로드한 뒤 바로 단어장 내부 학습으로 이어집니다.</p>
@@ -62,3 +62,5 @@ export default function HomePage() {
     </section>
   );
 }
+
+

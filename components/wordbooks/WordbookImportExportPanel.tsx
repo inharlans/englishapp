@@ -81,26 +81,26 @@ export function WordbookImportExportPanel({ wordbookId }: { wordbookId: number }
         value={rawText}
         onChange={(e) => setRawText(e.target.value)}
         placeholder={"term\tmeaning\tpronunciation\texample\texampleMeaning"}
-        className="mt-3 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+        className="mt-3 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
       />
       <div className="mt-3 flex flex-wrap gap-2">
         <button
           type="button"
           onClick={() => void onImport()}
           disabled={loading}
-          className="rounded-lg bg-slate-900 px-3 py-1.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
+          className="ui-btn-primary px-3 py-1.5 text-sm disabled:opacity-60"
         >
           {loading ? "Importing..." : "Import"}
         </button>
         <a
           href={`/api/wordbooks/${wordbookId}/export?format=tsv`}
-          className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold hover:bg-slate-50"
+          className="ui-btn-secondary px-3 py-1.5 text-sm"
         >
           Export TSV
         </a>
         <a
           href={`/api/wordbooks/${wordbookId}/export?format=csv`}
-          className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold hover:bg-slate-50"
+          className="ui-btn-secondary px-3 py-1.5 text-sm"
         >
           Export CSV
         </a>
@@ -109,6 +109,7 @@ export function WordbookImportExportPanel({ wordbookId }: { wordbookId: number }
     </section>
   );
 }
+
 
 
 

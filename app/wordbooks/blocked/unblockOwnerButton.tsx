@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -42,8 +42,10 @@ export function UnblockOwnerButton({ ownerId, ownerEmail }: { ownerId: number; o
       >
         {loading ? "Unblocking..." : "Unblock"}
       </button>
-      {error ? <p className="text-xs text-rose-700">{error}</p> : null}
+      {error ? <p className="text-xs text-blue-700">{error}</p> : null}
     </div>
   );
 }
+
+
 

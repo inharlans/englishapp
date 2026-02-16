@@ -55,14 +55,15 @@ export function DownloadButton({ wordbookId, disabled, wordbookTitle, redirectPa
         onClick={onDownload}
         data-testid="download-wordbook"
         disabled={loading || disabled}
-        className="rounded-lg bg-slate-900 px-3 py-1.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+        className="ui-btn-accent px-3 py-1.5 text-sm disabled:cursor-not-allowed disabled:opacity-60"
       >
         {loading ? "Downloading..." : "Download"}
       </button>
-      {error ? <p className="mt-1 text-xs text-rose-700">{error}</p> : null}
+      {error ? <p className="mt-1 text-xs text-blue-700">{error}</p> : null}
     </div>
   );
 }
+
 
 
 

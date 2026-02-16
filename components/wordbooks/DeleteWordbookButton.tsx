@@ -39,13 +39,15 @@ export function DeleteWordbookButton({ wordbookId }: Props) {
         type="button"
         onClick={onDelete}
         disabled={loading}
-        className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-sm font-semibold text-rose-800 hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
+        className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-sm font-semibold text-blue-800 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
       >
         {loading ? "Deleting..." : "Delete"}
       </button>
-      {error ? <p className="mt-1 text-xs text-rose-700">{error}</p> : null}
+      {error ? <p className="mt-1 text-xs text-blue-700">{error}</p> : null}
     </div>
   );
 }
+
+
 
 

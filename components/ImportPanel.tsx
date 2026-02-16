@@ -55,16 +55,18 @@ export function ImportPanel() {
         <button
           type="submit"
           disabled={loading}
-          className="rounded-xl bg-slate-900 px-4 py-2 text-white disabled:opacity-60"
+          className="ui-btn-primary px-4 py-2 disabled:opacity-60"
         >
           {loading ? "Import 중..." : "Import 실행"}
         </button>
       </form>
-      {message ? <p className="mt-3 text-sm text-emerald-700">{message}</p> : null}
-      {error ? <p className="mt-3 text-sm text-rose-700">{error}</p> : null}
+      {message ? <p className="mt-3 text-sm text-blue-700">{message}</p> : null}
+      {error ? <p className="mt-3 text-sm text-blue-700">{error}</p> : null}
     </section>
   );
 }
+
+
 
 
 

@@ -47,7 +47,7 @@ export function SyncDownloadButton({ wordbookId }: Props) {
           type="button"
           disabled={loading}
           onClick={() => void runSync(true)}
-          className="rounded-lg border border-teal-300 bg-teal-50 px-3 py-1.5 text-xs font-semibold text-teal-800 hover:bg-teal-100 disabled:opacity-60"
+          className="rounded-lg border border-blue-300 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-800 hover:bg-blue-100 disabled:opacity-60"
         >
           업데이트 적용(학습 유지)
         </button>
@@ -60,8 +60,10 @@ export function SyncDownloadButton({ wordbookId }: Props) {
           업데이트 적용(학습 초기화)
         </button>
       </div>
-      {message ? <p className="text-xs text-emerald-700">{message}</p> : null}
-      {error ? <p className="text-xs text-rose-700">{error}</p> : null}
+      {message ? <p className="text-xs text-blue-700">{message}</p> : null}
+      {error ? <p className="text-xs text-blue-700">{error}</p> : null}
     </div>
   );
 }
+
+

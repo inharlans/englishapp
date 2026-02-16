@@ -76,15 +76,17 @@ export function UserPlanEditor({ user, onUpdated }: { user: UserRow; onUpdated: 
         type="button"
         onClick={onSave}
         disabled={loading}
-        className="rounded-lg bg-slate-900 px-3 py-1.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+        className="ui-btn-primary px-3 py-1.5 text-sm disabled:cursor-not-allowed disabled:opacity-60"
       >
         {loading ? "Saving..." : "Save"}
       </button>
 
-      {error ? <span className="text-xs text-rose-700">{error}</span> : null}
+      {error ? <span className="text-xs text-blue-700">{error}</span> : null}
     </div>
   );
 }
+
+
 
 
 

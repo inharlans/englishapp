@@ -28,7 +28,7 @@ export default async function WordbookQuizWordPage(props: { params: Promise<{ id
     return (
       <section className="space-y-4">
         <h1 className="text-2xl font-black tracking-tight text-slate-900">Invalid wordbook</h1>
-        <Link href={{ pathname: "/wordbooks" }} className="text-sm font-semibold text-teal-700 hover:underline">
+        <Link href={{ pathname: "/wordbooks" }} className="text-sm font-semibold text-blue-700 hover:underline">
           Back
         </Link>
       </section>
@@ -47,3 +47,4 @@ export default async function WordbookQuizWordPage(props: { params: Promise<{ id
 
   return <WordbookQuizClient wordbookId={id} initialMode="WORD" />;
 }
+

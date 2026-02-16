@@ -52,7 +52,7 @@ function LoginInner() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               type="email"
-              className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+              className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               autoComplete="email"
               required
               disabled={loading}
@@ -67,7 +67,7 @@ function LoginInner() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               type="password"
-              className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+              className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               autoComplete="current-password"
               required
               disabled={loading}
@@ -77,13 +77,13 @@ function LoginInner() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+            className="ui-btn-primary w-full px-4 py-2.5 text-sm transition disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading ? "Signing in..." : "Sign in"}
           </button>
 
           {error ? (
-            <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+            <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
               {error}
             </p>
           ) : null}
@@ -100,5 +100,7 @@ export default function LoginPage() {
     </Suspense>
   );
 }
+
+
 
 
