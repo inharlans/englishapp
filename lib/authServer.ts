@@ -12,8 +12,9 @@ export async function getUserFromRequestCookies(cookies: {
   proUntil: Date | null;
 } | null> {
   const token = cookies.get(getSessionCookieName())?.value;
+  const previewEnabled = Boolean(process.env.PREVIEW_BYPASS_TOKEN?.trim());
   const hasPreviewBypass = cookies.get(PREVIEW_BYPASS_COOKIE)?.value === "1";
-  if (!token && hasPreviewBypass) {
+  if (!token && (hasPreviewBypass || previewEnabled)) {
     const previewUser =
       (await prisma.user.findFirst({
         where: { isAdmin: false },
