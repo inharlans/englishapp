@@ -57,14 +57,14 @@ export default async function PricingPage() {
           </ul>
         </div>
 
-        <div className="rounded-3xl border border-orange-200 bg-white p-6 shadow-[0_20px_50px_-30px_rgba(15,23,42,0.25)]">
+        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_20px_50px_-30px_rgba(15,23,42,0.25)]">
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-700">PRO</p>
               <p className="mt-2 text-3xl font-black text-slate-900">2,900 KRW / month</p>
               <p className="mt-1 text-sm font-semibold text-slate-700">29,000 KRW / year</p>
             </div>
-            <span className="rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-800">
+            <span className="ui-badge-accent px-3 py-1 text-xs">
               Recommended
             </span>
           </div>

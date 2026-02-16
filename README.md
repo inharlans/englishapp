@@ -122,8 +122,8 @@ npm run dev
 ## Recent Update (2026-02-16)
 
 - Applied a global 2-color design system with tokens in `app/globals.css`:
-  - Primary blue: `#1E88E5`
-  - Accent orange: `#FFB300`
+  - Primary blue: `#2563EB`
+  - Accent orange: `#F59E0B`
   - Neutrals: background/card/border/text tokens
 - Standardized shared UI classes:
   - `ui-btn-primary`, `ui-btn-accent`, `ui-btn-secondary`, `ui-btn-ghost`
@@ -587,3 +587,18 @@ Additional observations and guardrails:
   - Correct answer now shows a green `정답` feedback panel.
   - Wrong answer now shows a red `오답` feedback panel and the actual correct answer.
   - Added explicit `다음 문제` action after each submission.
+
+## 2026-02-16 Button visual polish (SaaS tone)
+
+- Updated button color tokens:
+  - `--primary: #2563EB`
+  - `--accent: #F59E0B`
+- Refined button hierarchy:
+  - `ui-btn-primary`: solid blue, stronger contrast
+  - `ui-btn-accent`: solid orange, darker hover, cleaner CTA emphasis
+  - `ui-btn-secondary`: soft tinted secondary (no heavy empty outlines)
+- Updated tab states to match the same hierarchy:
+  - `ui-tab-active`: filled primary
+  - `ui-tab-inactive`: soft secondary tint
+- Applied secondary tone to memorize bottom controls to reduce outline noise.
+- Pricing `Recommended` badge now uses token-based accent styling (`ui-badge-accent`).

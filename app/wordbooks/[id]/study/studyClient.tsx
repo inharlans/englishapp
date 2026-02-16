@@ -277,7 +277,7 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
             <button
               type="button"
               onClick={() => changePageSize(pageSize - 1)}
-              className="rounded-lg border border-slate-300 bg-white px-2 py-1 font-semibold text-slate-700 hover:bg-slate-50"
+              className="ui-btn-secondary px-2 py-1"
             >
               -
             </button>
@@ -285,7 +285,7 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
             <button
               type="button"
               onClick={() => changePageSize(pageSize + 1)}
-              className="rounded-lg border border-slate-300 bg-white px-2 py-1 font-semibold text-slate-700 hover:bg-slate-50"
+              className="ui-btn-secondary px-2 py-1"
             >
               +
             </button>
@@ -293,7 +293,7 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
               type="button"
               onClick={() => movePage(-1)}
               disabled={currentPage <= 0}
-              className="rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+              className="ui-btn-secondary px-2.5 py-1 disabled:cursor-not-allowed disabled:opacity-40"
             >
               이전
             </button>
@@ -304,7 +304,7 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
               type="button"
               onClick={() => movePage(1)}
               disabled={currentPage >= totalPages - 1}
-              className="rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+              className="ui-btn-secondary px-2.5 py-1 disabled:cursor-not-allowed disabled:opacity-40"
             >
               다음
             </button>
