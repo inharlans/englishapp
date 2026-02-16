@@ -121,7 +121,7 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
     }),
     prisma.wordbookRating.findUnique({
       where: { userId_wordbookId: { userId: user.id, wordbookId: id } },
-      select: { rating: true }
+      select: { rating: true, review: true }
     }),
     prisma.wordbookDownload.count({
       where: { userId: user.id }
@@ -133,6 +133,7 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
   const snapshotItemCount = downloadRow?.snapshotItemCount ?? null;
   const syncedAt = downloadRow?.syncedAt ?? null;
   const myRating = ratingRow?.rating ?? null;
+  const myReview = ratingRow?.review ?? null;
   const speakLang = wordbook.fromLang.toLowerCase().startsWith("en") ? "en-US" : undefined;
   const freeLimitReached =
     user.plan === "FREE" && !downloadedAt && !isOwner && downloadsUsed >= 3;
@@ -209,6 +210,7 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
             ratingAvg={wordbook.ratingAvg}
             ratingCount={wordbook.ratingCount}
             myRating={myRating}
+            myReview={myReview}
             disabled={!isOwner && !downloadedAt}
           />
           {!isOwner && !downloadedAt ? (

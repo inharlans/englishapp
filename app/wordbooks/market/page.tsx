@@ -1,8 +1,8 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import { cookies } from "next/headers";
 
 import { DownloadButton } from "@/components/wordbooks/DownloadButton";
-import { StarRating } from "@/components/wordbooks/StarRating";
+import { MarketRatingReviews } from "@/components/wordbooks/MarketRatingReviews";
 import { EmptyStateCard } from "@/components/ui/EmptyStateCard";
 import { getUserFromRequestCookies } from "@/lib/authServer";
 import { prisma } from "@/lib/prisma";
@@ -105,8 +105,8 @@ export default async function MarketPage(props: {
             Plan: <span className="font-semibold">{user.plan}</span>
             {user.plan === "FREE" ? (
               <>
-                {" "}- downloads used: <span className="font-semibold">{myDownloadsUsed}/3</span>{" "}
-                -{" "}
+                {" "}
+                - downloads used: <span className="font-semibold">{myDownloadsUsed}/3</span> -{" "}
                 <Link href={{ pathname: "/pricing" }} className="font-semibold text-teal-700 hover:underline">
                   upgrade
                 </Link>
@@ -217,7 +217,7 @@ export default async function MarketPage(props: {
                       </span>
                     </div>
                     <div className="mt-2">
-                      <StarRating value={wb.ratingAvg} count={wb.ratingCount} />
+                      <MarketRatingReviews wordbookId={wb.id} ratingAvg={wb.ratingAvg} ratingCount={wb.ratingCount} />
                     </div>
                   </div>
                   <div className="shrink-0">

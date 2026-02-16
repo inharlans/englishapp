@@ -22,22 +22,31 @@ export function StarRating({ value, count, onChange, disabled }: Props) {
           const n = idx + 1;
           const filled = rounded >= n - 0.25;
           const clickable = !!onChange && !disabled;
+          const className = [
+            "h-7 w-7 select-none text-lg leading-none",
+            clickable ? "cursor-pointer hover:scale-105" : "cursor-default",
+            filled ? "text-amber-500" : "text-slate-300",
+            disabled ? "opacity-60" : ""
+          ].join(" ");
+
+          if (clickable) {
+            return (
+              <button
+                key={n}
+                type="button"
+                onClick={() => onChange(n)}
+                className={className}
+                aria-label={`${n} stars`}
+              >
+                ★
+              </button>
+            );
+          }
+
           return (
-            <button
-              key={n}
-              type="button"
-              onClick={clickable ? () => onChange(n) : undefined}
-              disabled={!clickable}
-              className={[
-                "h-7 w-7 select-none text-lg leading-none",
-                clickable ? "cursor-pointer hover:scale-105" : "cursor-default",
-                filled ? "text-amber-500" : "text-slate-300",
-                disabled ? "opacity-60" : ""
-              ].join(" ")}
-              aria-label={`${n} stars`}
-            >
+            <span key={n} className={className} aria-hidden="true">
               ★
-            </button>
+            </span>
           );
         })}
       </div>
@@ -48,4 +57,3 @@ export function StarRating({ value, count, onChange, disabled }: Props) {
     </div>
   );
 }
-

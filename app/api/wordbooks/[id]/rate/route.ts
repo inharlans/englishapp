@@ -15,7 +15,8 @@ function parseId(raw: string): number | null {
 }
 
 const rateSchema = z.object({
-  rating: z.coerce.number().int().min(1).max(5)
+  rating: z.coerce.number().int().min(1).max(5),
+  review: z.string().trim().max(1000).optional().nullable()
 });
 
 export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
@@ -49,6 +50,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   const parsedBody = await parseJsonWithSchema(req, rateSchema);
   if (!parsedBody.ok) return parsedBody.response;
   const rating = parsedBody.data.rating;
+  const review = parsedBody.data.review ? parsedBody.data.review.trim() : null;
 
   const result = await prisma.$transaction(async (tx) => {
     const wordbook = await tx.wordbook.findUnique({
@@ -73,8 +75,8 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
 
     await tx.wordbookRating.upsert({
       where: { userId_wordbookId: { userId: user.id, wordbookId: id } },
-      create: { userId: user.id, wordbookId: id, rating },
-      update: { rating }
+      create: { userId: user.id, wordbookId: id, rating, review },
+      update: { rating, review }
     });
 
     const agg = await tx.wordbookRating.aggregate({
@@ -101,7 +103,13 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   }
 
   return NextResponse.json(
-    { ok: true, ratingAvg: result.ratingAvg, ratingCount: result.ratingCount, myRating: rating },
+    {
+      ok: true,
+      ratingAvg: result.ratingAvg,
+      ratingCount: result.ratingCount,
+      myRating: rating,
+      myReview: review
+    },
     { status: 200 }
   );
 }

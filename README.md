@@ -77,6 +77,8 @@ English 1500(고정 단어 리스트)
 - `GET /api/wordbooks/market` 마켓 목록(검색/정렬/페이지네이션)
 - `POST /api/wordbooks/[id]/download` 단어장 다운로드(유저당 1회 기록 + `downloadCount` 증가, 플랜 제한 강제)
 - `POST /api/wordbooks/[id]/rate` 1~5점 평점(소유자 또는 다운로드한 유저만 가능, 1인 1회 upsert + 평균/개수 집계)
+  - `review`(댓글) 필드 함께 저장 가능
+- `GET /api/wordbooks/[id]/reviews` 해당 단어장 리뷰 목록(평점 + 댓글 + 작성자 마스킹 이메일)
 - `GET /api/wordbooks/downloaded` 내가 다운로드한 단어장 목록
 - `GET /api/wordbooks/[id]/study` 다운로드 단어장 학습 상태/아이템 조회(사용자 스코프)
 - `POST /api/wordbooks/[id]/study/items/[itemId]` 다운로드 단어장 아이템 정오답/리셋 반영(사용자 스코프)
@@ -499,3 +501,6 @@ Done in this sprint:
   - 리스트 화면 각 part 버튼에 `p/n` 표시(`p`: 해당 리스트 조건에 맞는 단어 수).
 - memorize 보강:
   - 하단 고정 컨트롤에 `맞춘 단어 숨김` 토글 추가(정답 상태 단어 제외, 로컬 저장).
+- 리뷰 기능:
+  - 다운로드한 단어장(또는 소유 단어장)에 평점과 댓글을 함께 저장 가능.
+  - 마켓에서 별점 영역 클릭 시 리뷰 목록(댓글 + 평점) 펼쳐보기 지원.
