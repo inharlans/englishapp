@@ -2,9 +2,11 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 import { getSessionCookieName, verifySessionToken } from "@/lib/authJwt";
-
-const PREVIEW_BYPASS_COOKIE = "preview_bypass";
-const PREVIEW_BYPASS_TTL_SECONDS = 60 * 60;
+import {
+  PREVIEW_BYPASS_COOKIE,
+  PREVIEW_BYPASS_TTL_SECONDS,
+  isPreviewBypassAllowed
+} from "@/lib/previewBypass";
 
 function applySecurityHeaders(res: NextResponse): NextResponse {
   res.headers.set("X-Frame-Options", "DENY");
@@ -30,7 +32,7 @@ export async function middleware(req: NextRequest) {
   const previewBypassToken = process.env.PREVIEW_BYPASS_TOKEN?.trim() || "";
 
   if (pathname === "/preview-access") {
-    if (!previewBypassToken) {
+    if (!isPreviewBypassAllowed()) {
       return applySecurityHeaders(
         NextResponse.json({ error: "Preview bypass is disabled." }, { status: 503 })
       );

@@ -570,3 +570,7 @@ Security notes:
 - This is temporary access for preview workflows.
 - Do not share token publicly.
 - Remove it after design/review is complete.
+- [x] Preview bypass now also applies to API/user auth context.
+  - `getUserFromRequestCookies` accepts `preview_bypass` cookie when `PREVIEW_BYPASS_TOKEN` is configured.
+  - For preview sessions, server uses a surrogate account (first non-admin user, fallback first user).
+  - This keeps preview flows working across page + API without normal login.
