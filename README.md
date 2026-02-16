@@ -574,3 +574,6 @@ Security notes:
   - `getUserFromRequestCookies` accepts `preview_bypass` cookie when `PREVIEW_BYPASS_TOKEN` is configured.
   - For preview sessions, server uses a surrogate account (first non-admin user, fallback first user).
   - This keeps preview flows working across page + API without normal login.
+- [x] Preview bypass elevated permissions:
+  - Preview sessions now run as `admin + PRO` capability for broad page/API access.
+  - Study access guard allows admin users to access all wordbooks.

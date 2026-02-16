@@ -4,6 +4,12 @@ export async function canAccessWordbookForStudy(input: {
   userId: number;
   wordbookId: number;
 }): Promise<boolean> {
+  const user = await prisma.user.findUnique({
+    where: { id: input.userId },
+    select: { isAdmin: true }
+  });
+  if (user?.isAdmin) return true;
+
   const wordbook = await prisma.wordbook.findUnique({
     where: { id: input.wordbookId },
     select: { id: true, ownerId: true, isPublic: true, hiddenByAdmin: true }
@@ -19,4 +25,3 @@ export async function canAccessWordbookForStudy(input: {
   });
   return Boolean(downloaded);
 }
-
