@@ -43,8 +43,8 @@ type SubmitPayload = {
   error?: string;
 };
 
-export function WordbookQuizClient({ wordbookId, initialMode = "MEANING", lockMode = false }: Props) {
-  const [mode, setMode] = useState<QuizMode>(initialMode);
+export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Props) {
+  const [mode] = useState<QuizMode>(initialMode);
   const [item, setItem] = useState<QuizItem | null>(null);
   const [answer, setAnswer] = useState("");
   const [message, setMessage] = useState("");
@@ -95,6 +95,10 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING", lockMo
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (feedback) {
+      await loadNext();
+      return;
+    }
     if (!item || !answer.trim()) return;
     setLoading(true);
     setMessage("");
@@ -153,20 +157,6 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING", lockMo
       <div className="ui-card p-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="text-xs text-slate-600">품사/의미 표시</div>
-          {!lockMode ? (
-            <label className="text-xs font-semibold text-slate-700">
-              Mode{" "}
-              <select
-                value={mode}
-                onChange={(e) => setMode(e.target.value === "WORD" ? "WORD" : "MEANING")}
-                data-testid="wordbook-quiz-mode"
-                className="ml-2 rounded border border-slate-300 bg-white px-2 py-1"
-              >
-                <option value="MEANING">Meaning Quiz</option>
-                <option value="WORD">Word Quiz</option>
-              </select>
-            </label>
-          ) : null}
         </div>
         <div className="mt-2 flex flex-wrap items-center gap-2">
           <div className="inline-flex rounded-lg border border-slate-200 p-1 text-xs">
@@ -278,10 +268,10 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING", lockMo
               <button
                 type="submit"
                 data-testid="wordbook-quiz-submit"
-                disabled={loading || !!feedback}
+                disabled={loading}
                 className="ui-btn-accent px-4 py-2 text-sm disabled:opacity-60"
               >
-                제출
+                {feedback ? "다음 (Enter)" : "제출"}
               </button>
             </form>
             {feedback ? (

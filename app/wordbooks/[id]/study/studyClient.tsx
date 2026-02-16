@@ -263,8 +263,7 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
       </div>
       </div>
 
-      {!loading ? (
-        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/80 backdrop-blur-md">
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/80 backdrop-blur-md">
           <div className="mx-auto flex max-w-6xl items-center gap-2 overflow-x-auto px-3 py-2 text-xs">
             <input
               type="search"
@@ -277,6 +276,7 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
             <button
               type="button"
               onClick={() => changePageSize(pageSize - 1)}
+              disabled={loading}
               className="ui-btn-secondary px-2 py-1"
             >
               -
@@ -285,6 +285,7 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
             <button
               type="button"
               onClick={() => changePageSize(pageSize + 1)}
+              disabled={loading}
               className="ui-btn-secondary px-2 py-1"
             >
               +
@@ -292,7 +293,7 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
             <button
               type="button"
               onClick={() => movePage(-1)}
-              disabled={currentPage <= 0}
+              disabled={loading || currentPage <= 0}
               className="ui-btn-secondary px-2.5 py-1 disabled:cursor-not-allowed disabled:opacity-40"
             >
               이전
@@ -303,7 +304,7 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
             <button
               type="button"
               onClick={() => movePage(1)}
-              disabled={currentPage >= totalPages - 1}
+              disabled={loading || currentPage >= totalPages - 1}
               className="ui-btn-secondary px-2.5 py-1 disabled:cursor-not-allowed disabled:opacity-40"
             >
               다음
@@ -319,6 +320,7 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
             <button
               type="button"
               onClick={applyPageInput}
+              disabled={loading}
               className="ui-btn-primary rounded-lg px-3 py-1"
             >
               이동
@@ -326,6 +328,7 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
             <button
               type="button"
               onClick={toggleHideCorrect}
+              disabled={loading}
               className={[
                 "rounded-lg border px-3 py-1 font-semibold",
                 hideCorrect
@@ -336,8 +339,7 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
               맞춘 단어 숨김
             </button>
           </div>
-        </div>
-      ) : null}
+      </div>
     </section>
   );
 }

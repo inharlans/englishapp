@@ -602,3 +602,14 @@ Additional observations and guardrails:
   - `ui-tab-inactive`: soft secondary tint
 - Applied secondary tone to memorize bottom controls to reduce outline noise.
 - Pricing `Recommended` badge now uses token-based accent styling (`ui-badge-accent`).
+
+## 2026-02-16 UX fixes (rating/quiz/memorize)
+
+- Fixed wordbook rating star glyph rendering (`??` -> `★`) in `StarRating`.
+- Quiz flow improvements:
+  - Removed in-panel mode selector from `/wordbooks/[id]/quiz` UI.
+  - Kept explicit `다음 문제` button after grading.
+  - Added Enter-key progression after grading (press Enter to move to next question).
+- Memorize bottom fixed bar stability:
+  - Bottom control bar now stays mounted while loading (no disappear/reappear flicker).
+  - Controls are disabled during loading instead of unmounting the bar.

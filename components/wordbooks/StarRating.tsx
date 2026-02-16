@@ -38,13 +38,15 @@ export function StarRating({ value, count, onChange, disabled }: Props) {
                 className={className}
                 aria-label={`${n} stars`}
               >
-                ??              </button>
+                ★
+              </button>
             );
           }
 
           return (
             <span key={n} className={className} aria-hidden="true">
-              ??            </span>
+              ★
+            </span>
           );
         })}
       </div>
