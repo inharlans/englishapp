@@ -5,6 +5,7 @@ import { normalizeEn, normalizeKo } from "@/lib/text";
 import { prisma } from "@/lib/prisma";
 import { checkRateLimit, getClientIpFromHeaders } from "@/lib/rateLimit";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
+import { invalidateStudyPartStatsCacheForWordbook } from "@/lib/studyPartStatsCache";
 import { parseJsonWithSchema, zPositiveInt } from "@/lib/validation";
 import { canAccessWordbookForStudy } from "@/lib/wordbookAccess";
 import { z } from "zod";
@@ -136,6 +137,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
       lastResult: correct ? "CORRECT" : "WRONG"
     }
   });
+  invalidateStudyPartStatsCacheForWordbook(user.id, wordbookId);
   await syncWordbookStudyState(user.id, wordbookId);
 
   return NextResponse.json(

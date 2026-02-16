@@ -539,3 +539,9 @@ Additional observations and guardrails:
 - Client simplification is safe when authority remains on server (filters, paging, permissions).
 - Keep all business rules centralized in API routes and return minimal DTOs to prevent drift.
 - For very large datasets, consider cursor pagination for deep page access and cache `partStats` by `(userId, wordbookId, view, q, hideCorrect, partSize)`.
+- [x] Extra guardrail applied:
+  - Added in-memory TTL cache (30s) for study `partStats` in `GET /api/wordbooks/[id]/study`.
+  - Added cache invalidation on study mutations:
+    - `POST /api/wordbooks/[id]/study/items/[itemId]`
+    - `POST /api/wordbooks/[id]/quiz/submit`
+    - `POST /api/wordbooks/[id]/sync-download` (when study state reset)

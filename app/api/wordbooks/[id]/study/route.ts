@@ -3,6 +3,11 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { getUserFromRequestCookies } from "@/lib/authServer";
 import { prisma } from "@/lib/prisma";
+import {
+  getStudyPartStatsFromCache,
+  makeStudyPartStatsCacheKey,
+  setStudyPartStatsCache
+} from "@/lib/studyPartStatsCache";
 import { canAccessWordbookForStudy } from "@/lib/wordbookAccess";
 
 type StudyView = "memorize" | "listCorrect" | "listWrong" | "listHalf";
@@ -211,25 +216,39 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
 
   let partStats: Array<{ partIndex: number; totalInPart: number; matchedCount: number }> = [];
   if (partSize) {
-    const qLike = q ? `%${q.replace(/[%_]/g, "\\$&")}%` : null;
-    const matchSql = buildMatchSql({ view, hideCorrect, qLike });
-    const rows = await prisma.$queryRaw<Array<{ partIndex: number; totalInPart: number; matchedCount: number }>>(
-      Prisma.sql`
-        SELECT
-          ((wi."position" / ${partSize})::int + 1) AS "partIndex",
-          COUNT(*)::int AS "totalInPart",
-          COUNT(*) FILTER (WHERE ${matchSql})::int AS "matchedCount"
-        FROM "WordbookItem" wi
-        LEFT JOIN "WordbookStudyItemState" ws
-          ON ws."itemId" = wi."id"
-         AND ws."wordbookId" = wi."wordbookId"
-         AND ws."userId" = ${user.id}
-        WHERE wi."wordbookId" = ${wordbookId}
-        GROUP BY "partIndex"
-        ORDER BY "partIndex" ASC
-      `
-    );
-    partStats = rows;
+    const cacheKey = makeStudyPartStatsCacheKey({
+      userId: user.id,
+      wordbookId,
+      view,
+      hideCorrect,
+      q,
+      partSize
+    });
+    const cached = getStudyPartStatsFromCache(cacheKey);
+    if (cached) {
+      partStats = cached;
+    } else {
+      const qLike = q ? `%${q.replace(/[%_]/g, "\\$&")}%` : null;
+      const matchSql = buildMatchSql({ view, hideCorrect, qLike });
+      const rows = await prisma.$queryRaw<Array<{ partIndex: number; totalInPart: number; matchedCount: number }>>(
+        Prisma.sql`
+          SELECT
+            ((wi."position" / ${partSize})::int + 1) AS "partIndex",
+            COUNT(*)::int AS "totalInPart",
+            COUNT(*) FILTER (WHERE ${matchSql})::int AS "matchedCount"
+          FROM "WordbookItem" wi
+          LEFT JOIN "WordbookStudyItemState" ws
+            ON ws."itemId" = wi."id"
+           AND ws."wordbookId" = wi."wordbookId"
+           AND ws."userId" = ${user.id}
+          WHERE wi."wordbookId" = ${wordbookId}
+          GROUP BY "partIndex"
+          ORDER BY "partIndex" ASC
+        `
+      );
+      partStats = rows;
+      setStudyPartStatsCache(cacheKey, rows);
+    }
   }
 
   return NextResponse.json(

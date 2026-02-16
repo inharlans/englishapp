@@ -5,6 +5,7 @@ import { getUserFromRequestCookies } from "@/lib/authServer";
 import { prisma } from "@/lib/prisma";
 import { checkRateLimit, getClientIpFromHeaders } from "@/lib/rateLimit";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
+import { invalidateStudyPartStatsCacheForWordbook } from "@/lib/studyPartStatsCache";
 import { parseJsonWithSchema } from "@/lib/validation";
 import { canAccessWordbookForStudy } from "@/lib/wordbookAccess";
 import { z } from "zod";
@@ -89,6 +90,7 @@ export async function POST(
     await prisma.wordbookStudyItemState.deleteMany({
       where: { userId: user.id, wordbookId, itemId }
     });
+    invalidateStudyPartStatsCacheForWordbook(user.id, wordbookId);
     const studyState = await syncWordbookStudyState(user.id, wordbookId);
     return NextResponse.json({ ok: true, itemState: null, studyState }, { status: 200 });
   }
@@ -138,6 +140,7 @@ export async function POST(
     }
   });
 
+  invalidateStudyPartStatsCacheForWordbook(user.id, wordbookId);
   const studyState = await syncWordbookStudyState(user.id, wordbookId);
   return NextResponse.json({ ok: true, itemState, studyState }, { status: 200 });
 }

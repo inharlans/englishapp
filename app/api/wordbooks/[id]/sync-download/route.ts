@@ -3,6 +3,7 @@
 import { getUserFromRequestCookies } from "@/lib/authServer";
 import { prisma } from "@/lib/prisma";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
+import { invalidateStudyPartStatsCacheForWordbook } from "@/lib/studyPartStatsCache";
 import { parseJsonWithSchema } from "@/lib/validation";
 import { aggregateVersionLogs } from "@/lib/wordbookVersion";
 import { z } from "zod";
@@ -93,6 +94,9 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
 
   if (!result.ok) {
     return NextResponse.json({ error: result.error }, { status: result.status });
+  }
+  if (!result.preserveStudyState) {
+    invalidateStudyPartStatsCacheForWordbook(user.id, wordbookId);
   }
 
   return NextResponse.json(
