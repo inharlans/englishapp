@@ -26,14 +26,12 @@ export async function getUserFromRequestCookies(cookies: {
         select: { id: true, email: true, isAdmin: true, plan: true, proUntil: true }
       }));
     if (previewUser) {
-      if (!previewUser.isAdmin || previewUser.plan !== "PRO" || previewUser.proUntil !== null) {
-        return prisma.user.update({
-          where: { id: previewUser.id },
-          data: { isAdmin: true, plan: "PRO", proUntil: null },
-          select: { id: true, email: true, isAdmin: true, plan: true, proUntil: true }
-        });
-      }
-      return previewUser;
+      return {
+        ...previewUser,
+        isAdmin: true,
+        plan: "PRO",
+        proUntil: null
+      };
     }
 
     return prisma.user.upsert({
