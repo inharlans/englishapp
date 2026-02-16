@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/prisma";
 import { getSessionCookieName, verifySessionToken } from "@/lib/authJwt";
-import { PREVIEW_BYPASS_COOKIE, isPreviewBypassAllowed } from "@/lib/previewBypass";
 
 export async function getUserFromRequestCookies(cookies: {
   get(name: string): { value: string } | undefined;
@@ -12,21 +11,6 @@ export async function getUserFromRequestCookies(cookies: {
   proUntil: Date | null;
 } | null> {
   const token = cookies.get(getSessionCookieName())?.value;
-  const hasPreviewBypass = cookies.get(PREVIEW_BYPASS_COOKIE)?.value === "1";
-  if (!token && hasPreviewBypass && isPreviewBypassAllowed()) {
-    const previewUser =
-      (await prisma.user.findFirst({
-        where: { isAdmin: false },
-        orderBy: [{ id: "asc" }],
-        select: { id: true, email: true, isAdmin: true, plan: true, proUntil: true }
-      })) ??
-      (await prisma.user.findFirst({
-        orderBy: [{ id: "asc" }],
-        select: { id: true, email: true, isAdmin: true, plan: true, proUntil: true }
-      }));
-    return previewUser ?? null;
-  }
-
   if (!token) {
     return null;
   }
