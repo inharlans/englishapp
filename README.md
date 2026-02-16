@@ -233,3 +233,30 @@ curl -sS -b cookies.txt "$BASE/api/words?mode=memorize&batch=1&page=0&hideCorrec
 curl -sS -b cookies.txt -X POST "$BASE/api/auth/logout"
 ```
 
+## Dataset / Wordbooks (Generated)
+
+This repo can generate multiple **en+ko** wordbooks where `ko` is filled in the `(명)(동)...` style.
+These are built from open wordlists (NGSL Project) and Korean translations from Kaikki/Wiktionary.
+
+Commands (from `C:\\dev\\englishapp`):
+
+```powershell
+# Crawl open wordlists (NGSL family + NDL + MOEL file)
+node .\\scripts\\crawl-ngsl-family.mjs
+
+# Generate many fully-filled KO wordbooks (no blank ko rows kept)
+node .\\scripts\\generate-many-wordbooks-ko.mjs --chunk 300 --max 2100 --concurrency 6
+
+# Build derived "school level" sets (초등/중등/고등/수능/토익/회화/비즈니스/전문)
+node .\\scripts\\build-derived-level-wordbooks.mjs
+
+# Validate outputs (optional)
+node .\\scripts\\validate-wordbooks-ko.mjs
+
+# Generate a root TSV for seeding (does not overwrite words.tsv)
+node .\\scripts\\generate-root-words-tsv-ko.mjs --count 1500
+```
+
+Outputs:
+- `data/wordbooks-ko/**.generated.tsv`
+- `words.ko.generated.tsv`

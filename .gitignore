@@ -9,3 +9,7 @@ dist
 /tmp
 *.tsbuildinfo
 
+# generated/crawled datasets (keep out of git by default)
+/data
+*.generated.tsv
+
