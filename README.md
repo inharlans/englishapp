@@ -549,3 +549,6 @@ Additional observations and guardrails:
   - `WordbookStudyClient` now resets paging through input handlers (`query/pageSize/hideCorrect`) instead of separate reset effects.
   - Removed redundant `useMemo` usage for progress and simplified page clamping flow.
   - `WordbookListClient` removed duplicated title state and uses memoized part-stat lookup map.
+- [x] Loading UI stabilization:
+  - Removed inline `Loading...` text blocks that pushed content down.
+  - Added non-layout-shifting loading badge overlay (`absolute`) with `min-h` containers in memorize/list study views.
