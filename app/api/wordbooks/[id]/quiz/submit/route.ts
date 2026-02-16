@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getUserFromRequestCookies } from "@/lib/authServer";
 import { normalizeEn, normalizeKo } from "@/lib/text";
 import { prisma } from "@/lib/prisma";
+import { checkRateLimit, getClientIpFromHeaders } from "@/lib/rateLimit";
+import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
 import { canAccessWordbookForStudy } from "@/lib/wordbookAccess";
 
 function parseId(raw: string): number | null {
@@ -49,6 +51,22 @@ async function syncWordbookStudyState(userId: number, wordbookId: number) {
 }
 
 export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
+  const badReq = assertTrustedMutationRequest(req);
+  if (badReq) return badReq;
+
+  const ip = getClientIpFromHeaders(req.headers);
+  const limit = await checkRateLimit({
+    key: `wordbookQuizSubmit:${ip}`,
+    limit: 120,
+    windowMs: 60_000
+  });
+  if (!limit.ok) {
+    return NextResponse.json(
+      { error: "Too many requests." },
+      { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } }
+    );
+  }
+
   const { id: idRaw } = await ctx.params;
   const wordbookId = parseId(idRaw);
   if (!wordbookId) {

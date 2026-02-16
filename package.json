@@ -9,12 +9,14 @@
     "lint": "next lint",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
+    "test:e2e": "node tests/e2e/http-smoke.mjs",
     "test:watch": "vitest",
     "postinstall": "prisma generate",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev --name init",
     "prisma:deploy": "prisma migrate deploy",
     "prisma:seed": "node prisma/seed.js",
+    "wordbooks:recompute-rank": "node scripts/recompute-wordbook-rank.mjs",
     "start:railway": "prisma generate && prisma migrate deploy && node prisma/seed.js && next start -p ${PORT:-3000}"
   },
   "dependencies": {

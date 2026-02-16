@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getUserFromRequestCookies } from "@/lib/authServer";
 import { parseWordbookText } from "@/lib/wordbookIo";
 import { prisma } from "@/lib/prisma";
+import { checkRateLimit, getClientIpFromHeaders } from "@/lib/rateLimit";
+import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
 
 function parseId(raw: string): number | null {
   const n = Number(raw);
@@ -18,6 +20,22 @@ type Body = {
 };
 
 export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
+  const badReq = assertTrustedMutationRequest(req);
+  if (badReq) return badReq;
+
+  const ip = getClientIpFromHeaders(req.headers);
+  const limit = await checkRateLimit({
+    key: `wordbookImport:${ip}`,
+    limit: 15,
+    windowMs: 60_000
+  });
+  if (!limit.ok) {
+    return NextResponse.json(
+      { error: "Too many requests." },
+      { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } }
+    );
+  }
+
   const { id: idRaw } = await ctx.params;
   const wordbookId = parseId(idRaw);
   if (!wordbookId) {
@@ -41,6 +59,9 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   const replaceAll = body?.replaceAll === true;
   if (!rawText.trim()) {
     return NextResponse.json({ error: "rawText is required." }, { status: 400 });
+  }
+  if (rawText.length > 1_000_000) {
+    return NextResponse.json({ error: "rawText is too large." }, { status: 413 });
   }
 
   const parsed = parseWordbookText({ rawText, format, fillPronunciation });
@@ -73,4 +94,3 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
 
   return NextResponse.json({ ok: true, importedCount: parsed.length }, { status: 201 });
 }
-

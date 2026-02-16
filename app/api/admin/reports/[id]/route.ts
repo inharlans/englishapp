@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { getUserFromRequestCookies } from "@/lib/authServer";
 import { prisma } from "@/lib/prisma";
+import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
 
 function parseId(raw: string): number | null {
   const n = Number(raw);
@@ -15,6 +16,9 @@ type Body = {
 };
 
 export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
+  const badReq = assertTrustedMutationRequest(req);
+  if (badReq) return badReq;
+
   const { id: idRaw } = await ctx.params;
   const id = parseId(idRaw);
   if (!id) return NextResponse.json({ error: "Invalid id." }, { status: 400 });
@@ -67,4 +71,3 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
 
   return NextResponse.json({ ok: true }, { status: 200 });
 }
-

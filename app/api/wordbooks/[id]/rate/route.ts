@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { getUserFromRequestCookies } from "@/lib/authServer";
 import { prisma } from "@/lib/prisma";
+import { checkRateLimit, getClientIpFromHeaders } from "@/lib/rateLimit";
+import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
+import { refreshWordbookRankScore } from "@/lib/wordbookRanking";
 
 function parseId(raw: string): number | null {
   const n = Number(raw);
@@ -18,6 +21,22 @@ function parseRating(raw: unknown): number | null {
 }
 
 export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
+  const badReq = assertTrustedMutationRequest(req);
+  if (badReq) return badReq;
+
+  const ip = getClientIpFromHeaders(req.headers);
+  const limit = await checkRateLimit({
+    key: `wordbookRate:${ip}`,
+    limit: 60,
+    windowMs: 60_000
+  });
+  if (!limit.ok) {
+    return NextResponse.json(
+      { error: "Too many requests." },
+      { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } }
+    );
+  }
+
   const { id: idRaw } = await ctx.params;
   const id = parseId(idRaw);
   if (!id) {
@@ -76,6 +95,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
       },
       select: { ratingAvg: true, ratingCount: true }
     });
+    await refreshWordbookRankScore(tx, id);
 
     return { ok: true as const, ratingAvg: updated.ratingAvg, ratingCount: updated.ratingCount };
   });
@@ -89,4 +109,3 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     { status: 200 }
   );
 }
-

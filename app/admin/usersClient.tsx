@@ -90,6 +90,31 @@ export function AdminUsersClient({ initialUsers }: { initialUsers: UserRow[] }) 
         <div className="ml-auto flex flex-wrap gap-2">
           <button
             type="button"
+            onClick={async () => {
+              setLoading(true);
+              setError("");
+              try {
+                const res = await fetch("/api/admin/wordbooks/recompute-rank", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: "{}"
+                });
+                const json = (await res.json()) as { error?: string };
+                if (!res.ok) throw new Error(json.error ?? "Recompute failed.");
+                await reload();
+              } catch (e) {
+                setError(e instanceof Error ? e.message : "Recompute failed.");
+              } finally {
+                setLoading(false);
+              }
+            }}
+            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
+            disabled={loading}
+          >
+            Recompute Rank
+          </button>
+          <button
+            type="button"
             onClick={() => void reload()}
             className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
             disabled={loading}

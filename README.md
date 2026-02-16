@@ -284,3 +284,28 @@ Still pending (external integration keys required):
 
 - [ ] Payment integration (subscription lifecycle automation)
 - [ ] OAuth login (Google/Naver/Kakao)
+
+## 2026-02-16 Hardening Update
+
+- Security hardening:
+  - Added mutation-request trust checks (`Origin` / `sec-fetch-site`) on major write APIs.
+  - Added stronger rate limits on report/block/import/study/quiz-submit write paths.
+  - Added security response headers in `middleware.ts`:
+    - `X-Frame-Options: DENY`
+    - `X-Content-Type-Options: nosniff`
+    - `Referrer-Policy: strict-origin-when-cross-origin`
+    - `Permissions-Policy: camera=(), microphone=(), geolocation=()`
+- Ranking stabilization:
+  - `Wordbook.rankScore`, `Wordbook.rankScoreUpdatedAt` added.
+  - Market `Top` sort now uses persisted `rankScore` (DB-level ordering).
+  - Rank score refresh now runs automatically after downloads/ratings.
+  - Manual recompute command added:
+    - `npm run wordbooks:recompute-rank`
+- E2E smoke test:
+  - Added HTTP end-to-end smoke test script:
+    - `npm run test:e2e`
+  - Environment variables:
+    - `E2E_BASE_URL` (default: `http://127.0.0.1:3000`)
+    - `E2E_EMAIL` (default: `admin@example.com`)
+    - `E2E_PASSWORD` (default: `change-me-now-123`)
+    - `AUTH_BOOTSTRAP_TOKEN` (optional, for bootstrap step)

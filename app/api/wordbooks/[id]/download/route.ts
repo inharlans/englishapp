@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { getUserFromRequestCookies } from "@/lib/authServer";
 import { prisma } from "@/lib/prisma";
+import { checkRateLimit, getClientIpFromHeaders } from "@/lib/rateLimit";
+import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
+import { refreshWordbookRankScore } from "@/lib/wordbookRanking";
 
 function parseId(raw: string): number | null {
   const n = Number(raw);
@@ -16,6 +19,22 @@ function isPro(user: { plan: "FREE" | "PRO"; proUntil: Date | null }): boolean {
 }
 
 export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
+  const badReq = assertTrustedMutationRequest(req);
+  if (badReq) return badReq;
+
+  const ip = getClientIpFromHeaders(req.headers);
+  const limit = await checkRateLimit({
+    key: `wordbookDownload:${ip}`,
+    limit: 60,
+    windowMs: 60_000
+  });
+  if (!limit.ok) {
+    return NextResponse.json(
+      { error: "Too many requests." },
+      { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } }
+    );
+  }
+
   const { id: idRaw } = await ctx.params;
   const id = parseId(idRaw);
   if (!id) {
@@ -74,6 +93,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
       data: { downloadCount: { increment: 1 } },
       select: { downloadCount: true }
     });
+    await refreshWordbookRankScore(tx, id);
 
     return {
       ok: true as const,

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
 import { checkRateLimit, getClientIpFromHeaders } from "@/lib/rateLimit";
+import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
 import { normalizeEn, parseWords } from "@/lib/text";
 
 type ImportRequestBody = {
@@ -9,6 +10,9 @@ type ImportRequestBody = {
 };
 
 export async function POST(req: NextRequest) {
+  const badReq = assertTrustedMutationRequest(req);
+  if (badReq) return badReq;
+
   const ip = getClientIpFromHeaders(req.headers);
   const limit = await checkRateLimit({
     key: `wordsImport:${ip}`,
@@ -25,9 +29,8 @@ export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as ImportRequestBody;
     const rawText = body.rawText ?? "";
-
     if (!rawText.trim()) {
-      return NextResponse.json({ error: "rawText가 비어 있습니다." }, { status: 400 });
+      return NextResponse.json({ error: "rawText is required." }, { status: 400 });
     }
 
     const parsed = parseWords(rawText);
@@ -36,47 +39,34 @@ export async function POST(req: NextRequest) {
         importedCount: 0,
         skippedCount: 0,
         delimiter: parsed.delimiter,
-        message: "유효한 단어가 없습니다."
+        message: "No valid rows found."
       });
     }
 
-    const existing = await prisma.word.findMany({
-      select: { en: true }
-    });
+    const existing = await prisma.word.findMany({ select: { en: true } });
     const existingNormalized = new Set(existing.map((w) => normalizeEn(w.en)));
 
     let importedCount = 0;
     let skippedCount = 0;
-
     for (const row of parsed.rows) {
       if (existingNormalized.has(normalizeEn(row.en))) {
         skippedCount += 1;
         continue;
       }
-
       const created = await prisma.word.create({
-        data: {
-          en: row.en,
-          ko: row.ko
-        },
+        data: { en: row.en, ko: row.ko },
         select: { en: true }
       });
       existingNormalized.add(normalizeEn(created.en));
       importedCount += 1;
     }
 
-    return NextResponse.json({
-      importedCount,
-      skippedCount,
-      delimiter: parsed.delimiter
-    });
+    return NextResponse.json({ importedCount, skippedCount, delimiter: parsed.delimiter });
   } catch (error) {
     return NextResponse.json(
-      {
-        error:
-          error instanceof Error ? error.message : "단어 import 중 알 수 없는 오류가 발생했습니다."
-      },
+      { error: error instanceof Error ? error.message : "Unexpected error during word import." },
       { status: 400 }
     );
   }
 }
+

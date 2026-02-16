@@ -140,9 +140,8 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
             {wordbook.title}
           </h1>
           <p className="mt-2 text-sm text-slate-600">
-            by {wordbook.owner.email} · {wordbook.items.length} items · {wordbook.downloadCount}{" "}
-            downloads
-            {downloadedAt ? ` · downloaded ${downloadedAt.toISOString().slice(0, 10)}` : ""} ·{" "}
+            by {wordbook.owner.email} | {wordbook.items.length} items | {wordbook.downloadCount}{" "}
+            downloads{downloadedAt ? ` | downloaded ${downloadedAt.toISOString().slice(0, 10)}` : ""} |{" "}
             {wordbook.isPublic ? "Public" : "Private"}
           </p>
           {wordbook.description ? (
@@ -281,3 +280,4 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
     </section>
   );
 }
+

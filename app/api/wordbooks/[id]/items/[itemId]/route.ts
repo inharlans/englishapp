@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { getUserFromRequestCookies } from "@/lib/authServer";
 import { prisma } from "@/lib/prisma";
+import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
 
 function parseId(raw: string): number | null {
   const n = Number(raw);
@@ -13,6 +14,9 @@ export async function PATCH(
   req: NextRequest,
   ctx: { params: Promise<{ id: string; itemId: string }> }
 ) {
+  const badReq = assertTrustedMutationRequest(req);
+  if (badReq) return badReq;
+
   const { id: idRaw, itemId: itemIdRaw } = await ctx.params;
   const wordbookId = parseId(idRaw);
   const itemId = parseId(itemIdRaw);
@@ -103,6 +107,9 @@ export async function DELETE(
   req: NextRequest,
   ctx: { params: Promise<{ id: string; itemId: string }> }
 ) {
+  const badReq = assertTrustedMutationRequest(req);
+  if (badReq) return badReq;
+
   const { id: idRaw, itemId: itemIdRaw } = await ctx.params;
   const wordbookId = parseId(idRaw);
   const itemId = parseId(itemIdRaw);

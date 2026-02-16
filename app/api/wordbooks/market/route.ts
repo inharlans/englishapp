@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { getUserFromRequestCookies } from "@/lib/authServer";
 import { prisma } from "@/lib/prisma";
-import { computeWordbookRankScore } from "@/lib/wordbookRanking";
 
 type SortMode = "top" | "new" | "downloads";
 
@@ -48,20 +47,15 @@ export async function GET(req: NextRequest) {
       ? [{ createdAt: "desc" as const }]
       : sort === "downloads"
         ? [{ downloadCount: "desc" as const }, { ratingAvg: "desc" as const }]
-        : [
-            { ratingAvg: "desc" as const },
-            { ratingCount: "desc" as const },
-            { downloadCount: "desc" as const },
-            { createdAt: "desc" as const }
-          ];
+        : [{ rankScore: "desc" as const }, { createdAt: "desc" as const }];
 
-  const [total, fetched] = await Promise.all([
+  const [total, wordbooks] = await Promise.all([
     prisma.wordbook.count({ where }),
     prisma.wordbook.findMany({
       where,
       orderBy: orderByForDb,
-      skip: sort === "top" ? 0 : page * take,
-      take: sort === "top" ? Math.min(400, (page + 1) * take + 120) : take,
+      skip: page * take,
+      take,
       select: {
         id: true,
         title: true,
@@ -79,21 +73,6 @@ export async function GET(req: NextRequest) {
       }
     })
   ]);
-
-  const withScore = fetched.map((wb) => ({
-    ...wb,
-    rankScore: computeWordbookRankScore({
-      ratingAvg: wb.ratingAvg,
-      ratingCount: wb.ratingCount,
-      downloadCount: wb.downloadCount,
-      createdAt: wb.createdAt
-    })
-  }));
-
-  const wordbooks =
-    sort === "top"
-      ? withScore.sort((a, b) => b.rankScore - a.rankScore).slice(page * take, page * take + take)
-      : withScore;
 
   return NextResponse.json({ total, page, take, sort, q, wordbooks }, { status: 200 });
 }

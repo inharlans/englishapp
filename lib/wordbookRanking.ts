@@ -23,3 +23,41 @@ export function computeWordbookRankScore(input: RankInput): number {
   return bayesian + downloadBoost + recencyBoost - lowSamplePenalty;
 }
 
+export async function refreshWordbookRankScore(
+  tx: {
+    wordbook: {
+      findUnique(args: any): Promise<{
+        id: number;
+        ratingAvg: number;
+        ratingCount: number;
+        downloadCount: number;
+        createdAt: Date;
+      } | null>;
+      update(args: any): Promise<unknown>;
+    };
+  },
+  wordbookId: number
+): Promise<void> {
+  const wb = await tx.wordbook.findUnique({
+    where: { id: wordbookId },
+    select: {
+      id: true,
+      ratingAvg: true,
+      ratingCount: true,
+      downloadCount: true,
+      createdAt: true
+    }
+  });
+  if (!wb) return;
+
+  const rankScore = computeWordbookRankScore({
+    ratingAvg: wb.ratingAvg,
+    ratingCount: wb.ratingCount,
+    downloadCount: wb.downloadCount,
+    createdAt: wb.createdAt
+  });
+  await tx.wordbook.update({
+    where: { id: wordbookId },
+    data: { rankScore, rankScoreUpdatedAt: new Date() }
+  });
+}

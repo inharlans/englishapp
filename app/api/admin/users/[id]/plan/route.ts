@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { getUserFromRequestCookies } from "@/lib/authServer";
 import { prisma } from "@/lib/prisma";
+import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
 
 function parseId(raw: string): number | null {
   const n = Number(raw);
@@ -15,6 +16,9 @@ function parsePlan(raw: unknown): "FREE" | "PRO" | null {
 }
 
 export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
+  const badReq = assertTrustedMutationRequest(req);
+  if (badReq) return badReq;
+
   const admin = await getUserFromRequestCookies(req.cookies);
   if (!admin) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   if (!admin.isAdmin) return NextResponse.json({ error: "Forbidden." }, { status: 403 });
@@ -51,4 +55,3 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
 
   return NextResponse.json({ user: updated }, { status: 200 });
 }
-

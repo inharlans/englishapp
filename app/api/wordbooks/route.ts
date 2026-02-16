@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { getUserFromRequestCookies } from "@/lib/authServer";
 import { prisma } from "@/lib/prisma";
+import { computeWordbookRankScore } from "@/lib/wordbookRanking";
+import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
 
 export async function GET(req: NextRequest) {
   const user = await getUserFromRequestCookies(req.cookies);
@@ -32,6 +34,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const badReq = assertTrustedMutationRequest(req);
+  if (badReq) return badReq;
+
   const user = await getUserFromRequestCookies(req.cookies);
   if (!user) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
@@ -71,6 +76,19 @@ export async function POST(req: NextRequest) {
       ratingCount: true,
       createdAt: true,
       updatedAt: true
+    }
+  });
+
+  await prisma.wordbook.update({
+    where: { id: wordbook.id },
+    data: {
+      rankScore: computeWordbookRankScore({
+        ratingAvg: 0,
+        ratingCount: 0,
+        downloadCount: 0,
+        createdAt: wordbook.createdAt
+      }),
+      rankScoreUpdatedAt: new Date()
     }
   });
 

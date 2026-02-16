@@ -72,7 +72,7 @@ export function StudyClient({ id }: { id: number }) {
           </h1>
           {wb ? (
             <p className="mt-2 text-sm text-slate-600">
-              {items.length} items · {idx + 1}/{Math.max(items.length, 1)}
+              {items.length} items | {idx + 1}/{Math.max(items.length, 1)}
             </p>
           ) : null}
         </div>
@@ -166,3 +166,4 @@ export function StudyClient({ id }: { id: number }) {
     </section>
   );
 }
+

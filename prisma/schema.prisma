@@ -99,6 +99,8 @@ model Wordbook {
   downloadCount Int   @default(0)
   ratingAvg     Float @default(0)
   ratingCount   Int   @default(0)
+  rankScore     Float @default(0)
+  rankScoreUpdatedAt DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
