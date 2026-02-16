@@ -81,6 +81,7 @@ English 1500(고정 단어 리스트)
 - `GET /api/wordbooks/[id]/study` 다운로드 단어장 학습 상태/아이템 조회(사용자 스코프)
 - `POST /api/wordbooks/[id]/study/items/[itemId]` 다운로드 단어장 아이템 정오답/리셋 반영(사용자 스코프)
 - `GET /api/wordbooks/[id]/quiz` 다운로드 단어장 퀴즈 문제 로드(의미/단어 모드)
+  - `partSize`, `partIndex` 쿼리로 part 범위 출제 가능
 - `POST /api/wordbooks/[id]/quiz/submit` 다운로드 단어장 퀴즈 채점/상태 반영(사용자 스코프)
 - `POST /api/wordbooks/[id]/sync-download` 다운로드 단어장 최신 버전 동기화(학습상태 유지/초기화 선택)
 
@@ -491,3 +492,10 @@ Done in this sprint:
 - 단어장 생성 정책/가이드 보강:
   - 서버에서 FREE 생성 1회 제한, PRO 무제한 생성을 강제.
   - `/wordbooks/new`에 좋은 단어장 작성 가이드라인(제목/설명/구성/예문 원칙) 추가.
+- 학습 파트(part) 기능:
+  - 퀴즈와 리스트(`list-correct`, `list-wrong`, `list-half`)에서 part 단위 학습 지원.
+  - part 기준은 `1번째 단어 ~ n번째 단어`, `n`은 단어장별 설정(로컬 저장)으로 조정.
+  - part 개수는 `전체 단어 수 / n`으로 계산.
+  - 리스트 화면 각 part 버튼에 `p/n` 표시(`p`: 해당 리스트 조건에 맞는 단어 수).
+- memorize 보강:
+  - 하단 고정 컨트롤에 `맞춘 단어 숨김` 토글 추가(정답 상태 단어 제외, 로컬 저장).

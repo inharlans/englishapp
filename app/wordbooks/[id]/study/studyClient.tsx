@@ -38,6 +38,7 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
   const [speakLang, setSpeakLang] = useState<string | undefined>(undefined);
   const [items, setItems] = useState<Item[]>([]);
   const [query, setQuery] = useState("");
+  const [hideCorrect, setHideCorrect] = useState(false);
   const [pageSize, setPageSize] = useState(1);
   const [pageIndex, setPageIndex] = useState(0);
   const [pageInput, setPageInput] = useState("1");
@@ -85,14 +86,23 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
     return Math.round((studyState.correctCount / items.length) * 100);
   }, [items.length, studyState.correctCount]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const raw = window.localStorage.getItem(`wordbook_memorize_hide_correct_${wordbookId}`);
+    if (raw === "1") setHideCorrect(true);
+  }, [wordbookId]);
+
   const filteredItems = useMemo(() => {
+    const scoped = hideCorrect
+      ? items.filter((item) => itemStates.get(item.id)?.status !== "CORRECT")
+      : items;
     const q = query.trim().toLowerCase();
-    if (!q) return items;
-    return items.filter((item) => {
+    if (!q) return scoped;
+    return scoped.filter((item) => {
       const hay = `${item.term} ${item.meaning} ${item.pronunciation ?? ""} ${item.example ?? ""} ${item.exampleMeaning ?? ""}`.toLowerCase();
       return hay.includes(q);
     });
-  }, [items, query]);
+  }, [hideCorrect, itemStates, items, query]);
 
   const totalPages = Math.max(1, Math.ceil(filteredItems.length / pageSize));
   const safePageIndex = Math.min(Math.max(pageIndex, 0), totalPages - 1);
@@ -132,6 +142,16 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
     if (!Number.isFinite(n)) return;
     const next = Math.min(Math.max(Math.floor(n), 1), totalPages);
     setPageIndex(next - 1);
+  };
+
+  const toggleHideCorrect = () => {
+    setHideCorrect((prev) => {
+      const next = !prev;
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(`wordbook_memorize_hide_correct_${wordbookId}`, next ? "1" : "0");
+      }
+      return next;
+    });
   };
 
   return (
@@ -294,6 +314,18 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
               className="rounded-lg bg-slate-900 px-3 py-1 font-semibold text-white hover:bg-slate-800"
             >
               이동
+            </button>
+            <button
+              type="button"
+              onClick={toggleHideCorrect}
+              className={[
+                "rounded-lg border px-3 py-1 font-semibold",
+                hideCorrect
+                  ? "border-slate-900 bg-slate-900 text-white"
+                  : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+              ].join(" ")}
+            >
+              맞춘 단어 숨김
             </button>
           </div>
         </div>

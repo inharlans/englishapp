@@ -1,10 +1,11 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useState } from "react";
 
 import { MeaningView } from "@/components/MeaningView";
 import { WordbookStudyTabs } from "@/components/wordbooks/WordbookStudyTabs";
 import { useMeaningViewMode } from "@/components/wordbooks/useMeaningViewMode";
+import { useWordbookParting } from "@/components/wordbooks/useWordbookParting";
 import { DensityModeToggle } from "@/components/ui/DensityModeToggle";
 import { densityCardClass, useDensityMode } from "@/components/ui/useDensityMode";
 import { EmptyStateCard } from "@/components/ui/EmptyStateCard";
@@ -18,6 +19,7 @@ type Item = {
   meaning: string;
   example: string | null;
   exampleMeaning: string | null;
+  position?: number | null;
 };
 
 type ItemState = {
@@ -62,6 +64,7 @@ export function WordbookListClient({
   const [error, setError] = useState("");
   const { mode: meaningMode, setMode: setMeaningMode } = useMeaningViewMode();
   const { mode: densityMode, setMode: setDensityMode } = useDensityMode();
+  const { partSize, setPartSize, partIndex, setPartIndex, partCount } = useWordbookParting(wordbookId, items.length);
 
   useEffect(() => {
     const load = async () => {
@@ -83,9 +86,27 @@ export function WordbookListClient({
     void load();
   }, [wordbookId]);
 
+  const partStart = (partIndex - 1) * partSize;
+  const partItems = useMemo(() => items.slice(partStart, partStart + partSize), [items, partStart, partSize]);
+
+  const partStats = useMemo(
+    () =>
+      Array.from({ length: partCount }, (_, idx) => {
+        const start = idx * partSize;
+        const segment = items.slice(start, start + partSize);
+        const matchedCount = segment.filter((item) => matches(mode, states.get(item.id))).length;
+        return {
+          partNumber: idx + 1,
+          totalInPart: segment.length,
+          matchedCount
+        };
+      }),
+    [items, mode, partCount, partSize, states]
+  );
+
   const filtered = useMemo(
-    () => items.filter((item) => matches(mode, states.get(item.id))),
-    [items, mode, states]
+    () => partItems.filter((item) => matches(mode, states.get(item.id))),
+    [partItems, mode, states]
   );
 
   return (
@@ -110,6 +131,43 @@ export function WordbookListClient({
         </div>
       </div>
 
+      <div className="ui-card p-4">
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          <label className="font-semibold text-slate-700">Part 크기(n)</label>
+          <input
+            type="number"
+            min={1}
+            max={200}
+            value={partSize}
+            onChange={(e) => setPartSize(Number(e.target.value))}
+            className="w-20 rounded border border-slate-300 bg-white px-2 py-1 text-sm"
+          />
+          <span className="text-slate-500">
+            총 {items.length}개 · {partCount}개 part
+          </span>
+        </div>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {partStats.map((s) => (
+            <button
+              key={s.partNumber}
+              type="button"
+              onClick={() => setPartIndex(s.partNumber)}
+              className={[
+                "rounded-lg border px-3 py-1 text-left text-xs font-semibold",
+                s.partNumber === partIndex
+                  ? "border-slate-900 bg-slate-900 text-white"
+                  : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+              ].join(" ")}
+            >
+              <span>Part {s.partNumber}</span>
+              <span className={s.partNumber === partIndex ? "ml-2 text-slate-200" : "ml-2 text-slate-500"}>
+                {s.matchedCount}/{s.totalInPart}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+
       {loading ? <p className="text-sm text-slate-600">Loading...</p> : null}
       {error ? (
         <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>
@@ -118,7 +176,7 @@ export function WordbookListClient({
       {!loading && filtered.length === 0 ? (
         <EmptyStateCard
           title="조건에 맞는 단어가 없습니다"
-          description="필터 조건을 바꾸거나 다른 학습 탭으로 이동해보세요."
+          description={`Part ${partIndex}에서 조건에 맞는 단어를 찾지 못했습니다. 다른 part를 선택해보세요.`}
           primary={{ label: "암기 탭으로 이동", href: `/wordbooks/${wordbookId}/memorize` }}
           secondary={{ label: "퀴즈 탭으로 이동", href: `/wordbooks/${wordbookId}/quiz-meaning` }}
         />
