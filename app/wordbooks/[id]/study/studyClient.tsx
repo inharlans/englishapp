@@ -39,7 +39,7 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
   const [items, setItems] = useState<Item[]>([]);
   const [query, setQuery] = useState("");
   const [hideCorrect, setHideCorrect] = useState(false);
-  const [pageSize, setPageSize] = useState(1);
+  const [pageSize, setPageSize] = useState(4);
   const [pageIndex, setPageIndex] = useState(0);
   const [pageInput, setPageInput] = useState("1");
   const [itemStates, setItemStates] = useState<Map<number, ItemState>>(new Map());
@@ -164,7 +164,7 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
             체크 {studyState.studiedCount} / 정답 {studyState.correctCount} / 오답 {studyState.wrongCount}
           </p>
         </div>
-        <WordbookStudyTabs wordbookId={wordbookId} active="memorize" />
+        <WordbookStudyTabs wordbookId={wordbookId} active="memorize" showBack={false} />
       </header>
 
       <div className="ui-card p-3">

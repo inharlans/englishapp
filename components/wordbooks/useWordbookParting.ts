@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-const DEFAULT_PART_SIZE = 20;
+const DEFAULT_PART_SIZE = 30;
 const MIN_PART_SIZE = 1;
 const MAX_PART_SIZE = 200;
 

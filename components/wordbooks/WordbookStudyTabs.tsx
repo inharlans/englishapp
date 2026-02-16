@@ -11,7 +11,15 @@ const tabs = [
 
 export type StudyTabKey = (typeof tabs)[number]["key"];
 
-export function WordbookStudyTabs({ wordbookId, active }: { wordbookId: number; active: StudyTabKey }) {
+export function WordbookStudyTabs({
+  wordbookId,
+  active,
+  showBack = true
+}: {
+  wordbookId: number;
+  active: StudyTabKey;
+  showBack?: boolean;
+}) {
   return (
     <nav
       aria-label="Wordbook study tabs"
@@ -41,12 +49,14 @@ export function WordbookStudyTabs({ wordbookId, active }: { wordbookId: number; 
             </Link>
           );
         })}
-        <Link
-          href={{ pathname: `/wordbooks/${wordbookId}` }}
-          className="ml-auto rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-        >
-          Back
-        </Link>
+        {showBack ? (
+          <Link
+            href={{ pathname: `/wordbooks/${wordbookId}` }}
+            className="ml-auto rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+          >
+            Back
+          </Link>
+        ) : null}
       </div>
     </nav>
   );
