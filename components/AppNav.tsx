@@ -12,7 +12,7 @@ export function AppNav() {
   return (
     <nav
       aria-label="주요 메뉴"
-      className="mb-6 rounded-2xl border border-white/60 bg-white/90 p-4 shadow-[0_16px_36px_-24px_rgba(15,23,42,0.45)] backdrop-blur"
+      className="ui-card-soft mb-6 p-4"
     >
       <div className="flex flex-wrap items-center gap-2" role="list">
         {links.map((link) => (
@@ -20,7 +20,7 @@ export function AppNav() {
             key={link.href}
             href={{ pathname: link.href }}
             role="listitem"
-            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:-translate-y-0.5 hover:border-teal-300 hover:text-slate-900"
+            className="ui-btn-secondary px-3 py-2 text-sm"
           >
             {link.label}
           </Link>
@@ -28,14 +28,11 @@ export function AppNav() {
         <div className="ml-auto flex items-center gap-2">
           <Link
             href="/login"
-            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-teal-300 hover:text-slate-900"
+            className="ui-btn-secondary px-3 py-2 text-sm"
           >
             Login
           </Link>
-          <Link
-            href="/logout"
-            className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
-          >
+          <Link href="/logout" className="ui-btn-primary px-3 py-2 text-sm">
             Logout
           </Link>
         </div>

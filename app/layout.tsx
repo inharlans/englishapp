@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import { Manrope, Noto_Sans_KR } from "next/font/google";
 
 import "./globals.css";
@@ -49,3 +49,4 @@ export default function RootLayout({
     </html>
   );
 }
+

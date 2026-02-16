@@ -439,3 +439,30 @@ Done in this sprint:
 - `MeaningView` 파서를 개선해 `(명)...(동)...` 형태의 복합 품사 문자열을 품사별로 분리 렌더링
 - `간결` 모드: 품사+의미를 항목 단위(칩)로 분리
 - `자세히` 모드: 품사 그룹(명사/동사 등) 기준으로 줄바꿈 목록 표시
+
+## 2026-02-17 UI 아이디어 5종 적용 완료(코드 반영)
+
+- [x] 아이디어 1: 학습 대시보드 헤더 적용
+  - `components/wordbooks/LearningDashboardHeader.tsx` 추가
+  - 라이브러리 상단에 진행률/활성 단어장/업데이트 필요 지표 + 추천 CTA 배치
+- [x] 아이디어 2: 컬러/타이포/카드 토큰 기반 시각 시스템 적용
+  - `app/globals.css`에 `ui-*` 공통 토큰/컴포넌트 클래스 추가
+  - 네비/라이브러리/마켓/학습 화면에 공통 스타일 적용
+- [x] 아이디어 3: 밀도 모드(컴팩트/표준/집중) 적용
+  - `components/ui/useDensityMode.ts`, `DensityModeToggle.tsx` 추가
+  - memorize/quiz/list 화면에 밀도 모드 토글 및 로컬 저장 연동
+- [x] 아이디어 4: 저소음 모션 정책 적용
+  - 카드 진입 `ui-fade-in` 및 `prefers-reduced-motion` 강화
+  - 과도한 모션 대신 핵심 전환만 유지
+- [x] 아이디어 5: 행동 중심 Empty State 적용
+  - `components/ui/EmptyStateCard.tsx` 추가
+  - 라이브러리/마켓/학습/퀴즈/리스트의 빈 상태를 액션형으로 통일
+
+추가 반영:
+- 레이아웃 skip link 한글 깨짐 수정(`app/layout.tsx`: "본문으로 건너뛰기")
+- 마켓 페이지 JSX 파싱 오류(`->`) 수정으로 타입체크/빌드 안정화
+
+검증 결과:
+- `npm run typecheck` 통과
+- `npm run test` 통과
+- `npm run build` 통과

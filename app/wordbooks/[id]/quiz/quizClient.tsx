@@ -9,6 +9,9 @@ import { MeaningView } from "@/components/MeaningView";
 import { SessionRecapPanel } from "@/components/wordbooks/SessionRecapPanel";
 import { WordbookStudyTabs } from "@/components/wordbooks/WordbookStudyTabs";
 import { useMeaningViewMode } from "@/components/wordbooks/useMeaningViewMode";
+import { DensityModeToggle } from "@/components/ui/DensityModeToggle";
+import { useDensityMode } from "@/components/ui/useDensityMode";
+import { EmptyStateCard } from "@/components/ui/EmptyStateCard";
 
 type QuizItem = {
   id: number;
@@ -36,6 +39,7 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING", lockMo
   const [corrects, setCorrects] = useState(0);
   const [wrongs, setWrongs] = useState(0);
   const { mode: meaningMode, setMode: setMeaningMode } = useMeaningViewMode();
+  const { mode: densityMode, setMode: setDensityMode } = useDensityMode();
 
   const loadNext = useCallback(async () => {
     setLoading(true);
@@ -123,11 +127,14 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING", lockMo
         <WordbookStudyTabs wordbookId={wordbookId} active={activeTab} />
       </header>
 
-      <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-3">
+      <div className="ui-card p-3">
         <div className="text-xs text-slate-600">품사/의미 표시</div>
-        <div className="inline-flex rounded-lg border border-slate-200 p-1 text-xs">
-          <button type="button" onClick={() => setMeaningMode("compact")} className={meaningMode === "compact" ? "rounded-md bg-slate-900 px-2 py-1 font-semibold text-white" : "rounded-md px-2 py-1 text-slate-700"}>간결</button>
-          <button type="button" onClick={() => setMeaningMode("detailed")} className={meaningMode === "detailed" ? "rounded-md bg-slate-900 px-2 py-1 font-semibold text-white" : "rounded-md px-2 py-1 text-slate-700"}>자세히</button>
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <div className="inline-flex rounded-lg border border-slate-200 p-1 text-xs">
+            <button type="button" onClick={() => setMeaningMode("compact")} className={meaningMode === "compact" ? "rounded-md bg-slate-900 px-2 py-1 font-semibold text-white" : "rounded-md px-2 py-1 text-slate-700"}>간결</button>
+            <button type="button" onClick={() => setMeaningMode("detailed")} className={meaningMode === "detailed" ? "rounded-md bg-slate-900 px-2 py-1 font-semibold text-white" : "rounded-md px-2 py-1 text-slate-700"}>자세히</button>
+          </div>
+          <DensityModeToggle mode={densityMode} onChange={setDensityMode} />
         </div>
       </div>
 
@@ -148,9 +155,18 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING", lockMo
         </div>
       ) : null}
 
-      <div className="rounded-3xl border border-slate-200 bg-white p-5">
+      <div className={densityMode === "compact" ? "ui-card p-3" : densityMode === "focus" ? "ui-card p-6" : "ui-card p-5"}>
         {!item ? (
-          <p className="text-sm text-slate-600">{loading ? "Loading..." : "No quiz items available."}</p>
+          loading ? (
+            <p className="text-sm text-slate-600">Loading...</p>
+          ) : (
+            <EmptyStateCard
+              title="출제 가능한 문제가 없습니다"
+              description="먼저 단어를 추가하거나 암기에서 상태를 만든 뒤 다시 시도해보세요."
+              primary={{ label: "단어장 상세로 이동", href: `/wordbooks/${wordbookId}` }}
+              secondary={{ label: "암기 시작", href: `/wordbooks/${wordbookId}/memorize` }}
+            />
+          )
         ) : (
           <>
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Question</p>

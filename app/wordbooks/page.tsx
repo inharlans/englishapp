@@ -7,7 +7,9 @@ import { StarRating } from "@/components/wordbooks/StarRating";
 import { OfflineSaveButton } from "@/components/wordbooks/OfflineSaveButton";
 import { SyncDownloadButton } from "@/components/wordbooks/SyncDownloadButton";
 import { PostDownloadOnboardingBanner } from "@/components/wordbooks/PostDownloadOnboardingBanner";
+import { LearningDashboardHeader } from "@/components/wordbooks/LearningDashboardHeader";
 import { aggregateVersionLogs } from "@/lib/wordbookVersion";
+import { EmptyStateCard } from "@/components/ui/EmptyStateCard";
 
 export default async function WordbooksPage() {
   const user = await getUserFromRequestCookies(await cookies());
@@ -20,7 +22,7 @@ export default async function WordbooksPage() {
     );
   }
 
-  const [mine, downloaded, downloadsUsed] = await Promise.all([
+  const [mine, downloaded, downloadsUsed, studyAgg] = await Promise.all([
     prisma.wordbook.findMany({
       where: { ownerId: user.id },
       orderBy: { updatedAt: "desc" },
@@ -63,6 +65,10 @@ export default async function WordbooksPage() {
     }),
     prisma.wordbookDownload.count({
       where: { userId: user.id }
+    }),
+    prisma.wordbookStudyState.aggregate({
+      where: { userId: user.id },
+      _sum: { studiedCount: true, correctCount: true }
     })
   ]);
 
@@ -91,16 +97,38 @@ export default async function WordbooksPage() {
     summaryByWordbook.set(d.wordbook.id, aggregateVersionLogs(relevant));
   }
 
+  const staleDecks = downloaded.filter((d) => d.wordbook.contentVersion > d.downloadedVersion).length;
+  const activeDecks = mine.length + downloaded.length;
+  const studiedSum = studyAgg._sum.studiedCount ?? 0;
+  const correctSum = studyAgg._sum.correctCount ?? 0;
+  const studyRate = studiedSum > 0 ? Math.round((correctSum / studiedSum) * 100) : 0;
+  const suggestedHref =
+    downloaded.find((d) => d.wordbook.contentVersion > d.downloadedVersion)?.wordbook.id
+      ? `/wordbooks/${downloaded.find((d) => d.wordbook.contentVersion > d.downloadedVersion)!.wordbook.id}`
+      : downloaded[0]?.wordbook?.id
+        ? `/wordbooks/${downloaded[0].wordbook.id}/memorize`
+        : mine[0]?.id
+          ? `/wordbooks/${mine[0].id}`
+          : "/wordbooks/new";
+  const suggestedLabel = staleDecks > 0 ? "업데이트 단어장 확인" : downloaded.length > 0 ? "마지막 단어장 이어서" : "첫 단어장 만들기";
+
   return (
     <section className="space-y-6">
       <PostDownloadOnboardingBanner availableWordbookIds={downloadedWordbookIds} />
+      <LearningDashboardHeader
+        studyRate={studyRate}
+        activeDecks={activeDecks}
+        staleDecks={staleDecks}
+        suggestedHref={suggestedHref}
+        suggestedLabel={suggestedLabel}
+      />
       <header className="flex flex-wrap items-end gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
             Wordbooks
           </p>
-          <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-900">My Library</h1>
-          <p className="mt-2 text-sm text-slate-600">
+          <h1 className="ui-h2 mt-2">My Library</h1>
+          <p className="ui-body mt-2">
             Create your own wordbooks or download public ones.
           </p>
           <p className="mt-1 text-xs text-slate-500">
@@ -165,14 +193,19 @@ export default async function WordbooksPage() {
           Created
         </h2>
         {mine.length === 0 ? (
-          <p className="text-sm text-slate-600">No wordbooks yet.</p>
+          <EmptyStateCard
+            title="아직 만든 단어장이 없습니다"
+            description="첫 단어장을 만들고 학습 루틴을 시작해보세요."
+            primary={{ label: "새 단어장 만들기", href: "/wordbooks/new" }}
+            secondary={{ label: "마켓 둘러보기", href: "/wordbooks/market" }}
+          />
         ) : (
           <div className="grid gap-3 md:grid-cols-2">
             {mine.map((wb) => (
               <Link
                 key={wb.id}
                 href={{ pathname: `/wordbooks/${wb.id}` }}
-                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_14px_34px_-24px_rgba(15,23,42,0.55)] transition hover:-translate-y-0.5 hover:border-teal-300"
+                className="ui-card p-4 transition hover:-translate-y-0.5 hover:border-teal-300"
               >
                 <div className="flex items-start gap-3">
                   <div className="min-w-0 flex-1">
@@ -212,13 +245,18 @@ export default async function WordbooksPage() {
           Downloaded (Read-only)
         </h2>
         {downloaded.length === 0 ? (
-          <p className="text-sm text-slate-600">No downloads yet.</p>
+          <EmptyStateCard
+            title="다운로드한 단어장이 없습니다"
+            description="마켓에서 단어장을 내려받아 바로 암기/퀴즈를 시작할 수 있습니다."
+            primary={{ label: "마켓 둘러보기", href: "/wordbooks/market" }}
+            secondary={{ label: "내 단어장 만들기", href: "/wordbooks/new" }}
+          />
         ) : (
           <div className="grid gap-3 md:grid-cols-2">
             {downloaded.map((d) => (
               <div
                 key={d.wordbook.id}
-                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_14px_34px_-24px_rgba(15,23,42,0.55)]"
+                className="ui-card p-4"
               >
                 <div className="flex items-start gap-3">
                   <div className="min-w-0 flex-1">

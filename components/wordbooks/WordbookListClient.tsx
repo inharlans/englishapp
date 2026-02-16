@@ -5,6 +5,9 @@ import { useEffect, useMemo, useState } from "react";
 import { MeaningView } from "@/components/MeaningView";
 import { WordbookStudyTabs } from "@/components/wordbooks/WordbookStudyTabs";
 import { useMeaningViewMode } from "@/components/wordbooks/useMeaningViewMode";
+import { DensityModeToggle } from "@/components/ui/DensityModeToggle";
+import { densityCardClass, useDensityMode } from "@/components/ui/useDensityMode";
+import { EmptyStateCard } from "@/components/ui/EmptyStateCard";
 import { apiFetch } from "@/lib/clientApi";
 
 type ListMode = "listCorrect" | "listWrong" | "listHalf";
@@ -58,6 +61,7 @@ export function WordbookListClient({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const { mode: meaningMode, setMode: setMeaningMode } = useMeaningViewMode();
+  const { mode: densityMode, setMode: setDensityMode } = useDensityMode();
 
   useEffect(() => {
     const load = async () => {
@@ -95,11 +99,14 @@ export function WordbookListClient({
         <WordbookStudyTabs wordbookId={wordbookId} active={activeTab(mode)} />
       </header>
 
-      <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-3">
+      <div className="ui-card p-3">
         <div className="text-xs text-slate-600">의미 표시</div>
-        <div className="inline-flex rounded-lg border border-slate-200 p-1 text-xs">
-          <button type="button" onClick={() => setMeaningMode("compact")} className={meaningMode === "compact" ? "rounded-md bg-slate-900 px-2 py-1 font-semibold text-white" : "rounded-md px-2 py-1 text-slate-700"}>간결</button>
-          <button type="button" onClick={() => setMeaningMode("detailed")} className={meaningMode === "detailed" ? "rounded-md bg-slate-900 px-2 py-1 font-semibold text-white" : "rounded-md px-2 py-1 text-slate-700"}>자세히</button>
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <div className="inline-flex rounded-lg border border-slate-200 p-1 text-xs">
+            <button type="button" onClick={() => setMeaningMode("compact")} className={meaningMode === "compact" ? "rounded-md bg-slate-900 px-2 py-1 font-semibold text-white" : "rounded-md px-2 py-1 text-slate-700"}>간결</button>
+            <button type="button" onClick={() => setMeaningMode("detailed")} className={meaningMode === "detailed" ? "rounded-md bg-slate-900 px-2 py-1 font-semibold text-white" : "rounded-md px-2 py-1 text-slate-700"}>자세히</button>
+          </div>
+          <DensityModeToggle mode={densityMode} onChange={setDensityMode} />
         </div>
       </div>
 
@@ -109,16 +116,19 @@ export function WordbookListClient({
       ) : null}
 
       {!loading && filtered.length === 0 ? (
-        <p className="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-600">
-          해당 조건에 맞는 단어가 없습니다.
-        </p>
+        <EmptyStateCard
+          title="조건에 맞는 단어가 없습니다"
+          description="필터 조건을 바꾸거나 다른 학습 탭으로 이동해보세요."
+          primary={{ label: "암기 탭으로 이동", href: `/wordbooks/${wordbookId}/memorize` }}
+          secondary={{ label: "퀴즈 탭으로 이동", href: `/wordbooks/${wordbookId}/quiz-meaning` }}
+        />
       ) : null}
 
       <div className="grid gap-3 md:grid-cols-2">
         {filtered.map((item) => {
           const state = states.get(item.id);
           return (
-            <article key={item.id} className="rounded-2xl border border-slate-200 bg-white p-4">
+            <article key={item.id} className={`ui-card ui-fade-in ${densityCardClass(densityMode)}`}>
               <h2 className="text-lg font-bold text-slate-900">{item.term}</h2>
               <div className="mt-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
                 <MeaningView value={item.meaning} mode={meaningMode} className="text-sm" />

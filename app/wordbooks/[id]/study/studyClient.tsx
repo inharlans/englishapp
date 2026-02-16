@@ -9,6 +9,9 @@ import { MeaningView } from "@/components/MeaningView";
 import { SessionRecapPanel } from "@/components/wordbooks/SessionRecapPanel";
 import { WordbookStudyTabs } from "@/components/wordbooks/WordbookStudyTabs";
 import { useMeaningViewMode } from "@/components/wordbooks/useMeaningViewMode";
+import { DensityModeToggle } from "@/components/ui/DensityModeToggle";
+import { densityCardClass, useDensityMode } from "@/components/ui/useDensityMode";
+import { EmptyStateCard } from "@/components/ui/EmptyStateCard";
 
 type Item = {
   id: number;
@@ -44,6 +47,7 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
   const [error, setError] = useState("");
   const [sessionActions, setSessionActions] = useState(0);
   const { mode, setMode } = useMeaningViewMode();
+  const { mode: densityMode, setMode: setDensityMode } = useDensityMode();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -151,27 +155,32 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
         <WordbookStudyTabs wordbookId={wordbookId} active="memorize" />
       </header>
 
-      <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-3">
-        <div className="text-xs text-slate-600">의미 표시</div>
-        <div className="inline-flex rounded-lg border border-slate-200 p-1 text-xs">
-          <button
-            type="button"
-            onClick={() => setMode("compact")}
-            className={mode === "compact" ? "rounded-md bg-slate-900 px-2 py-1 font-semibold text-white" : "rounded-md px-2 py-1 text-slate-700"}
-          >
-            간결
-          </button>
-          <button
-            type="button"
-            onClick={() => setMode("detailed")}
-            className={mode === "detailed" ? "rounded-md bg-slate-900 px-2 py-1 font-semibold text-white" : "rounded-md px-2 py-1 text-slate-700"}
-          >
-            자세히
-          </button>
+      <div className="ui-card p-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="text-xs text-slate-600">표시 모드</div>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="inline-flex rounded-lg border border-slate-200 p-1 text-xs">
+              <button
+                type="button"
+                onClick={() => setMode("compact")}
+                className={mode === "compact" ? "rounded-md bg-slate-900 px-2 py-1 font-semibold text-white" : "rounded-md px-2 py-1 text-slate-700"}
+              >
+                간결
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode("detailed")}
+                className={mode === "detailed" ? "rounded-md bg-slate-900 px-2 py-1 font-semibold text-white" : "rounded-md px-2 py-1 text-slate-700"}
+              >
+                자세히
+              </button>
+            </div>
+            <DensityModeToggle mode={densityMode} onChange={setDensityMode} />
+          </div>
         </div>
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-4">
+      <div className="ui-card p-4">
         <div className="flex items-center justify-between text-xs text-slate-500">
           <span>Progress</span>
           <span>{progressPercent}%</span>
@@ -195,11 +204,20 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
         </p>
       ) : null}
 
+      {!loading && items.length === 0 ? (
+        <EmptyStateCard
+          title="학습할 단어가 없습니다"
+          description="이 단어장에는 아직 항목이 없거나 표시 조건에 맞는 단어가 없습니다."
+          primary={{ label: "단어장 상세로 이동", href: `/wordbooks/${wordbookId}` }}
+          secondary={{ label: "마켓 둘러보기", href: "/wordbooks/market" }}
+        />
+      ) : null}
+
       <div className="grid gap-2">
         {items.map((item, idx) => {
           const state = itemStates.get(item.id);
           return (
-            <div key={item.id} className="rounded-xl border border-slate-200 bg-white p-3">
+            <div key={item.id} className={`ui-card ui-fade-in ${densityCardClass(densityMode)}`}>
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <p className="text-sm font-semibold text-slate-900">{item.term}</p>
