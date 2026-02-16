@@ -26,14 +26,14 @@ export function computeWordbookRankScore(input: RankInput): number {
 export async function refreshWordbookRankScore(
   tx: {
     wordbook: {
-      findUnique(args: any): Promise<{
+      findUnique(args: unknown): Promise<{
         id: number;
         ratingAvg: number;
         ratingCount: number;
         downloadCount: number;
         createdAt: Date;
       } | null>;
-      update(args: any): Promise<unknown>;
+      update(args: unknown): Promise<unknown>;
     };
   },
   wordbookId: number
