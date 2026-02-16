@@ -1,4 +1,6 @@
-"use client";
+﻿"use client";
+
+import { apiFetch } from "@/lib/clientApi";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -20,7 +22,7 @@ export function WordbookImportExportPanel({ wordbookId }: { wordbookId: number }
     setLoading(true);
     setMessage("");
     try {
-      const res = await fetch(`/api/wordbooks/${wordbookId}/import`, {
+      const res = await apiFetch(`/api/wordbooks/${wordbookId}/import`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ rawText, format, fillPronunciation: fillPron, replaceAll })
@@ -107,4 +109,6 @@ export function WordbookImportExportPanel({ wordbookId }: { wordbookId: number }
     </section>
   );
 }
+
+
 

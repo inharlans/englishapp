@@ -1,4 +1,6 @@
-"use client";
+﻿"use client";
+
+import { apiFetch } from "@/lib/clientApi";
 
 import { useState } from "react";
 
@@ -19,7 +21,7 @@ export function ImportPanel() {
     setMessage("");
 
     try {
-      const res = await fetch("/api/words/import", {
+      const res = await apiFetch("/api/words/import", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ rawText })
@@ -63,4 +65,6 @@ export function ImportPanel() {
     </section>
   );
 }
+
+
 

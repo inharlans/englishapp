@@ -5,7 +5,9 @@ import { getUserFromRequestCookies } from "@/lib/authServer";
 import { prisma } from "@/lib/prisma";
 import { checkRateLimit, getClientIpFromHeaders } from "@/lib/rateLimit";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
+import { parseJsonWithSchema } from "@/lib/validation";
 import { canAccessWordbookForStudy } from "@/lib/wordbookAccess";
+import { z } from "zod";
 
 function parseId(raw: string): number | null {
   const n = Number(raw);
@@ -13,7 +15,9 @@ function parseId(raw: string): number | null {
   return Math.floor(n);
 }
 
-type Body = { result?: "CORRECT" | "WRONG" | "RESET" };
+const studyItemBodySchema = z.object({
+  result: z.enum(["CORRECT", "WRONG", "RESET"])
+});
 
 async function syncWordbookStudyState(userId: number, wordbookId: number) {
   const states = await prisma.wordbookStudyItemState.findMany({
@@ -77,11 +81,9 @@ export async function POST(
     return NextResponse.json({ error: "Item not found." }, { status: 404 });
   }
 
-  const body = (await req.json().catch(() => null)) as Body | null;
-  const result = body?.result;
-  if (result !== "CORRECT" && result !== "WRONG" && result !== "RESET") {
-    return NextResponse.json({ error: "result must be CORRECT | WRONG | RESET." }, { status: 400 });
-  }
+  const parsedBody = await parseJsonWithSchema(req, studyItemBodySchema);
+  if (!parsedBody.ok) return parsedBody.response;
+  const result = parsedBody.data.result;
 
   if (result === "RESET") {
     await prisma.wordbookStudyItemState.deleteMany({

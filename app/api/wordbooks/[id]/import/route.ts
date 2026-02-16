@@ -5,6 +5,8 @@ import { parseWordbookText } from "@/lib/wordbookIo";
 import { prisma } from "@/lib/prisma";
 import { checkRateLimit, getClientIpFromHeaders } from "@/lib/rateLimit";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
+import { parseJsonWithSchema } from "@/lib/validation";
+import { z } from "zod";
 
 function parseId(raw: string): number | null {
   const n = Number(raw);
@@ -12,12 +14,12 @@ function parseId(raw: string): number | null {
   return Math.floor(n);
 }
 
-type Body = {
-  rawText?: string;
-  format?: "tsv" | "csv";
-  fillPronunciation?: boolean;
-  replaceAll?: boolean;
-};
+const importWordbookSchema = z.object({
+  rawText: z.string().min(1).max(1_000_000),
+  format: z.enum(["tsv", "csv"]).optional(),
+  fillPronunciation: z.boolean().optional(),
+  replaceAll: z.boolean().optional()
+});
 
 export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const badReq = assertTrustedMutationRequest(req);
@@ -52,17 +54,12 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   if (!wordbook) return NextResponse.json({ error: "Not found." }, { status: 404 });
   if (wordbook.ownerId !== user.id) return NextResponse.json({ error: "Forbidden." }, { status: 403 });
 
-  const body = (await req.json().catch(() => null)) as Body | null;
-  const rawText = body?.rawText ?? "";
-  const format = body?.format === "csv" ? "csv" : "tsv";
-  const fillPronunciation = body?.fillPronunciation === true;
-  const replaceAll = body?.replaceAll === true;
-  if (!rawText.trim()) {
-    return NextResponse.json({ error: "rawText is required." }, { status: 400 });
-  }
-  if (rawText.length > 1_000_000) {
-    return NextResponse.json({ error: "rawText is too large." }, { status: 413 });
-  }
+  const parsedBody = await parseJsonWithSchema(req, importWordbookSchema);
+  if (!parsedBody.ok) return parsedBody.response;
+  const rawText = parsedBody.data.rawText;
+  const format = parsedBody.data.format === "csv" ? "csv" : "tsv";
+  const fillPronunciation = parsedBody.data.fillPronunciation === true;
+  const replaceAll = parsedBody.data.replaceAll === true;
 
   const parsed = parseWordbookText({ rawText, format, fillPronunciation });
   if (parsed.length === 0) {

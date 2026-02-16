@@ -1,4 +1,6 @@
-"use client";
+﻿"use client";
+
+import { apiFetch } from "@/lib/clientApi";
 
 import { useState } from "react";
 
@@ -21,7 +23,7 @@ export function UserPlanEditor({ user, onUpdated }: { user: UserRow; onUpdated: 
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`/api/admin/users/${user.id}/plan`, {
+      const res = await apiFetch(`/api/admin/users/${user.id}/plan`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -83,4 +85,6 @@ export function UserPlanEditor({ user, onUpdated }: { user: UserRow; onUpdated: 
     </div>
   );
 }
+
+
 

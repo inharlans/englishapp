@@ -1,4 +1,6 @@
-"use client";
+﻿"use client";
+
+import { apiFetch } from "@/lib/clientApi";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -22,7 +24,7 @@ export function RateBox({ wordbookId, ratingAvg, ratingCount, myRating, disabled
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`/api/wordbooks/${wordbookId}/rate`, {
+      const res = await apiFetch(`/api/wordbooks/${wordbookId}/rate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ rating: next })
@@ -55,4 +57,6 @@ export function RateBox({ wordbookId, ratingAvg, ratingCount, myRating, disabled
     </div>
   );
 }
+
+
 

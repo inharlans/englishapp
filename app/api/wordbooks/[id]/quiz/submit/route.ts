@@ -5,7 +5,9 @@ import { normalizeEn, normalizeKo } from "@/lib/text";
 import { prisma } from "@/lib/prisma";
 import { checkRateLimit, getClientIpFromHeaders } from "@/lib/rateLimit";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
+import { parseJsonWithSchema, zPositiveInt } from "@/lib/validation";
 import { canAccessWordbookForStudy } from "@/lib/wordbookAccess";
+import { z } from "zod";
 
 function parseId(raw: string): number | null {
   const n = Number(raw);
@@ -28,11 +30,11 @@ function getMeaningCandidates(value: string): string[] {
   return [...candidates];
 }
 
-type Body = {
-  itemId?: number;
-  mode?: "MEANING" | "WORD";
-  answer?: string;
-};
+const submitSchema = z.object({
+  itemId: zPositiveInt,
+  mode: z.enum(["MEANING", "WORD"]).optional(),
+  answer: z.string().trim().min(1).max(1000)
+});
 
 async function syncWordbookStudyState(userId: number, wordbookId: number) {
   const states = await prisma.wordbookStudyItemState.findMany({
@@ -83,16 +85,14 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     return NextResponse.json({ error: "Forbidden." }, { status: 403 });
   }
 
-  const body = (await req.json().catch(() => null)) as Body | null;
-  const itemId = Number(body?.itemId);
-  const mode = body?.mode === "WORD" ? "WORD" : "MEANING";
-  const answer = (body?.answer ?? "").trim();
-  if (!Number.isFinite(itemId) || itemId <= 0 || !answer) {
-    return NextResponse.json({ error: "itemId and answer are required." }, { status: 400 });
-  }
+  const parsedBody = await parseJsonWithSchema(req, submitSchema);
+  if (!parsedBody.ok) return parsedBody.response;
+  const itemId = parsedBody.data.itemId;
+  const mode = parsedBody.data.mode === "WORD" ? "WORD" : "MEANING";
+  const answer = parsedBody.data.answer.trim();
 
   const item = await prisma.wordbookItem.findFirst({
-    where: { id: Math.floor(itemId), wordbookId },
+    where: { id: itemId, wordbookId },
     select: { id: true, term: true, meaning: true }
   });
   if (!item) {

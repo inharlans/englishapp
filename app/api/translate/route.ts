@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 
 import { checkRateLimit, getClientIpFromHeaders } from "@/lib/rateLimit";
+import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
+import { parseJsonWithSchema } from "@/lib/validation";
 
-type TranslateBody = {
-  text?: string;
-  source?: string;
-  target?: string;
-};
+const translateBodySchema = z.object({
+  text: z.string().min(1).max(10000),
+  source: z.string().trim().min(2).max(12).optional(),
+  target: z.string().trim().min(2).max(12).optional()
+});
 
 type GoogleTranslateResponse = {
   data?: {
@@ -29,6 +32,9 @@ function decodeHtmlEntities(value: string): string {
 }
 
 export async function POST(req: NextRequest) {
+  const badReq = assertTrustedMutationRequest(req);
+  if (badReq) return badReq;
+
   const ip = getClientIpFromHeaders(req.headers);
   const limit = await checkRateLimit({
     key: `translate:${ip}`,
@@ -43,14 +49,11 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const body = (await req.json()) as TranslateBody;
-    const text = (body.text ?? "").trim();
-    const source = (body.source ?? "en").trim() || "en";
-    const target = (body.target ?? "ko").trim() || "ko";
-
-    if (!text) {
-      return NextResponse.json({ error: "text is required." }, { status: 400 });
-    }
+    const parsed = await parseJsonWithSchema(req, translateBodySchema);
+    if (!parsed.ok) return parsed.response;
+    const text = parsed.data.text.trim();
+    const source = (parsed.data.source ?? "en").trim() || "en";
+    const target = (parsed.data.target ?? "ko").trim() || "ko";
 
     const apiKey = process.env.GOOGLE_TRANSLATE_API_KEY;
     if (!apiKey) {

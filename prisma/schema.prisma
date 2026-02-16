@@ -115,6 +115,7 @@ model Wordbook {
 
   @@index([ownerId, createdAt])
   @@index([isPublic, ratingAvg, downloadCount, createdAt])
+  @@index([isPublic, hiddenByAdmin, rankScore, createdAt])
 }
 
 model WordbookItem {
@@ -225,7 +226,12 @@ model WordbookReport {
   reason        String
   detail        String?
   status        WordbookReportStatus @default(OPEN)
+  reporterTrustScore Int           @default(0)
   moderatorNote String?
+  reviewAction  String?
+  previousStatus WordbookReportStatus?
+  nextStatus    WordbookReportStatus?
+  reviewerIpHash String?
   reviewedById  Int?
   reviewedAt    DateTime?
   createdAt     DateTime           @default(now())

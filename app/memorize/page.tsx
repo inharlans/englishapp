@@ -1,4 +1,6 @@
-"use client";
+﻿"use client";
+
+import { apiFetch } from "@/lib/clientApi";
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -30,7 +32,7 @@ export default function MemorizePage() {
       setLoading(true);
       setError("");
       try {
-        const res = await fetch(
+        const res = await apiFetch(
           `/api/words?mode=memorize&batch=${batch}&page=${page}&hideCorrect=${hideCorrect}&week=${week}`
         );
         const json = (await res.json()) as MemorizeResponse & { error?: string };
@@ -114,7 +116,7 @@ export default function MemorizePage() {
   }, [loading, page, maxPage, week, maxWeek]);
 
   const handleSaveMeaning = async (wordId: number, ko: string) => {
-    const res = await fetch(`/api/words/${wordId}`, {
+    const res = await apiFetch(`/api/words/${wordId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ko })
@@ -316,3 +318,5 @@ export default function MemorizePage() {
     </section>
   );
 }
+
+

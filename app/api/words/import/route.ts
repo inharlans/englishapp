@@ -4,10 +4,12 @@ import { prisma } from "@/lib/prisma";
 import { checkRateLimit, getClientIpFromHeaders } from "@/lib/rateLimit";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
 import { normalizeEn, parseWords } from "@/lib/text";
+import { parseJsonWithSchema } from "@/lib/validation";
+import { z } from "zod";
 
-type ImportRequestBody = {
-  rawText?: string;
-};
+const importRequestSchema = z.object({
+  rawText: z.string().min(1).max(1_000_000)
+});
 
 export async function POST(req: NextRequest) {
   const badReq = assertTrustedMutationRequest(req);
@@ -27,11 +29,9 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const body = (await req.json()) as ImportRequestBody;
-    const rawText = body.rawText ?? "";
-    if (!rawText.trim()) {
-      return NextResponse.json({ error: "rawText is required." }, { status: 400 });
-    }
+    const parsedBody = await parseJsonWithSchema(req, importRequestSchema);
+    if (!parsedBody.ok) return parsedBody.response;
+    const rawText = parsedBody.data.rawText;
 
     const parsed = parseWords(rawText);
     if (parsed.rows.length === 0) {
@@ -69,4 +69,3 @@ export async function POST(req: NextRequest) {
     );
   }
 }
-

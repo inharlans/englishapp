@@ -1,4 +1,6 @@
-"use client";
+﻿"use client";
+
+import { apiFetch } from "@/lib/clientApi";
 
 import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
@@ -17,7 +19,7 @@ function LoginInner() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/auth/login", {
+      const res = await apiFetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password })
@@ -98,3 +100,5 @@ export default function LoginPage() {
     </Suspense>
   );
 }
+
+

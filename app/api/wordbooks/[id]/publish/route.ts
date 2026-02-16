@@ -3,6 +3,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { getUserFromRequestCookies } from "@/lib/authServer";
 import { prisma } from "@/lib/prisma";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
+import { parseJsonWithSchema } from "@/lib/validation";
+import { z } from "zod";
+
+const publishSchema = z.object({
+  isPublic: z.boolean()
+});
 
 function parseId(raw: string): number | null {
   const n = Number(raw);
@@ -25,10 +31,9 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
-  const body = (await req.json().catch(() => null)) as { isPublic?: boolean } | null;
-  if (typeof body?.isPublic !== "boolean") {
-    return NextResponse.json({ error: "isPublic boolean is required." }, { status: 400 });
-  }
+  const parsedBody = await parseJsonWithSchema(req, publishSchema);
+  if (!parsedBody.ok) return parsedBody.response;
+  const body = parsedBody.data;
 
   if (user.plan === "FREE" && body.isPublic === false) {
     return NextResponse.json(

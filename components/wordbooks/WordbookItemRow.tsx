@@ -1,4 +1,6 @@
-"use client";
+﻿"use client";
+
+import { apiFetch } from "@/lib/clientApi";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -36,7 +38,7 @@ export function WordbookItemRow({ wordbookId, item, editable, speakLang }: Props
     setSaving(true);
     setError("");
     try {
-      const res = await fetch(`/api/wordbooks/${wordbookId}/items/${item.id}`, {
+      const res = await apiFetch(`/api/wordbooks/${wordbookId}/items/${item.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -63,7 +65,7 @@ export function WordbookItemRow({ wordbookId, item, editable, speakLang }: Props
     setSaving(true);
     setError("");
     try {
-      const res = await fetch(`/api/wordbooks/${wordbookId}/items/${item.id}`, { method: "DELETE" });
+      const res = await apiFetch(`/api/wordbooks/${wordbookId}/items/${item.id}`, { method: "DELETE" });
       const json = (await res.json()) as { ok?: boolean; error?: string };
       if (!res.ok) throw new Error(json.error ?? "Delete failed.");
       router.refresh();
@@ -167,3 +169,5 @@ export function WordbookItemRow({ wordbookId, item, editable, speakLang }: Props
     </div>
   );
 }
+
+

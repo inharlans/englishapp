@@ -1,4 +1,6 @@
-"use client";
+﻿"use client";
+
+import { apiFetch } from "@/lib/clientApi";
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -25,7 +27,7 @@ export function WordbookMetaEditor({ wordbookId, title, description, fromLang, t
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`/api/wordbooks/${wordbookId}`, {
+      const res = await apiFetch(`/api/wordbooks/${wordbookId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -115,3 +117,5 @@ export function WordbookMetaEditor({ wordbookId, title, description, fromLang, t
     </form>
   );
 }
+
+

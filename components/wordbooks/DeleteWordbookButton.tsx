@@ -1,4 +1,6 @@
-"use client";
+﻿"use client";
+
+import { apiFetch } from "@/lib/clientApi";
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -18,7 +20,7 @@ export function DeleteWordbookButton({ wordbookId }: Props) {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`/api/wordbooks/${wordbookId}`, { method: "DELETE" });
+      const res = await apiFetch(`/api/wordbooks/${wordbookId}`, { method: "DELETE" });
       const json = (await res.json()) as { ok?: boolean; error?: string };
       if (!res.ok) throw new Error(json.error ?? "Delete failed.");
       const href = "/wordbooks";
@@ -45,3 +47,5 @@ export function DeleteWordbookButton({ wordbookId }: Props) {
     </div>
   );
 }
+
+

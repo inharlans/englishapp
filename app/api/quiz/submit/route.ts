@@ -13,13 +13,15 @@ import {
 import { computeNextReviewAt } from "@/lib/scheduling";
 import { normalizeEn, normalizeKo } from "@/lib/text";
 import type { QuizType } from "@/lib/types";
+import { parseJsonWithSchema, zPositiveInt } from "@/lib/validation";
+import { z } from "zod";
 
-type SubmitBody = {
-  wordId?: number;
-  quizType?: QuizType;
-  userAnswer?: string;
-  scope?: "half";
-};
+const submitBodySchema = z.object({
+  wordId: zPositiveInt,
+  quizType: z.enum(["MEANING", "WORD"]),
+  userAnswer: z.string().max(1000).default(""),
+  scope: z.enum(["half"]).optional()
+});
 
 function getMeaningCandidates(value: string): string[] {
   const normalizedWhole = normalizeKo(value);
@@ -62,17 +64,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
     }
 
-    const body = (await req.json()) as SubmitBody;
+    const parsedBody = await parseJsonWithSchema(req, submitBodySchema);
+    if (!parsedBody.ok) return parsedBody.response;
+    const body = parsedBody.data;
     const wordId = body.wordId;
-    const quizType = body.quizType;
-    const userAnswer = body.userAnswer ?? "";
-
-    if (!wordId || !quizType || (quizType !== "MEANING" && quizType !== "WORD")) {
-      return NextResponse.json(
-        { error: "wordId, quizType, userAnswer are required." },
-        { status: 400 }
-      );
-    }
+    const quizType = body.quizType as QuizType;
+    const userAnswer = body.userAnswer;
 
     const word = await prisma.word.findUnique({
       where: { id: wordId },

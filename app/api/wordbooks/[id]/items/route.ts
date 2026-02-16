@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getUserFromRequestCookies } from "@/lib/authServer";
 import { prisma } from "@/lib/prisma";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
+import { parseJsonWithSchema } from "@/lib/validation";
+import { z } from "zod";
 
 function parseId(raw: string): number | null {
   const n = Number(raw);
@@ -10,13 +12,17 @@ function parseId(raw: string): number | null {
   return Math.floor(n);
 }
 
-type NewItem = {
-  term: string;
-  meaning: string;
-  pronunciation?: string | null;
-  example?: string | null;
-  exampleMeaning?: string | null;
-};
+const newItemSchema = z.object({
+  term: z.string().trim().min(1).max(300),
+  meaning: z.string().trim().min(1).max(1000),
+  pronunciation: z.string().trim().max(120).nullable().optional(),
+  example: z.string().trim().max(1000).nullable().optional(),
+  exampleMeaning: z.string().trim().max(1000).nullable().optional()
+});
+
+const addItemsSchema = z.object({
+  items: z.array(newItemSchema).min(1).max(1000)
+});
 
 export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const badReq = assertTrustedMutationRequest(req);
@@ -44,11 +50,9 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     return NextResponse.json({ error: "Forbidden." }, { status: 403 });
   }
 
-  const body = (await req.json().catch(() => null)) as { items?: NewItem[] } | null;
-  const items = Array.isArray(body?.items) ? body!.items : [];
-  if (items.length === 0) {
-    return NextResponse.json({ error: "items is required." }, { status: 400 });
-  }
+  const parsedBody = await parseJsonWithSchema(req, addItemsSchema);
+  if (!parsedBody.ok) return parsedBody.response;
+  const items = parsedBody.data.items;
 
   const cleaned = items
     .map((it) => ({

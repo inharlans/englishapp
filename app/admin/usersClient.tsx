@@ -1,4 +1,6 @@
-"use client";
+﻿"use client";
+
+import { apiFetch } from "@/lib/clientApi";
 
 import { useState } from "react";
 import { useEffect } from "react";
@@ -19,9 +21,14 @@ type ReportRow = {
   reason: string;
   detail: string | null;
   status: "OPEN" | "RESOLVED" | "DISMISSED";
+  reporterTrustScore: number;
   createdAt: string;
   reviewedAt: string | null;
   moderatorNote: string | null;
+  reviewAction: string | null;
+  previousStatus: "OPEN" | "RESOLVED" | "DISMISSED" | null;
+  nextStatus: "OPEN" | "RESOLVED" | "DISMISSED" | null;
+  reviewerIpHash: string | null;
   reporter: { id: number; email: string };
   reviewedBy: { id: number; email: string } | null;
   wordbook: {
@@ -43,7 +50,7 @@ export function AdminUsersClient({ initialUsers }: { initialUsers: UserRow[] }) 
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/admin/users");
+      const res = await apiFetch("/api/admin/users");
       const json = (await res.json()) as {
         users?: Array<{
           id: number;
@@ -58,7 +65,7 @@ export function AdminUsersClient({ initialUsers }: { initialUsers: UserRow[] }) 
       if (!res.ok) throw new Error(json.error ?? "Load failed.");
       setUsers((json.users ?? []) as UserRow[]);
 
-      const reportRes = await fetch("/api/admin/reports");
+      const reportRes = await apiFetch("/api/admin/reports");
       const reportJson = (await reportRes.json()) as { reports?: ReportRow[]; error?: string };
       if (reportRes.ok) {
         setReports((reportJson.reports ?? []).map((r) => ({
@@ -94,7 +101,7 @@ export function AdminUsersClient({ initialUsers }: { initialUsers: UserRow[] }) 
               setLoading(true);
               setError("");
               try {
-                const res = await fetch("/api/admin/wordbooks/recompute-rank", {
+                const res = await apiFetch("/api/admin/wordbooks/recompute-rank", {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
                   body: "{}"
@@ -170,12 +177,20 @@ export function AdminUsersClient({ initialUsers }: { initialUsers: UserRow[] }) 
               {r.moderatorNote ? (
                 <p className="mt-1 text-xs text-slate-500">note: {r.moderatorNote}</p>
               ) : null}
+              <p className="mt-1 text-xs text-slate-500">
+                reporter trust: {r.reporterTrustScore}
+                {r.reviewAction ? ` / action ${r.reviewAction}` : ""}
+                {r.previousStatus && r.nextStatus ? ` / ${r.previousStatus} -> ${r.nextStatus}` : ""}
+              </p>
+              {r.reviewerIpHash ? (
+                <p className="mt-1 text-[11px] text-slate-400">reviewer-ip-hash: {r.reviewerIpHash}</p>
+              ) : null}
               {r.status === "OPEN" ? (
                 <div className="mt-3 flex flex-wrap gap-2">
                   <button
                     type="button"
                     onClick={async () => {
-                      await fetch(`/api/admin/reports/${r.id}`, {
+                      await apiFetch(`/api/admin/reports/${r.id}`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ action: "resolve" })
@@ -190,7 +205,7 @@ export function AdminUsersClient({ initialUsers }: { initialUsers: UserRow[] }) 
                     type="button"
                     onClick={async () => {
                       const note = window.prompt("Moderator note (optional):", "") ?? "";
-                      await fetch(`/api/admin/reports/${r.id}`, {
+                      await apiFetch(`/api/admin/reports/${r.id}`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ action: "dismiss", note })
@@ -205,7 +220,7 @@ export function AdminUsersClient({ initialUsers }: { initialUsers: UserRow[] }) 
                     type="button"
                     onClick={async () => {
                       const note = window.prompt("Hide this wordbook and resolve report. Note:", "") ?? "";
-                      await fetch(`/api/admin/reports/${r.id}`, {
+                      await apiFetch(`/api/admin/reports/${r.id}`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ action: "hide", note })
@@ -225,3 +240,5 @@ export function AdminUsersClient({ initialUsers }: { initialUsers: UserRow[] }) 
     </section>
   );
 }
+
+

@@ -1,4 +1,6 @@
-"use client";
+﻿"use client";
+
+import { apiFetch } from "@/lib/clientApi";
 
 import { useState } from "react";
 
@@ -27,7 +29,7 @@ export function OfflineSaveButton({ wordbookId, className }: Props) {
     setSaving(true);
     setMsg("");
     try {
-      const res = await fetch(`/api/wordbooks/${wordbookId}`, { method: "GET" });
+      const res = await apiFetch(`/api/wordbooks/${wordbookId}`, { method: "GET" });
       const json = (await res.json()) as { wordbook?: ApiWordbookDetail; error?: string };
       if (!res.ok) throw new Error(json.error ?? "Failed to fetch wordbook.");
       const wb = json.wordbook;
@@ -68,3 +70,5 @@ export function OfflineSaveButton({ wordbookId, className }: Props) {
     </div>
   );
 }
+
+

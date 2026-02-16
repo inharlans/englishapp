@@ -1,4 +1,6 @@
-"use client";
+﻿"use client";
+
+import { apiFetch } from "@/lib/clientApi";
 
 import { useState } from "react";
 
@@ -18,7 +20,7 @@ export function ReportWordbookButton({ wordbookId }: Props) {
     setLoading(true);
     setMessage("");
     try {
-      const res = await fetch(`/api/wordbooks/${wordbookId}/report`, {
+      const res = await apiFetch(`/api/wordbooks/${wordbookId}/report`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ reason: reason.trim(), detail: detail.trim() || null })
@@ -47,4 +49,6 @@ export function ReportWordbookButton({ wordbookId }: Props) {
     </div>
   );
 }
+
+
 

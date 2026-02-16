@@ -1,4 +1,6 @@
-"use client";
+﻿"use client";
+
+import { apiFetch } from "@/lib/clientApi";
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -17,7 +19,7 @@ export default function NewWordbookPage() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/wordbooks", {
+      const res = await apiFetch("/api/wordbooks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -129,3 +131,5 @@ export default function NewWordbookPage() {
     </section>
   );
 }
+
+

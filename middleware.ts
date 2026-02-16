@@ -6,6 +6,7 @@ import { getSessionCookieName, verifySessionToken } from "@/lib/authJwt";
 function isPublicPath(pathname: string): boolean {
   if (pathname === "/login") return true;
   if (pathname.startsWith("/api/auth/")) return true;
+  if (pathname.startsWith("/api/internal/cron/")) return true;
   if (pathname.startsWith("/offline")) return true;
   if (pathname === "/sw.js") return true;
   if (pathname.startsWith("/_next/")) return true;

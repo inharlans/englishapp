@@ -3,11 +3,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkRateLimit, getClientIpFromHeaders } from "@/lib/rateLimit";
 import { hashPassword } from "@/lib/password";
+import { parseJsonWithSchema } from "@/lib/validation";
+import { z } from "zod";
 
-type BootstrapBody = {
-  email?: string;
-  password?: string;
-};
+const bootstrapSchema = z.object({
+  email: z.string().email().max(320),
+  password: z.string().min(8).max(512)
+});
 
 export async function POST(req: NextRequest) {
   const ip = getClientIpFromHeaders(req.headers);
@@ -41,15 +43,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Bootstrap already completed." }, { status: 409 });
   }
 
-  const body = (await req.json()) as BootstrapBody;
-  const email = (body.email ?? "").trim().toLowerCase();
-  const password = body.password ?? "";
-  if (!email || !password || password.length < 8) {
-    return NextResponse.json(
-      { error: "email and password(>=8 chars) are required." },
-      { status: 400 }
-    );
-  }
+  const parsed = await parseJsonWithSchema(req, bootstrapSchema);
+  if (!parsed.ok) return parsed.response;
+  const email = parsed.data.email.trim().toLowerCase();
+  const password = parsed.data.password;
 
   const passwordHash = await hashPassword(password);
   const user = await prisma.user.create({

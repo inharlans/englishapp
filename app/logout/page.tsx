@@ -1,4 +1,6 @@
-"use client";
+﻿"use client";
+
+import { apiFetch } from "@/lib/clientApi";
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -8,7 +10,7 @@ export default function LogoutPage() {
 
   useEffect(() => {
     const run = async () => {
-      await fetch("/api/auth/logout", { method: "POST" });
+      await apiFetch("/api/auth/logout", { method: "POST" });
       router.replace("/login");
       router.refresh();
     };
@@ -21,4 +23,6 @@ export default function LogoutPage() {
     </section>
   );
 }
+
+
 

@@ -3,6 +3,19 @@ import { NextRequest, NextResponse } from "next/server";
 import { getUserFromRequestCookies } from "@/lib/authServer";
 import { prisma } from "@/lib/prisma";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
+import { parseJsonWithSchema } from "@/lib/validation";
+import { z } from "zod";
+
+const patchItemSchema = z
+  .object({
+    term: z.string().trim().min(1).max(300).optional(),
+    meaning: z.string().trim().min(1).max(1000).optional(),
+    pronunciation: z.string().trim().max(120).nullable().optional(),
+    example: z.string().trim().max(1000).nullable().optional(),
+    exampleMeaning: z.string().trim().max(1000).nullable().optional(),
+    position: z.number().int().nonnegative().optional()
+  })
+  .refine((value) => Object.keys(value).length > 0, "At least one field is required.");
 
 function parseId(raw: string): number | null {
   const n = Number(raw);
@@ -40,19 +53,9 @@ export async function PATCH(
     return NextResponse.json({ error: "Forbidden." }, { status: 403 });
   }
 
-  const body = (await req.json().catch(() => null)) as
-    | {
-        term?: string;
-        meaning?: string;
-        pronunciation?: string | null;
-        example?: string | null;
-        exampleMeaning?: string | null;
-        position?: number;
-      }
-    | null;
-  if (!body) {
-    return NextResponse.json({ error: "Invalid body." }, { status: 400 });
-  }
+  const parsedBody = await parseJsonWithSchema(req, patchItemSchema);
+  if (!parsedBody.ok) return parsedBody.response;
+  const body = parsedBody.data;
 
   const data: {
     term?: string;
@@ -63,14 +66,12 @@ export async function PATCH(
     position?: number;
   } = {};
 
-  if (typeof body.term === "string") {
+  if ("term" in body && typeof body.term === "string") {
     const t = body.term.trim();
-    if (!t) return NextResponse.json({ error: "term cannot be empty." }, { status: 400 });
     data.term = t;
   }
-  if (typeof body.meaning === "string") {
+  if ("meaning" in body && typeof body.meaning === "string") {
     const m = body.meaning.trim();
-    if (!m) return NextResponse.json({ error: "meaning cannot be empty." }, { status: 400 });
     data.meaning = m;
   }
   if ("pronunciation" in body) {

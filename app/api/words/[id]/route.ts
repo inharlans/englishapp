@@ -3,10 +3,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkRateLimit, getClientIpFromHeaders } from "@/lib/rateLimit";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
+import { parseJsonWithSchema } from "@/lib/validation";
+import { z } from "zod";
 
-type UpdateWordBody = {
-  ko?: string;
-};
+const updateWordSchema = z.object({
+  ko: z.string().trim().min(1).max(1000)
+});
 
 function parseId(raw: string): number | null {
   const value = Number(raw);
@@ -38,11 +40,9 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
       return NextResponse.json({ error: "Invalid word id." }, { status: 400 });
     }
 
-    const body = (await req.json()) as UpdateWordBody;
-    const ko = (body.ko ?? "").trim();
-    if (!ko) {
-      return NextResponse.json({ error: "ko cannot be empty." }, { status: 400 });
-    }
+    const parsedBody = await parseJsonWithSchema(req, updateWordSchema);
+    if (!parsedBody.ok) return parsedBody.response;
+    const ko = parsedBody.data.ko.trim();
 
     const updated = await prisma.word.update({
       where: { id },
@@ -57,4 +57,3 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
     );
   }
 }
-

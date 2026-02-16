@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getUserFromRequestCookies } from "@/lib/authServer";
 import { prisma } from "@/lib/prisma";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
+import { parseJsonWithSchema } from "@/lib/validation";
+import { z } from "zod";
 
 function parseId(raw: string): number | null {
   const n = Number(raw);
@@ -14,6 +16,15 @@ function parsePlan(raw: unknown): "FREE" | "PRO" | null {
   if (raw === "FREE" || raw === "PRO") return raw;
   return null;
 }
+
+const updatePlanSchema = z.object({
+  plan: z.enum(["FREE", "PRO"]),
+  proUntil: z
+    .union([z.string().datetime(), z.string().regex(/^\d{4}-\d{2}-\d{2}$/)])
+    .nullable()
+    .optional(),
+  isAdmin: z.boolean().optional()
+});
 
 export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const badReq = assertTrustedMutationRequest(req);
@@ -27,10 +38,10 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   const id = parseId(idRaw);
   if (!id) return NextResponse.json({ error: "Invalid id." }, { status: 400 });
 
-  const body = (await req.json().catch(() => null)) as
-    | { plan?: unknown; proUntil?: string | null; isAdmin?: boolean }
-    | null;
-  const plan = parsePlan(body?.plan);
+  const parsedBody = await parseJsonWithSchema(req, updatePlanSchema);
+  if (!parsedBody.ok) return parsedBody.response;
+  const body = parsedBody.data;
+  const plan = parsePlan(body.plan);
   if (!plan) return NextResponse.json({ error: "plan must be FREE or PRO." }, { status: 400 });
 
   const proUntil =

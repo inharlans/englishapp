@@ -3,12 +3,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkRateLimit, getClientIpFromHeaders } from "@/lib/rateLimit";
 import { getSessionCookieName, issueSessionToken } from "@/lib/authJwt";
+import { getCsrfCookieName, issueCsrfToken } from "@/lib/csrf";
 import { verifyPassword } from "@/lib/password";
+import { parseJsonWithSchema } from "@/lib/validation";
+import { z } from "zod";
 
-type LoginBody = {
-  email?: string;
-  password?: string;
-};
+const loginSchema = z.object({
+  email: z.string().email().max(320),
+  password: z.string().min(1).max(512)
+});
 
 export async function POST(req: NextRequest) {
   const ip = getClientIpFromHeaders(req.headers);
@@ -25,13 +28,10 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const body = (await req.json()) as LoginBody;
-    const email = (body.email ?? "").trim().toLowerCase();
-    const password = body.password ?? "";
-
-    if (!email || !password) {
-      return NextResponse.json({ error: "email and password are required." }, { status: 400 });
-    }
+    const parsed = await parseJsonWithSchema(req, loginSchema);
+    if (!parsed.ok) return parsed.response;
+    const email = parsed.data.email.trim().toLowerCase();
+    const password = parsed.data.password;
 
     const user = await prisma.user.findUnique({
       where: { email },
@@ -53,8 +53,16 @@ export async function POST(req: NextRequest) {
     });
 
     const res = NextResponse.json({ ok: true, user: { id: user.id, email: user.email } });
+    const csrfToken = issueCsrfToken();
     res.cookies.set(getSessionCookieName(), token, {
       httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 30
+    });
+    res.cookies.set(getCsrfCookieName(), csrfToken, {
+      httpOnly: false,
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production",
       path: "/",

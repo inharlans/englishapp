@@ -1,4 +1,6 @@
-"use client";
+﻿"use client";
+
+import { apiFetch } from "@/lib/clientApi";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -17,7 +19,7 @@ export function DownloadButton({ wordbookId, disabled }: Props) {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`/api/wordbooks/${wordbookId}/download`, {
+      const res = await apiFetch(`/api/wordbooks/${wordbookId}/download`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: "{}"
@@ -46,4 +48,6 @@ export function DownloadButton({ wordbookId, disabled }: Props) {
     </div>
   );
 }
+
+
 

@@ -3,6 +3,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { getUserFromRequestCookies } from "@/lib/authServer";
 import { prisma } from "@/lib/prisma";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
+import { parseJsonWithSchema } from "@/lib/validation";
+import { z } from "zod";
+
+const patchWordbookSchema = z
+  .object({
+    title: z.string().trim().min(1).max(160).optional(),
+    description: z.string().trim().max(2000).nullable().optional(),
+    fromLang: z.string().trim().min(2).max(12).optional(),
+    toLang: z.string().trim().min(2).max(12).optional()
+  })
+  .refine((value) => Object.keys(value).length > 0, "At least one field is required.");
 
 function parseId(raw: string): number | null {
   const n = Number(raw);
@@ -113,27 +124,24 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     return NextResponse.json({ error: "Forbidden." }, { status: 403 });
   }
 
-  const body = (await req.json().catch(() => null)) as
-    | { title?: string; description?: string | null; fromLang?: string; toLang?: string }
-    | null;
+  const parsedBody = await parseJsonWithSchema(req, patchWordbookSchema);
+  if (!parsedBody.ok) return parsedBody.response;
+  const body = parsedBody.data;
 
   const data: { title?: string; description?: string | null; fromLang?: string; toLang?: string } =
     {};
 
-  if (typeof body?.title === "string") {
+  if (typeof body.title === "string") {
     const t = body.title.trim();
-    if (!t) {
-      return NextResponse.json({ error: "title cannot be empty." }, { status: 400 });
-    }
     data.title = t;
   }
-  if (body && "description" in body) {
+  if ("description" in body) {
     data.description = body.description ? String(body.description).trim() : null;
   }
-  if (typeof body?.fromLang === "string") {
+  if (typeof body.fromLang === "string") {
     data.fromLang = body.fromLang.trim() || "en";
   }
-  if (typeof body?.toLang === "string") {
+  if (typeof body.toLang === "string") {
     data.toLang = body.toLang.trim() || "ko";
   }
 

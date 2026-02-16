@@ -16,9 +16,14 @@ export async function GET(req: NextRequest) {
       reason: true,
       detail: true,
       status: true,
+      reporterTrustScore: true,
       createdAt: true,
       reviewedAt: true,
       moderatorNote: true,
+      reviewAction: true,
+      previousStatus: true,
+      nextStatus: true,
+      reviewerIpHash: true,
       reporter: { select: { id: true, email: true } },
       reviewedBy: { select: { id: true, email: true } },
       wordbook: {
@@ -35,4 +40,3 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json({ reports }, { status: 200 });
 }
-

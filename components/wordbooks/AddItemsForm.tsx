@@ -1,4 +1,6 @@
-"use client";
+﻿"use client";
+
+import { apiFetch } from "@/lib/clientApi";
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -70,7 +72,7 @@ export function AddItemsForm({ wordbookId }: Props) {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`/api/wordbooks/${wordbookId}/items`, {
+      const res = await apiFetch(`/api/wordbooks/${wordbookId}/items`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ items })
@@ -208,3 +210,5 @@ export function AddItemsForm({ wordbookId }: Props) {
     </section>
   );
 }
+
+

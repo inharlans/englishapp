@@ -1,4 +1,6 @@
-"use client";
+﻿"use client";
+
+import { apiFetch } from "@/lib/clientApi";
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -20,7 +22,7 @@ export function BlockOwnerButton({ wordbookId, ownerEmail }: Props) {
     setLoading(true);
     setMessage("");
     try {
-      const res = await fetch(`/api/wordbooks/${wordbookId}/block`, {
+      const res = await apiFetch(`/api/wordbooks/${wordbookId}/block`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: "{}"
@@ -50,4 +52,6 @@ export function BlockOwnerButton({ wordbookId, ownerEmail }: Props) {
     </div>
   );
 }
+
+
 

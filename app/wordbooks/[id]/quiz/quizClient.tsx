@@ -1,4 +1,6 @@
-"use client";
+﻿"use client";
+
+import { apiFetch } from "@/lib/clientApi";
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
@@ -25,7 +27,7 @@ export function WordbookQuizClient({ wordbookId }: { wordbookId: number }) {
     setMessage("");
     setAnswer("");
     try {
-      const res = await fetch(`/api/wordbooks/${wordbookId}/quiz?mode=${mode}`, { cache: "no-store" });
+      const res = await apiFetch(`/api/wordbooks/${wordbookId}/quiz?mode=${mode}`, { cache: "no-store" });
       const json = (await res.json()) as { item?: QuizItem | null; error?: string };
       if (!res.ok) throw new Error(json.error ?? "Failed to load question.");
       setItem(json.item ?? null);
@@ -47,7 +49,7 @@ export function WordbookQuizClient({ wordbookId }: { wordbookId: number }) {
     setLoading(true);
     setMessage("");
     try {
-      const res = await fetch(`/api/wordbooks/${wordbookId}/quiz/submit`, {
+      const res = await apiFetch(`/api/wordbooks/${wordbookId}/quiz/submit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ itemId: item.id, mode, answer: answer.trim() })
@@ -138,4 +140,6 @@ export function WordbookQuizClient({ wordbookId }: { wordbookId: number }) {
     </section>
   );
 }
+
+
 

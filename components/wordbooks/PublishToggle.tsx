@@ -1,4 +1,6 @@
-"use client";
+﻿"use client";
+
+import { apiFetch } from "@/lib/clientApi";
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -17,7 +19,7 @@ export function PublishToggle({ wordbookId, isPublic }: Props) {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`/api/wordbooks/${wordbookId}/publish`, {
+      const res = await apiFetch(`/api/wordbooks/${wordbookId}/publish`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isPublic: !isPublic })
@@ -46,3 +48,5 @@ export function PublishToggle({ wordbookId, isPublic }: Props) {
     </div>
   );
 }
+
+

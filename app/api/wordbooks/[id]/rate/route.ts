@@ -4,7 +4,9 @@ import { getUserFromRequestCookies } from "@/lib/authServer";
 import { prisma } from "@/lib/prisma";
 import { checkRateLimit, getClientIpFromHeaders } from "@/lib/rateLimit";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
+import { parseJsonWithSchema } from "@/lib/validation";
 import { refreshWordbookRankScore } from "@/lib/wordbookRanking";
+import { z } from "zod";
 
 function parseId(raw: string): number | null {
   const n = Number(raw);
@@ -12,13 +14,9 @@ function parseId(raw: string): number | null {
   return Math.floor(n);
 }
 
-function parseRating(raw: unknown): number | null {
-  const n = typeof raw === "number" ? raw : Number(raw);
-  if (!Number.isFinite(n)) return null;
-  const v = Math.floor(n);
-  if (v < 1 || v > 5) return null;
-  return v;
-}
+const rateSchema = z.object({
+  rating: z.coerce.number().int().min(1).max(5)
+});
 
 export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const badReq = assertTrustedMutationRequest(req);
@@ -48,11 +46,9 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
-  const body = (await req.json().catch(() => null)) as { rating?: unknown } | null;
-  const rating = parseRating(body?.rating);
-  if (!rating) {
-    return NextResponse.json({ error: "rating must be 1..5." }, { status: 400 });
-  }
+  const parsedBody = await parseJsonWithSchema(req, rateSchema);
+  if (!parsedBody.ok) return parsedBody.response;
+  const rating = parsedBody.data.rating;
 
   const result = await prisma.$transaction(async (tx) => {
     const wordbook = await tx.wordbook.findUnique({

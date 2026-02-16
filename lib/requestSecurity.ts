@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { getSessionCookieName } from "@/lib/authJwt";
+import { getCsrfCookieName, getCsrfHeaderName } from "@/lib/csrf";
+
 function getExpectedHost(req: NextRequest): string {
   return (
     req.headers.get("x-forwarded-host") ??
@@ -29,6 +32,14 @@ export function assertTrustedMutationRequest(req: NextRequest): NextResponse | n
     return NextResponse.json({ error: "Origin mismatch." }, { status: 403 });
   }
 
+  const hasSession = Boolean(req.cookies.get(getSessionCookieName())?.value);
+  if (hasSession) {
+    const csrfCookie = req.cookies.get(getCsrfCookieName())?.value ?? "";
+    const csrfHeader = req.headers.get(getCsrfHeaderName()) ?? "";
+    if (!csrfCookie || !csrfHeader || csrfCookie !== csrfHeader) {
+      return NextResponse.json({ error: "Invalid CSRF token." }, { status: 403 });
+    }
+  }
+
   return null;
 }
-

@@ -1,4 +1,6 @@
-"use client";
+﻿"use client";
+
+import { apiFetch } from "@/lib/clientApi";
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -40,7 +42,7 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`/api/wordbooks/${wordbookId}/study`, { cache: "no-store" });
+      const res = await apiFetch(`/api/wordbooks/${wordbookId}/study`, { cache: "no-store" });
       const json = (await res.json()) as {
         error?: string;
         wordbook?: { title: string; items: Item[] };
@@ -70,7 +72,7 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
 
   const mark = async (itemId: number, result: "CORRECT" | "WRONG" | "RESET") => {
     try {
-      const res = await fetch(`/api/wordbooks/${wordbookId}/study/items/${itemId}`, {
+      const res = await apiFetch(`/api/wordbooks/${wordbookId}/study/items/${itemId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ result })
@@ -169,4 +171,6 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
     </section>
   );
 }
+
+
 

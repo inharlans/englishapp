@@ -118,6 +118,12 @@ export default async function WordbooksPage() {
           >
             Offline
           </Link>
+          <Link
+            href={{ pathname: "/wordbooks/blocked" }}
+            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
+          >
+            Blocked
+          </Link>
         </div>
       </header>
 

@@ -4,6 +4,15 @@ import { getUserFromRequestCookies } from "@/lib/authServer";
 import { prisma } from "@/lib/prisma";
 import { computeWordbookRankScore } from "@/lib/wordbookRanking";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
+import { parseJsonWithSchema } from "@/lib/validation";
+import { z } from "zod";
+
+const createWordbookSchema = z.object({
+  title: z.string().trim().min(1).max(160),
+  description: z.string().trim().max(2000).nullable().optional(),
+  fromLang: z.string().trim().min(2).max(12).optional(),
+  toLang: z.string().trim().min(2).max(12).optional()
+});
 
 export async function GET(req: NextRequest) {
   const user = await getUserFromRequestCookies(req.cookies);
@@ -42,17 +51,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
-  const body = (await req.json().catch(() => null)) as
-    | { title?: string; description?: string | null; fromLang?: string; toLang?: string }
-    | null;
-  const title = (body?.title ?? "").trim();
-  if (!title) {
-    return NextResponse.json({ error: "title is required." }, { status: 400 });
-  }
+  const parsedBody = await parseJsonWithSchema(req, createWordbookSchema);
+  if (!parsedBody.ok) return parsedBody.response;
 
-  const fromLang = (body?.fromLang ?? "en").trim() || "en";
-  const toLang = (body?.toLang ?? "ko").trim() || "ko";
-  const description = body?.description ? body.description.trim() : null;
+  const title = parsedBody.data.title.trim();
+  const fromLang = (parsedBody.data.fromLang ?? "en").trim() || "en";
+  const toLang = (parsedBody.data.toLang ?? "ko").trim() || "ko";
+  const description = parsedBody.data.description ? parsedBody.data.description.trim() : null;
 
   const wordbook = await prisma.wordbook.create({
     data: {

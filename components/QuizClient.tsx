@@ -1,4 +1,6 @@
-"use client";
+﻿"use client";
+
+import { apiFetch } from "@/lib/clientApi";
 
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -119,7 +121,7 @@ export function QuizClient({ quizType }: { quizType: QuizType }) {
         scope === "half"
           ? "/api/words?mode=listHalf&batch=5&page=0"
           : `/api/words?mode=memorize&week=${week}&batch=50&page=0&hideCorrect=false&forQuiz=true&quizType=${quizType}`;
-      const res = await fetch(url);
+      const res = await apiFetch(url);
       const data = (await res.json()) as WordListResponse & { error?: string };
       if (!res.ok) {
         throw new Error(data.error ?? "Failed to load quiz words");
@@ -208,7 +210,7 @@ export function QuizClient({ quizType }: { quizType: QuizType }) {
     setError("");
     setKoUpdateMessage("");
     try {
-      const res = await fetch("/api/quiz/submit", {
+      const res = await apiFetch("/api/quiz/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -288,7 +290,7 @@ export function QuizClient({ quizType }: { quizType: QuizType }) {
 
     const fetchTranslation = async () => {
       try {
-        const res = await fetch("/api/translate", {
+        const res = await apiFetch("/api/translate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -348,7 +350,7 @@ export function QuizClient({ quizType }: { quizType: QuizType }) {
     setKoUpdateLoading(true);
     setKoUpdateMessage("");
     try {
-      const res = await fetch(`/api/words/${currentWord.id}`, {
+      const res = await apiFetch(`/api/words/${currentWord.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ko: nextKo })
@@ -583,3 +585,5 @@ export function QuizClient({ quizType }: { quizType: QuizType }) {
     </section>
   );
 }
+
+

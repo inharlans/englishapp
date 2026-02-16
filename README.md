@@ -113,6 +113,7 @@ npm run dev
 - `GOOGLE_TRANSLATE_API_KEY` (선택)
 - `AUTH_SECRET` (필수, 32자 이상 권장)
 - `AUTH_BOOTSTRAP_TOKEN` (필수: 최초 사용자 생성용 bootstrap API 보호)
+- `CRON_SECRET` (선택: 내부 크론 API 인증 토큰)
 - `UPSTASH_REDIS_REST_URL` (선택: 분산 rate limit)
 - `UPSTASH_REDIS_REST_TOKEN` (선택: 분산 rate limit)
 
@@ -325,16 +326,40 @@ Done in this sprint:
 
 신규 백로그(직접 서버 점검 및 분석 기반):
 
-- [ ] 레거시 페이지/문서에 남아있는 한글 인코딩 깨짐(모지바케) 완전 정리
-- [ ] 모든 쓰기 API에 `zod`(또는 동급) 스키마 검증 적용
-- [ ] 현재 Origin 체크 외 CSRF 토큰(더블 서브밋/동기화 토큰) 추가
-- [ ] 차단 해제 UI(`BlockedOwner` 관리 화면) 추가
-- [ ] 모더레이션 감사 로그 필드 강화(처리 전/후 상태, 사유 코드, 처리자 IP 해시)
-- [ ] 신고 악용 방지(쿨다운, 중복 신고 억제, 신고자 신뢰 점수)
+- [x] 레거시 페이지/문서에 남아있는 한글 인코딩 깨짐(모지바케) 정리
+- [x] 모든 쓰기 API에 `zod`(또는 동급) 스키마 검증 적용
+- [x] 현재 Origin 체크 외 CSRF 토큰(더블 서브밋) 추가
+- [x] 차단 해제 UI(`BlockedOwner` 관리 화면) 추가
+- [x] 모더레이션 감사 로그 필드 강화(처리 전/후 상태, 사유 코드, 처리자 IP 해시)
+- [x] 신고 악용 방지(쿨다운, 중복 신고 억제, 신고자 신뢰 점수)
 - [ ] E2E를 HTTP 스모크에서 UI 플로우 테스트까지 확장
   - 로그인 -> 마켓 -> 다운로드 -> 학습 -> 퀴즈 -> 신고 -> 모더레이션
-- [ ] CI 파이프라인에 `typecheck + test + test:e2e` 고정
-- [ ] 랭킹 유지보수 작업 스케줄링(일 단위 재계산 + 점수 드리프트 모니터링)
+- [x] CI 파이프라인에 `typecheck + test + test:e2e` 고정
+- [x] 랭킹 유지보수 작업 스케줄링(일 단위 재계산 + 점수 드리프트 모니터링)
 - [ ] 관측성 스택 추가(구조화 로그, 에러 추적, 라우트별 4xx/5xx/지연 대시보드)
-- [ ] DB 백업/복구 런북 및 마이그레이션 롤백 플레이북 추가
+- [x] DB 백업/복구 런북 및 마이그레이션 롤백 플레이북 추가
 - [ ] 접근성/모바일 QA 패스(키보드 네비, 포커스 순서, 명도 대비, 스크린리더 라벨)
+
+## 2026-02-16 추가 완료 항목
+
+- 쓰기 API 보강:
+  - 주요 쓰기 API에 `zod` 스키마 기반 JSON 입력 검증을 적용
+  - 로그인 시 CSRF 토큰 쿠키를 발급하고, 클라이언트는 `x-csrf-token` 헤더 자동 전송
+  - 서버는 `Origin`/`sec-fetch-site` + 더블 서브밋 CSRF 토큰을 함께 검증
+- 차단 관리:
+  - `GET/DELETE /api/blocked-owners` 추가
+  - `/wordbooks/blocked` 차단 생성자 목록/해제 화면 추가
+- 신고/모더레이션:
+  - 신고 API에 30초 쿨다운 + 24시간 30회 제한 추가
+  - 신고자 신뢰 점수(`reporterTrustScore`) 저장
+  - 모더레이션 감사 필드 추가:
+    - `reviewAction`, `previousStatus`, `nextStatus`, `reviewerIpHash`
+- 랭킹 유지보수:
+  - 내부 크론 엔드포인트 `POST /api/internal/cron/wordbook-rank` 추가
+  - `CRON_SECRET` Bearer 인증으로 보호
+  - 실행 시 재계산 건수 + stale 건수(1일 이상 미갱신) 반환
+- CI:
+  - `.github/workflows/ci.yml` 추가
+  - `typecheck + test + test:e2e`를 CI에서 자동 실행
+- 운영 문서:
+  - `docs/OPERATIONS.md`에 DB 백업/복구/마이그레이션 롤백 플레이북 추가
