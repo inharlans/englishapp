@@ -1,7 +1,14 @@
 /* eslint-disable no-restricted-globals */
 
-const CACHE_NAME = "englishapp-cache-v1";
-const CORE = ["/offline"];
+const CACHE_NAME = "englishapp-cache-v2";
+const CORE = [
+  "/offline",
+  "/wordbooks",
+  "/wordbooks/market",
+  "/memorize",
+  "/quiz-meaning",
+  "/quiz-word"
+];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -13,7 +20,13 @@ self.addEventListener("install", (event) => {
 });
 
 self.addEventListener("activate", (event) => {
-  event.waitUntil(self.clients.claim());
+  event.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(
+        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
+      )
+    ).then(() => self.clients.claim())
+  );
 });
 
 async function cacheFirst(request) {
@@ -25,6 +38,32 @@ async function cacheFirst(request) {
     cache.put(request, res.clone());
   }
   return res;
+}
+
+async function staleWhileRevalidate(request) {
+  const cache = await caches.open(CACHE_NAME);
+  const cached = await cache.match(request);
+  const fetchPromise = fetch(request)
+    .then((res) => {
+      if (res && res.ok) {
+        cache.put(request, res.clone());
+      }
+      return res;
+    })
+    .catch(() => null);
+
+  if (cached) {
+    fetchPromise.catch(() => null);
+    return cached;
+  }
+
+  const fresh = await fetchPromise;
+  if (fresh) return fresh;
+
+  return new Response("Offline", {
+    status: 503,
+    headers: { "content-type": "text/plain; charset=utf-8" }
+  });
 }
 
 async function networkFirst(request) {
@@ -61,9 +100,25 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  if (url.pathname.startsWith("/api/wordbooks/market") || url.pathname.startsWith("/api/wordbooks/downloaded")) {
+    event.respondWith(staleWhileRevalidate(req));
+    return;
+  }
+
   if (req.mode === "navigate") {
-    event.respondWith(networkFirst(req));
+    event.respondWith(
+      networkFirst(req).catch(async () => {
+        const cache = await caches.open(CACHE_NAME);
+        return (
+          (await cache.match(url.pathname)) ||
+          (await cache.match("/offline")) ||
+          new Response("Offline", {
+            status: 503,
+            headers: { "content-type": "text/plain; charset=utf-8" }
+          })
+        );
+      })
+    );
     return;
   }
 });
-

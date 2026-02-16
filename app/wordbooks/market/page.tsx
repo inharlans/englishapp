@@ -5,6 +5,7 @@ import { DownloadButton } from "@/components/wordbooks/DownloadButton";
 import { StarRating } from "@/components/wordbooks/StarRating";
 import { getUserFromRequestCookies } from "@/lib/authServer";
 import { prisma } from "@/lib/prisma";
+import { computeWordbookRankScore } from "@/lib/wordbookRanking";
 
 type SortMode = "top" | "new" | "downloads";
 
@@ -34,6 +35,15 @@ export default async function MarketPage(props: {
 
   const where = {
     isPublic: true,
+    hiddenByAdmin: false,
+    ownerId: {
+      notIn: (
+        await prisma.blockedOwner.findMany({
+          where: { userId: user.id },
+          select: { ownerId: true }
+        })
+      ).map((b) => b.ownerId)
+    },
     ...(q
       ? {
           OR: [
@@ -56,13 +66,13 @@ export default async function MarketPage(props: {
             { createdAt: "desc" as const }
           ];
 
-  const [total, wordbooks, myDownloads, myDownloadsUsed] = await Promise.all([
+  const [total, fetchedWordbooks, myDownloads, myDownloadsUsed] = await Promise.all([
     prisma.wordbook.count({ where }),
     prisma.wordbook.findMany({
       where,
       orderBy,
-      skip: page * take,
-      take,
+      skip: sort === "top" ? 0 : page * take,
+      take: sort === "top" ? Math.min(400, (page + 1) * take + 120) : take,
       select: {
         id: true,
         title: true,
@@ -85,6 +95,27 @@ export default async function MarketPage(props: {
       where: { userId: user.id }
     })
   ]);
+
+  const wordbooks =
+    sort === "top"
+      ? [...fetchedWordbooks]
+          .sort(
+            (a, b) =>
+              computeWordbookRankScore({
+                ratingAvg: b.ratingAvg,
+                ratingCount: b.ratingCount,
+                downloadCount: b.downloadCount,
+                createdAt: b.createdAt
+              }) -
+              computeWordbookRankScore({
+                ratingAvg: a.ratingAvg,
+                ratingCount: a.ratingCount,
+                downloadCount: a.downloadCount,
+                createdAt: a.createdAt
+              })
+          )
+          .slice(page * take, page * take + take)
+      : fetchedWordbooks;
 
   const downloadedIds = new Set(myDownloads.map((d) => d.wordbookId));
   const maxPage = Math.max(Math.ceil(total / take) - 1, 0);

@@ -37,7 +37,14 @@ export async function PATCH(
   }
 
   const body = (await req.json().catch(() => null)) as
-    | { term?: string; meaning?: string; pronunciation?: string | null; position?: number }
+    | {
+        term?: string;
+        meaning?: string;
+        pronunciation?: string | null;
+        example?: string | null;
+        exampleMeaning?: string | null;
+        position?: number;
+      }
     | null;
   if (!body) {
     return NextResponse.json({ error: "Invalid body." }, { status: 400 });
@@ -47,6 +54,8 @@ export async function PATCH(
     term?: string;
     meaning?: string;
     pronunciation?: string | null;
+    example?: string | null;
+    exampleMeaning?: string | null;
     position?: number;
   } = {};
 
@@ -63,6 +72,12 @@ export async function PATCH(
   if ("pronunciation" in body) {
     data.pronunciation = body.pronunciation ? String(body.pronunciation).trim() : null;
   }
+  if ("example" in body) {
+    data.example = body.example ? String(body.example).trim() : null;
+  }
+  if ("exampleMeaning" in body) {
+    data.exampleMeaning = body.exampleMeaning ? String(body.exampleMeaning).trim() : null;
+  }
   if (typeof body.position === "number" && Number.isFinite(body.position)) {
     data.position = Math.max(0, Math.floor(body.position));
   }
@@ -70,7 +85,15 @@ export async function PATCH(
   const updated = await prisma.wordbookItem.update({
     where: { id: itemId, wordbookId },
     data,
-    select: { id: true, term: true, meaning: true, pronunciation: true, position: true }
+    select: {
+      id: true,
+      term: true,
+      meaning: true,
+      pronunciation: true,
+      example: true,
+      exampleMeaning: true,
+      position: true
+    }
   });
 
   return NextResponse.json({ item: updated }, { status: 200 });
@@ -106,4 +129,3 @@ export async function DELETE(
   await prisma.wordbookItem.delete({ where: { id: itemId, wordbookId } });
   return NextResponse.json({ ok: true }, { status: 200 });
 }
-

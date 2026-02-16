@@ -30,9 +30,9 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   const result = await prisma.$transaction(async (tx) => {
     const wordbook = await tx.wordbook.findUnique({
       where: { id },
-      select: { id: true, isPublic: true, downloadCount: true }
+      select: { id: true, isPublic: true, hiddenByAdmin: true, downloadCount: true }
     });
-    if (!wordbook || !wordbook.isPublic) {
+    if (!wordbook || !wordbook.isPublic || wordbook.hiddenByAdmin) {
       return { ok: false as const, status: 404, error: "Not found." };
     }
 

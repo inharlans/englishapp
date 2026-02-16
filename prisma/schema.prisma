@@ -78,6 +78,12 @@ model User {
   progresses Progress[]
   resultStates ResultState[]
   quizProgresses QuizProgress[]
+  wordbookStudyStates WordbookStudyState[]
+  wordbookStudyItemStates WordbookStudyItemState[]
+  blockedOwners BlockedOwner[] @relation("BlockedByUser")
+  blockedByUsers BlockedOwner[] @relation("BlockedOwnerUser")
+  submittedReports WordbookReport[] @relation("ReportByUser")
+  reviewedReports WordbookReport[] @relation("ReportReviewedByUser")
 }
 
 model Wordbook {
@@ -88,6 +94,7 @@ model Wordbook {
   fromLang    String  @default("en")
   toLang      String  @default("ko")
   isPublic    Boolean @default(false)
+  hiddenByAdmin Boolean @default(false)
 
   downloadCount Int   @default(0)
   ratingAvg     Float @default(0)
@@ -100,6 +107,9 @@ model Wordbook {
   items     WordbookItem[]
   downloads WordbookDownload[]
   ratings   WordbookRating[]
+  studyStates WordbookStudyState[]
+  studyItemStates WordbookStudyItemState[]
+  reports WordbookReport[]
 
   @@index([ownerId, createdAt])
   @@index([isPublic, ratingAvg, downloadCount, createdAt])
@@ -111,11 +121,14 @@ model WordbookItem {
   term          String
   meaning       String
   pronunciation String?
+  example       String?
+  exampleMeaning String?
   position      Int      @default(0)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
   wordbook Wordbook @relation(fields: [wordbookId], references: [id], onDelete: Cascade)
+  studyItemStates WordbookStudyItemState[]
 
   @@index([wordbookId, position])
 }
@@ -154,6 +167,76 @@ model RateLimitBucket {
   resetAt DateTime
 }
 
+model WordbookStudyState {
+  userId      Int
+  wordbookId  Int
+  studiedCount Int      @default(0)
+  correctCount Int      @default(0)
+  wrongCount   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wordbook  Wordbook @relation(fields: [wordbookId], references: [id], onDelete: Cascade)
+  itemStates WordbookStudyItemState[]
+
+  @@id([userId, wordbookId])
+  @@index([wordbookId])
+}
+
+model WordbookStudyItemState {
+  userId     Int
+  wordbookId Int
+  itemId     Int
+  status     WordbookStudyStatus @default(NEW)
+  streak     Int       @default(0)
+  lastResult LastResult?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  user     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wordbook Wordbook     @relation(fields: [wordbookId], references: [id], onDelete: Cascade)
+  studyState WordbookStudyState @relation(fields: [userId, wordbookId], references: [userId, wordbookId], onDelete: Cascade)
+  item     WordbookItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@id([userId, wordbookId, itemId])
+  @@index([wordbookId, itemId])
+  @@index([userId, itemId])
+}
+
+model BlockedOwner {
+  userId    Int
+  ownerId   Int
+  createdAt DateTime @default(now())
+
+  user  User @relation("BlockedByUser", fields: [userId], references: [id], onDelete: Cascade)
+  owner User @relation("BlockedOwnerUser", fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@id([userId, ownerId])
+  @@index([ownerId])
+}
+
+model WordbookReport {
+  id            Int                @id @default(autoincrement())
+  wordbookId    Int
+  reporterId    Int
+  reason        String
+  detail        String?
+  status        WordbookReportStatus @default(OPEN)
+  moderatorNote String?
+  reviewedById  Int?
+  reviewedAt    DateTime?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  wordbook   Wordbook @relation(fields: [wordbookId], references: [id], onDelete: Cascade)
+  reporter   User     @relation("ReportByUser", fields: [reporterId], references: [id], onDelete: Cascade)
+  reviewedBy User?    @relation("ReportReviewedByUser", fields: [reviewedById], references: [id], onDelete: SetNull)
+
+  @@index([wordbookId, status, createdAt])
+  @@index([reporterId, createdAt])
+}
+
 enum LastResult {
   CORRECT
   WRONG
@@ -162,4 +245,16 @@ enum LastResult {
 enum UserPlan {
   FREE
   PRO
+}
+
+enum WordbookStudyStatus {
+  NEW
+  CORRECT
+  WRONG
+}
+
+enum WordbookReportStatus {
+  OPEN
+  RESOLVED
+  DISMISSED
 }

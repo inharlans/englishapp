@@ -13,6 +13,8 @@ type NewItem = {
   term: string;
   meaning: string;
   pronunciation?: string | null;
+  example?: string | null;
+  exampleMeaning?: string | null;
 };
 
 export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
@@ -48,7 +50,9 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     .map((it) => ({
       term: (it.term ?? "").trim(),
       meaning: (it.meaning ?? "").trim(),
-      pronunciation: it.pronunciation ? String(it.pronunciation).trim() : null
+      pronunciation: it.pronunciation ? String(it.pronunciation).trim() : null,
+      example: it.example ? String(it.example).trim() : null,
+      exampleMeaning: it.exampleMeaning ? String(it.exampleMeaning).trim() : null
     }))
     .filter((it) => it.term && it.meaning);
 
@@ -68,6 +72,8 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
         term: it.term,
         meaning: it.meaning,
         pronunciation: it.pronunciation,
+        example: it.example,
+        exampleMeaning: it.exampleMeaning,
         position: start + idx
       }))
     });
@@ -75,10 +81,17 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     return tx.wordbookItem.findMany({
       where: { wordbookId: id },
       orderBy: [{ position: "asc" }, { id: "asc" }],
-      select: { id: true, term: true, meaning: true, pronunciation: true, position: true }
+      select: {
+        id: true,
+        term: true,
+        meaning: true,
+        pronunciation: true,
+        example: true,
+        exampleMeaning: true,
+        position: true
+      }
     });
   });
 
   return NextResponse.json({ items: created }, { status: 201 });
 }
-

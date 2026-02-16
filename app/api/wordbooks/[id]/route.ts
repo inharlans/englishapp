@@ -31,6 +31,7 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
       fromLang: true,
       toLang: true,
       isPublic: true,
+      hiddenByAdmin: true,
       downloadCount: true,
       ratingAvg: true,
       ratingCount: true,
@@ -44,6 +45,8 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
           term: true,
           meaning: true,
           pronunciation: true,
+          example: true,
+          exampleMeaning: true,
           position: true
         }
       }
@@ -55,7 +58,7 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
   }
 
   const isOwner = wordbook.ownerId === user.id;
-  if (!wordbook.isPublic && !isOwner) {
+  if ((!wordbook.isPublic || wordbook.hiddenByAdmin) && !isOwner) {
     return NextResponse.json({ error: "Not found." }, { status: 404 });
   }
 
@@ -177,4 +180,3 @@ export async function DELETE(req: NextRequest, ctx: { params: Promise<{ id: stri
   await prisma.wordbook.delete({ where: { id } });
   return NextResponse.json({ ok: true }, { status: 200 });
 }
-

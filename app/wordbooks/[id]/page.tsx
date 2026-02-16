@@ -9,6 +9,9 @@ import { DownloadButton } from "@/components/wordbooks/DownloadButton";
 import { OfflineSaveButton } from "@/components/wordbooks/OfflineSaveButton";
 import { PublishToggle } from "@/components/wordbooks/PublishToggle";
 import { RateBox } from "@/components/wordbooks/RateBox";
+import { ReportWordbookButton } from "@/components/wordbooks/ReportWordbookButton";
+import { BlockOwnerButton } from "@/components/wordbooks/BlockOwnerButton";
+import { WordbookImportExportPanel } from "@/components/wordbooks/WordbookImportExportPanel";
 import { WordbookItemRow } from "@/components/wordbooks/WordbookItemRow";
 import { WordbookMetaEditor } from "@/components/wordbooks/WordbookMetaEditor";
 
@@ -55,6 +58,7 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
       fromLang: true,
       toLang: true,
       isPublic: true,
+      hiddenByAdmin: true,
       downloadCount: true,
       ratingAvg: true,
       ratingCount: true,
@@ -63,7 +67,15 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
       owner: { select: { email: true } },
       items: {
         orderBy: [{ position: "asc" }, { id: "asc" }],
-        select: { id: true, term: true, meaning: true, pronunciation: true, position: true }
+        select: {
+          id: true,
+          term: true,
+          meaning: true,
+          pronunciation: true,
+          example: true,
+          exampleMeaning: true,
+          position: true
+        }
       }
     }
   });
@@ -83,7 +95,7 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
   }
 
   const isOwner = wordbook.ownerId === user.id;
-  if (!wordbook.isPublic && !isOwner) {
+  if ((!wordbook.isPublic || wordbook.hiddenByAdmin) && !isOwner) {
     return (
       <section className="space-y-4">
         <h1 className="text-2xl font-black tracking-tight text-slate-900">Not found</h1>
@@ -160,6 +172,22 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
             </Link>
           ) : null}
           {!isOwner && downloadedAt ? <OfflineSaveButton wordbookId={id} /> : null}
+          {(isOwner || downloadedAt) && (
+            <Link
+              href={{ pathname: `/wordbooks/${id}/study` }}
+              className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
+            >
+              Study State
+            </Link>
+          )}
+          {(isOwner || downloadedAt) && (
+            <Link
+              href={{ pathname: `/wordbooks/${id}/quiz` }}
+              className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
+            >
+              Wordbook Quiz
+            </Link>
+          )}
           {isOwner && user.plan === "PRO" ? (
             <PublishToggle wordbookId={id} isPublic={wordbook.isPublic} />
           ) : null}
@@ -183,6 +211,12 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
           />
           {!isOwner && !downloadedAt ? (
             <p className="mt-2 text-xs text-slate-600">Download first to rate.</p>
+          ) : null}
+          {!isOwner ? (
+            <div className="mt-3 flex flex-wrap gap-2">
+              <ReportWordbookButton wordbookId={id} />
+              <BlockOwnerButton wordbookId={id} ownerEmail={wordbook.owner.email} />
+            </div>
           ) : null}
         </div>
       ) : null}
@@ -214,6 +248,9 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
             <h2 className="mt-2 text-xl font-black text-slate-900">Add Words</h2>
             <div className="mt-4">
               <AddItemsForm wordbookId={id} />
+            </div>
+            <div className="mt-4">
+              <WordbookImportExportPanel wordbookId={id} />
             </div>
           </div>
         </div>

@@ -7,17 +7,35 @@ type Props = {
   wordbookId: number;
 };
 
-function parseBulk(text: string): Array<{ term: string; meaning: string; pronunciation?: string | null }> {
+function parseBulk(text: string): Array<{
+  term: string;
+  meaning: string;
+  pronunciation?: string | null;
+  example?: string | null;
+  exampleMeaning?: string | null;
+}> {
   const lines = text
     .split(/\r?\n/)
     .map((l) => l.trim())
     .filter(Boolean);
 
-  const items: Array<{ term: string; meaning: string; pronunciation?: string | null }> = [];
+  const items: Array<{
+    term: string;
+    meaning: string;
+    pronunciation?: string | null;
+    example?: string | null;
+    exampleMeaning?: string | null;
+  }> = [];
   for (const line of lines) {
     const tab = line.split("\t").map((s) => s.trim());
     if (tab.length >= 2 && tab[0] && tab[1]) {
-      items.push({ term: tab[0], meaning: tab[1], pronunciation: tab[2] ? tab[2] : null });
+      items.push({
+        term: tab[0],
+        meaning: tab[1],
+        pronunciation: tab[2] ? tab[2] : null,
+        example: tab[3] ? tab[3] : null,
+        exampleMeaning: tab[4] ? tab[4] : null
+      });
       continue;
     }
 
@@ -34,11 +52,21 @@ export function AddItemsForm({ wordbookId }: Props) {
   const [term, setTerm] = useState("");
   const [meaning, setMeaning] = useState("");
   const [pron, setPron] = useState("");
+  const [example, setExample] = useState("");
+  const [exampleMeaning, setExampleMeaning] = useState("");
   const [bulk, setBulk] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const submit = async (items: Array<{ term: string; meaning: string; pronunciation?: string | null }>) => {
+  const submit = async (
+    items: Array<{
+      term: string;
+      meaning: string;
+      pronunciation?: string | null;
+      example?: string | null;
+      exampleMeaning?: string | null;
+    }>
+  ) => {
     setLoading(true);
     setError("");
     try {
@@ -65,10 +93,20 @@ export function AddItemsForm({ wordbookId }: Props) {
       setError("term/meaning required.");
       return;
     }
-    await submit([{ term: t, meaning: m, pronunciation: pron.trim() ? pron.trim() : null }]);
+    await submit([
+      {
+        term: t,
+        meaning: m,
+        pronunciation: pron.trim() ? pron.trim() : null,
+        example: example.trim() ? example.trim() : null,
+        exampleMeaning: exampleMeaning.trim() ? exampleMeaning.trim() : null
+      }
+    ]);
     setTerm("");
     setMeaning("");
     setPron("");
+    setExample("");
+    setExampleMeaning("");
   };
 
   const onAddBulk = async (e: React.FormEvent) => {
@@ -86,7 +124,7 @@ export function AddItemsForm({ wordbookId }: Props) {
     <section className="space-y-4">
       <div className="rounded-2xl border border-slate-200 bg-white p-4">
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Add Item</p>
-        <form onSubmit={onAddOne} className="mt-3 grid gap-3 md:grid-cols-3">
+        <form onSubmit={onAddOne} className="mt-3 grid gap-3 md:grid-cols-5">
           <input
             value={term}
             onChange={(e) => setTerm(e.target.value)}
@@ -108,7 +146,21 @@ export function AddItemsForm({ wordbookId }: Props) {
             className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
             disabled={loading}
           />
-          <div className="md:col-span-3">
+          <input
+            value={example}
+            onChange={(e) => setExample(e.target.value)}
+            placeholder="example (optional)"
+            className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+            disabled={loading}
+          />
+          <input
+            value={exampleMeaning}
+            onChange={(e) => setExampleMeaning(e.target.value)}
+            placeholder="example ko (optional)"
+            className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+            disabled={loading}
+          />
+          <div className="md:col-span-5">
             <button
               type="submit"
               disabled={loading}

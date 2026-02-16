@@ -268,3 +268,19 @@ Outputs:
 - `/api/words` now returns `isUserScoped: true` for debugging/verification.
 - Seed process now imports generated wordbooks from `data/wordbooks-ko/**/*.generated.tsv`
   into public market wordbooks (download-ready).
+
+## 2026-02-16 TODO Sprint (No External Keys)
+
+Done in this sprint:
+
+- [x] Downloaded wordbook personal study state (check/wrong/progress) saved per user.
+- [x] Market ranking improvement (Bayesian rating + download + recency score).
+- [x] Report/block/moderation flow for public wordbooks.
+- [x] Wordbook import/export (TSV/CSV) with optional pronunciation auto-fill.
+- [x] Sentence/example fields + wordbook-based quiz mode.
+- [x] PWA install prompt + stronger route-level offline caching strategy.
+
+Still pending (external integration keys required):
+
+- [ ] Payment integration (subscription lifecycle automation)
+- [ ] OAuth login (Google/Naver/Kakao)

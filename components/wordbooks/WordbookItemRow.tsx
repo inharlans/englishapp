@@ -10,6 +10,8 @@ type Item = {
   term: string;
   meaning: string;
   pronunciation: string | null;
+  example: string | null;
+  exampleMeaning: string | null;
   position: number;
 };
 
@@ -25,6 +27,8 @@ export function WordbookItemRow({ wordbookId, item, editable, speakLang }: Props
   const [term, setTerm] = useState(item.term);
   const [meaning, setMeaning] = useState(item.meaning);
   const [pron, setPron] = useState(item.pronunciation ?? "");
+  const [example, setExample] = useState(item.example ?? "");
+  const [exampleMeaning, setExampleMeaning] = useState(item.exampleMeaning ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -38,7 +42,9 @@ export function WordbookItemRow({ wordbookId, item, editable, speakLang }: Props
         body: JSON.stringify({
           term,
           meaning,
-          pronunciation: pron ? pron : null
+          pronunciation: pron ? pron : null,
+          example: example ? example : null,
+          exampleMeaning: exampleMeaning ? exampleMeaning : null
         })
       });
       const json = (await res.json()) as { item?: Item; error?: string };
@@ -72,7 +78,7 @@ export function WordbookItemRow({ wordbookId, item, editable, speakLang }: Props
     <div className="rounded-xl border border-slate-200 bg-white p-3">
       {editable ? (
         <div className="grid gap-2 md:grid-cols-12 md:items-center">
-          <div className="md:col-span-3">
+          <div className="md:col-span-2">
             <input
               value={term}
               onChange={(e) => setTerm(e.target.value)}
@@ -80,7 +86,7 @@ export function WordbookItemRow({ wordbookId, item, editable, speakLang }: Props
               disabled={saving}
             />
           </div>
-          <div className="md:col-span-5">
+          <div className="md:col-span-3">
             <input
               value={meaning}
               onChange={(e) => setMeaning(e.target.value)}
@@ -97,7 +103,25 @@ export function WordbookItemRow({ wordbookId, item, editable, speakLang }: Props
               disabled={saving}
             />
           </div>
-          <div className="flex flex-wrap items-center gap-2 md:col-span-2 md:justify-end">
+          <div className="md:col-span-3">
+            <input
+              value={example}
+              onChange={(e) => setExample(e.target.value)}
+              placeholder="example (optional)"
+              className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+              disabled={saving}
+            />
+          </div>
+          <div className="md:col-span-2">
+            <input
+              value={exampleMeaning}
+              onChange={(e) => setExampleMeaning(e.target.value)}
+              placeholder="example ko"
+              className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+              disabled={saving}
+            />
+          </div>
+          <div className="flex flex-wrap items-center gap-2 md:col-span-12 md:justify-end">
             <SpeakButton text={term} lang={speakLang} />
             <button
               type="button"
@@ -130,6 +154,12 @@ export function WordbookItemRow({ wordbookId, item, editable, speakLang }: Props
               ) : null}
             </p>
             <p className="mt-1 text-sm text-slate-700">{item.meaning}</p>
+            {item.example ? (
+              <p className="mt-1 text-xs text-slate-500">
+                e.g. {item.example}
+                {item.exampleMeaning ? ` - ${item.exampleMeaning}` : ""}
+              </p>
+            ) : null}
           </div>
           <SpeakButton text={item.term} lang={speakLang} />
         </div>

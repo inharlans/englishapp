@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { AppNav } from "@/components/AppNav";
 import { KeyboardPageNavigator } from "@/components/KeyboardPageNavigator";
+import { PwaInstallPrompt } from "@/components/PwaInstallPrompt";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 
 export const metadata: Metadata = {
@@ -21,6 +22,7 @@ export default function RootLayout({
         <KeyboardPageNavigator />
         <ServiceWorkerRegister />
         <main className="mx-auto min-h-screen w-full max-w-5xl p-6">
+          <PwaInstallPrompt />
           <AppNav />
           {children}
         </main>
