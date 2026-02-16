@@ -48,7 +48,38 @@ export default function NewWordbookPage() {
         </p>
         <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-900">New Wordbook</h1>
         <p className="mt-2 text-sm text-slate-600">Create your own vocabulary list.</p>
+        <p className="mt-1 text-xs text-slate-500">
+          Free plan: up to 1 created wordbook. PRO: unlimited.
+        </p>
       </header>
+
+      <section className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+        <h2 className="text-sm font-black uppercase tracking-[0.14em] text-slate-800">
+          Wordbook Guide
+        </h2>
+        <div className="mt-3 space-y-3 text-sm text-slate-700">
+          <p>
+            <span className="font-semibold text-slate-900">1) 제목은 좁고 명확하게:</span>{" "}
+            예: "토익 파트5 빈출 동사 120", "여행 영어 식당 표현".
+          </p>
+          <p>
+            <span className="font-semibold text-slate-900">2) 설명에 범위/목표를 쓰기:</span>{" "}
+            학습 대상, 예상 소요시간, 추천 사용법을 2~3줄로 적으면 재사용성이 좋아집니다.
+          </p>
+          <p>
+            <span className="font-semibold text-slate-900">3) 한 단어장에는 하나의 기준만:</span>{" "}
+            난이도/주제/시험영역 중 하나를 기준으로 묶으면 기억 효율이 올라갑니다.
+          </p>
+          <p>
+            <span className="font-semibold text-slate-900">4) 단어 추가 형식 추천:</span>{" "}
+            term(필수), meaning(필수), pronunciation(선택), example(선택), exampleMeaning(선택).
+          </p>
+          <p>
+            <span className="font-semibold text-slate-900">5) 예문은 짧고 실제형으로:</span>{" "}
+            8~16단어, 현재 시제 중심, 뜻은 직역보다 자연스러운 한국어 권장.
+          </p>
+        </div>
+      </section>
 
       <div className="rounded-3xl border border-white/60 bg-white/85 p-6 shadow-[0_20px_50px_-30px_rgba(15,23,42,0.7)] backdrop-blur">
         <form onSubmit={onSubmit} className="space-y-4">

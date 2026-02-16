@@ -59,6 +59,20 @@ export async function POST(req: NextRequest) {
   const toLang = (parsedBody.data.toLang ?? "ko").trim() || "ko";
   const description = parsedBody.data.description ? parsedBody.data.description.trim() : null;
 
+  // Plan enforcement: FREE users can create only 1 wordbook lifetime.
+  if (user.plan === "FREE") {
+    const createdCount = await prisma.wordbook.count({ where: { ownerId: user.id } });
+    if (createdCount >= 1) {
+      return NextResponse.json(
+        {
+          error:
+            "Free plan can create only 1 wordbook. Upgrade to PRO for unlimited wordbooks."
+        },
+        { status: 403 }
+      );
+    }
+  }
+
   const wordbook = await prisma.wordbook.create({
     data: {
       ownerId: user.id,

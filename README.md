@@ -19,9 +19,11 @@ Next.js(App Router) + Prisma + PostgreSQL 기반 단어 학습 웹앱.
 플랜 정책(서버 강제)
 - FREE
 - 공개 단어장 다운로드 **평생 3회 제한**
+- 단어장 생성 **평생 1개 제한**
 - 업로드(내가 만든) 단어장은 **강제 공개**
 - PRO
 - 다운로드 **무제한**
+- 단어장 생성 **무제한**
 - 업로드 단어장 공개/비공개 선택 가능
 
 가격(표시용, 결제 연동은 아직 없음)
@@ -64,6 +66,7 @@ English 1500(고정 단어 리스트)
 단어장(Wordbooks)
 - `GET /api/wordbooks` 내가 만든 단어장 목록
 - `POST /api/wordbooks` 단어장 생성(FREE는 강제 공개)
+  - FREE는 생성 1회(평생) 제한, PRO는 무제한
 - `GET /api/wordbooks/[id]` 단어장 + 아이템 조회(소유자만 private 조회 가능, 타인은 public만)
 - `PATCH /api/wordbooks/[id]` 단어장 메타 수정(소유자만)
 - `DELETE /api/wordbooks/[id]` 단어장 삭제(소유자만)
@@ -485,3 +488,6 @@ Done in this sprint:
 - "마지막 단어장 이어서" 개선:
   - 학습 화면 진입 시 `last_study_wordbook_id` 쿠키를 저장.
   - `/wordbooks` 대시보드 추천 CTA는 이 쿠키를 우선 사용해 실제 마지막으로 학습한 단어장으로 이동.
+- 단어장 생성 정책/가이드 보강:
+  - 서버에서 FREE 생성 1회 제한, PRO 무제한 생성을 강제.
+  - `/wordbooks/new`에 좋은 단어장 작성 가이드라인(제목/설명/구성/예문 원칙) 추가.
