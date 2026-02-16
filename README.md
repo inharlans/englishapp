@@ -577,6 +577,3 @@ Security notes:
 - [x] Preview bypass elevated permissions:
   - Preview sessions now run as `admin + PRO` capability for broad page/API access.
   - Study access guard allows admin users to access all wordbooks.
-- [x] Temporary full-access mode for preview:
-  - While `PREVIEW_BYPASS_TOKEN` is configured, unauthenticated requests are resolved to preview-admin context.
-  - This guarantees broad page/API access during design review windows.
