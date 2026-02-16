@@ -5,19 +5,32 @@ type MeaningEntry = {
   text: string;
 };
 
+const POS_LABELS: Record<string, string> = {
+  "명": "명사",
+  "동": "동사",
+  "형": "형용사",
+  "부": "부사",
+  "대": "대명사",
+  "전": "전치사",
+  "접": "접속사",
+  "감": "감탄사",
+  "명사": "명사",
+  "동사": "동사",
+  "형용사": "형용사",
+  "부사": "부사",
+  "대명사": "대명사",
+  "전치사": "전치사",
+  "접속사": "접속사",
+  "감탄사": "감탄사"
+};
+
+function isPosTag(tag: string): boolean {
+  return Object.prototype.hasOwnProperty.call(POS_LABELS, tag.trim());
+}
+
 function normalizeTag(tag: string): string {
   const t = tag.replace(/[()]/g, "").trim();
-  const map: Record<string, string> = {
-    "명": "명사",
-    "동": "동사",
-    "형": "형용사",
-    "부": "부사",
-    "대": "대명사",
-    "전": "전치사",
-    "접": "접속사",
-    "감": "감탄사"
-  };
-  return map[t] ?? t;
+  return POS_LABELS[t] ?? t;
 }
 
 function splitPrimary(value: string): string[] {
@@ -50,20 +63,25 @@ function parseMeaningEntries(value: string): MeaningEntry[] {
 
   for (const chunk of chunks) {
     const regex = /\(([^)]+)\)/g;
-    let cursor = 0;
+    let segmentStart = 0;
     let match: RegExpExecArray | null;
 
     while ((match = regex.exec(chunk)) !== null) {
-      const before = chunk.slice(cursor, match.index).trim();
+      const candidate = match[1].trim();
+      if (!isPosTag(candidate)) {
+        continue;
+      }
+
+      const before = chunk.slice(segmentStart, match.index).trim();
       if (before) {
         pushEntry(entries, currentTag, before);
       }
 
-      currentTag = match[1].trim();
-      cursor = match.index + match[0].length;
+      currentTag = candidate;
+      segmentStart = match.index + match[0].length;
     }
 
-    const rest = chunk.slice(cursor).trim();
+    const rest = chunk.slice(segmentStart).trim();
     if (rest) {
       pushEntry(entries, currentTag, rest);
     }
