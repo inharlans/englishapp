@@ -34,9 +34,6 @@ type LoadPayload = {
   item?: QuizItem | null;
   error?: string;
   totalItems?: number;
-  partSize?: number;
-  partIndex?: number;
-  partCount?: number;
   partItemCount?: number;
 };
 
@@ -65,7 +62,9 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING", lockMo
         partSize: String(partSize),
         partIndex: String(partIndex)
       });
-      const res = await apiFetch(`/api/wordbooks/${wordbookId}/quiz?${qs.toString()}`, { cache: "no-store" });
+      const res = await apiFetch(`/api/wordbooks/${wordbookId}/quiz?${qs.toString()}`, {
+        cache: "no-store"
+      });
       const json = (await res.json()) as LoadPayload;
       if (!res.ok) throw new Error(json.error ?? "Failed to load question.");
       setItem(json.item ?? null);
@@ -101,11 +100,8 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING", lockMo
       };
       if (!res.ok) throw new Error(json.error ?? "Submit failed.");
       setAttempts((v) => v + 1);
-      if (json.correct) {
-        setCorrects((v) => v + 1);
-      } else {
-        setWrongs((v) => v + 1);
-      }
+      if (json.correct) setCorrects((v) => v + 1);
+      else setWrongs((v) => v + 1);
       setMessage(
         json.correct
           ? "정답입니다."
@@ -120,7 +116,6 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING", lockMo
   };
 
   const activeTab = mode === "MEANING" ? "quiz-meaning" : "quiz-word";
-
   const recommendation =
     wrongs > corrects
       ? {
@@ -136,14 +131,7 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING", lockMo
           reason: "퀴즈 직후 암기카드로 되짚으면 유지율이 높아집니다."
         };
 
-  const partButtons = useMemo(
-    () =>
-      Array.from({ length: partCount }, (_, idx) => {
-        const n = idx + 1;
-        return n;
-      }),
-    [partCount]
-  );
+  const partButtons = useMemo(() => Array.from({ length: partCount }, (_, idx) => idx + 1), [partCount]);
 
   return (
     <section className="space-y-4">
@@ -158,11 +146,47 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING", lockMo
       </header>
 
       <div className="ui-card p-3">
-        <div className="text-xs text-slate-600">품사/의미 표시</div>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="text-xs text-slate-600">품사/의미 표시</div>
+          {!lockMode ? (
+            <label className="text-xs font-semibold text-slate-700">
+              Mode{" "}
+              <select
+                value={mode}
+                onChange={(e) => setMode(e.target.value === "WORD" ? "WORD" : "MEANING")}
+                data-testid="wordbook-quiz-mode"
+                className="ml-2 rounded border border-slate-300 bg-white px-2 py-1"
+              >
+                <option value="MEANING">Meaning Quiz</option>
+                <option value="WORD">Word Quiz</option>
+              </select>
+            </label>
+          ) : null}
+        </div>
         <div className="mt-2 flex flex-wrap items-center gap-2">
           <div className="inline-flex rounded-lg border border-slate-200 p-1 text-xs">
-            <button type="button" onClick={() => setMeaningMode("compact")} className={meaningMode === "compact" ? "rounded-md bg-slate-900 px-2 py-1 font-semibold text-white" : "rounded-md px-2 py-1 text-slate-700"}>간결</button>
-            <button type="button" onClick={() => setMeaningMode("detailed")} className={meaningMode === "detailed" ? "rounded-md bg-slate-900 px-2 py-1 font-semibold text-white" : "rounded-md px-2 py-1 text-slate-700"}>자세히</button>
+            <button
+              type="button"
+              onClick={() => setMeaningMode("compact")}
+              className={
+                meaningMode === "compact"
+                  ? "rounded-md bg-slate-900 px-2 py-1 font-semibold text-white"
+                  : "rounded-md px-2 py-1 text-slate-700"
+              }
+            >
+              간결
+            </button>
+            <button
+              type="button"
+              onClick={() => setMeaningMode("detailed")}
+              className={
+                meaningMode === "detailed"
+                  ? "rounded-md bg-slate-900 px-2 py-1 font-semibold text-white"
+                  : "rounded-md px-2 py-1 text-slate-700"
+              }
+            >
+              자세히
+            </button>
           </div>
           <DensityModeToggle mode={densityMode} onChange={setDensityMode} />
         </div>
@@ -202,24 +226,11 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING", lockMo
         </div>
       </div>
 
-      {!lockMode ? (
-        <div className="rounded-2xl border border-slate-200 bg-white p-4">
-          <label className="text-sm font-semibold text-slate-700">
-            Mode{" "}
-            <select
-              value={mode}
-              onChange={(e) => setMode(e.target.value === "WORD" ? "WORD" : "MEANING")}
-              data-testid="wordbook-quiz-mode"
-              className="ml-2 rounded border border-slate-300 bg-white px-2 py-1"
-            >
-              <option value="MEANING">Meaning Quiz</option>
-              <option value="WORD">Word Quiz</option>
-            </select>
-          </label>
-        </div>
-      ) : null}
-
-      <div className={densityMode === "compact" ? "ui-card p-3" : densityMode === "focus" ? "ui-card p-6" : "ui-card p-5"}>
+      <div
+        className={
+          densityMode === "compact" ? "ui-card p-3" : densityMode === "focus" ? "ui-card p-6" : "ui-card p-5"
+        }
+      >
         {!item ? (
           loading ? (
             <p className="text-sm text-slate-600">Loading...</p>
@@ -234,7 +245,9 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING", lockMo
         ) : (
           <>
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Question</p>
-            <p className="mt-1 text-xs text-slate-500">Part {partIndex} · {partItemCount} words</p>
+            <p className="mt-1 text-xs text-slate-500">
+              Part {partIndex} · {partItemCount} words
+            </p>
             <div className="mt-2 text-3xl font-black tracking-tight text-slate-900">
               {mode === "MEANING" ? item.term : <MeaningView value={item.meaning} mode={meaningMode} />}
             </div>
