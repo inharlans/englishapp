@@ -165,7 +165,7 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Wordbook Memorize</p>
           <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-900">{title || "Wordbook"}</h1>
           <p className="mt-2 text-sm text-slate-600">
-            泥댄겕 {studyState.studiedCount} / ?뺣떟 {studyState.correctCount} / ?ㅻ떟 {studyState.wrongCount}
+            체크 {studyState.studiedCount} / 정답 {studyState.correctCount} / 오답 {studyState.wrongCount}
           </p>
         </div>
         <WordbookStudyTabs wordbookId={wordbookId} active="memorize" showBack={false} />
@@ -173,7 +173,7 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
 
       <div className="ui-card p-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="text-xs text-slate-600">?쒖떆 紐⑤뱶</div>
+          <div className="text-xs text-slate-600">표시 모드</div>
           <div className="flex flex-wrap items-center gap-2">
             <div className="inline-flex rounded-lg border border-slate-200 p-1 text-xs">
               <button
@@ -181,14 +181,15 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
                 onClick={() => setMode("compact")}
                 className={mode === "compact" ? "rounded-md ui-tab-active px-2 py-1 font-semibold" : "rounded-md ui-tab-inactive px-2 py-1"}
               >
-                媛꾧껐
+                간결
               </button>
               <button
                 type="button"
                 onClick={() => setMode("detailed")}
                 className={mode === "detailed" ? "rounded-md ui-tab-active px-2 py-1 font-semibold" : "rounded-md ui-tab-inactive px-2 py-1"}
               >
-                ?먯꽭??              </button>
+                자세히
+              </button>
             </div>
             <DensityModeToggle mode={densityMode} onChange={setDensityMode} />
           </div>
@@ -227,10 +228,10 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
 
       {!loading && items.length === 0 ? (
         <EmptyStateCard
-          title="?숈뒿???⑥뼱媛 ?놁뒿?덈떎"
-          description="???⑥뼱?μ뿉???꾩쭅 ??ぉ???녾굅???쒖떆 議곌굔??留욌뒗 ?⑥뼱媛 ?놁뒿?덈떎."
-          primary={{ label: "?⑥뼱???곸꽭濡??대룞", href: `/wordbooks/${wordbookId}` }}
-          secondary={{ label: "留덉폆 ?섎윭蹂닿린", href: "/wordbooks/market" }}
+          title="학습할 단어가 없습니다"
+          description="이 단어장에서 아직 항목이 없거나 현재 표시 조건에 맞는 단어가 없습니다."
+          primary={{ label: "단어장 상세로 이동", href: `/wordbooks/${wordbookId}` }}
+          secondary={{ label: "마켓 둘러보기", href: "/wordbooks/market" }}
         />
       ) : null}
 
@@ -272,7 +273,7 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
               placeholder="Search words"
               className="min-w-[180px] flex-1 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 outline-none ring-blue-500 focus:ring-2"
             />
-            <span className="text-slate-500">媛쒖닔</span>
+            <span className="text-slate-500">개수</span>
             <button
               type="button"
               onClick={() => changePageSize(pageSize - 1)}
@@ -294,7 +295,7 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
               disabled={currentPage <= 0}
               className="rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
             >
-              ?댁쟾
+              이전
             </button>
             <span className="text-slate-500">
               {currentPage + 1}/{totalPages}
@@ -305,7 +306,7 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
               disabled={currentPage >= totalPages - 1}
               className="rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
             >
-              ?ㅼ쓬
+              다음
             </button>
             <input
               type="number"
@@ -320,7 +321,7 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
               onClick={applyPageInput}
               className="ui-btn-primary rounded-lg px-3 py-1"
             >
-              ?대룞
+              이동
             </button>
             <button
               type="button"
@@ -332,7 +333,7 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
                   : "ui-tab-inactive"
               ].join(" ")}
             >
-              留욎텣 ?⑥뼱 ?④?
+              맞춘 단어 숨김
             </button>
           </div>
         </div>

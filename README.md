@@ -575,3 +575,15 @@ Additional observations and guardrails:
 - [x] Loading UI stabilization:
   - Removed inline `Loading...` text blocks that pushed content down.
   - Added non-layout-shifting loading badge overlay (`absolute`) with `min-h` containers in memorize/list study views.
+
+## 2026-02-16 Text encoding and quiz feedback fixes
+
+- Fixed broken text rendering (mojibake) in:
+  - `/wordbooks/[id]/list-correct`
+  - `/wordbooks/[id]/list-wrong`
+  - `/wordbooks/[id]/list-half`
+  - related study/quiz/review labels in shared clients
+- Updated quiz result UX:
+  - Correct answer now shows a green `정답` feedback panel.
+  - Wrong answer now shows a red `오답` feedback panel and the actual correct answer.
+  - Added explicit `다음 문제` action after each submission.

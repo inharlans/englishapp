@@ -85,7 +85,7 @@ export default function OfflineLibraryPage() {
                 <h2 className="truncate text-lg font-black text-slate-900">{wb.title}</h2>
                 <p className="mt-1 text-xs text-slate-500">
                   saved {wb.savedAt.slice(0, 10)}
-                  {wb.ownerEmail ? ` 쨌 by ${wb.ownerEmail}` : ""}
+                  {wb.ownerEmail ? ` by ${wb.ownerEmail}` : ""}
                 </p>
                 <p className="mt-2 text-sm text-slate-600">{wb.items.length} items</p>
               </div>

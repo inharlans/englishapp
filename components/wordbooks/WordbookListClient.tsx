@@ -116,7 +116,7 @@ export function WordbookListClient({
       </header>
 
       <div className="ui-card p-3">
-        <div className="text-xs text-slate-600">?섎? ?쒖떆</div>
+        <div className="text-xs text-slate-600">의미 표시</div>
         <div className="mt-2 flex flex-wrap items-center gap-2">
           <div className="inline-flex rounded-lg border border-slate-200 p-1 text-xs">
             <button
@@ -128,7 +128,7 @@ export function WordbookListClient({
                   : "rounded-md ui-tab-inactive px-2 py-1"
               }
             >
-              媛꾧껐
+              간결
             </button>
             <button
               type="button"
@@ -139,7 +139,8 @@ export function WordbookListClient({
                   : "rounded-md ui-tab-inactive px-2 py-1"
               }
             >
-              ?먯꽭??            </button>
+              자세히
+            </button>
           </div>
           <DensityModeToggle mode={densityMode} onChange={setDensityMode} />
         </div>
@@ -147,7 +148,7 @@ export function WordbookListClient({
 
       <div className="ui-card p-4">
         <div className="flex flex-wrap items-center gap-2 text-xs">
-          <label className="font-semibold text-slate-700">Part ?ш린(n)</label>
+          <label className="font-semibold text-slate-700">Part 크기(n)</label>
           <input
             type="number"
             min={1}
@@ -157,7 +158,7 @@ export function WordbookListClient({
             className="w-20 rounded border border-slate-300 bg-white px-2 py-1 text-sm"
           />
           <span className="text-slate-500">
-            珥?{totalItems}媛?쨌 {partCount}媛?part
+            총 {totalItems}개 / {partCount}개 part
           </span>
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
@@ -195,10 +196,10 @@ export function WordbookListClient({
 
       {!loading && items.length === 0 ? (
         <EmptyStateCard
-          title="議곌굔??留욌뒗 ?⑥뼱媛 ?놁뒿?덈떎"
-          description={`Part ${partIndex}?먯꽌 議곌굔??留욌뒗 ?⑥뼱瑜?李얠? 紐삵뻽?듬땲?? ?ㅻⅨ part瑜??좏깮?대낫?몄슂.`}
-          primary={{ label: "?붽린 ??쑝濡??대룞", href: `/wordbooks/${wordbookId}/memorize` }}
-          secondary={{ label: "?댁쫰 ??쑝濡??대룞", href: `/wordbooks/${wordbookId}/quiz-meaning` }}
+          title="조건에 맞는 단어가 없습니다"
+          description={`Part ${partIndex}에서 조건에 맞는 단어를 찾지 못했습니다. 다른 part를 선택해보세요.`}
+          primary={{ label: "암기 화면으로 이동", href: `/wordbooks/${wordbookId}/memorize` }}
+          secondary={{ label: "퀴즈 화면으로 이동", href: `/wordbooks/${wordbookId}/quiz-meaning` }}
         />
       ) : null}
 

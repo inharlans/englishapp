@@ -37,11 +37,21 @@ type LoadPayload = {
   partItemCount?: number;
 };
 
+type SubmitPayload = {
+  correct?: boolean;
+  correctAnswer?: { term: string; meaning: string };
+  error?: string;
+};
+
 export function WordbookQuizClient({ wordbookId, initialMode = "MEANING", lockMode = false }: Props) {
   const [mode, setMode] = useState<QuizMode>(initialMode);
   const [item, setItem] = useState<QuizItem | null>(null);
   const [answer, setAnswer] = useState("");
   const [message, setMessage] = useState("");
+  const [feedback, setFeedback] = useState<{
+    isCorrect: boolean;
+    correctAnswer?: { term: string; meaning: string };
+  } | null>(null);
   const [loading, setLoading] = useState(false);
   const [attempts, setAttempts] = useState(0);
   const [corrects, setCorrects] = useState(0);
@@ -56,6 +66,7 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING", lockMo
     setLoading(true);
     setMessage("");
     setAnswer("");
+    setFeedback(null);
     try {
       const qs = new URLSearchParams({
         mode,
@@ -93,21 +104,15 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING", lockMo
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ itemId: item.id, mode, answer: answer.trim() })
       });
-      const json = (await res.json()) as {
-        correct?: boolean;
-        correctAnswer?: { term: string; meaning: string };
-        error?: string;
-      };
+      const json = (await res.json()) as SubmitPayload;
       if (!res.ok) throw new Error(json.error ?? "Submit failed.");
       setAttempts((v) => v + 1);
       if (json.correct) setCorrects((v) => v + 1);
       else setWrongs((v) => v + 1);
-      setMessage(
-        json.correct
-          ? "?뺣떟?낅땲??"
-          : `?ㅻ떟?낅땲?? ?뺣떟: ${json.correctAnswer?.term ?? ""} / ${json.correctAnswer?.meaning ?? ""}`
-      );
-      await loadNext();
+      setFeedback({
+        isCorrect: Boolean(json.correct),
+        correctAnswer: json.correctAnswer
+      });
     } catch (e) {
       setMessage(e instanceof Error ? e.message : "Submit failed.");
     } finally {
@@ -139,7 +144,7 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING", lockMo
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Wordbook Quiz</p>
           <h1 className="mt-2 text-2xl font-black tracking-tight text-slate-900">
-            {mode === "MEANING" ? "?섎? ?댁쫰" : "?⑥뼱 ?댁쫰"}
+            {mode === "MEANING" ? "의미 퀴즈" : "단어 퀴즈"}
           </h1>
         </div>
         <WordbookStudyTabs wordbookId={wordbookId} active={activeTab} />
@@ -147,7 +152,7 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING", lockMo
 
       <div className="ui-card p-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="text-xs text-slate-600">?덉궗/?섎? ?쒖떆</div>
+          <div className="text-xs text-slate-600">품사/의미 표시</div>
           {!lockMode ? (
             <label className="text-xs font-semibold text-slate-700">
               Mode{" "}
@@ -174,7 +179,7 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING", lockMo
                   : "rounded-md ui-tab-inactive px-2 py-1"
               }
             >
-              媛꾧껐
+              간결
             </button>
             <button
               type="button"
@@ -185,7 +190,8 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING", lockMo
                   : "rounded-md ui-tab-inactive px-2 py-1"
               }
             >
-              ?먯꽭??            </button>
+              자세히
+            </button>
           </div>
           <DensityModeToggle mode={densityMode} onChange={setDensityMode} />
         </div>
@@ -193,7 +199,7 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING", lockMo
 
       <div className="ui-card p-4">
         <div className="flex flex-wrap items-center gap-2 text-xs">
-          <label className="font-semibold text-slate-700">Part ?ш린(n)</label>
+          <label className="font-semibold text-slate-700">Part 크기(n)</label>
           <input
             type="number"
             min={1}
@@ -203,7 +209,7 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING", lockMo
             className="w-20 rounded border border-slate-300 bg-white px-2 py-1 text-sm"
           />
           <span className="text-slate-500">
-            珥?{totalItems}媛?쨌 {partCount}媛?part
+            총 {totalItems}개 / {partCount}개 part
           </span>
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
@@ -235,17 +241,17 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING", lockMo
             <p className="text-sm text-slate-600">Loading...</p>
           ) : (
             <EmptyStateCard
-              title="異쒖젣 媛?ν븳 臾몄젣媛 ?놁뒿?덈떎"
-              description={`Part ${partIndex} (${partItemCount}媛??먯꽌 癒쇱? ?숈뒿 ?곹깭瑜?留뚮뱾嫄곕굹 ?ㅻⅨ part瑜??좏깮?대낫?몄슂.`}
-              primary={{ label: "?⑥뼱???곸꽭濡??대룞", href: `/wordbooks/${wordbookId}` }}
-              secondary={{ label: "?붽린 ?쒖옉", href: `/wordbooks/${wordbookId}/memorize` }}
+              title="출제 가능한 문제가 없습니다"
+              description={`Part ${partIndex} (${partItemCount}개)에서 먼저 학습 상태를 만들거나 다른 part를 선택해보세요.`}
+              primary={{ label: "단어장 상세로 이동", href: `/wordbooks/${wordbookId}` }}
+              secondary={{ label: "암기 시작", href: `/wordbooks/${wordbookId}/memorize` }}
             />
           )
         ) : (
           <>
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Question</p>
             <p className="mt-1 text-xs text-slate-500">
-              Part {partIndex} 쨌 {partItemCount} words
+              Part {partIndex} / {partItemCount} words
             </p>
             <div className="mt-2 text-3xl font-black tracking-tight text-slate-900">
               {mode === "MEANING" ? item.term : <MeaningView value={item.meaning} mode={meaningMode} />}
@@ -272,12 +278,36 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING", lockMo
               <button
                 type="submit"
                 data-testid="wordbook-quiz-submit"
-                disabled={loading}
+                disabled={loading || !!feedback}
                 className="ui-btn-accent px-4 py-2 text-sm disabled:opacity-60"
               >
-                Submit
+                제출
               </button>
             </form>
+            {feedback ? (
+              <div
+                className={[
+                  "mt-3 rounded-xl border px-3 py-2 text-sm font-semibold",
+                  feedback.isCorrect
+                    ? "border-green-300 bg-green-50 text-green-800"
+                    : "border-red-300 bg-red-50 text-red-800"
+                ].join(" ")}
+              >
+                <p>{feedback.isCorrect ? "정답" : "오답"}</p>
+                {!feedback.isCorrect && feedback.correctAnswer ? (
+                  <p className="mt-1 text-xs font-medium text-red-700">
+                    정답: {feedback.correctAnswer.term} / {feedback.correctAnswer.meaning}
+                  </p>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={() => void loadNext()}
+                  className="ui-btn-primary mt-2 px-3 py-1.5 text-xs"
+                >
+                  다음 문제
+                </button>
+              </div>
+            ) : null}
           </>
         )}
       </div>
@@ -290,11 +320,11 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING", lockMo
 
       {attempts >= 5 ? (
         <SessionRecapPanel
-          title="?댁쫰 ?몄뀡 ?붿빟"
-          summary={`珥?${attempts}臾몄젣 쨌 ?뺣떟 ${corrects} 쨌 ?ㅻ떟 ${wrongs}. 吏湲?諛붾줈 ?ㅼ쓬 ?④퀎濡??댁뼱媛硫??숈뒿 猷⑦봽媛 ?딄린吏 ?딆뒿?덈떎.`}
+          title="퀴즈 세션 요약"
+          summary={`총 ${attempts}문제 중 정답 ${corrects}, 오답 ${wrongs}. 지금 바로 다음 단계로 넘어가 학습 루프를 이어가세요.`}
           suggestion={recommendation}
           secondaryHref={`/wordbooks/${wordbookId}/list-half` as Route}
-          secondaryLabel="?뚮났 紐⑸줉 蹂닿린"
+          secondaryLabel="회복 목록 보기"
         />
       ) : null}
     </section>

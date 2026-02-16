@@ -70,7 +70,7 @@ export function MarketRatingReviews({
           {loading ? <p className="mt-2 text-xs text-slate-500">Loading...</p> : null}
           {error ? <p className="mt-2 text-xs text-blue-700">{error}</p> : null}
           {!loading && !error && reviews.length === 0 ? (
-            <p className="mt-2 text-xs text-slate-500">?꾩쭅 ?깅줉??由щ럭媛 ?놁뒿?덈떎.</p>
+            <p className="mt-2 text-xs text-slate-500">아직 등록된 리뷰가 없습니다.</p>
           ) : null}
           {!loading && !error ? (
             <div className="mt-2 space-y-2">
