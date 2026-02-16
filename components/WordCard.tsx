@@ -1,4 +1,5 @@
 import type { WordCardDto } from "@/components/types";
+import { MeaningView } from "@/components/MeaningView";
 
 export function WordCard({
   word,
@@ -23,7 +24,9 @@ export function WordCard({
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="truncate text-lg font-semibold text-slate-900">{word.en}</p>
-          <p className="truncate text-sm text-slate-700">{word.ko}</p>
+          <p className="mt-1 text-sm text-slate-700">
+            <MeaningView value={word.ko} />
+          </p>
         </div>
         <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
           {showWeekPosition && week && weekPosition ? (

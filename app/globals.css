@@ -15,6 +15,7 @@ body {
     radial-gradient(circle at 100% 0%, rgba(56, 189, 248, 0.14), transparent 38%),
     linear-gradient(180deg, var(--page-bg-top) 0%, var(--page-bg-mid) 46%, var(--page-bg-bottom) 100%);
   color: #111827;
+  font-family: var(--font-manrope), var(--font-noto-kr), "Segoe UI", sans-serif;
 }
 
 a:focus-visible,

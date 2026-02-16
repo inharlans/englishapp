@@ -95,10 +95,12 @@ export async function POST(
 
   const existing = await prisma.wordbookStudyItemState.findUnique({
     where: { userId_wordbookId_itemId: { userId: user.id, wordbookId, itemId } },
-    select: { streak: true }
+    select: { streak: true, everCorrect: true, everWrong: true }
   });
   const streak = result === "CORRECT" ? (existing?.streak ?? 0) + 1 : 0;
   const lastResult = result === "CORRECT" ? LastResult.CORRECT : LastResult.WRONG;
+  const everCorrect = (existing?.everCorrect ?? false) || result === "CORRECT";
+  const everWrong = (existing?.everWrong ?? false) || result === "WRONG";
 
   await prisma.wordbookStudyState.upsert({
     where: { userId_wordbookId: { userId: user.id, wordbookId } },
@@ -114,14 +116,26 @@ export async function POST(
       itemId,
       status: result,
       streak,
+      everCorrect,
+      everWrong,
       lastResult
     },
     update: {
       status: result,
       streak,
+      everCorrect,
+      everWrong,
       lastResult
     },
-    select: { itemId: true, status: true, streak: true, lastResult: true, updatedAt: true }
+    select: {
+      itemId: true,
+      status: true,
+      streak: true,
+      everCorrect: true,
+      everWrong: true,
+      lastResult: true,
+      updatedAt: true
+    }
   });
 
   const studyState = await syncWordbookStudyState(user.id, wordbookId);

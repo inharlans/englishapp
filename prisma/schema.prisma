@@ -193,6 +193,8 @@ model WordbookStudyItemState {
   itemId     Int
   status     WordbookStudyStatus @default(NEW)
   streak     Int       @default(0)
+  everCorrect Boolean  @default(false)
+  everWrong   Boolean  @default(false)
   lastResult LastResult?
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt

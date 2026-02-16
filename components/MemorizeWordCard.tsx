@@ -2,14 +2,16 @@
 
 import { useEffect, useState } from "react";
 
+import { MeaningView } from "@/components/MeaningView";
 import type { WordCardDto } from "@/components/types";
 
 type Props = {
   word: WordCardDto;
-  onSaveMeaning: (wordId: number, ko: string) => Promise<void>;
+  onSaveMeaning?: (wordId: number, ko: string) => Promise<void>;
+  readOnlyMeaning?: boolean;
 };
 
-export function MemorizeWordCard({ word, onSaveMeaning }: Props) {
+export function MemorizeWordCard({ word, onSaveMeaning, readOnlyMeaning = false }: Props) {
   const [koInput, setKoInput] = useState(word.ko);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
@@ -31,6 +33,7 @@ export function MemorizeWordCard({ word, onSaveMeaning }: Props) {
     setError("");
     setMessage("");
     try {
+      if (!onSaveMeaning) return;
       await onSaveMeaning(word.id, nextMeaning);
       setMessage("Meaning updated.");
     } catch (e) {
@@ -51,25 +54,33 @@ export function MemorizeWordCard({ word, onSaveMeaning }: Props) {
         <label className="block text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
           Meaning
         </label>
-        <input
-          value={koInput}
-          onChange={(e) => setKoInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key !== "Enter") {
-              return;
-            }
-            e.preventDefault();
-            void handleSave();
-          }}
-          className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 outline-none transition focus:border-teal-500 focus:ring-4 focus:ring-teal-100"
-        />
-        <button
-          onClick={() => void handleSave()}
-          disabled={saving}
-          className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {saving ? "Saving..." : "Save meaning"}
-        </button>
+        {readOnlyMeaning ? (
+          <div className="rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900">
+            <MeaningView value={word.ko} className="text-sm text-slate-800" />
+          </div>
+        ) : (
+          <>
+            <input
+              value={koInput}
+              onChange={(e) => setKoInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key !== "Enter") {
+                  return;
+                }
+                e.preventDefault();
+                void handleSave();
+              }}
+              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 outline-none transition focus:border-teal-500 focus:ring-4 focus:ring-teal-100"
+            />
+            <button
+              onClick={() => void handleSave()}
+              disabled={saving || !onSaveMeaning}
+              className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {saving ? "Saving..." : "Save meaning"}
+            </button>
+          </>
+        )}
       </div>
 
       <div className="mt-3 flex flex-wrap gap-2 text-xs">
@@ -81,6 +92,9 @@ export function MemorizeWordCard({ word, onSaveMeaning }: Props) {
         </span>
       </div>
 
+      {readOnlyMeaning ? (
+        <p className="mt-2 text-xs text-slate-500">다운로드 단어장은 뜻 수정이 비활성화됩니다.</p>
+      ) : null}
       {message ? <p className="mt-2 text-xs text-emerald-700">{message}</p> : null}
       {error ? <p className="mt-2 text-xs text-rose-700">{error}</p> : null}
     </article>

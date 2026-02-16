@@ -7,6 +7,9 @@ dist
 
 # local temp
 /tmp
+.devserver.log
+ui-e2e.out.log
+ui-e2e.err.log
 *.tsbuildinfo
 
 # generated/crawled datasets (keep out of git by default)

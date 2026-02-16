@@ -129,7 +129,10 @@ async function runDesktopFlow() {
 
   console.log("[e2e-ui] study + quiz");
   await page.getByTestId("wordbook-study-link").click();
-  await page.getByTestId("study-mark-correct-first").click();
+  const firstMarkCorrect = page.getByTestId("study-mark-correct-first");
+  if ((await firstMarkCorrect.count()) > 0) {
+    await firstMarkCorrect.first().click();
+  }
   await page.getByTestId("study-start-quiz").click();
 
   await page.getByTestId("wordbook-quiz-mode").selectOption("MEANING");

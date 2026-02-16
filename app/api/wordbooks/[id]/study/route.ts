@@ -56,7 +56,15 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
     }),
     prisma.wordbookStudyItemState.findMany({
       where: { userId: user.id, wordbookId },
-      select: { itemId: true, status: true, streak: true, lastResult: true, updatedAt: true }
+      select: {
+        itemId: true,
+        status: true,
+        streak: true,
+        everCorrect: true,
+        everWrong: true,
+        lastResult: true,
+        updatedAt: true
+      }
     })
   ]);
 
@@ -78,4 +86,3 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
     { status: 200 }
   );
 }
-

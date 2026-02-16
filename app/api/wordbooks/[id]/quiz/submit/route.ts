@@ -106,9 +106,11 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
 
   const existing = await prisma.wordbookStudyItemState.findUnique({
     where: { userId_wordbookId_itemId: { userId: user.id, wordbookId, itemId: item.id } },
-    select: { streak: true }
+    select: { streak: true, everCorrect: true, everWrong: true }
   });
   const streak = correct ? (existing?.streak ?? 0) + 1 : 0;
+  const everCorrect = (existing?.everCorrect ?? false) || correct;
+  const everWrong = (existing?.everWrong ?? false) || !correct;
   await prisma.wordbookStudyState.upsert({
     where: { userId_wordbookId: { userId: user.id, wordbookId } },
     create: { userId: user.id, wordbookId },
@@ -122,11 +124,15 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
       itemId: item.id,
       status: correct ? "CORRECT" : "WRONG",
       streak,
+      everCorrect,
+      everWrong,
       lastResult: correct ? "CORRECT" : "WRONG"
     },
     update: {
       status: correct ? "CORRECT" : "WRONG",
       streak,
+      everCorrect,
+      everWrong,
       lastResult: correct ? "CORRECT" : "WRONG"
     }
   });
