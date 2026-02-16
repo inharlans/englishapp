@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { MeaningView } from "@/components/MeaningView";
 import { WordbookStudyTabs } from "@/components/wordbooks/WordbookStudyTabs";
@@ -54,7 +54,6 @@ export function WordbookListClient({
   mode: ListMode;
   title: string;
 }) {
-  const [wordbookTitle, setWordbookTitle] = useState("");
   const [items, setItems] = useState<Item[]>([]);
   const [totalItems, setTotalItems] = useState(0);
   const [partStats, setPartStats] = useState<Array<{ partIndex: number; totalInPart: number; matchedCount: number }>>(
@@ -82,8 +81,7 @@ export function WordbookListClient({
           cache: "no-store"
         });
         const json = (await res.json()) as Payload;
-        if (!res.ok || !json.wordbook) throw new Error(json.error ?? "Failed to load list.");
-        setWordbookTitle(json.wordbook.title);
+        if (!res.ok) throw new Error(json.error ?? "Failed to load list.");
         setItems(json.items ?? []);
         setTotalItems(json.paging?.totalItems ?? 0);
         setPartStats(json.paging?.partStats ?? []);
@@ -96,9 +94,10 @@ export function WordbookListClient({
     void load();
   }, [mode, partIndex, partSize, wordbookId]);
 
+  const partStatsMap = useMemo(() => new Map(partStats.map((s) => [s.partIndex, s])), [partStats]);
   const parts = Array.from({ length: partCount }, (_, idx) => {
     const n = idx + 1;
-    const stat = partStats.find((s) => s.partIndex === n);
+    const stat = partStatsMap.get(n);
     return {
       partIndex: n,
       totalInPart: stat?.totalInPart ?? 0,
@@ -112,7 +111,6 @@ export function WordbookListClient({
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Wordbook List</p>
           <h1 className="mt-2 text-2xl font-black tracking-tight text-slate-900">{title}</h1>
-          <p className="mt-1 text-sm text-slate-600">{wordbookTitle || "단어장"}</p>
         </div>
         <WordbookStudyTabs wordbookId={wordbookId} active={activeTab(mode)} />
       </header>

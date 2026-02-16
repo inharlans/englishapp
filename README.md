@@ -545,3 +545,7 @@ Additional observations and guardrails:
     - `POST /api/wordbooks/[id]/study/items/[itemId]`
     - `POST /api/wordbooks/[id]/quiz/submit`
     - `POST /api/wordbooks/[id]/sync-download` (when study state reset)
+- [x] Client simplification follow-up:
+  - `WordbookStudyClient` now resets paging through input handlers (`query/pageSize/hideCorrect`) instead of separate reset effects.
+  - Removed redundant `useMemo` usage for progress and simplified page clamping flow.
+  - `WordbookListClient` removed duplicated title state and uses memoized part-stat lookup map.

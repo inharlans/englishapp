@@ -2,7 +2,7 @@
 
 import { apiFetch } from "@/lib/clientApi";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { MeaningView } from "@/components/MeaningView";
 import { SpeakButton } from "@/components/wordbooks/SpeakButton";
@@ -36,7 +36,7 @@ type Payload = {
   wordbook?: { title: string; fromLang?: string };
   studyState?: StudyState;
   items?: Item[];
-  paging?: { totalFiltered: number; totalItems: number };
+  paging?: { page: number; take: number; totalFiltered: number; totalItems: number };
 };
 
 export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
@@ -61,7 +61,7 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
   const { mode: densityMode, setMode: setDensityMode } = useDensityMode();
 
   const totalPages = Math.max(1, Math.ceil(totalFiltered / pageSize));
-  const safePageIndex = Math.min(Math.max(pageIndex, 0), totalPages - 1);
+  const currentPage = Math.min(Math.max(pageIndex, 0), totalPages - 1);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -69,7 +69,7 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
     try {
       const qs = new URLSearchParams({
         view: "memorize",
-        page: String(safePageIndex),
+        page: String(currentPage),
         take: String(pageSize),
         q: query.trim(),
         hideCorrect: hideCorrect ? "1" : "0"
@@ -85,6 +85,10 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
       if (json.studyState) setStudyState(json.studyState);
       setTotalFiltered(json.paging?.totalFiltered ?? 0);
       setTotalItems(json.paging?.totalItems ?? 0);
+      const total = Math.max(1, Math.ceil((json.paging?.totalFiltered ?? 0) / pageSize));
+      if (currentPage > total - 1) {
+        setPageIndex(total - 1);
+      }
     } catch (e) {
       setItems([]);
       setTotalFiltered(0);
@@ -93,7 +97,7 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
     } finally {
       setLoading(false);
     }
-  }, [hideCorrect, pageSize, query, safePageIndex, wordbookId]);
+  }, [currentPage, hideCorrect, pageSize, query, wordbookId]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -106,29 +110,16 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
   }, [load]);
 
   useEffect(() => {
-    setPageIndex(0);
-  }, [query, pageSize, hideCorrect]);
-
-  useEffect(() => {
-    if (pageIndex > totalPages - 1) {
-      setPageIndex(totalPages - 1);
-    }
-  }, [pageIndex, totalPages]);
-
-  useEffect(() => {
-    setPageInput(String(safePageIndex + 1));
-  }, [safePageIndex]);
+    setPageInput(String(currentPage + 1));
+  }, [currentPage]);
 
   useEffect(() => {
     if (typeof document === "undefined") return;
     document.cookie = `last_study_wordbook_id=${wordbookId}; Path=/; Max-Age=2592000; SameSite=Lax`;
   }, [wordbookId]);
 
-  const progressPercent = useMemo(() => {
-    const total = totalItems;
-    if (total <= 0) return 0;
-    return Math.round((studyState.correctCount / Math.max(total, 1)) * 100);
-  }, [studyState.correctCount, totalItems]);
+  const progressPercent =
+    totalItems <= 0 ? 0 : Math.round((studyState.correctCount / Math.max(totalItems, 1)) * 100);
 
   const movePage = (delta: number) => {
     setPageIndex((prev) => {
@@ -152,8 +143,19 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
       if (typeof window !== "undefined") {
         window.localStorage.setItem(`wordbook_memorize_hide_correct_${wordbookId}`, next ? "1" : "0");
       }
+      setPageIndex(0);
       return next;
     });
+  };
+
+  const onQueryChange = (value: string) => {
+    setQuery(value);
+    setPageIndex(0);
+  };
+
+  const changePageSize = (next: number) => {
+    setPageSize(Math.min(50, Math.max(1, next)));
+    setPageIndex(0);
   };
 
   return (
@@ -260,14 +262,14 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
             <input
               type="search"
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => onQueryChange(e.target.value)}
               placeholder="단어 검색"
               className="min-w-[180px] flex-1 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 outline-none ring-teal-500 focus:ring-2"
             />
             <span className="text-slate-500">개수</span>
             <button
               type="button"
-              onClick={() => setPageSize((v) => Math.max(1, v - 1))}
+              onClick={() => changePageSize(pageSize - 1)}
               className="rounded-lg border border-slate-300 bg-white px-2 py-1 font-semibold text-slate-700 hover:bg-slate-50"
             >
               -
@@ -275,7 +277,7 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
             <span className="w-10 text-center font-semibold text-slate-800">{pageSize}</span>
             <button
               type="button"
-              onClick={() => setPageSize((v) => Math.min(50, v + 1))}
+              onClick={() => changePageSize(pageSize + 1)}
               className="rounded-lg border border-slate-300 bg-white px-2 py-1 font-semibold text-slate-700 hover:bg-slate-50"
             >
               +
@@ -283,18 +285,18 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
             <button
               type="button"
               onClick={() => movePage(-1)}
-              disabled={safePageIndex <= 0}
+              disabled={currentPage <= 0}
               className="rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
             >
               이전
             </button>
             <span className="text-slate-500">
-              {safePageIndex + 1}/{totalPages}
+              {currentPage + 1}/{totalPages}
             </span>
             <button
               type="button"
               onClick={() => movePage(1)}
-              disabled={safePageIndex >= totalPages - 1}
+              disabled={currentPage >= totalPages - 1}
               className="rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
             >
               다음
