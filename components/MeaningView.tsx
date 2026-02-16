@@ -30,7 +30,7 @@ function splitPrimary(value: string): string[] {
 function splitSecondary(text: string): string[] {
   return text
     .split(/[,]/g)
-    .map((part) => part.replace(/^[-\u2022]\s*/, "").trim())
+    .map((part) => part.replace(/^(?:[\u2022•]\s*|-\s+)/, "").trim())
     .filter(Boolean);
 }
 
@@ -111,25 +111,15 @@ export function MeaningView({
     const groups = groupByTag(entries);
 
     if (groups.length === 1 && groups[0].key === "__none__") {
-      return (
-        <span className={`flex flex-col gap-1 ${className}`}>
-          {groups[0].items.map((item, idx) => (
-            <span key={`${item}-${idx}`}>{item}</span>
-          ))}
-        </span>
-      );
+      return <span className={className}>{groups[0].items.join(", ")}</span>;
     }
 
     return (
-      <span className={`flex flex-col gap-2 ${className}`}>
+      <span className={`flex flex-col gap-1 ${className}`}>
         {groups.map((group) => (
-          <span key={group.key} className="flex flex-col gap-1">
-            <span className="text-xs font-semibold text-teal-800">{group.label}</span>
-            {group.items.map((item, idx) => (
-              <span key={`${group.key}-${item}-${idx}`} className="text-sm text-slate-700">
-                - {item}
-              </span>
-            ))}
+          <span key={group.key} className="text-sm text-slate-700">
+            <span className="mr-2 text-xs font-semibold text-teal-800">{group.label}</span>
+            {group.items.join(", ")}
           </span>
         ))}
       </span>

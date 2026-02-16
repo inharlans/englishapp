@@ -466,3 +466,15 @@ Done in this sprint:
 - `npm run typecheck` 통과
 - `npm run test` 통과
 - `npm run build` 통과
+
+## 2026-02-16 Memorize UX 조정
+
+- `/wordbooks` 라이브러리에서 단어장 제목 클릭 시 상세(`/wordbooks/[id]`) 대신
+  바로 `/wordbooks/[id]/memorize`로 이동하도록 변경.
+- `/wordbooks/[id]/memorize` 하단에 고정 컨트롤 바 추가:
+  - 검색(한 줄), 페이지 이동(이전/다음/직접 이동), 표시 개수(기본 1, 최대 50).
+  - 전체 단어를 한 번에 렌더링하지 않고 페이지 단위로 표시.
+- `MeaningView`의 `자세히` 모드 출력 형식 개선:
+  - 기존 줄바꿈/불릿 중심에서 `명사 님, -씨, 미스터` 형태의 한 줄 그룹 표시로 변경.
+- `memorize` 카드에서 `Correct / Wrong / Reset` 수동 버튼 제거.
+- 각 단어 옆에 스피커 아이콘 버튼 추가(브라우저 `SpeechSynthesis` 발음 재생).

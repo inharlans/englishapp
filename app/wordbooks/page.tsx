@@ -104,11 +104,11 @@ export default async function WordbooksPage() {
   const studyRate = studiedSum > 0 ? Math.round((correctSum / studiedSum) * 100) : 0;
   const suggestedHref =
     downloaded.find((d) => d.wordbook.contentVersion > d.downloadedVersion)?.wordbook.id
-      ? `/wordbooks/${downloaded.find((d) => d.wordbook.contentVersion > d.downloadedVersion)!.wordbook.id}`
+      ? `/wordbooks/${downloaded.find((d) => d.wordbook.contentVersion > d.downloadedVersion)!.wordbook.id}/memorize`
       : downloaded[0]?.wordbook?.id
         ? `/wordbooks/${downloaded[0].wordbook.id}/memorize`
         : mine[0]?.id
-          ? `/wordbooks/${mine[0].id}`
+          ? `/wordbooks/${mine[0].id}/memorize`
           : "/wordbooks/new";
   const suggestedLabel = staleDecks > 0 ? "업데이트 단어장 확인" : downloaded.length > 0 ? "마지막 단어장 이어서" : "첫 단어장 만들기";
 
@@ -204,7 +204,7 @@ export default async function WordbooksPage() {
             {mine.map((wb) => (
               <Link
                 key={wb.id}
-                href={{ pathname: `/wordbooks/${wb.id}` }}
+                href={{ pathname: `/wordbooks/${wb.id}/memorize` }}
                 className="ui-card p-4 transition hover:-translate-y-0.5 hover:border-teal-300"
               >
                 <div className="flex items-start gap-3">
@@ -262,7 +262,7 @@ export default async function WordbooksPage() {
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <Link
-                        href={{ pathname: `/wordbooks/${d.wordbook.id}` }}
+                        href={{ pathname: `/wordbooks/${d.wordbook.id}/memorize` }}
                         className="truncate text-lg font-black text-slate-900 hover:underline"
                       >
                         {d.wordbook.title}

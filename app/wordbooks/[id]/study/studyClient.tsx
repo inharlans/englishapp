@@ -3,10 +3,9 @@
 import { apiFetch } from "@/lib/clientApi";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { Route } from "next";
 
 import { MeaningView } from "@/components/MeaningView";
-import { SessionRecapPanel } from "@/components/wordbooks/SessionRecapPanel";
+import { SpeakButton } from "@/components/wordbooks/SpeakButton";
 import { WordbookStudyTabs } from "@/components/wordbooks/WordbookStudyTabs";
 import { useMeaningViewMode } from "@/components/wordbooks/useMeaningViewMode";
 import { DensityModeToggle } from "@/components/ui/DensityModeToggle";
@@ -36,7 +35,12 @@ type StudyState = {
 
 export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
   const [title, setTitle] = useState("");
+  const [speakLang, setSpeakLang] = useState<string | undefined>(undefined);
   const [items, setItems] = useState<Item[]>([]);
+  const [query, setQuery] = useState("");
+  const [pageSize, setPageSize] = useState(1);
+  const [pageIndex, setPageIndex] = useState(0);
+  const [pageInput, setPageInput] = useState("1");
   const [itemStates, setItemStates] = useState<Map<number, ItemState>>(new Map());
   const [studyState, setStudyState] = useState<StudyState>({
     studiedCount: 0,
@@ -45,7 +49,6 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [sessionActions, setSessionActions] = useState(0);
   const { mode, setMode } = useMeaningViewMode();
   const { mode: densityMode, setMode: setDensityMode } = useDensityMode();
 
@@ -56,12 +59,13 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
       const res = await apiFetch(`/api/wordbooks/${wordbookId}/study`, { cache: "no-store" });
       const json = (await res.json()) as {
         error?: string;
-        wordbook?: { title: string; items: Item[] };
+        wordbook?: { title: string; fromLang?: string; items: Item[] };
         itemStates?: ItemState[];
         studyState?: StudyState;
       };
       if (!res.ok || !json.wordbook) throw new Error(json.error ?? "Failed to load study state.");
       setTitle(json.wordbook.title);
+      setSpeakLang(json.wordbook.fromLang?.toLowerCase().startsWith("en") ? "en-US" : undefined);
       setItems(json.wordbook.items ?? []);
       setItemStates(new Map((json.itemStates ?? []).map((s) => [s.itemId, s])));
       if (json.studyState) setStudyState(json.studyState);
@@ -81,69 +85,52 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
     return Math.round((studyState.correctCount / items.length) * 100);
   }, [items.length, studyState.correctCount]);
 
-  const halfCount = useMemo(() => {
-    let correct = 0;
-    let wrong = 0;
-    itemStates.forEach((s) => {
-      if (s.status === "CORRECT") correct += 1;
-      if (s.status === "WRONG") wrong += 1;
+  const filteredItems = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return items;
+    return items.filter((item) => {
+      const hay = `${item.term} ${item.meaning} ${item.pronunciation ?? ""} ${item.example ?? ""} ${item.exampleMeaning ?? ""}`.toLowerCase();
+      return hay.includes(q);
     });
-    return Math.min(correct, wrong);
-  }, [itemStates]);
+  }, [items, query]);
 
-  const mark = async (itemId: number, result: "CORRECT" | "WRONG" | "RESET") => {
-    try {
-      const res = await apiFetch(`/api/wordbooks/${wordbookId}/study/items/${itemId}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ result })
-      });
-      const json = (await res.json()) as {
-        error?: string;
-        itemState?: ItemState | null;
-        studyState?: StudyState;
-      };
-      if (!res.ok) throw new Error(json.error ?? "Failed to update.");
-      setItemStates((prev) => {
-        const next = new Map(prev);
-        if (!json.itemState) {
-          next.delete(itemId);
-        } else {
-          next.set(itemId, json.itemState);
-        }
-        return next;
-      });
-      if (json.studyState) setStudyState(json.studyState);
-      setSessionActions((v) => v + 1);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to update.");
+  const totalPages = Math.max(1, Math.ceil(filteredItems.length / pageSize));
+  const safePageIndex = Math.min(Math.max(pageIndex, 0), totalPages - 1);
+  const start = safePageIndex * pageSize;
+  const visibleItems = filteredItems.slice(start, start + pageSize);
+
+  useEffect(() => {
+    setPageIndex(0);
+  }, [query, pageSize]);
+
+  useEffect(() => {
+    if (pageIndex > totalPages - 1) {
+      setPageIndex(totalPages - 1);
     }
+  }, [pageIndex, totalPages]);
+
+  useEffect(() => {
+    setPageInput(String(safePageIndex + 1));
+  }, [safePageIndex]);
+
+  const movePage = (delta: number) => {
+    setPageIndex((prev) => {
+      const next = prev + delta;
+      if (next < 0) return 0;
+      if (next > totalPages - 1) return totalPages - 1;
+      return next;
+    });
   };
 
-  const recommendation =
-    studyState.wrongCount > studyState.correctCount
-      ? {
-          href: `/wordbooks/${wordbookId}/list-wrong` as Route,
-          label: "오답 리스트 복습",
-          eta: "5분",
-          reason: "오답이 정답보다 많아 우선 복습이 필요합니다."
-        }
-      : halfCount > 0
-        ? {
-            href: `/wordbooks/${wordbookId}/list-half` as Route,
-            label: "회복 리스트 점검",
-            eta: "4분",
-            reason: "반복 교차된 단어부터 안정화하면 효율이 좋습니다."
-          }
-        : {
-            href: `/wordbooks/${wordbookId}/quiz-meaning` as Route,
-            label: "의미 퀴즈 이어서",
-            eta: "3분",
-            reason: "현재 흐름을 퀴즈로 이어가면 회상 고정에 유리합니다."
-          };
+  const applyPageInput = () => {
+    const n = Number(pageInput);
+    if (!Number.isFinite(n)) return;
+    const next = Math.min(Math.max(Math.floor(n), 1), totalPages);
+    setPageIndex(next - 1);
+  };
 
   return (
-    <section className="space-y-6">
+    <section className="space-y-6 pb-28">
       <header className="space-y-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Wordbook Memorize</p>
@@ -214,13 +201,16 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
       ) : null}
 
       <div className="grid gap-2">
-        {items.map((item, idx) => {
+        {visibleItems.map((item) => {
           const state = itemStates.get(item.id);
           return (
             <div key={item.id} className={`ui-card ui-fade-in ${densityCardClass(densityMode)}`}>
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <p className="text-sm font-semibold text-slate-900">{item.term}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-semibold text-slate-900">{item.term}</p>
+                    <SpeakButton text={item.term} lang={speakLang} iconOnly className="border-slate-300" />
+                  </div>
                   <MeaningView value={item.meaning} mode={mode} className="mt-1 text-sm text-slate-700" />
                   {item.example ? (
                     <p className="mt-1 text-xs text-slate-500">
@@ -234,44 +224,74 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
                     </p>
                   ) : null}
                 </div>
-                <div className="flex flex-wrap gap-1">
-                  <button
-                    type="button"
-                    data-testid={idx === 0 ? "study-mark-correct-first" : undefined}
-                    onClick={() => void mark(item.id, "CORRECT")}
-                    className="rounded border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-800 hover:bg-emerald-100"
-                  >
-                    Correct
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void mark(item.id, "WRONG")}
-                    className="rounded border border-amber-200 bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-800 hover:bg-amber-100"
-                  >
-                    Wrong
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void mark(item.id, "RESET")}
-                    className="rounded border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                  >
-                    Reset
-                  </button>
-                </div>
               </div>
             </div>
           );
         })}
       </div>
 
-      {sessionActions >= 5 ? (
-        <SessionRecapPanel
-          title="학습 흐름이 만들어졌습니다"
-          summary={`이번 세션에서 ${sessionActions}회 체크했습니다. 지금 이어서 다음 단계로 가면 기억 고정률이 더 좋아집니다.`}
-          suggestion={recommendation}
-          secondaryHref={`/wordbooks/${wordbookId}/list-correct` as Route}
-          secondaryLabel="정답 리스트 보기"
-        />
+      {!loading && items.length > 0 ? (
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/80 backdrop-blur-md">
+          <div className="mx-auto flex max-w-6xl items-center gap-2 overflow-x-auto px-3 py-2 text-xs">
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="단어 검색"
+              className="min-w-[180px] flex-1 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 outline-none ring-teal-500 focus:ring-2"
+            />
+            <span className="text-slate-500">개수</span>
+            <button
+              type="button"
+              onClick={() => setPageSize((v) => Math.max(1, v - 1))}
+              className="rounded-lg border border-slate-300 bg-white px-2 py-1 font-semibold text-slate-700 hover:bg-slate-50"
+            >
+              -
+            </button>
+            <span className="w-10 text-center font-semibold text-slate-800">{pageSize}</span>
+            <button
+              type="button"
+              onClick={() => setPageSize((v) => Math.min(50, v + 1))}
+              className="rounded-lg border border-slate-300 bg-white px-2 py-1 font-semibold text-slate-700 hover:bg-slate-50"
+            >
+              +
+            </button>
+            <button
+              type="button"
+              onClick={() => movePage(-1)}
+              disabled={safePageIndex <= 0}
+              className="rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              이전
+            </button>
+            <span className="text-slate-500">
+              {safePageIndex + 1}/{totalPages}
+            </span>
+            <button
+              type="button"
+              onClick={() => movePage(1)}
+              disabled={safePageIndex >= totalPages - 1}
+              className="rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              다음
+            </button>
+            <input
+              type="number"
+              min={1}
+              max={totalPages}
+              value={pageInput}
+              onChange={(e) => setPageInput(e.target.value)}
+              className="w-16 rounded-lg border border-slate-300 bg-white px-2 py-1 text-center text-sm text-slate-900 outline-none ring-teal-500 focus:ring-2"
+            />
+            <button
+              type="button"
+              onClick={applyPageInput}
+              className="rounded-lg bg-slate-900 px-3 py-1 font-semibold text-white hover:bg-slate-800"
+            >
+              이동
+            </button>
+          </div>
+        </div>
       ) : null}
     </section>
   );
