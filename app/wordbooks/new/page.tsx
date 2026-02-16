@@ -60,7 +60,7 @@ export default function NewWordbookPage() {
         <div className="mt-3 space-y-3 text-sm text-slate-700">
           <p>
             <span className="font-semibold text-slate-900">1) 제목은 좁고 명확하게:</span>{" "}
-            예: "토익 파트5 빈출 동사 120", "여행 영어 식당 표현".
+            예: &#34;토익 파트5 빈출 동사 120&#34;, &#34;여행 영어 식당 표현&#34;.
           </p>
           <p>
             <span className="font-semibold text-slate-900">2) 설명에 범위/목표를 쓰기:</span>{" "}

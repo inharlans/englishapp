@@ -509,3 +509,5 @@ Done in this sprint:
 - 리뷰 기능:
   - 다운로드한 단어장(또는 소유 단어장)에 평점과 댓글을 함께 저장 가능.
   - 마켓에서 별점 영역 클릭 시 리뷰 목록(댓글 + 평점) 펼쳐보기 지원.
+- 배포 안정화:
+  - `/wordbooks/new` 가이드 문구의 JSX 이스케이프를 보정해 `next build` ESLint(`react/no-unescaped-entities`) 실패를 해결.
