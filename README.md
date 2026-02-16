@@ -426,3 +426,10 @@ Done in this sprint:
 - 세션 회고 UX:
   - 암기/퀴즈 세션에서 일정 활동 이후 회고 패널 노출
   - 다음 추천 행동(오답/회복/퀴즈/암기) + 예상 소요시간 + 루틴 알림 토글 제공
+
+## 2026-02-17 마이그레이션 안정화
+
+- `20260217000000_wordbook_versioning_sync` SQL을 PostgreSQL 호환 구문으로 수정
+  - 파일 BOM 제거
+  - `UPDATE ... FROM` 조인 참조 문제를 상관 서브쿼리 형태로 교체
+- CI(`prisma migrate deploy`) 및 운영 DB 적용 안정성 개선

@@ -1,4 +1,4 @@
-﻿-- Add versioning fields for wordbook sync UX
+-- Add versioning fields for wordbook sync UX
 ALTER TABLE "Wordbook"
   ADD COLUMN "contentVersion" INTEGER NOT NULL DEFAULT 1;
 
@@ -8,16 +8,15 @@ ALTER TABLE "WordbookDownload"
   ADD COLUMN "syncedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
 
 UPDATE "WordbookDownload" d
-SET "downloadedVersion" = w."contentVersion",
-    "snapshotItemCount" = COALESCE(cnt."itemCount", 0),
-    "syncedAt" = d."createdAt"
-FROM "Wordbook" w
-LEFT JOIN (
-  SELECT "wordbookId", COUNT(*)::int AS "itemCount"
-  FROM "WordbookItem"
-  GROUP BY "wordbookId"
-) cnt ON cnt."wordbookId" = d."wordbookId"
-WHERE w."id" = d."wordbookId";
+SET "downloadedVersion" = COALESCE(
+      (SELECT w."contentVersion" FROM "Wordbook" w WHERE w."id" = d."wordbookId"),
+      1
+    ),
+    "snapshotItemCount" = COALESCE(
+      (SELECT COUNT(*)::int FROM "WordbookItem" wi WHERE wi."wordbookId" = d."wordbookId"),
+      0
+    ),
+    "syncedAt" = d."createdAt";
 
 CREATE TABLE "WordbookVersionLog" (
   "id" SERIAL NOT NULL,
@@ -37,3 +36,4 @@ ALTER TABLE "WordbookVersionLog"
   ADD CONSTRAINT "WordbookVersionLog_wordbookId_fkey"
   FOREIGN KEY ("wordbookId") REFERENCES "Wordbook"("id")
   ON DELETE CASCADE ON UPDATE CASCADE;
+
