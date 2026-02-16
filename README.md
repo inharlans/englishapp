@@ -316,6 +316,9 @@ Done in this sprint:
   - HTTP 기반 end-to-end 스모크 테스트 스크립트 추가:
     - `npm run test:e2e`
     - `npm run test:e2e:ui` (Playwright UI 플로우)
+    - `npm run test:e2e:local` (dev 서버 자동 실행 + smoke + ui 일괄)
+    - `npm run test:e2e:local:smoke` (dev 서버 자동 실행 + smoke)
+    - `npm run test:e2e:local:ui` (dev 서버 자동 실행 + ui)
   - 환경 변수:
     - `E2E_BASE_URL` (default: `http://127.0.0.1:3000`)
     - `E2E_EMAIL` (default: `admin@example.com`)
