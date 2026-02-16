@@ -83,35 +83,5 @@ export async function ensureWordsSeeded(): Promise<void> {
       data: rows.map((row) => ({ en: row.en, ko: row.ko })),
       skipDuplicates: true
     });
-
-    const words = await tx.word.findMany({
-      select: { id: true },
-      orderBy: { id: "asc" }
-    });
-    if (words.length === 0) {
-      return;
-    }
-
-    await tx.progress.createMany({
-      data: words.map((w) => ({
-        wordId: w.id,
-        correctStreak: 0,
-        wrongActive: false,
-        wrongRecoveryRemaining: 0
-      })),
-      skipDuplicates: true
-    });
-
-    const now = new Date();
-    await tx.resultState.createMany({
-      data: words.map((w) => ({
-        wordId: w.id,
-        everCorrect: false,
-        everWrong: false,
-        lastResult: null,
-        updatedAt: now
-      })),
-      skipDuplicates: true
-    });
   });
 }

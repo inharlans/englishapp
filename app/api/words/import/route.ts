@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
     });
     const existingNormalized = new Set(existing.map((w) => normalizeEn(w.en)));
 
-    const createdWordIds: number[] = [];
+    let importedCount = 0;
     let skippedCount = 0;
 
     for (const row of parsed.rows) {
@@ -59,33 +59,14 @@ export async function POST(req: NextRequest) {
           en: row.en,
           ko: row.ko
         },
-        select: { id: true, en: true }
+        select: { en: true }
       });
       existingNormalized.add(normalizeEn(created.en));
-      createdWordIds.push(created.id);
-    }
-
-    if (createdWordIds.length > 0) {
-      await prisma.progress.createMany({
-        data: createdWordIds.map((wordId) => ({
-          wordId,
-          correctStreak: 0,
-          wrongActive: false,
-          wrongRecoveryRemaining: 0
-        }))
-      });
-      await prisma.resultState.createMany({
-        data: createdWordIds.map((wordId) => ({
-          wordId,
-          everCorrect: false,
-          everWrong: false,
-          lastResult: null
-        }))
-      });
+      importedCount += 1;
     }
 
     return NextResponse.json({
-      importedCount: createdWordIds.length,
+      importedCount,
       skippedCount,
       delimiter: parsed.delimiter
     });

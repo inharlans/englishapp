@@ -6,6 +6,7 @@ import type { QuizType } from "@/lib/types";
 type DbClient = Pick<PrismaClient, "$executeRaw" | "$queryRaw">;
 
 type QuizProgressRow = {
+  userId: number;
   wordId: number;
   meaningCorrectStreak: number;
   meaningNextReviewAt: Date | string | null;
@@ -20,17 +21,19 @@ export async function ensureQuizProgressTable(db: DbClient) {
 
 export async function getQuizProgressByWordId(
   db: DbClient,
+  userId: number,
   wordId: number
 ): Promise<QuizProgressRow | null> {
   const rows = await db.$queryRaw<QuizProgressRow[]>`
     SELECT
+      "userId",
       "wordId",
       "meaningCorrectStreak",
       "meaningNextReviewAt",
       "wordCorrectStreak",
       "wordNextReviewAt"
     FROM "QuizProgress"
-    WHERE "wordId" = ${wordId}
+    WHERE "userId" = ${userId} AND "wordId" = ${wordId}
     LIMIT 1
   `;
   return rows[0] ?? null;
@@ -39,6 +42,7 @@ export async function getQuizProgressByWordId(
 export async function upsertQuizProgress(
   db: DbClient,
   input: {
+    userId: number;
     wordId: number;
     quizType: QuizType;
     correct: boolean;
@@ -51,13 +55,14 @@ export async function upsertQuizProgress(
   await db.$executeRaw(
     Prisma.sql`
       INSERT INTO "QuizProgress" (
+        "userId",
         "wordId",
         "meaningCorrectStreak",
         "wordCorrectStreak",
         "updatedAt"
       )
-      VALUES (${input.wordId}, 0, 0, CURRENT_TIMESTAMP)
-      ON CONFLICT("wordId") DO NOTHING;
+      VALUES (${input.userId}, ${input.wordId}, 0, 0, CURRENT_TIMESTAMP)
+      ON CONFLICT("userId", "wordId") DO NOTHING;
     `
   );
 
@@ -70,7 +75,7 @@ export async function upsertQuizProgress(
           "meaningNextReviewAt" = ${input.nextReviewAt},
           "meaningLastResult" = ${resultValue},
           "updatedAt" = CURRENT_TIMESTAMP
-        WHERE "wordId" = ${input.wordId}
+        WHERE "userId" = ${input.userId} AND "wordId" = ${input.wordId}
       `
     );
     return;
@@ -84,13 +89,14 @@ export async function upsertQuizProgress(
         "wordNextReviewAt" = ${input.nextReviewAt},
         "wordLastResult" = ${resultValue},
         "updatedAt" = CURRENT_TIMESTAMP
-      WHERE "wordId" = ${input.wordId}
+      WHERE "userId" = ${input.userId} AND "wordId" = ${input.wordId}
     `
   );
 }
 
 export async function getQuizProgressMap(
   db: DbClient,
+  userId: number,
   wordIds: number[]
 ): Promise<Map<number, QuizProgressRow>> {
   if (wordIds.length === 0) {
@@ -101,13 +107,14 @@ export async function getQuizProgressMap(
   const rows = await db.$queryRaw<QuizProgressRow[]>(
     Prisma.sql`
       SELECT
+        "userId",
         "wordId",
         "meaningCorrectStreak",
         "meaningNextReviewAt",
         "wordCorrectStreak",
         "wordNextReviewAt"
       FROM "QuizProgress"
-      WHERE "wordId" IN (${idList})
+      WHERE "userId" = ${userId} AND "wordId" IN (${idList})
     `
   );
 

@@ -260,3 +260,11 @@ node .\\scripts\\generate-root-words-tsv-ko.mjs --count 1500
 Outputs:
 - `data/wordbooks-ko/**.generated.tsv`
 - `words.ko.generated.tsv`
+
+## 2026-02-16 Update
+
+- Study state is now **user-scoped** for all quiz/memorize flows.
+- `Progress`, `ResultState`, and `QuizProgress` are keyed by `(userId, wordId)`.
+- `/api/words` now returns `isUserScoped: true` for debugging/verification.
+- Seed process now imports generated wordbooks from `data/wordbooks-ko/**/*.generated.tsv`
+  into public market wordbooks (download-ready).

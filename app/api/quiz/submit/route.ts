@@ -1,6 +1,7 @@
 import { LastResult } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
+import { getUserFromRequestCookies } from "@/lib/authServer";
 import { prisma } from "@/lib/prisma";
 import { checkRateLimit, getClientIpFromHeaders } from "@/lib/rateLimit";
 import {
@@ -52,6 +53,11 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    const user = await getUserFromRequestCookies(req.cookies);
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+    }
+
     const body = (await req.json()) as SubmitBody;
     const wordId = body.wordId;
     const quizType = body.quizType;
@@ -66,19 +72,26 @@ export async function POST(req: NextRequest) {
 
     const word = await prisma.word.findUnique({
       where: { id: wordId },
-      include: { progress: true, resultState: true }
+      select: { id: true, en: true, ko: true }
     });
-
-    if (!word || !word.progress || !word.resultState) {
+    if (!word) {
       return NextResponse.json({ error: "Word not found." }, { status: 404 });
     }
 
-    if (body.scope === "half" && !(word.resultState.everCorrect && word.resultState.everWrong)) {
+    const currentResultState = await prisma.resultState.findUnique({
+      where: { userId_wordId: { userId: user.id, wordId } },
+      select: { everCorrect: true, everWrong: true, lastResult: true }
+    });
+
+    if (
+      body.scope === "half" &&
+      !(currentResultState?.everCorrect === true && currentResultState?.everWrong === true)
+    ) {
       return NextResponse.json({ error: "Word is not eligible for half scope." }, { status: 400 });
     }
 
     await ensureQuizProgressTable(prisma);
-    const modeProgress = await getQuizProgressByWordId(prisma, wordId);
+    const modeProgress = await getQuizProgressByWordId(prisma, user.id, wordId);
 
     const meaningAnswerCandidates = getMeaningCandidates(userAnswer);
     const meaningCorrectCandidates = new Set(getMeaningCandidates(word.ko));
@@ -103,6 +116,7 @@ export async function POST(req: NextRequest) {
     const nextModeStreak = currentModeStreak + (correct ? 1 : 0);
     const nextModeReviewAt = correct ? computeNextReviewAt(now, nextModeStreak) : null;
     await upsertQuizProgress(prisma, {
+      userId: user.id,
       wordId,
       quizType,
       correct,
@@ -125,23 +139,33 @@ export async function POST(req: NextRequest) {
     const resultStateUpdate = correct
       ? {
           everCorrect: true,
-          everWrong: word.resultState.everWrong,
+          everWrong: currentResultState?.everWrong ?? false,
           lastResult: LastResult.CORRECT
         }
       : {
-          everCorrect: word.resultState.everCorrect,
+          everCorrect: currentResultState?.everCorrect ?? false,
           everWrong: true,
           lastResult: LastResult.WRONG
         };
 
     const [progress, resultState] = await prisma.$transaction([
-      prisma.progress.update({
-        where: { wordId },
-        data: progressUpdate
+      prisma.progress.upsert({
+        where: { userId_wordId: { userId: user.id, wordId } },
+        update: progressUpdate,
+        create: {
+          userId: user.id,
+          wordId,
+          ...progressUpdate
+        }
       }),
-      prisma.resultState.update({
-        where: { wordId },
-        data: resultStateUpdate
+      prisma.resultState.upsert({
+        where: { userId_wordId: { userId: user.id, wordId } },
+        update: resultStateUpdate,
+        create: {
+          userId: user.id,
+          wordId,
+          ...resultStateUpdate
+        }
       })
     ]);
 
