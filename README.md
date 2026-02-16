@@ -280,60 +280,61 @@ Done in this sprint:
 - [x] Sentence/example fields + wordbook-based quiz mode.
 - [x] PWA install prompt + stronger route-level offline caching strategy.
 
-Still pending (external integration keys required):
+아직 남은 항목(외부 연동 키 필요):
 
-- [ ] Payment integration (subscription lifecycle automation)
-- [ ] OAuth login (Google/Naver/Kakao)
+- [ ] 결제 연동(구독 결제) + 플랜 자동 활성화/만료 처리
+- [ ] OAuth 로그인(구글/네이버/카카오) + 계정 연결
 
-## 2026-02-16 Hardening Update
+## 2026-02-16 보강 업데이트
 
-- Security hardening:
-  - Added mutation-request trust checks (`Origin` / `sec-fetch-site`) on major write APIs.
-  - Added stronger rate limits on report/block/import/study/quiz-submit write paths.
-  - Added security response headers in `middleware.ts`:
+- 보안 강화:
+  - 주요 쓰기 API에 mutation 요청 신뢰성 체크(`Origin` / `sec-fetch-site`) 추가
+  - 신고/차단/import/학습/퀴즈 제출 경로 rate limit 강화
+  - `middleware.ts`에 보안 응답 헤더 추가:
     - `X-Frame-Options: DENY`
     - `X-Content-Type-Options: nosniff`
     - `Referrer-Policy: strict-origin-when-cross-origin`
     - `Permissions-Policy: camera=(), microphone=(), geolocation=()`
-- Ranking stabilization:
-  - `Wordbook.rankScore`, `Wordbook.rankScoreUpdatedAt` added.
-  - Market `Top` sort now uses persisted `rankScore` (DB-level ordering).
-  - Rank score refresh now runs automatically after downloads/ratings.
-  - Manual recompute command added:
+- 랭킹 안정화:
+  - `Wordbook.rankScore`, `Wordbook.rankScoreUpdatedAt` 추가
+  - 마켓 `Top` 정렬을 영속화된 `rankScore` 기반(DB 정렬)으로 변경
+  - 다운로드/평점 반영 시 랭킹 점수 자동 갱신
+  - 수동 재계산 명령 추가:
     - `npm run wordbooks:recompute-rank`
-- E2E smoke test:
-  - Added HTTP end-to-end smoke test script:
+- E2E 스모크 테스트:
+  - HTTP 기반 end-to-end 스모크 테스트 스크립트 추가:
     - `npm run test:e2e`
-  - Environment variables:
+  - 환경 변수:
     - `E2E_BASE_URL` (default: `http://127.0.0.1:3000`)
     - `E2E_EMAIL` (default: `admin@example.com`)
     - `E2E_PASSWORD` (default: `change-me-now-123`)
-    - `AUTH_BOOTSTRAP_TOKEN` (optional, for bootstrap step)
+    - `AUTH_BOOTSTRAP_TOKEN` (bootstrap 단계에서 선택 사용)
 
-## TODO Refresh (2026-02-16)
+## TODO 재정리 (2026-02-16)
 
-Status update for the previous TODO list:
+기존 TODO 기준 진행 현황:
 
-- [x] Downloaded wordbook personal study state
-- [x] Market ranking improvement
-- [x] Report/block/moderation tools
-- [x] Wordbook import/export + optional pronunciation autofill
-- [x] Sentence/example feature + wordbook quiz mode
-- [x] PWA install UX + stronger offline caching
-- [ ] Payment integration + automated plan lifecycle
-- [ ] OAuth login + account linking
+- [x] 다운로드 단어장 개인 학습 상태 저장
+- [x] 마켓 랭킹 개선
+- [x] 신고/차단/모더레이션 도구
+- [x] 단어장 import/export + 선택적 발음 자동 채움
+- [x] 예문/문장 기능 + 단어장 퀴즈 모드
+- [x] PWA 설치 UX + 오프라인 캐싱 강화
+- [ ] 결제 연동 + 플랜 자동 라이프사이클
+- [ ] OAuth 로그인 + 계정 연결
 
-New backlog (based on direct server checks and feature analysis):
+신규 백로그(직접 서버 점검 및 분석 기반):
 
-- [ ] Fix remaining mojibake/encoding issues across Korean texts in legacy pages/docs.
-- [ ] Add `zod` (or equivalent) request schema validation for all write APIs.
-- [ ] Add CSRF token (double-submit or synchronizer token) in addition to current origin checks.
-- [ ] Add unblock flow UI (`BlockedOwner` management page) so users can reverse blocks.
-- [ ] Add moderator audit trail fields (before/after state, action reason code, actor IP hash).
-- [ ] Add abuse controls: report cooldown, duplicate report suppression, reporter trust score.
-- [ ] Expand E2E from HTTP smoke to UI flow tests (login -> market -> download -> study -> quiz -> report -> moderate).
-- [ ] Add CI pipeline step for `typecheck + test + test:e2e` with required env setup.
-- [ ] Add ranking maintenance job scheduling (daily recompute + drift monitor for stale scores).
-- [ ] Add observability stack (structured logs, error tracking, dashboard on 4xx/5xx and latency by route).
-- [ ] Add DB backup/restore runbook and migration rollback playbook.
-- [ ] Add accessibility and mobile QA pass (keyboard nav, focus order, contrast, screen reader labels).
+- [ ] 레거시 페이지/문서에 남아있는 한글 인코딩 깨짐(모지바케) 완전 정리
+- [ ] 모든 쓰기 API에 `zod`(또는 동급) 스키마 검증 적용
+- [ ] 현재 Origin 체크 외 CSRF 토큰(더블 서브밋/동기화 토큰) 추가
+- [ ] 차단 해제 UI(`BlockedOwner` 관리 화면) 추가
+- [ ] 모더레이션 감사 로그 필드 강화(처리 전/후 상태, 사유 코드, 처리자 IP 해시)
+- [ ] 신고 악용 방지(쿨다운, 중복 신고 억제, 신고자 신뢰 점수)
+- [ ] E2E를 HTTP 스모크에서 UI 플로우 테스트까지 확장
+  - 로그인 -> 마켓 -> 다운로드 -> 학습 -> 퀴즈 -> 신고 -> 모더레이션
+- [ ] CI 파이프라인에 `typecheck + test + test:e2e` 고정
+- [ ] 랭킹 유지보수 작업 스케줄링(일 단위 재계산 + 점수 드리프트 모니터링)
+- [ ] 관측성 스택 추가(구조화 로그, 에러 추적, 라우트별 4xx/5xx/지연 대시보드)
+- [ ] DB 백업/복구 런북 및 마이그레이션 롤백 플레이북 추가
+- [ ] 접근성/모바일 QA 패스(키보드 네비, 포커스 순서, 명도 대비, 스크린리더 라벨)
