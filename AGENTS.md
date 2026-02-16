@@ -12,3 +12,12 @@ For implementation tasks that change behavior or code:
 
 - If the user explicitly says not to update README, not to commit, or not to push, follow the user request.
 - If push fails due to auth/network/remote policy, report the exact failure and stop.
+
+## Stable Test Command Policy
+
+- For local E2E checks, always use the fixed runner scripts:
+  - `npm run test:e2e:local`
+  - `npm run test:e2e:local:smoke`
+  - `npm run test:e2e:local:ui`
+- Do not run ad-hoc inline PowerShell `Start-Process ... npm run dev ...` test commands unless the user explicitly requests it.
+- Goal: keep command prefixes stable so approval rules remain reusable across new agent contexts.
