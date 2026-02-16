@@ -1,10 +1,5 @@
-import { Suspense } from "react";
-import { QuizClient } from "@/components/QuizClient";
+﻿import { redirect } from "next/navigation";
 
 export default function QuizMeaningPage() {
-  return (
-    <Suspense fallback={<div className="rounded-xl bg-white p-4">Loading...</div>}>
-      <QuizClient quizType="MEANING" />
-    </Suspense>
-  );
+  redirect("/wordbooks");
 }

@@ -1,5 +1,5 @@
-import { WordListClient } from "@/components/WordListClient";
+﻿import { redirect } from "next/navigation";
 
 export default function ListHalfPage() {
-  return <WordListClient mode="listHalf" title="회복 목록(반반)" />;
+  redirect("/wordbooks");
 }

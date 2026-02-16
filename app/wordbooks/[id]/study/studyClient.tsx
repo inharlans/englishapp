@@ -1,9 +1,11 @@
-"use client";
+﻿"use client";
 
 import { apiFetch } from "@/lib/clientApi";
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
+
+import { MeaningView } from "@/components/MeaningView";
 
 type Item = {
   id: number;
@@ -102,26 +104,19 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
     <section className="space-y-6">
       <header className="flex flex-wrap items-end gap-3">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Study State</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Wordbook Memorize</p>
           <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-900">{title || "Wordbook"}</h1>
           <p className="mt-2 text-sm text-slate-600">
-            Checked {studyState.studiedCount} / Correct {studyState.correctCount} / Wrong {studyState.wrongCount}
+            체크 {studyState.studiedCount} / 정답 {studyState.correctCount} / 오답 {studyState.wrongCount}
           </p>
         </div>
         <div className="ml-auto flex flex-wrap gap-2">
-          <Link
-            href={{ pathname: `/wordbooks/${wordbookId}` }}
-            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
-          >
-            Back
-          </Link>
-          <Link
-            href={{ pathname: `/wordbooks/${wordbookId}/quiz` }}
-            data-testid="study-start-quiz"
-            className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
-          >
-            Start Quiz
-          </Link>
+          <Link href={{ pathname: `/wordbooks/${wordbookId}/quiz-meaning` }} data-testid="study-start-quiz" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold hover:bg-slate-50">Quiz Meaning</Link>
+          <Link href={{ pathname: `/wordbooks/${wordbookId}/quiz-word` }} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold hover:bg-slate-50">Quiz Word</Link>
+          <Link href={{ pathname: `/wordbooks/${wordbookId}/list-correct` }} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold hover:bg-slate-50">List Correct</Link>
+          <Link href={{ pathname: `/wordbooks/${wordbookId}/list-wrong` }} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold hover:bg-slate-50">List Wrong</Link>
+          <Link href={{ pathname: `/wordbooks/${wordbookId}/list-half` }} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold hover:bg-slate-50">List Half</Link>
+          <Link href={{ pathname: `/wordbooks/${wordbookId}` }} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold hover:bg-slate-50">Back</Link>
         </div>
       </header>
 
@@ -157,7 +152,7 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <p className="text-sm font-semibold text-slate-900">{item.term}</p>
-                  <p className="mt-1 text-sm text-slate-700">{item.meaning}</p>
+                  <MeaningView value={item.meaning} className="mt-1 text-sm text-slate-700" />
                   {item.example ? (
                     <p className="mt-1 text-xs text-slate-500">
                       e.g. {item.example}
@@ -202,4 +197,3 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
     </section>
   );
 }
-

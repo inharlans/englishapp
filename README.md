@@ -12,7 +12,7 @@ Next.js(App Router) + Prisma + PostgreSQL 기반 단어 학습 웹앱.
 
 - 단어장에는 `ownerId`(소유자)가 있고, **소유자만** 단어장 메타/항목을 수정할 수 있다.
 - 다운로드한 단어장은 **읽기 전용**이며, 다운로더는 내용을 수정하거나 재배포(업로드)할 수 없다.
-- 다운로드한 단어장은 `/memorize`, `/quiz-meaning`, `/quiz-word`, `/list-*`에서 기본 1500과 동일한 흐름으로 학습할 수 있다.
+- 학습 플로우는 단어장 내부 경로(`/wordbooks/[id]/memorize`, `/quiz-meaning`, `/quiz-word`, `/list-*`)에서만 제공한다.
 - 단, 다운로드한 단어장의 원본 텍스트는 바뀌지 않으며(뜻 저장/수정 금지), 학습 상태(정답/오답/진도)만 사용자별로 저장된다.
 - 마켓은 단어장별 `downloadCount`, `ratingAvg`, `ratingCount`를 표시하며 기본 정렬은 “Top(평점/평가수/다운로드/최신)”이다.
 
@@ -31,10 +31,11 @@ Next.js(App Router) + Prisma + PostgreSQL 기반 단어 학습 웹앱.
 ## 페이지(웹)
 
 - `/` 홈
-- `/memorize` 암기(스페이스드 리피티션)
-- `/quiz-meaning`, `/quiz-word` 퀴즈
-- `/list-correct`, `/list-wrong`, `/list-half` 리스트(정답/오답/회복)
-- 위 5개 학습 화면은 상단 `학습 단어장 선택`에서 기본 1500/다운로드 단어장을 즉시 전환 가능
+- `/memorize`, `/quiz-meaning`, `/quiz-word`, `/list-*`는 `/wordbooks`로 리다이렉트
+- 실제 학습 화면:
+  - `/wordbooks/[id]/memorize`
+  - `/wordbooks/[id]/quiz-meaning`, `/wordbooks/[id]/quiz-word`
+  - `/wordbooks/[id]/list-correct`, `/wordbooks/[id]/list-wrong`, `/wordbooks/[id]/list-half`
 - `/wordbooks` 내 라이브러리(내가 만든 단어장 + 다운로드한 단어장)
 - `/wordbooks/new` 단어장 생성
 - `/wordbooks/[id]` 단어장 상세(소유자 편집, 다운로드본은 읽기 전용)
@@ -183,7 +184,7 @@ npm run start:railway
 - [x] PRO: 다운로드 무제한, 공개/비공개 토글 가능
 - [x] 요금 안내 페이지(`/pricing`) 추가(표시용)
 - [x] 관리자 콘솔(`/admin`) + 플랜/관리자 권한 설정 API
-- [x] 통합 학습 소스 선택기(기본 1500 + 다운로드 단어장) 적용: memorize/quiz/list 전 화면
+- [x] 단어장 내부 전용 학습 라우트 적용: `/wordbooks/[id]/memorize|quiz|list-*`
 - [x] 다운로드 단어장 read-only 보장(뜻 저장/수정 비활성) + 사용자별 학습 상태 저장
 - [x] `(명)(동)(형)` 형태 의미 표시 개선(품사 태그 가독성 강화)
 - [x] 홈/네비/전역 폰트 및 레이아웃 리디자인
@@ -383,9 +384,10 @@ Done in this sprint:
 
 ## 2026-02-16 통합 학습 UX 업데이트
 
-- `/memorize`, `/quiz-meaning`, `/quiz-word`, `/list-*`에 공통 `학습 단어장 선택` UI 추가
-  - 기본 1500 + 다운로드 단어장을 같은 화면에서 즉시 전환
-  - 단어장 전환 시 URL query(`source`) 동기화로 재진입/공유 시 동일 상태 복원
+- 학습 진입 구조를 단순화:
+  - 전역 `/memorize`, `/quiz-*`, `/list-*`는 `/wordbooks`로 리다이렉트
+  - 학습은 `wordbooks/[id]` 내부에서만 진행
+  - 상세 페이지에서 `memorize/quiz-meaning/quiz-word/list-*` 버튼으로 이동
 - 다운로드 단어장 정책 강화:
   - `save meaning` 등 원본 변경 액션 비활성화(읽기 전용)
   - 정답/오답/회복 이력은 사용자별 상태로만 저장

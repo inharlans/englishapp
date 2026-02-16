@@ -1,5 +1,5 @@
-import { WordListClient } from "@/components/WordListClient";
+﻿import { redirect } from "next/navigation";
 
 export default function ListWrongPage() {
-  return <WordListClient mode="listWrong" title="오답 목록" />;
+  redirect("/wordbooks");
 }

@@ -172,22 +172,46 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
           ) : null}
           {!isOwner && downloadedAt ? <OfflineSaveButton wordbookId={id} /> : null}
           {(isOwner || downloadedAt) && (
-            <Link
-              href={{ pathname: `/wordbooks/${id}/study` }}
-              data-testid="wordbook-study-link"
-              className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
-            >
-              Study State
-            </Link>
-          )}
-          {(isOwner || downloadedAt) && (
-            <Link
-              href={{ pathname: `/wordbooks/${id}/quiz` }}
-              data-testid="wordbook-quiz-link"
-              className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
-            >
-              Wordbook Quiz
-            </Link>
+            <>
+              <Link
+                href={{ pathname: `/wordbooks/${id}/memorize` }}
+                data-testid="wordbook-study-link"
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
+              >
+                Memorize
+              </Link>
+              <Link
+                href={{ pathname: `/wordbooks/${id}/quiz-meaning` }}
+                data-testid="wordbook-quiz-link"
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
+              >
+                Quiz Meaning
+              </Link>
+              <Link
+                href={{ pathname: `/wordbooks/${id}/quiz-word` }}
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
+              >
+                Quiz Word
+              </Link>
+              <Link
+                href={{ pathname: `/wordbooks/${id}/list-correct` }}
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
+              >
+                List Correct
+              </Link>
+              <Link
+                href={{ pathname: `/wordbooks/${id}/list-wrong` }}
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
+              >
+                List Wrong
+              </Link>
+              <Link
+                href={{ pathname: `/wordbooks/${id}/list-half` }}
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
+              >
+                List Half
+              </Link>
+            </>
           )}
           {isOwner && user.plan === "PRO" ? (
             <PublishToggle wordbookId={id} isPublic={wordbook.isPublic} />

@@ -15,8 +15,14 @@ type QuizItem = {
 
 type QuizMode = "MEANING" | "WORD";
 
-export function WordbookQuizClient({ wordbookId }: { wordbookId: number }) {
-  const [mode, setMode] = useState<QuizMode>("MEANING");
+type Props = {
+  wordbookId: number;
+  initialMode?: QuizMode;
+  lockMode?: boolean;
+};
+
+export function WordbookQuizClient({ wordbookId, initialMode = "MEANING", lockMode = false }: Props) {
+  const [mode, setMode] = useState<QuizMode>(initialMode);
   const [item, setItem] = useState<QuizItem | null>(null);
   const [answer, setAnswer] = useState("");
   const [message, setMessage] = useState("");
@@ -62,8 +68,8 @@ export function WordbookQuizClient({ wordbookId }: { wordbookId: number }) {
       if (!res.ok) throw new Error(json.error ?? "Submit failed.");
       setMessage(
         json.correct
-          ? "Correct."
-          : `Wrong. Answer: ${json.correctAnswer?.term ?? ""} / ${json.correctAnswer?.meaning ?? ""}`
+          ? "정답입니다."
+          : `오답입니다. 정답: ${json.correctAnswer?.term ?? ""} / ${json.correctAnswer?.meaning ?? ""}`
       );
       await loadNext();
     } catch (e) {
@@ -75,33 +81,63 @@ export function WordbookQuizClient({ wordbookId }: { wordbookId: number }) {
 
   return (
     <section className="space-y-4">
-      <header className="flex items-center justify-between">
+      <header className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Wordbook Quiz</p>
-          <h1 className="mt-2 text-2xl font-black tracking-tight text-slate-900">Practice</h1>
+          <h1 className="mt-2 text-2xl font-black tracking-tight text-slate-900">
+            {mode === "MEANING" ? "의미 퀴즈" : "단어 퀴즈"}
+          </h1>
         </div>
-        <Link
-          href={{ pathname: `/wordbooks/${wordbookId}` }}
-          className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
-        >
-          Back
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href={{ pathname: `/wordbooks/${wordbookId}/memorize` }}
+            className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold hover:bg-slate-50"
+          >
+            Memorize
+          </Link>
+          <Link
+            href={{ pathname: `/wordbooks/${wordbookId}/quiz-meaning` }}
+            className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold hover:bg-slate-50"
+          >
+            Quiz Meaning
+          </Link>
+          <Link
+            href={{ pathname: `/wordbooks/${wordbookId}/quiz-word` }}
+            className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold hover:bg-slate-50"
+          >
+            Quiz Word
+          </Link>
+          <Link
+            href={{ pathname: `/wordbooks/${wordbookId}/list-correct` }}
+            className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold hover:bg-slate-50"
+          >
+            List
+          </Link>
+          <Link
+            href={{ pathname: `/wordbooks/${wordbookId}` }}
+            className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold hover:bg-slate-50"
+          >
+            Back
+          </Link>
+        </div>
       </header>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-4">
-        <label className="text-sm font-semibold text-slate-700">
-          Mode{" "}
-          <select
-            value={mode}
-            onChange={(e) => setMode(e.target.value === "WORD" ? "WORD" : "MEANING")}
-            data-testid="wordbook-quiz-mode"
-            className="ml-2 rounded border border-slate-300 bg-white px-2 py-1"
-          >
-            <option value="MEANING">Meaning Quiz</option>
-            <option value="WORD">Word Quiz</option>
-          </select>
-        </label>
-      </div>
+      {!lockMode ? (
+        <div className="rounded-2xl border border-slate-200 bg-white p-4">
+          <label className="text-sm font-semibold text-slate-700">
+            Mode{" "}
+            <select
+              value={mode}
+              onChange={(e) => setMode(e.target.value === "WORD" ? "WORD" : "MEANING")}
+              data-testid="wordbook-quiz-mode"
+              className="ml-2 rounded border border-slate-300 bg-white px-2 py-1"
+            >
+              <option value="MEANING">Meaning Quiz</option>
+              <option value="WORD">Word Quiz</option>
+            </select>
+          </label>
+        </div>
+      ) : null}
 
       <div className="rounded-3xl border border-slate-200 bg-white p-5">
         {!item ? (
@@ -152,6 +188,3 @@ export function WordbookQuizClient({ wordbookId }: { wordbookId: number }) {
     </section>
   );
 }
-
-
-
