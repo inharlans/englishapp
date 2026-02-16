@@ -142,6 +142,7 @@ npm run dev
 - `npm run prisma:generate` Prisma Client 생성
 - `npm run prisma:migrate` 로컬 개발용 마이그레이션
 - `npm run prisma:deploy` 프로덕션 마이그레이션(`migrate deploy`)
+- `npm run typecheck` 실행 시 `next typegen`을 먼저 수행해 `.next/types` 누락으로 인한 TS6053 오류를 예방
 
 ## Railway 시작 커맨드
 
