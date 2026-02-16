@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { MeaningView } from "@/components/MeaningView";
 import { WordbookStudyTabs } from "@/components/wordbooks/WordbookStudyTabs";
@@ -19,28 +19,25 @@ type Item = {
   meaning: string;
   example: string | null;
   exampleMeaning: string | null;
-  position?: number | null;
+  itemState: {
+    status: "NEW" | "CORRECT" | "WRONG";
+    everCorrect: boolean;
+    everWrong: boolean;
+  } | null;
 };
 
-type ItemState = {
-  itemId: number;
-  status: "NEW" | "CORRECT" | "WRONG";
-  everCorrect: boolean;
-  everWrong: boolean;
-};
-
-type StudyPayload = {
-  wordbook?: { title: string; items: Item[] };
-  itemStates?: ItemState[];
+type Payload = {
+  wordbook?: { title: string };
+  items?: Item[];
   error?: string;
+  paging?: {
+    totalItems: number;
+    partCount: number;
+    partSize: number | null;
+    partIndex: number;
+    partStats: Array<{ partIndex: number; totalInPart: number; matchedCount: number }>;
+  };
 };
-
-function matches(mode: ListMode, state?: ItemState) {
-  if (!state) return false;
-  if (mode === "listCorrect") return state.status === "CORRECT";
-  if (mode === "listWrong") return state.status === "WRONG";
-  return state.everCorrect && state.everWrong;
-}
 
 function activeTab(mode: ListMode) {
   if (mode === "listCorrect") return "list-correct" as const;
@@ -59,24 +56,37 @@ export function WordbookListClient({
 }) {
   const [wordbookTitle, setWordbookTitle] = useState("");
   const [items, setItems] = useState<Item[]>([]);
-  const [states, setStates] = useState<Map<number, ItemState>>(new Map());
+  const [totalItems, setTotalItems] = useState(0);
+  const [partStats, setPartStats] = useState<Array<{ partIndex: number; totalInPart: number; matchedCount: number }>>(
+    []
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const { mode: meaningMode, setMode: setMeaningMode } = useMeaningViewMode();
   const { mode: densityMode, setMode: setDensityMode } = useDensityMode();
-  const { partSize, setPartSize, partIndex, setPartIndex, partCount } = useWordbookParting(wordbookId, items.length);
+  const { partSize, setPartSize, partIndex, setPartIndex, partCount } = useWordbookParting(wordbookId, totalItems);
 
   useEffect(() => {
     const load = async () => {
       setLoading(true);
       setError("");
       try {
-        const res = await apiFetch(`/api/wordbooks/${wordbookId}/study`, { cache: "no-store" });
-        const json = (await res.json()) as StudyPayload;
+        const qs = new URLSearchParams({
+          view: mode,
+          page: "0",
+          take: String(partSize),
+          partSize: String(partSize),
+          partIndex: String(partIndex)
+        });
+        const res = await apiFetch(`/api/wordbooks/${wordbookId}/study?${qs.toString()}`, {
+          cache: "no-store"
+        });
+        const json = (await res.json()) as Payload;
         if (!res.ok || !json.wordbook) throw new Error(json.error ?? "Failed to load list.");
         setWordbookTitle(json.wordbook.title);
-        setItems(json.wordbook.items ?? []);
-        setStates(new Map((json.itemStates ?? []).map((s) => [s.itemId, s])));
+        setItems(json.items ?? []);
+        setTotalItems(json.paging?.totalItems ?? 0);
+        setPartStats(json.paging?.partStats ?? []);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to load list.");
       } finally {
@@ -84,30 +94,17 @@ export function WordbookListClient({
       }
     };
     void load();
-  }, [wordbookId]);
+  }, [mode, partIndex, partSize, wordbookId]);
 
-  const partStart = (partIndex - 1) * partSize;
-  const partItems = useMemo(() => items.slice(partStart, partStart + partSize), [items, partStart, partSize]);
-
-  const partStats = useMemo(
-    () =>
-      Array.from({ length: partCount }, (_, idx) => {
-        const start = idx * partSize;
-        const segment = items.slice(start, start + partSize);
-        const matchedCount = segment.filter((item) => matches(mode, states.get(item.id))).length;
-        return {
-          partNumber: idx + 1,
-          totalInPart: segment.length,
-          matchedCount
-        };
-      }),
-    [items, mode, partCount, partSize, states]
-  );
-
-  const filtered = useMemo(
-    () => partItems.filter((item) => matches(mode, states.get(item.id))),
-    [partItems, mode, states]
-  );
+  const parts = Array.from({ length: partCount }, (_, idx) => {
+    const n = idx + 1;
+    const stat = partStats.find((s) => s.partIndex === n);
+    return {
+      partIndex: n,
+      totalInPart: stat?.totalInPart ?? 0,
+      matchedCount: stat?.matchedCount ?? 0
+    };
+  });
 
   return (
     <section className="space-y-4">
@@ -124,8 +121,28 @@ export function WordbookListClient({
         <div className="text-xs text-slate-600">의미 표시</div>
         <div className="mt-2 flex flex-wrap items-center gap-2">
           <div className="inline-flex rounded-lg border border-slate-200 p-1 text-xs">
-            <button type="button" onClick={() => setMeaningMode("compact")} className={meaningMode === "compact" ? "rounded-md bg-slate-900 px-2 py-1 font-semibold text-white" : "rounded-md px-2 py-1 text-slate-700"}>간결</button>
-            <button type="button" onClick={() => setMeaningMode("detailed")} className={meaningMode === "detailed" ? "rounded-md bg-slate-900 px-2 py-1 font-semibold text-white" : "rounded-md px-2 py-1 text-slate-700"}>자세히</button>
+            <button
+              type="button"
+              onClick={() => setMeaningMode("compact")}
+              className={
+                meaningMode === "compact"
+                  ? "rounded-md bg-slate-900 px-2 py-1 font-semibold text-white"
+                  : "rounded-md px-2 py-1 text-slate-700"
+              }
+            >
+              간결
+            </button>
+            <button
+              type="button"
+              onClick={() => setMeaningMode("detailed")}
+              className={
+                meaningMode === "detailed"
+                  ? "rounded-md bg-slate-900 px-2 py-1 font-semibold text-white"
+                  : "rounded-md px-2 py-1 text-slate-700"
+              }
+            >
+              자세히
+            </button>
           </div>
           <DensityModeToggle mode={densityMode} onChange={setDensityMode} />
         </div>
@@ -143,25 +160,25 @@ export function WordbookListClient({
             className="w-20 rounded border border-slate-300 bg-white px-2 py-1 text-sm"
           />
           <span className="text-slate-500">
-            총 {items.length}개 · {partCount}개 part
+            총 {totalItems}개 · {partCount}개 part
           </span>
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
-          {partStats.map((s) => (
+          {parts.map((p) => (
             <button
-              key={s.partNumber}
+              key={p.partIndex}
               type="button"
-              onClick={() => setPartIndex(s.partNumber)}
+              onClick={() => setPartIndex(p.partIndex)}
               className={[
                 "rounded-lg border px-3 py-1 text-left text-xs font-semibold",
-                s.partNumber === partIndex
+                p.partIndex === partIndex
                   ? "border-slate-900 bg-slate-900 text-white"
                   : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
               ].join(" ")}
             >
-              <span>Part {s.partNumber}</span>
-              <span className={s.partNumber === partIndex ? "ml-2 text-slate-200" : "ml-2 text-slate-500"}>
-                {s.matchedCount}/{s.totalInPart}
+              <span>Part {p.partIndex}</span>
+              <span className={p.partIndex === partIndex ? "ml-2 text-slate-200" : "ml-2 text-slate-500"}>
+                {p.matchedCount}/{p.totalInPart}
               </span>
             </button>
           ))}
@@ -173,7 +190,7 @@ export function WordbookListClient({
         <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>
       ) : null}
 
-      {!loading && filtered.length === 0 ? (
+      {!loading && items.length === 0 ? (
         <EmptyStateCard
           title="조건에 맞는 단어가 없습니다"
           description={`Part ${partIndex}에서 조건에 맞는 단어를 찾지 못했습니다. 다른 part를 선택해보세요.`}
@@ -183,28 +200,26 @@ export function WordbookListClient({
       ) : null}
 
       <div className="grid gap-3 md:grid-cols-2">
-        {filtered.map((item) => {
-          const state = states.get(item.id);
-          return (
-            <article key={item.id} className={`ui-card ui-fade-in ${densityCardClass(densityMode)}`}>
-              <h2 className="text-lg font-bold text-slate-900">{item.term}</h2>
-              <div className="mt-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
-                <MeaningView value={item.meaning} mode={meaningMode} className="text-sm" />
-              </div>
-              {item.example ? (
-                <p className="mt-2 text-xs text-slate-500">
-                  e.g. {item.example}
-                  {item.exampleMeaning ? ` - ${item.exampleMeaning}` : ""}
-                </p>
-              ) : null}
-              {state ? (
-                <p className="mt-2 text-xs text-slate-500">
-                  status {state.status} / history C:{state.everCorrect ? "Y" : "N"} W:{state.everWrong ? "Y" : "N"}
-                </p>
-              ) : null}
-            </article>
-          );
-        })}
+        {items.map((item) => (
+          <article key={item.id} className={`ui-card ui-fade-in ${densityCardClass(densityMode)}`}>
+            <h2 className="text-lg font-bold text-slate-900">{item.term}</h2>
+            <div className="mt-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+              <MeaningView value={item.meaning} mode={meaningMode} className="text-sm" />
+            </div>
+            {item.example ? (
+              <p className="mt-2 text-xs text-slate-500">
+                e.g. {item.example}
+                {item.exampleMeaning ? ` - ${item.exampleMeaning}` : ""}
+              </p>
+            ) : null}
+            {item.itemState ? (
+              <p className="mt-2 text-xs text-slate-500">
+                status {item.itemState.status} / history C:{item.itemState.everCorrect ? "Y" : "N"} W:
+                {item.itemState.everWrong ? "Y" : "N"}
+              </p>
+            ) : null}
+          </article>
+        ))}
       </div>
     </section>
   );

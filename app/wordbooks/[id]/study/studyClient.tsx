@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { apiFetch } from "@/lib/clientApi";
 
@@ -12,6 +12,12 @@ import { DensityModeToggle } from "@/components/ui/DensityModeToggle";
 import { densityCardClass, useDensityMode } from "@/components/ui/useDensityMode";
 import { EmptyStateCard } from "@/components/ui/EmptyStateCard";
 
+type StudyState = {
+  studiedCount: number;
+  correctCount: number;
+  wrongCount: number;
+};
+
 type Item = {
   id: number;
   term: string;
@@ -19,18 +25,18 @@ type Item = {
   pronunciation: string | null;
   example: string | null;
   exampleMeaning: string | null;
+  itemState: {
+    status: "NEW" | "CORRECT" | "WRONG";
+    streak: number;
+  } | null;
 };
 
-type ItemState = {
-  itemId: number;
-  status: "NEW" | "CORRECT" | "WRONG";
-  streak: number;
-};
-
-type StudyState = {
-  studiedCount: number;
-  correctCount: number;
-  wrongCount: number;
+type Payload = {
+  error?: string;
+  wordbook?: { title: string; fromLang?: string };
+  studyState?: StudyState;
+  items?: Item[];
+  paging?: { totalFiltered: number; totalItems: number };
 };
 
 export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
@@ -42,7 +48,8 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
   const [pageSize, setPageSize] = useState(4);
   const [pageIndex, setPageIndex] = useState(0);
   const [pageInput, setPageInput] = useState("1");
-  const [itemStates, setItemStates] = useState<Map<number, ItemState>>(new Map());
+  const [totalFiltered, setTotalFiltered] = useState(0);
+  const [totalItems, setTotalItems] = useState(0);
   const [studyState, setStudyState] = useState<StudyState>({
     studiedCount: 0,
     correctCount: 0,
@@ -53,38 +60,40 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
   const { mode, setMode } = useMeaningViewMode();
   const { mode: densityMode, setMode: setDensityMode } = useDensityMode();
 
+  const totalPages = Math.max(1, Math.ceil(totalFiltered / pageSize));
+  const safePageIndex = Math.min(Math.max(pageIndex, 0), totalPages - 1);
+
   const load = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
-      const res = await apiFetch(`/api/wordbooks/${wordbookId}/study`, { cache: "no-store" });
-      const json = (await res.json()) as {
-        error?: string;
-        wordbook?: { title: string; fromLang?: string; items: Item[] };
-        itemStates?: ItemState[];
-        studyState?: StudyState;
-      };
+      const qs = new URLSearchParams({
+        view: "memorize",
+        page: String(safePageIndex),
+        take: String(pageSize),
+        q: query.trim(),
+        hideCorrect: hideCorrect ? "1" : "0"
+      });
+      const res = await apiFetch(`/api/wordbooks/${wordbookId}/study?${qs.toString()}`, {
+        cache: "no-store"
+      });
+      const json = (await res.json()) as Payload;
       if (!res.ok || !json.wordbook) throw new Error(json.error ?? "Failed to load study state.");
       setTitle(json.wordbook.title);
       setSpeakLang(json.wordbook.fromLang?.toLowerCase().startsWith("en") ? "en-US" : undefined);
-      setItems(json.wordbook.items ?? []);
-      setItemStates(new Map((json.itemStates ?? []).map((s) => [s.itemId, s])));
+      setItems(json.items ?? []);
       if (json.studyState) setStudyState(json.studyState);
+      setTotalFiltered(json.paging?.totalFiltered ?? 0);
+      setTotalItems(json.paging?.totalItems ?? 0);
     } catch (e) {
+      setItems([]);
+      setTotalFiltered(0);
+      setTotalItems(0);
       setError(e instanceof Error ? e.message : "Failed to load study state.");
     } finally {
       setLoading(false);
     }
-  }, [wordbookId]);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
-
-  const progressPercent = useMemo(() => {
-    if (items.length === 0) return 0;
-    return Math.round((studyState.correctCount / items.length) * 100);
-  }, [items.length, studyState.correctCount]);
+  }, [hideCorrect, pageSize, query, safePageIndex, wordbookId]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -92,26 +101,13 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
     if (raw === "1") setHideCorrect(true);
   }, [wordbookId]);
 
-  const filteredItems = useMemo(() => {
-    const scoped = hideCorrect
-      ? items.filter((item) => itemStates.get(item.id)?.status !== "CORRECT")
-      : items;
-    const q = query.trim().toLowerCase();
-    if (!q) return scoped;
-    return scoped.filter((item) => {
-      const hay = `${item.term} ${item.meaning} ${item.pronunciation ?? ""} ${item.example ?? ""} ${item.exampleMeaning ?? ""}`.toLowerCase();
-      return hay.includes(q);
-    });
-  }, [hideCorrect, itemStates, items, query]);
-
-  const totalPages = Math.max(1, Math.ceil(filteredItems.length / pageSize));
-  const safePageIndex = Math.min(Math.max(pageIndex, 0), totalPages - 1);
-  const start = safePageIndex * pageSize;
-  const visibleItems = filteredItems.slice(start, start + pageSize);
+  useEffect(() => {
+    void load();
+  }, [load]);
 
   useEffect(() => {
     setPageIndex(0);
-  }, [query, pageSize]);
+  }, [query, pageSize, hideCorrect]);
 
   useEffect(() => {
     if (pageIndex > totalPages - 1) {
@@ -127,6 +123,12 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
     if (typeof document === "undefined") return;
     document.cookie = `last_study_wordbook_id=${wordbookId}; Path=/; Max-Age=2592000; SameSite=Lax`;
   }, [wordbookId]);
+
+  const progressPercent = useMemo(() => {
+    const total = totalItems;
+    if (total <= 0) return 0;
+    return Math.round((studyState.correctCount / Math.max(total, 1)) * 100);
+  }, [studyState.correctCount, totalItems]);
 
   const movePage = (delta: number) => {
     setPageIndex((prev) => {
@@ -226,36 +228,33 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
       ) : null}
 
       <div className="grid gap-2">
-        {visibleItems.map((item) => {
-          const state = itemStates.get(item.id);
-          return (
-            <div key={item.id} className={`ui-card ui-fade-in ${densityCardClass(densityMode)}`}>
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-semibold text-slate-900">{item.term}</p>
-                    <SpeakButton text={item.term} lang={speakLang} iconOnly className="border-slate-300" />
-                  </div>
-                  <MeaningView value={item.meaning} mode={mode} className="mt-1 text-sm text-slate-700" />
-                  {item.example ? (
-                    <p className="mt-1 text-xs text-slate-500">
-                      e.g. {item.example}
-                      {item.exampleMeaning ? ` - ${item.exampleMeaning}` : ""}
-                    </p>
-                  ) : null}
-                  {state ? (
-                    <p className="mt-1 text-xs text-slate-500">
-                      status {state.status} / streak {state.streak}
-                    </p>
-                  ) : null}
+        {items.map((item) => (
+          <div key={item.id} className={`ui-card ui-fade-in ${densityCardClass(densityMode)}`}>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-semibold text-slate-900">{item.term}</p>
+                  <SpeakButton text={item.term} lang={speakLang} iconOnly className="border-slate-300" />
                 </div>
+                <MeaningView value={item.meaning} mode={mode} className="mt-1 text-sm text-slate-700" />
+                {item.example ? (
+                  <p className="mt-1 text-xs text-slate-500">
+                    e.g. {item.example}
+                    {item.exampleMeaning ? ` - ${item.exampleMeaning}` : ""}
+                  </p>
+                ) : null}
+                {item.itemState ? (
+                  <p className="mt-1 text-xs text-slate-500">
+                    status {item.itemState.status} / streak {item.itemState.streak}
+                  </p>
+                ) : null}
               </div>
             </div>
-          );
-        })}
+          </div>
+        ))}
       </div>
 
-      {!loading && items.length > 0 ? (
+      {!loading ? (
         <div className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/80 backdrop-blur-md">
           <div className="mx-auto flex max-w-6xl items-center gap-2 overflow-x-auto px-3 py-2 text-xs">
             <input

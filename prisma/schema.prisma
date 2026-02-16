@@ -229,6 +229,8 @@ model WordbookStudyItemState {
   @@id([userId, wordbookId, itemId])
   @@index([wordbookId, itemId])
   @@index([userId, itemId])
+  @@index([userId, wordbookId, status])
+  @@index([userId, wordbookId, everCorrect, everWrong])
 }
 
 model BlockedOwner {

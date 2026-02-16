@@ -516,3 +516,26 @@ Done in this sprint:
   - 마켓에서 별점 영역 클릭 시 리뷰 목록(댓글 + 평점) 펼쳐보기 지원.
 - 배포 안정화:
   - `/wordbooks/new` 가이드 문구의 JSX 이스케이프를 보정해 `next build` ESLint(`react/no-unescaped-entities`) 실패를 해결.
+
+## 2026-02-17 Study/List/Quiz performance refactor (1~4 + extra observations)
+
+- [x] `GET /api/wordbooks/[id]/study` was refactored to server-side paging/filtering.
+  - Added query support: `view`, `page`, `take`, `q`, `hideCorrect`, `partSize`, `partIndex`.
+  - `memorize`, `list-correct`, `list-wrong`, `list-half` no longer require full wordbook payloads.
+- [x] `/wordbooks/[id]/memorize` client now consumes paged API data only.
+  - Removed full in-memory filtering/pagination pattern on client.
+  - Uses per-item `itemState` from API instead of loading full state maps.
+- [x] `/wordbooks/[id]/list-*` client now uses server-driven part pagination and stats.
+  - `partStats` (`p/n`) are computed on server and rendered directly by client.
+- [x] `GET /api/wordbooks/[id]/quiz` now selects question candidates in DB.
+  - Tiered random pick strategy: unseen -> wrong -> fallback.
+  - Avoids loading all items/states for each quiz request.
+- [x] Added DB indexes for state-heavy reads.
+  - `WordbookStudyItemState(userId, wordbookId, status)`
+  - `WordbookStudyItemState(userId, wordbookId, everCorrect, everWrong)`
+  - Migration: `20260217021000_add_study_state_indexes`
+
+Additional observations and guardrails:
+- Client simplification is safe when authority remains on server (filters, paging, permissions).
+- Keep all business rules centralized in API routes and return minimal DTOs to prevent drift.
+- For very large datasets, consider cursor pagination for deep page access and cache `partStats` by `(userId, wordbookId, view, q, hideCorrect, partSize)`.

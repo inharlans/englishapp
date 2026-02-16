@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
 import { getUserFromRequestCookies } from "@/lib/authServer";
@@ -16,10 +17,49 @@ function parseMode(raw: string | null): QuizMode {
   return raw === "WORD" ? "WORD" : "MEANING";
 }
 
-function parsePositiveInt(raw: string | null, fallback: number): number {
+function parsePositiveInt(raw: string | null, fallback: number, min: number, max: number): number {
   const n = Number(raw);
   if (!Number.isFinite(n) || n <= 0) return fallback;
-  return Math.floor(n);
+  return Math.min(max, Math.max(min, Math.floor(n)));
+}
+
+type QuizRow = {
+  id: number;
+  term: string;
+  meaning: string;
+  example: string | null;
+  exampleMeaning: string | null;
+};
+
+async function pickRandomItem(input: {
+  wordbookId: number;
+  userId: number;
+  partStart: number;
+  partEndExclusive: number;
+  filterSql: Prisma.Sql;
+}): Promise<QuizRow | null> {
+  const rows = await prisma.$queryRaw<QuizRow[]>(
+    Prisma.sql`
+      SELECT
+        wi."id",
+        wi."term",
+        wi."meaning",
+        wi."example",
+        wi."exampleMeaning"
+      FROM "WordbookItem" wi
+      LEFT JOIN "WordbookStudyItemState" ws
+        ON ws."itemId" = wi."id"
+       AND ws."wordbookId" = wi."wordbookId"
+       AND ws."userId" = ${input.userId}
+      WHERE wi."wordbookId" = ${input.wordbookId}
+        AND wi."position" >= ${input.partStart}
+        AND wi."position" < ${input.partEndExclusive}
+        AND (${input.filterSql})
+      ORDER BY random()
+      LIMIT 1
+    `
+  );
+  return rows[0] ?? null;
 }
 
 export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
@@ -41,62 +81,58 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
 
   const { searchParams } = new URL(req.url);
   const mode = parseMode(searchParams.get("mode"));
-  const partSize = Math.min(200, Math.max(1, parsePositiveInt(searchParams.get("partSize"), 20)));
-  const requestedPartIndex = parsePositiveInt(searchParams.get("partIndex"), 1);
+  const partSize = parsePositiveInt(searchParams.get("partSize"), 30, 1, 200);
+  const requestedPartIndex = parsePositiveInt(searchParams.get("partIndex"), 1, 1, 100_000);
 
-  const [items, states] = await Promise.all([
-    prisma.wordbookItem.findMany({
-      where: { wordbookId },
-      orderBy: [{ position: "asc" }, { id: "asc" }],
-      select: {
-        id: true,
-        term: true,
-        meaning: true,
-        pronunciation: true,
-        example: true,
-        exampleMeaning: true,
-        position: true
-      }
-    }),
-    prisma.wordbookStudyItemState.findMany({
-      where: { userId: user.id, wordbookId },
-      select: { itemId: true, status: true, updatedAt: true }
-    })
-  ]);
-
-  if (items.length === 0) {
+  const totalItems = await prisma.wordbookItem.count({ where: { wordbookId } });
+  if (totalItems === 0) {
     return NextResponse.json(
       { item: null, mode, totalItems: 0, partSize, partIndex: 1, partCount: 1, partItemCount: 0 },
       { status: 200 }
     );
   }
 
-  const partCount = Math.max(1, Math.ceil(items.length / partSize));
+  const partCount = Math.max(1, Math.ceil(totalItems / partSize));
   const partIndex = Math.min(Math.max(requestedPartIndex, 1), partCount);
-  const start = (partIndex - 1) * partSize;
-  const partItems = items.slice(start, start + partSize);
-  if (partItems.length === 0) {
-    return NextResponse.json(
-      { item: null, mode, totalItems: items.length, partSize, partIndex, partCount, partItemCount: 0 },
-      { status: 200 }
-    );
-  }
+  const partStart = (partIndex - 1) * partSize;
+  const partEndExclusive = partStart + partSize;
+  const partItemCount = Math.max(0, Math.min(partSize, totalItems - partStart));
 
-  const byItemId = new Map(states.map((s) => [s.itemId, s]));
-  const unseen = partItems.filter((it) => !byItemId.has(it.id));
-  const wrong = partItems.filter((it) => byItemId.get(it.id)?.status === "WRONG");
-  const pool = unseen.length > 0 ? unseen : wrong.length > 0 ? wrong : partItems;
-  const picked = pool[Math.floor(Math.random() * pool.length)];
+  const unseen = await pickRandomItem({
+    wordbookId,
+    userId: user.id,
+    partStart,
+    partEndExclusive,
+    filterSql: Prisma.sql`ws."itemId" IS NULL`
+  });
+  const wrong = unseen
+    ? null
+    : await pickRandomItem({
+        wordbookId,
+        userId: user.id,
+        partStart,
+        partEndExclusive,
+        filterSql: Prisma.sql`ws."status" = 'WRONG'`
+      });
+  const fallback = unseen || wrong
+    ? null
+    : await pickRandomItem({
+        wordbookId,
+        userId: user.id,
+        partStart,
+        partEndExclusive,
+        filterSql: Prisma.sql`TRUE`
+      });
 
   return NextResponse.json(
     {
-      item: picked,
+      item: unseen ?? wrong ?? fallback ?? null,
       mode,
-      totalItems: items.length,
+      totalItems,
       partSize,
       partIndex,
       partCount,
-      partItemCount: partItems.length
+      partItemCount
     },
     { status: 200 }
   );
