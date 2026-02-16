@@ -113,6 +113,11 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
     setPageInput(String(safePageIndex + 1));
   }, [safePageIndex]);
 
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    document.cookie = `last_study_wordbook_id=${wordbookId}; Path=/; Max-Age=2592000; SameSite=Lax`;
+  }, [wordbookId]);
+
   const movePage = (delta: number) => {
     setPageIndex((prev) => {
       const next = prev + delta;

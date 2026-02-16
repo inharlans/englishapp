@@ -12,7 +12,8 @@ import { aggregateVersionLogs } from "@/lib/wordbookVersion";
 import { EmptyStateCard } from "@/components/ui/EmptyStateCard";
 
 export default async function WordbooksPage() {
-  const user = await getUserFromRequestCookies(await cookies());
+  const reqCookies = await cookies();
+  const user = await getUserFromRequestCookies(reqCookies);
   if (!user) {
     return (
       <section className="space-y-4">
@@ -102,15 +103,26 @@ export default async function WordbooksPage() {
   const studiedSum = studyAgg._sum.studiedCount ?? 0;
   const correctSum = studyAgg._sum.correctCount ?? 0;
   const studyRate = studiedSum > 0 ? Math.round((correctSum / studiedSum) * 100) : 0;
+
+  const lastStudyIdRaw = reqCookies.get("last_study_wordbook_id")?.value ?? "";
+  const lastStudyIdNum = Number(lastStudyIdRaw);
+  const lastStudyId = Number.isFinite(lastStudyIdNum) && lastStudyIdNum > 0 ? Math.floor(lastStudyIdNum) : null;
+  const hasLastStudyDeck =
+    lastStudyId !== null &&
+    (downloaded.some((d) => d.wordbook.id === lastStudyId) || mine.some((d) => d.id === lastStudyId));
+
   const suggestedHref =
-    downloaded.find((d) => d.wordbook.contentVersion > d.downloadedVersion)?.wordbook.id
+    hasLastStudyDeck && lastStudyId
+      ? `/wordbooks/${lastStudyId}/memorize`
+      : downloaded.find((d) => d.wordbook.contentVersion > d.downloadedVersion)?.wordbook.id
       ? `/wordbooks/${downloaded.find((d) => d.wordbook.contentVersion > d.downloadedVersion)!.wordbook.id}/memorize`
       : downloaded[0]?.wordbook?.id
         ? `/wordbooks/${downloaded[0].wordbook.id}/memorize`
         : mine[0]?.id
           ? `/wordbooks/${mine[0].id}/memorize`
           : "/wordbooks/new";
-  const suggestedLabel = staleDecks > 0 ? "업데이트 단어장 확인" : downloaded.length > 0 ? "마지막 단어장 이어서" : "첫 단어장 만들기";
+  const suggestedLabel =
+    hasLastStudyDeck ? "마지막 단어장 이어서" : staleDecks > 0 ? "업데이트 단어장 확인" : downloaded.length > 0 ? "마지막 단어장 이어서" : "첫 단어장 만들기";
 
   return (
     <section className="space-y-6">
