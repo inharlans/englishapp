@@ -668,3 +668,17 @@ Additional observations and guardrails:
 - Root cause: `WordbookStudyTabs` was a Server Component using `onClick` (client event handler) on `Link`.
 - Change: marked `components/wordbooks/WordbookStudyTabs.tsx` as a Client Component (`"use client"`).
 - Result: removed `Event handlers cannot be passed to Client Component props` runtime failure.
+
+## 2026-02-17 Public preview and bot-access path split
+
+- Added public, no-login read-only access for:
+  - `/wordbooks/market`
+  - `/wordbooks/[id]` (detail page only)
+  - `/api/wordbooks/market`
+  - `/api/wordbooks/[id]/reviews`
+- Kept study/personal routes protected (memorize/quiz/list/my library APIs).
+- Added temporary preview cookie flow:
+  - `GET /preview-access?token=...&next=/path`
+  - Validates `PREVIEW_ACCESS_TOKEN` and sets `preview_access` cookie (`HttpOnly`, `Secure`, `SameSite=Lax`, 1h).
+  - Middleware bypasses login redirect while cookie is valid.
+- Market/detail pages now render guest read-only mode and show login CTA for download/rating/report actions.

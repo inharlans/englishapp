@@ -18,14 +18,6 @@ export default async function MarketPage(props: {
   searchParams: Promise<{ q?: string; sort?: string; page?: string }>;
 }) {
   const user = await getUserFromRequestCookies(await cookies());
-  if (!user) {
-    return (
-      <section className="space-y-4">
-        <h1 className="text-2xl font-black tracking-tight text-slate-900">Market</h1>
-        <p className="text-sm text-slate-600">Login required.</p>
-      </section>
-    );
-  }
 
   const sp = await props.searchParams;
   const q = (sp.q ?? "").trim();
@@ -33,17 +25,19 @@ export default async function MarketPage(props: {
   const page = Math.max(Number(sp.page ?? "0") || 0, 0);
   const take = 30;
 
-  const where = {
-    isPublic: true,
-    hiddenByAdmin: false,
-    ownerId: {
-      notIn: (
+  const blockedOwnerIds = user
+    ? (
         await prisma.blockedOwner.findMany({
           where: { userId: user.id },
           select: { ownerId: true }
         })
       ).map((b) => b.ownerId)
-    },
+    : [];
+
+  const where = {
+    isPublic: true,
+    hiddenByAdmin: false,
+    ...(blockedOwnerIds.length > 0 ? { ownerId: { notIn: blockedOwnerIds } } : {}),
     ...(q
       ? {
           OR: [
@@ -82,13 +76,17 @@ export default async function MarketPage(props: {
         _count: { select: { items: true } }
       }
     }),
-    prisma.wordbookDownload.findMany({
-      where: { userId: user.id },
-      select: { wordbookId: true }
-    }),
-    prisma.wordbookDownload.count({
-      where: { userId: user.id }
-    })
+    user
+      ? prisma.wordbookDownload.findMany({
+          where: { userId: user.id },
+          select: { wordbookId: true }
+        })
+      : Promise.resolve([]),
+    user
+      ? prisma.wordbookDownload.count({
+          where: { userId: user.id }
+        })
+      : Promise.resolve(0)
   ]);
 
   const downloadedIds = new Set(myDownloads.map((d) => d.wordbookId));
@@ -101,23 +99,38 @@ export default async function MarketPage(props: {
           <p className="ui-kicker">Wordbooks</p>
           <h1 className="ui-h2 mt-2">Market</h1>
           <p className="ui-body mt-2">Browse public wordbooks. Downloaded copies are read-only.</p>
-          <p className="mt-1 text-xs text-slate-500">
-            Plan: <span className="font-semibold">{user.plan}</span>
-            {user.plan === "FREE" ? (
-              <>
-                {" "}
-                - downloads used: <span className="font-semibold">{myDownloadsUsed}/3</span> -{" "}
-                <Link href={{ pathname: "/pricing" }} className="font-semibold text-blue-700 hover:underline">
-                  upgrade
-                </Link>
-              </>
-            ) : null}
-          </p>
+          {user ? (
+            <p className="mt-1 text-xs text-slate-500">
+              Plan: <span className="font-semibold">{user.plan}</span>
+              {user.plan === "FREE" ? (
+                <>
+                  {" "}
+                  - downloads used: <span className="font-semibold">{myDownloadsUsed}/3</span> -{" "}
+                  <Link
+                    href={{ pathname: "/pricing" }}
+                    className="font-semibold text-blue-700 hover:underline"
+                  >
+                    upgrade
+                  </Link>
+                </>
+              ) : null}
+            </p>
+          ) : (
+            <p className="mt-1 text-xs text-slate-500">
+              Guest preview mode - <Link href={{ pathname: "/login" }} className="font-semibold text-blue-700 hover:underline">login</Link> to download and study.
+            </p>
+          )}
         </div>
         <div className="ml-auto flex flex-wrap gap-2">
-          <Link href={{ pathname: "/wordbooks" }} className="ui-btn-secondary px-4 py-2 text-sm">
-            My Library
-          </Link>
+          {user ? (
+            <Link href={{ pathname: "/wordbooks" }} className="ui-btn-secondary px-4 py-2 text-sm">
+              My Library
+            </Link>
+          ) : (
+            <Link href={{ pathname: "/login", query: { next: "/wordbooks" } }} className="ui-btn-secondary px-4 py-2 text-sm">
+              Login
+            </Link>
+          )}
         </div>
       </header>
 
@@ -221,20 +234,28 @@ export default async function MarketPage(props: {
                     </div>
                   </div>
                   <div className="shrink-0">
-                    {!isDownloaded ? (
+                    {!isDownloaded && user ? (
                       <DownloadButton
                         wordbookId={wb.id}
                         wordbookTitle={wb.title}
                         disabled={user.plan === "FREE" && myDownloadsUsed >= 3}
                       />
                     ) : null}
-                    {!isDownloaded && user.plan === "FREE" && myDownloadsUsed >= 3 ? (
+                    {!isDownloaded && user && user.plan === "FREE" && myDownloadsUsed >= 3 ? (
                       <p className="mt-1 text-[11px] font-semibold text-blue-700">
                         Limit reached -{" "}
                         <Link href={{ pathname: "/pricing" }} className="text-blue-700 hover:underline">
                           upgrade
                         </Link>
                       </p>
+                    ) : null}
+                    {!isDownloaded && !user ? (
+                      <Link
+                        href={{ pathname: "/login", query: { next: `/wordbooks/${wb.id}` } }}
+                        className="ui-btn-secondary px-3 py-2 text-xs"
+                      >
+                        Login to download
+                      </Link>
                     ) : null}
                   </div>
                 </div>
