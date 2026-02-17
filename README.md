@@ -661,3 +661,10 @@ Additional observations and guardrails:
 - Added route-level error UI for `/wordbooks/[id]`:
   - file: `app/wordbooks/[id]/error.tsx`
   - replaces generic production `Application error` screen with a recoverable page (`다시 시도`, `내 단어장으로 이동`).
+
+## 2026-02-17 /wordbooks/[id] server-client boundary fix
+
+- Fixed production runtime digest `2262071249` on `/wordbooks/[id]`.
+- Root cause: `WordbookStudyTabs` was a Server Component using `onClick` (client event handler) on `Link`.
+- Change: marked `components/wordbooks/WordbookStudyTabs.tsx` as a Client Component (`"use client"`).
+- Result: removed `Event handlers cannot be passed to Client Component props` runtime failure.

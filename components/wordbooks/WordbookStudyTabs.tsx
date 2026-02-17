@@ -1,4 +1,6 @@
-﻿import Link from "next/link";
+"use client";
+
+import Link from "next/link";
 
 const tabs = [
   { key: "memorize", label: "Memorize", href: (id: number) => `/wordbooks/${id}/memorize` },
