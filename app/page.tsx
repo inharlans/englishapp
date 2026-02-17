@@ -41,15 +41,17 @@ export default async function HomePage() {
           </div>
 
           <div className="flex flex-wrap gap-3">
-            <Link href="/wordbooks/market" className="ui-btn-primary px-5 py-2.5 text-sm">
-              마켓 먼저 보기
-            </Link>
             {!user ? (
-              <Link href="/login?next=/wordbooks" className="ui-btn-secondary px-5 py-2.5 text-sm">
-                로그인 페이지 열기
-              </Link>
+              <>
+                <Link href="/wordbooks/market" className="ui-btn-primary px-5 py-2.5 text-sm">
+                  마켓 먼저 보기
+                </Link>
+                <Link href="/login?next=/wordbooks" className="ui-btn-secondary px-5 py-2.5 text-sm">
+                  로그인 페이지 열기
+                </Link>
+              </>
             ) : (
-              <Link href="/wordbooks" className="ui-btn-secondary px-5 py-2.5 text-sm">
+              <Link href="/wordbooks" className="ui-btn-primary px-5 py-2.5 text-sm">
                 내 단어장 열기
               </Link>
             )}
@@ -68,11 +70,7 @@ export default async function HomePage() {
           <section className="rounded-3xl border border-white/60 bg-white/90 p-6 shadow-[0_24px_55px_-30px_rgba(15,23,42,0.75)] backdrop-blur">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Welcome Back</p>
             <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-900">학습 계속하기</h2>
-            <p className="mt-2 text-sm text-slate-600">로그인되어 있습니다. 바로 학습 화면으로 이동하세요.</p>
-            <div className="mt-5 flex flex-wrap gap-2">
-              <Link href="/wordbooks" className="ui-btn-primary px-4 py-2 text-sm">내 단어장</Link>
-              <Link href="/wordbooks/market" className="ui-btn-secondary px-4 py-2 text-sm">마켓</Link>
-            </div>
+            <p className="mt-2 text-sm text-slate-600">로그인되어 있습니다. 상단 메뉴 또는 왼쪽 버튼으로 학습을 이어가세요.</p>
           </section>
         )}
       </div>

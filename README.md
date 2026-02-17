@@ -731,3 +731,9 @@ Additional observations and guardrails:
 - Added fixed bottom pagination bar on `/wordbooks/market` so `Prev/Next` are always reachable while scrolling.
 - Uses the same query state (`q`, `sort`, `page`) as top pagination.
 - Added bottom spacing (`pb-24`) to avoid content overlap with fixed controls.
+
+## 2026-02-17 Home CTA dedup (logged-in)
+
+- Reduced duplicate actions on `/` for logged-in users.
+- Left area now exposes a single primary CTA (`내 단어장 열기`) when authenticated.
+- Removed duplicated right-panel action buttons for authenticated view.
