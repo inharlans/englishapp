@@ -30,11 +30,11 @@ export default function NewWordbookPage() {
         })
       });
       const json = (await res.json()) as { wordbook?: { id: number }; error?: string };
-      if (!res.ok) throw new Error(json.error ?? "Create failed.");
+      if (!res.ok) throw new Error(json.error ?? "생성에 실패했습니다.");
       const href = `/wordbooks/${json.wordbook!.id}`;
       router.replace(href as unknown as Parameters<typeof router.replace>[0]);
     } catch (e2) {
-      setError(e2 instanceof Error ? e2.message : "Create failed.");
+      setError(e2 instanceof Error ? e2.message : "생성에 실패했습니다.");
     } finally {
       setLoading(false);
     }
@@ -44,18 +44,18 @@ export default function NewWordbookPage() {
     <section className="mx-auto max-w-2xl space-y-6">
       <header>
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-          Wordbooks
+          단어장
         </p>
-        <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-900">New Wordbook</h1>
-        <p className="mt-2 text-sm text-slate-600">Create your own vocabulary list.</p>
+        <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-900">새 단어장 만들기</h1>
+        <p className="mt-2 text-sm text-slate-600">나만의 단어장을 만들어 보세요.</p>
         <p className="mt-1 text-xs text-slate-500">
-          Free plan: up to 1 created wordbook. PRO: unlimited.
+          무료 요금제: 단어장 1개까지 생성. PRO: 무제한 생성.
         </p>
       </header>
 
       <section className="ui-card p-5">
         <h2 className="text-sm font-black uppercase tracking-[0.14em] text-slate-800">
-          Wordbook Guide
+          단어장 가이드
         </h2>
         <div className="mt-3 space-y-3 text-sm text-slate-700">
           <p>
@@ -99,7 +99,7 @@ export default function NewWordbookPage() {
           <div className="grid gap-3 md:grid-cols-2">
             <label className="block">
               <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
-                From
+                원본 언어
               </span>
               <input
                 value={fromLang}
@@ -110,7 +110,7 @@ export default function NewWordbookPage() {
             </label>
             <label className="block">
               <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
-                To
+                번역 언어
               </span>
               <input
                 value={toLang}
@@ -123,7 +123,7 @@ export default function NewWordbookPage() {
 
           <label className="block">
             <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
-              Description
+              설명
             </span>
             <textarea
               value={description}
@@ -140,7 +140,7 @@ export default function NewWordbookPage() {
               disabled={loading}
               className="ui-btn-accent px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {loading ? "Creating..." : "Create"}
+              {loading ? "생성 중..." : "생성"}
             </button>
             <button
               type="button"
@@ -148,7 +148,7 @@ export default function NewWordbookPage() {
               disabled={loading}
               className="ui-btn-secondary px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Cancel
+              취소
             </button>
           </div>
 

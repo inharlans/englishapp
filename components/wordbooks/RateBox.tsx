@@ -34,10 +34,10 @@ export function RateBox({ wordbookId, ratingAvg, ratingCount, myRating, myReview
         body: JSON.stringify({ rating, review: review.trim() ? review.trim() : null })
       });
       const json = (await res.json()) as { ok?: boolean; error?: string };
-      if (!res.ok) throw new Error(json.error ?? "Rating failed.");
+      if (!res.ok) throw new Error(json.error ?? "평가 저장에 실패했습니다.");
       router.refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Rating failed.");
+      setError(e instanceof Error ? e.message : "평가 저장에 실패했습니다.");
     } finally {
       setLoading(false);
     }
@@ -53,13 +53,13 @@ export function RateBox({ wordbookId, ratingAvg, ratingCount, myRating, myReview
           disabled={disabled || loading}
         />
         <div className="text-xs text-slate-600">
-          My rating:{" "}
+          내 평가:{" "}
           <span className="font-semibold text-slate-800">{myRating ? `${myRating}/5` : "-"}</span>
         </div>
       </div>
 
       <label className="block">
-        <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">Review</span>
+        <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">리뷰</span>
         <textarea
           value={review}
           onChange={(e) => setReview(e.target.value)}
@@ -78,7 +78,7 @@ export function RateBox({ wordbookId, ratingAvg, ratingCount, myRating, myReview
           disabled={disabled || loading || rating < 1 || rating > 5}
           className="ui-btn-primary px-3 py-1.5 text-xs disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {loading ? "Saving..." : "Save rating/review"}
+          {loading ? "저장 중..." : "평점/리뷰 저장"}
         </button>
       </div>
 

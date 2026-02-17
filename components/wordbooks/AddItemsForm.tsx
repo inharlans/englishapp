@@ -78,10 +78,10 @@ export function AddItemsForm({ wordbookId }: Props) {
         body: JSON.stringify({ items })
       });
       const json = (await res.json()) as { error?: string };
-      if (!res.ok) throw new Error(json.error ?? "Add failed.");
+      if (!res.ok) throw new Error(json.error ?? "추가에 실패했습니다.");
       router.refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Add failed.");
+      setError(e instanceof Error ? e.message : "추가에 실패했습니다.");
     } finally {
       setLoading(false);
     }
@@ -92,7 +92,7 @@ export function AddItemsForm({ wordbookId }: Props) {
     const t = term.trim();
     const m = meaning.trim();
     if (!t || !m) {
-      setError("term/meaning required.");
+      setError("단어와 뜻은 필수입니다.");
       return;
     }
     await submit([
@@ -115,7 +115,7 @@ export function AddItemsForm({ wordbookId }: Props) {
     e.preventDefault();
     const items = parseBulk(bulk);
     if (items.length === 0) {
-      setError("No valid lines. Use: term<TAB>meaning or term - meaning.");
+      setError("유효한 줄이 없습니다. 형식: term<TAB>meaning 또는 term - meaning");
       return;
     }
     await submit(items);
@@ -125,13 +125,13 @@ export function AddItemsForm({ wordbookId }: Props) {
   return (
     <section className="space-y-4">
       <div className="rounded-2xl border border-slate-200 bg-white p-4">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Add Item</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">단어 추가</p>
         <form onSubmit={onAddOne} className="mt-3 grid gap-3 md:grid-cols-5">
           <input
             value={term}
             onChange={(e) => setTerm(e.target.value)}
             aria-label="Word"
-            placeholder="word"
+            placeholder="단어"
             className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             disabled={loading}
           />
@@ -139,7 +139,7 @@ export function AddItemsForm({ wordbookId }: Props) {
             value={meaning}
             onChange={(e) => setMeaning(e.target.value)}
             aria-label="Meaning"
-            placeholder="meaning"
+            placeholder="뜻"
             className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             disabled={loading}
           />
@@ -147,7 +147,7 @@ export function AddItemsForm({ wordbookId }: Props) {
             value={pron}
             onChange={(e) => setPron(e.target.value)}
             aria-label="Pronunciation"
-            placeholder="pronunciation (optional)"
+            placeholder="발음 (선택)"
             className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             disabled={loading}
           />
@@ -155,15 +155,15 @@ export function AddItemsForm({ wordbookId }: Props) {
             value={example}
             onChange={(e) => setExample(e.target.value)}
             aria-label="Example"
-            placeholder="example (optional)"
+            placeholder="예문 (선택)"
             className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             disabled={loading}
           />
           <input
             value={exampleMeaning}
             onChange={(e) => setExampleMeaning(e.target.value)}
-            aria-label="Example meaning"
-            placeholder="example ko (optional)"
+            aria-label="예문 뜻"
+            placeholder="예문 뜻 (선택)"
             className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             disabled={loading}
           />
@@ -173,7 +173,7 @@ export function AddItemsForm({ wordbookId }: Props) {
               disabled={loading}
               className="ui-btn-primary px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {loading ? "Adding..." : "Add"}
+              {loading ? "추가 중..." : "추가"}
             </button>
           </div>
         </form>
@@ -181,18 +181,17 @@ export function AddItemsForm({ wordbookId }: Props) {
 
       <div className="rounded-2xl border border-slate-200 bg-white p-4">
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-          Bulk Add
+          일괄 추가
         </p>
         <p className="mt-2 text-xs text-slate-600">
-          One per line: <code className="rounded bg-slate-100 px-1.5 py-0.5">term[TAB]meaning</code>{" "}
-          or <code className="rounded bg-slate-100 px-1.5 py-0.5">term - meaning</code>. Optional
-          third tab for pronunciation.
+          한 줄에 하나씩: <code className="rounded bg-slate-100 px-1.5 py-0.5">term[TAB]meaning</code>{" "}
+          또는 <code className="rounded bg-slate-100 px-1.5 py-0.5">term - meaning</code>. 세 번째 탭에 발음을 선택적으로 넣을 수 있습니다.
         </p>
         <form onSubmit={onAddBulk} className="mt-3 space-y-3">
           <textarea
             value={bulk}
             onChange={(e) => setBulk(e.target.value)}
-            aria-label="Bulk add lines"
+            aria-label="일괄 추가 줄 입력"
             rows={6}
             placeholder={"apple\t사과\nbanana\t바나나\ncarry - 운반하다"}
             className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
@@ -203,7 +202,7 @@ export function AddItemsForm({ wordbookId }: Props) {
             disabled={loading}
             className="ui-btn-secondary px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {loading ? "Adding..." : "Add Lines"}
+            {loading ? "추가 중..." : "여러 줄 추가"}
           </button>
         </form>
       </div>

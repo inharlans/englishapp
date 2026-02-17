@@ -11,7 +11,7 @@ import { getUserFromRequestCookies } from "@/lib/authServer";
 
 export const metadata: Metadata = {
   title: "Englishapp",
-  description: "English 1500 + downloadable wordbooks learning platform."
+  description: "영어 단어 학습과 다운로드 단어장을 제공하는 학습 플랫폼입니다."
 };
 
 const manrope = Manrope({

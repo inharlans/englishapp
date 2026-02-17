@@ -25,10 +25,10 @@ export function PublishToggle({ wordbookId, isPublic }: Props) {
         body: JSON.stringify({ isPublic: !isPublic })
       });
       const json = (await res.json()) as { wordbook?: { id: number; isPublic: boolean }; error?: string };
-      if (!res.ok) throw new Error(json.error ?? "Update failed.");
+      if (!res.ok) throw new Error(json.error ?? "변경에 실패했습니다.");
       router.refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Update failed.");
+      setError(e instanceof Error ? e.message : "변경에 실패했습니다.");
     } finally {
       setLoading(false);
     }
@@ -42,7 +42,7 @@ export function PublishToggle({ wordbookId, isPublic }: Props) {
         disabled={loading}
         className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {loading ? "Saving..." : isPublic ? "Unpublish" : "Publish"}
+        {loading ? "저장 중..." : isPublic ? "비공개로 전환" : "공개로 전환"}
       </button>
       {error ? <p className="mt-1 text-xs text-blue-700">{error}</p> : null}
     </div>

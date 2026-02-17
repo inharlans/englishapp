@@ -18,8 +18,8 @@ export default async function WordbooksPage() {
   if (!user) {
     return (
       <section className="space-y-4">
-        <h1 className="text-2xl font-black tracking-tight text-slate-900">Wordbooks</h1>
-        <p className="text-sm text-slate-600">Login required.</p>
+        <h1 className="text-2xl font-black tracking-tight text-slate-900">단어장</h1>
+        <p className="text-sm text-slate-600">로그인이 필요합니다.</p>
       </section>
     );
   }
@@ -151,24 +151,24 @@ export default async function WordbooksPage() {
       <header className="flex flex-wrap items-end gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-            Wordbooks
+            단어장
           </p>
-          <h1 className="ui-h2 mt-2">My Library</h1>
+          <h1 className="ui-h2 mt-2">내 단어장</h1>
           <p className="ui-body mt-2">
-            Create your own wordbooks or download public ones.
+            직접 단어장을 만들거나 공개 단어장을 다운로드하세요.
           </p>
           <p className="mt-1 text-xs text-slate-500">
-            Plan: <span className="font-semibold">{user.plan}</span>
+            요금제: <span className="font-semibold">{user.plan}</span>
             {user.plan === "FREE" ? (
               <>
                 {" "}
-                - downloads used: <span className="font-semibold">{downloadsUsed}/3</span> - free
-                uploads are forced public -{" "}
+                - 다운로드 사용량: <span className="font-semibold">{downloadsUsed}/3</span> - 무료
+                업로드는 공개 고정 -{" "}
                 <Link
                   href={{ pathname: "/pricing" }}
                   className="font-semibold text-blue-700 hover:underline"
                 >
-                  upgrade
+                  업그레이드
                 </Link>
               </>
             ) : null}
@@ -180,7 +180,7 @@ export default async function WordbooksPage() {
                   href={{ pathname: "/admin" }}
                   className="font-semibold text-blue-700 hover:underline"
                 >
-                  admin
+                  관리자
                 </Link>
               </>
             ) : null}
@@ -191,19 +191,19 @@ export default async function WordbooksPage() {
             href={{ pathname: "/wordbooks/new" }}
             className="ui-btn-accent px-4 py-2 text-sm"
           >
-            New
+            새 단어장
           </Link>
           <Link
             href={{ pathname: "/wordbooks/market" }}
             className="ui-btn-secondary px-4 py-2 text-sm"
           >
-            Market
+            마켓
           </Link>
           <Link
             href={{ pathname: "/offline" }}
             className="ui-btn-secondary px-4 py-2 text-sm"
           >
-            Offline
+            오프라인
           </Link>
           <Link
             href={{ pathname: "/wordbooks/blocked" }}
@@ -216,7 +216,7 @@ export default async function WordbooksPage() {
 
       <section className="space-y-3">
         <h2 className="text-sm font-black uppercase tracking-[0.2em] text-slate-700">
-          Created
+          내가 만든 단어장
         </h2>
         {mine.length === 0 ? (
           <EmptyStateCard
@@ -244,15 +244,15 @@ export default async function WordbooksPage() {
                             : "border border-slate-200 bg-slate-50 text-slate-700"
                         ].join(" ")}
                       >
-                        {wb.isPublic ? "Public" : "Private"}
+                        {wb.isPublic ? "공개" : "비공개"}
                       </span>
                     </div>
                     {wb.description ? (
                       <p className="mt-1 line-clamp-2 text-sm text-slate-600">{wb.description}</p>
                     ) : null}
                     <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-slate-600">
-                      <span>{wb._count.items} items</span>
-                      <span>{wb.downloadCount} downloads</span>
+                      <span>{wb._count.items}개 단어</span>
+                      <span>{wb.downloadCount}회 다운로드</span>
                     </div>
                     <div className="mt-2">
                       <StarRating value={wb.ratingAvg} count={wb.ratingCount} />
@@ -267,7 +267,7 @@ export default async function WordbooksPage() {
 
       <section className="space-y-3">
         <h2 className="text-sm font-black uppercase tracking-[0.2em] text-slate-700">
-          Downloaded (Read-only)
+          다운로드한 단어장(읽기 전용)
         </h2>
         {downloaded.length === 0 ? (
           <EmptyStateCard
@@ -292,11 +292,11 @@ export default async function WordbooksPage() {
                         {d.wordbook.title}
                       </Link>
                       <span className="rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-800">
-                        Downloaded
+                        다운로드됨
                       </span>
                     </div>
                     <p className="mt-1 text-xs text-slate-500">
-                      by {d.wordbook.owner.email} - downloaded{" "}
+                      제작자 {d.wordbook.owner.email} - 다운로드일{" "}
                       {d.createdAt.toISOString().slice(0, 10)}
                     </p>
                     {d.wordbook.description ? (
@@ -305,8 +305,8 @@ export default async function WordbooksPage() {
                       </p>
                     ) : null}
                     <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-slate-600">
-                      <span>{d.wordbook._count.items} items</span>
-                      <span>{d.wordbook.downloadCount} downloads</span>
+                      <span>{d.wordbook._count.items}개 단어</span>
+                      <span>{d.wordbook.downloadCount}회 다운로드</span>
                     </div>
                     <div className="mt-2">
                       <StarRating value={d.wordbook.ratingAvg} count={d.wordbook.ratingCount} />
@@ -347,20 +347,20 @@ export default async function WordbooksPage() {
                         data-testid="library-study-link"
                         className="ui-btn-secondary px-3 py-1.5 text-xs"
                       >
-                        Memorize
+                        암기
                       </Link>
                       <Link
                         href={{ pathname: `/wordbooks/${d.wordbook.id}/quiz-meaning` }}
                         data-testid="library-quiz-link"
                         className="ui-btn-secondary px-3 py-1.5 text-xs"
                       >
-                        Quiz Meaning
+                        의미 퀴즈
                       </Link>
                       <Link
                         href={{ pathname: `/wordbooks/${d.wordbook.id}/quiz-word` }}
                         className="ui-btn-secondary px-3 py-1.5 text-xs"
                       >
-                        Quiz Word
+                        단어 퀴즈
                       </Link>
                     </div>
                   </div>

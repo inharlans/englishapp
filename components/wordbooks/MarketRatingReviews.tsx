@@ -44,10 +44,10 @@ export function MarketRatingReviews({
     try {
       const res = await apiFetch(`/api/wordbooks/${wordbookId}/reviews?take=20`, { cache: "no-store" });
       const json = (await res.json()) as { reviews?: Review[]; error?: string };
-      if (!res.ok) throw new Error(json.error ?? "Failed to load reviews.");
+      if (!res.ok) throw new Error(json.error ?? "리뷰를 불러오지 못했습니다.");
       setReviews(json.reviews ?? []);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load reviews.");
+      setError(e instanceof Error ? e.message : "리뷰를 불러오지 못했습니다.");
     } finally {
       setLoading(false);
     }
@@ -66,8 +66,8 @@ export function MarketRatingReviews({
 
       {open ? (
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">Reviews</p>
-          {loading ? <p className="mt-2 text-xs text-slate-500">Loading...</p> : null}
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">리뷰</p>
+          {loading ? <p className="mt-2 text-xs text-slate-500">불러오는 중...</p> : null}
           {error ? <p className="mt-2 text-xs text-blue-700">{error}</p> : null}
           {!loading && !error && reviews.length === 0 ? (
             <p className="mt-2 text-xs text-slate-500">아직 등록된 리뷰가 없습니다.</p>

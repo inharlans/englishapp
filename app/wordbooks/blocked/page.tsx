@@ -11,7 +11,7 @@ export default async function BlockedOwnersPage() {
     return (
       <section className="space-y-3">
         <h1 className="text-2xl font-black text-slate-900">블랙리스트</h1>
-        <p className="text-sm text-slate-600">Login required.</p>
+        <p className="text-sm text-slate-600">로그인이 필요합니다.</p>
       </section>
     );
   }

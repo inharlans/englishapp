@@ -53,27 +53,27 @@ export function WordbookItemRow({ wordbookId, item, editable, speakLang }: Props
         })
       });
       const json = (await res.json()) as { item?: Item; error?: string };
-      if (!res.ok) throw new Error(json.error ?? "Save failed.");
+      if (!res.ok) throw new Error(json.error ?? "저장에 실패했습니다.");
       router.refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Save failed.");
+      setError(e instanceof Error ? e.message : "저장에 실패했습니다.");
     } finally {
       setSaving(false);
     }
   };
 
   const onDelete = async () => {
-    const ok = window.confirm("Delete this item?");
+    const ok = window.confirm("이 항목을 삭제할까요?");
     if (!ok) return;
     setSaving(true);
     setError("");
     try {
       const res = await apiFetch(`/api/wordbooks/${wordbookId}/items/${item.id}`, { method: "DELETE" });
       const json = (await res.json()) as { ok?: boolean; error?: string };
-      if (!res.ok) throw new Error(json.error ?? "Delete failed.");
+      if (!res.ok) throw new Error(json.error ?? "삭제에 실패했습니다.");
       router.refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Delete failed.");
+      setError(e instanceof Error ? e.message : "삭제에 실패했습니다.");
     } finally {
       setSaving(false);
     }
@@ -103,7 +103,7 @@ export function WordbookItemRow({ wordbookId, item, editable, speakLang }: Props
             <input
               value={pron}
               onChange={(e) => setPron(e.target.value)}
-              placeholder="pron."
+              placeholder="발음"
               className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               disabled={saving}
             />
@@ -112,7 +112,7 @@ export function WordbookItemRow({ wordbookId, item, editable, speakLang }: Props
             <input
               value={example}
               onChange={(e) => setExample(e.target.value)}
-              placeholder="example (optional)"
+              placeholder="예문 (선택)"
               className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               disabled={saving}
             />
@@ -121,7 +121,7 @@ export function WordbookItemRow({ wordbookId, item, editable, speakLang }: Props
             <input
               value={exampleMeaning}
               onChange={(e) => setExampleMeaning(e.target.value)}
-              placeholder="example ko"
+              placeholder="예문 뜻"
               className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               disabled={saving}
             />
@@ -134,7 +134,7 @@ export function WordbookItemRow({ wordbookId, item, editable, speakLang }: Props
               disabled={saving}
               className="ui-btn-primary px-3 py-1.5 text-sm disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Save
+              저장
             </button>
             <button
               type="button"
@@ -142,7 +142,7 @@ export function WordbookItemRow({ wordbookId, item, editable, speakLang }: Props
               disabled={saving}
               className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-sm font-semibold text-blue-800 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Del
+              삭제
             </button>
           </div>
           {error ? <p className="md:col-span-12 text-xs text-blue-700">{error}</p> : null}
@@ -161,7 +161,7 @@ export function WordbookItemRow({ wordbookId, item, editable, speakLang }: Props
             <MeaningView value={item.meaning} mode={mode} className="mt-1 text-sm text-slate-700" />
             {item.example ? (
               <p className="mt-1 text-xs text-slate-500">
-                e.g. {item.example}
+                예문: {item.example}
                 {item.exampleMeaning ? ` - ${item.exampleMeaning}` : ""}
               </p>
             ) : null}

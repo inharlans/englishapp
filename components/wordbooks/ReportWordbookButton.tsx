@@ -9,11 +9,11 @@ type Props = {
 };
 
 const reasonOptions = [
-  "Spam / abuse",
-  "Copyright concern",
-  "Offensive content",
-  "Wrong/low quality translation",
-  "Other"
+  "스팸 / 악용",
+  "저작권 우려",
+  "불쾌하거나 부적절한 내용",
+  "오역 / 번역 품질 낮음",
+  "기타"
 ];
 
 export function ReportWordbookButton({ wordbookId }: Props) {
@@ -34,12 +34,12 @@ export function ReportWordbookButton({ wordbookId }: Props) {
         body: JSON.stringify({ reason: reason.trim(), detail: detail.trim() || null })
       });
       const json = (await res.json()) as { error?: string };
-      if (!res.ok) throw new Error(json.error ?? "Failed.");
-      setMessage("Reported.");
+      if (!res.ok) throw new Error(json.error ?? "처리에 실패했습니다.");
+      setMessage("신고가 접수되었습니다.");
       setOpen(false);
       setDetail("");
     } catch (e2) {
-      setMessage(e2 instanceof Error ? e2.message : "Failed.");
+      setMessage(e2 instanceof Error ? e2.message : "처리에 실패했습니다.");
     } finally {
       setLoading(false);
     }
@@ -55,7 +55,7 @@ export function ReportWordbookButton({ wordbookId }: Props) {
         aria-controls={`report-form-${wordbookId}`}
         className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-800 hover:bg-blue-100 disabled:opacity-60"
       >
-        {open ? "Cancel Report" : "Report"}
+        {open ? "신고 취소" : "신고"}
       </button>
 
       {open ? (
@@ -65,7 +65,7 @@ export function ReportWordbookButton({ wordbookId }: Props) {
           className="space-y-2 rounded-xl border border-blue-100 bg-blue-50/40 p-3"
         >
           <label className="block text-xs text-slate-700">
-            <span className="font-semibold">Reason</span>
+            <span className="font-semibold">사유</span>
             <select
               value={reason}
               onChange={(e) => setReason(e.target.value)}
@@ -80,7 +80,7 @@ export function ReportWordbookButton({ wordbookId }: Props) {
             </select>
           </label>
           <label className="block text-xs text-slate-700">
-            <span className="font-semibold">Detail (optional)</span>
+            <span className="font-semibold">상세 내용 (선택)</span>
             <textarea
               value={detail}
               onChange={(e) => setDetail(e.target.value)}
@@ -96,7 +96,7 @@ export function ReportWordbookButton({ wordbookId }: Props) {
             disabled={loading}
             className="ui-btn-primary px-3 py-1.5 text-xs disabled:opacity-60"
           >
-            {loading ? "Reporting..." : "Submit Report"}
+            {loading ? "신고 중..." : "신고 제출"}
           </button>
         </form>
       ) : null}

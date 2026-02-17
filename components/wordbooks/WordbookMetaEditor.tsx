@@ -41,10 +41,10 @@ export function WordbookMetaEditor({ wordbookId, title, description, fromLang, t
         wordbook?: { id: number; title: string; description: string | null; fromLang: string; toLang: string };
         error?: string;
       };
-      if (!res.ok) throw new Error(json.error ?? "Save failed.");
+      if (!res.ok) throw new Error(json.error ?? "저장에 실패했습니다.");
       router.refresh();
     } catch (e2) {
-      setError(e2 instanceof Error ? e2.message : "Save failed.");
+      setError(e2 instanceof Error ? e2.message : "저장에 실패했습니다.");
     } finally {
       setLoading(false);
     }
@@ -55,7 +55,7 @@ export function WordbookMetaEditor({ wordbookId, title, description, fromLang, t
       <div className="grid gap-3 md:grid-cols-2">
         <label className="block">
           <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
-            Title
+            제목
           </span>
           <input
             value={t}
@@ -68,7 +68,7 @@ export function WordbookMetaEditor({ wordbookId, title, description, fromLang, t
         <div className="grid grid-cols-2 gap-3">
           <label className="block">
             <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
-              From
+              원본 언어
             </span>
             <input
               value={f}
@@ -79,7 +79,7 @@ export function WordbookMetaEditor({ wordbookId, title, description, fromLang, t
           </label>
           <label className="block">
             <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
-              To
+              번역 언어
             </span>
             <input
               value={to}
@@ -93,7 +93,7 @@ export function WordbookMetaEditor({ wordbookId, title, description, fromLang, t
 
       <label className="block">
         <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
-          Description
+          설명
         </span>
         <textarea
           value={d}
@@ -110,7 +110,7 @@ export function WordbookMetaEditor({ wordbookId, title, description, fromLang, t
           disabled={loading}
           className="ui-btn-primary px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {loading ? "Saving..." : "Save"}
+          {loading ? "저장 중..." : "저장"}
         </button>
         {error ? <p className="text-sm text-blue-700">{error}</p> : null}
       </div>

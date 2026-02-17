@@ -101,39 +101,39 @@ export default async function MarketPage(props: {
     <section className="space-y-6 pb-24">
       <header className="flex flex-wrap items-end gap-3">
         <div>
-          <p className="ui-kicker">Wordbooks</p>
-          <h1 className="ui-h2 mt-2">Market</h1>
-          <p className="ui-body mt-2">Browse public wordbooks. Downloaded copies are read-only.</p>
+          <p className="ui-kicker">단어장</p>
+          <h1 className="ui-h2 mt-2">마켓</h1>
+          <p className="ui-body mt-2">공개 단어장을 둘러보세요. 다운로드본은 읽기 전용입니다.</p>
           {user ? (
             <p className="mt-1 text-xs text-slate-500">
-              Plan: <span className="font-semibold">{user.plan}</span>
+              요금제: <span className="font-semibold">{user.plan}</span>
               {user.plan === "FREE" ? (
                 <>
                   {" "}
-                  - downloads used: <span className="font-semibold">{myDownloadsUsed}/3</span> -{" "}
+                  - 다운로드 사용량: <span className="font-semibold">{myDownloadsUsed}/3</span> -{" "}
                   <Link
                     href={{ pathname: "/pricing" }}
                     className="font-semibold text-blue-700 hover:underline"
                   >
-                    upgrade
+                    업그레이드
                   </Link>
                 </>
               ) : null}
             </p>
           ) : (
             <p className="mt-1 text-xs text-slate-500">
-              Guest preview mode - <Link href={{ pathname: "/login" }} className="font-semibold text-blue-700 hover:underline">login</Link> to download and study.
+              게스트 미리보기 모드 - 다운로드와 학습은 <Link href={{ pathname: "/login" }} className="font-semibold text-blue-700 hover:underline">로그인</Link> 후 가능합니다.
             </p>
           )}
         </div>
         <div className="ml-auto flex flex-wrap gap-2">
           {user ? (
             <Link href={{ pathname: "/wordbooks" }} className="ui-btn-secondary px-4 py-2 text-sm">
-              My Library
+              내 단어장
             </Link>
           ) : (
             <Link href={{ pathname: "/login", query: { next: "/wordbooks" } }} className="ui-btn-secondary px-4 py-2 text-sm">
-              Login
+              로그인
             </Link>
           )}
         </div>
@@ -142,29 +142,29 @@ export default async function MarketPage(props: {
       <form className="ui-card p-4" method="get">
         <div className="grid gap-3 md:grid-cols-12 md:items-end">
           <label className="block md:col-span-7">
-            <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">Search</span>
+            <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">검색</span>
             <input
               name="q"
               defaultValue={q}
-              placeholder="title or description"
+              placeholder="제목 또는 설명"
               className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
           </label>
           <label className="block md:col-span-3">
-            <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">Sort</span>
+            <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">정렬</span>
             <select
               name="sort"
               defaultValue={sort}
               className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             >
-              <option value="top">Top</option>
-              <option value="new">New</option>
-              <option value="downloads">Downloads</option>
+              <option value="top">인기순</option>
+              <option value="new">최신순</option>
+              <option value="downloads">다운로드순</option>
             </select>
           </label>
           <div className="md:col-span-2">
             <button type="submit" className="ui-btn-primary w-full px-4 py-2 text-sm">
-              Apply
+              적용
             </button>
           </div>
         </div>
@@ -172,7 +172,7 @@ export default async function MarketPage(props: {
 
       <div className="flex items-center justify-between text-sm text-slate-600">
         <p>
-          {total} results - page {page + 1}/{maxPage + 1}
+          총 {total}개 - {page + 1}/{maxPage + 1}페이지
         </p>
         <div className="flex items-center gap-2">
           <Link
@@ -182,7 +182,7 @@ export default async function MarketPage(props: {
               prevDisabled ? "pointer-events-none opacity-50" : ""
             ].join(" ")}
           >
-            Prev
+            이전
           </Link>
           <Link
             href={{ pathname: "/wordbooks/market", query: { q, sort, page: String(nextPage) } }}
@@ -191,17 +191,17 @@ export default async function MarketPage(props: {
               nextDisabled ? "pointer-events-none opacity-50" : ""
             ].join(" ")}
           >
-            Next
+            다음
           </Link>
         </div>
       </div>
 
       {wordbooks.length === 0 ? (
         <EmptyStateCard
-          title="No results found"
-          description="Try a shorter query or change sorting to discover more wordbooks."
-          primary={{ label: "Reset filters", href: "/wordbooks/market?sort=top&page=0" }}
-          secondary={{ label: "My library", href: "/wordbooks" }}
+          title="검색 결과가 없습니다"
+          description="검색어를 줄이거나 정렬 기준을 바꿔서 다시 찾아보세요."
+          primary={{ label: "필터 초기화", href: "/wordbooks/market?sort=top&page=0" }}
+          secondary={{ label: "내 단어장", href: "/wordbooks" }}
         />
       ) : (
         <div className="grid gap-3 md:grid-cols-2">
@@ -217,17 +217,17 @@ export default async function MarketPage(props: {
                       </Link>
                       {isDownloaded ? (
                         <span className="rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-800">
-                          Downloaded
+                          다운로드됨
                         </span>
                       ) : null}
                     </div>
-                    <p className="mt-1 text-xs text-slate-500">by {wb.owner.email}</p>
+                    <p className="mt-1 text-xs text-slate-500">제작자 {wb.owner.email}</p>
                     {wb.description ? (
                       <p className="mt-2 line-clamp-2 text-sm text-slate-600">{wb.description}</p>
                     ) : null}
                     <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-slate-600">
-                      <span>{wb._count.items} items</span>
-                      <span>{wb.downloadCount} downloads</span>
+                      <span>{wb._count.items}개 단어</span>
+                      <span>{wb.downloadCount}회 다운로드</span>
                       <span>
                         {wb.fromLang}
                         {" -> "}
@@ -249,9 +249,9 @@ export default async function MarketPage(props: {
                     ) : null}
                     {!isDownloaded && user && user.plan === "FREE" && myDownloadsUsed >= 3 ? (
                       <p className="mt-1 text-[11px] font-semibold text-blue-700">
-                        Limit reached -{" "}
+                        한도 도달 -{" "}
                         <Link href={{ pathname: "/pricing" }} className="text-blue-700 hover:underline">
-                          upgrade
+                          업그레이드
                         </Link>
                       </p>
                     ) : null}
@@ -260,7 +260,7 @@ export default async function MarketPage(props: {
                         href={{ pathname: "/login", query: { next: `/wordbooks/${wb.id}` } }}
                         className="ui-btn-secondary rounded-xl px-3 py-2 text-xs"
                       >
-                        Login to download
+                        로그인 후 다운로드
                       </Link>
                     ) : null}
                     {user && wb.owner.id !== user.id ? (
@@ -286,7 +286,7 @@ export default async function MarketPage(props: {
                 prevDisabled ? "pointer-events-none opacity-50" : ""
               ].join(" ")}
             >
-              Prev
+              이전
             </Link>
             <p className="text-xs font-semibold text-slate-600">
               {page + 1}/{maxPage + 1}
@@ -298,7 +298,7 @@ export default async function MarketPage(props: {
                 nextDisabled ? "pointer-events-none opacity-50" : ""
               ].join(" ")}
             >
-              Next
+              다음
             </Link>
           </div>
         </div>

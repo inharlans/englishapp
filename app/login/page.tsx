@@ -13,8 +13,8 @@ function LoginInner() {
     <section className="mx-auto max-w-md">
       <LoginPanel
         nextPath={nextPath}
-        title="Login"
-        subtitle="Sign in to use the app and APIs."
+        title="로그인"
+        subtitle="앱과 API를 사용하려면 로그인하세요."
       />
     </section>
   );
@@ -22,7 +22,7 @@ function LoginInner() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<p className="text-sm text-slate-700">Loading...</p>}>
+    <Suspense fallback={<p className="text-sm text-slate-700">불러오는 중...</p>}>
       <LoginInner />
     </Suspense>
   );

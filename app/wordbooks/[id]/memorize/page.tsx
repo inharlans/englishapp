@@ -16,8 +16,8 @@ export default async function WordbookMemorizePage(props: { params: Promise<{ id
   if (!user) {
     return (
       <section className="space-y-4">
-        <h1 className="text-2xl font-black tracking-tight text-slate-900">Wordbook Memorize</h1>
-        <p className="text-sm text-slate-600">Login required.</p>
+        <h1 className="text-2xl font-black tracking-tight text-slate-900">단어장 암기</h1>
+        <p className="text-sm text-slate-600">로그인이 필요합니다.</p>
       </section>
     );
   }
@@ -27,9 +27,9 @@ export default async function WordbookMemorizePage(props: { params: Promise<{ id
   if (!id) {
     return (
       <section className="space-y-4">
-        <h1 className="text-2xl font-black tracking-tight text-slate-900">Invalid wordbook</h1>
+        <h1 className="text-2xl font-black tracking-tight text-slate-900">잘못된 단어장입니다</h1>
         <Link href={{ pathname: "/wordbooks" }} className="text-sm font-semibold text-blue-700 hover:underline">
-          Back
+          뒤로
         </Link>
       </section>
     );
@@ -39,8 +39,8 @@ export default async function WordbookMemorizePage(props: { params: Promise<{ id
   if (!allowed) {
     return (
       <section className="space-y-4">
-        <h1 className="text-2xl font-black tracking-tight text-slate-900">Forbidden</h1>
-        <p className="text-sm text-slate-600">Download this wordbook first.</p>
+        <h1 className="text-2xl font-black tracking-tight text-slate-900">접근할 수 없습니다</h1>
+        <p className="text-sm text-slate-600">먼저 이 단어장을 다운로드하세요.</p>
       </section>
     );
   }

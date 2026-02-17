@@ -17,7 +17,7 @@ export default function OfflineLibraryPage() {
       const list = await listOfflineWordbooks();
       setItems(list);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load offline library.");
+      setError(e instanceof Error ? e.message : "오프라인 라이브러리를 불러오지 못했습니다.");
     } finally {
       setLoading(false);
     }
@@ -28,7 +28,7 @@ export default function OfflineLibraryPage() {
   }, []);
 
   const onDelete = async (id: number) => {
-    const ok = window.confirm("Remove this offline copy?");
+    const ok = window.confirm("이 오프라인 사본을 삭제하시겠습니까?");
     if (!ok) return;
     await deleteOfflineWordbook(id);
     await reload();
@@ -38,12 +38,12 @@ export default function OfflineLibraryPage() {
     <section className="space-y-6">
       <header className="flex flex-wrap items-end gap-3">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Offline</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">오프라인</p>
           <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-900">
-            Offline Library
+            오프라인 라이브러리
           </h1>
           <p className="mt-2 text-sm text-slate-600">
-            Saved wordbooks are stored in this browser (IndexedDB).
+            저장한 단어장은 이 브라우저(IndexedDB)에 보관됩니다.
           </p>
         </div>
         <div className="ml-auto flex flex-wrap gap-2">
@@ -51,19 +51,19 @@ export default function OfflineLibraryPage() {
             href={{ pathname: "/wordbooks" }}
             className="ui-btn-secondary px-4 py-2 text-sm"
           >
-            Back
+            뒤로
           </Link>
           <button
             type="button"
             onClick={() => void reload()}
             className="ui-btn-secondary px-4 py-2 text-sm"
           >
-            Refresh
+            새로고침
           </button>
         </div>
       </header>
 
-      {loading ? <p className="text-sm text-slate-600">Loading...</p> : null}
+      {loading ? <p className="text-sm text-slate-600">불러오는 중...</p> : null}
       {error ? (
         <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
           {error}
@@ -72,8 +72,8 @@ export default function OfflineLibraryPage() {
 
       {items.length === 0 && !loading ? (
         <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-600">
-          Nothing saved yet. Open a downloaded wordbook and click{" "}
-          <span className="font-semibold">Save Offline</span>.
+          아직 저장된 항목이 없습니다. 다운로드한 단어장에서{" "}
+          <span className="font-semibold">오프라인 저장</span>을 눌러주세요.
         </div>
       ) : null}
 
@@ -84,17 +84,17 @@ export default function OfflineLibraryPage() {
               <div className="min-w-0">
                 <h2 className="truncate text-lg font-black text-slate-900">{wb.title}</h2>
                 <p className="mt-1 text-xs text-slate-500">
-                  saved {wb.savedAt.slice(0, 10)}
-                  {wb.ownerEmail ? ` by ${wb.ownerEmail}` : ""}
+                  저장일 {wb.savedAt.slice(0, 10)}
+                  {wb.ownerEmail ? ` · 제작자 ${wb.ownerEmail}` : ""}
                 </p>
-                <p className="mt-2 text-sm text-slate-600">{wb.items.length} items</p>
+                <p className="mt-2 text-sm text-slate-600">단어 {wb.items.length}개</p>
               </div>
               <button
                 type="button"
                 onClick={() => void onDelete(wb.id)}
                 className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-sm font-semibold text-blue-800 hover:bg-blue-100"
               >
-                Remove
+                삭제
               </button>
             </div>
             <div className="mt-4 flex flex-wrap gap-2">
@@ -102,7 +102,7 @@ export default function OfflineLibraryPage() {
                 href={{ pathname: `/offline/wordbooks/${wb.id}` }}
                 className="ui-btn-primary px-3 py-1.5 text-sm"
               >
-                Study Offline
+                오프라인 학습
               </Link>
             </div>
           </div>

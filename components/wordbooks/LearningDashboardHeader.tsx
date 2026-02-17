@@ -26,7 +26,7 @@ export function LearningDashboardHeader({
     <section className="ui-card-soft p-5 ui-fade-in">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="ui-kicker">Learning Dashboard</p>
+          <p className="ui-kicker">학습 대시보드</p>
           <h2 className="ui-h2 mt-2">오늘 학습 상태</h2>
           <p className="ui-body mt-2">핵심 지표를 먼저 보고 바로 학습 액션으로 이동하세요.</p>
           <div className="mt-3">

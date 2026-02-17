@@ -41,7 +41,7 @@ export function SessionRecapPanel({
 
   return (
     <aside className="rounded-2xl border border-blue-200 bg-blue-50/70 p-4">
-      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-700">Session Recap</p>
+      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-700">세션 요약</p>
       <h3 className="mt-1 text-lg font-black text-slate-900">{title}</h3>
       <p className="mt-1 text-sm text-slate-700">{summary}</p>
 

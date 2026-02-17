@@ -35,7 +35,7 @@ export function DownloadButton({
         body: "{}"
       });
       const json = (await res.json()) as { ok?: boolean; error?: string; wordbookTitle?: string };
-      if (!res.ok) throw new Error(json.error ?? "Download failed.");
+      if (!res.ok) throw new Error(json.error ?? "다운로드에 실패했습니다.");
       if (typeof window !== "undefined") {
         window.localStorage.setItem(
           "download_onboarding_pending",
@@ -49,7 +49,7 @@ export function DownloadButton({
       router.push(redirectPath as Route);
       router.refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Download failed.");
+      setError(e instanceof Error ? e.message : "다운로드에 실패했습니다.");
     } finally {
       setLoading(false);
     }
@@ -67,7 +67,7 @@ export function DownloadButton({
           className ?? ""
         ].join(" ")}
       >
-        {loading ? "Downloading..." : "Download"}
+        {loading ? "다운로드 중..." : "다운로드"}
       </button>
       {error ? <p className="mt-1 text-xs text-blue-700">{error}</p> : null}
     </div>

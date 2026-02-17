@@ -24,10 +24,10 @@ export function DailyGoalSetter({ initialGoal }: { initialGoal: number }) {
         body: JSON.stringify({ dailyGoal: Math.max(1, Math.min(500, Math.floor(n))) })
       });
       const json = (await res.json()) as { error?: string };
-      if (!res.ok) throw new Error(json.error ?? "Failed to save daily goal.");
+      if (!res.ok) throw new Error(json.error ?? "당일 목표 저장에 실패했습니다.");
       router.refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to save daily goal.");
+      setError(e instanceof Error ? e.message : "당일 목표 저장에 실패했습니다.");
     } finally {
       setSaving(false);
     }
@@ -56,3 +56,4 @@ export function DailyGoalSetter({ initialGoal }: { initialGoal: number }) {
     </div>
   );
 }
+

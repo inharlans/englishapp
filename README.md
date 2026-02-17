@@ -769,3 +769,14 @@ Additional observations and guardrails:
 - For non-downloaded users, detail page now shows rating summary + 안내 문구 and hides the review textarea/button.
 - Market review viewing remains read-only (no write controls).
 - Server-side `/api/wordbooks/[id]/rate` download check remains active.
+
+## 2026-02-17 UI Korean localization sweep
+
+- Translated user-facing UI text across major pages/components from English to Korean:
+  - navigation, home, login/logout, pricing, market, wordbook library/detail, memorize/quiz/list, offline, admin
+  - review/report/block/download/offline/import-export/edit actions and status messages
+- Replaced multiple English fallback/error/action labels with Korean equivalents for clearer meaning.
+- Fixed mojibake-corrupted files and text:
+  - `components/wordbooks/DailyGoalSetter.tsx`
+  - `app/wordbooks/[id]/error.tsx`
+- Kept technical literals where appropriate (e.g., `TSV/CSV`, enum values) while localizing visible labels.

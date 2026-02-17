@@ -77,13 +77,13 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
         cache: "no-store"
       });
       const json = (await res.json()) as LoadPayload;
-      if (!res.ok) throw new Error(json.error ?? "Failed to load question.");
+      if (!res.ok) throw new Error(json.error ?? "문제를 불러오지 못했습니다.");
       setItem(json.item ?? null);
       setTotalItems(json.totalItems ?? 0);
       setPartItemCount(json.partItemCount ?? 0);
     } catch (e) {
       setItem(null);
-      setMessage(e instanceof Error ? e.message : "Failed to load question.");
+      setMessage(e instanceof Error ? e.message : "문제를 불러오지 못했습니다.");
     } finally {
       setLoading(false);
     }
@@ -109,7 +109,7 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
         body: JSON.stringify({ itemId: item.id, mode, answer: answer.trim() })
       });
       const json = (await res.json()) as SubmitPayload;
-      if (!res.ok) throw new Error(json.error ?? "Submit failed.");
+      if (!res.ok) throw new Error(json.error ?? "제출에 실패했습니다.");
       setAttempts((v) => v + 1);
       if (json.correct) setCorrects((v) => v + 1);
       else setWrongs((v) => v + 1);
@@ -118,7 +118,7 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
         correctAnswer: json.correctAnswer
       });
     } catch (e) {
-      setMessage(e instanceof Error ? e.message : "Submit failed.");
+      setMessage(e instanceof Error ? e.message : "제출에 실패했습니다.");
     } finally {
       setLoading(false);
     }
@@ -129,15 +129,15 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
     wrongs > corrects
       ? {
           href: `/wordbooks/${wordbookId}/list-wrong` as Route,
-          label: "Review wrong list",
+          label: "오답 목록 복습",
           eta: "4m",
-          reason: "Wrong answers are higher, so fix weak words first."
+          reason: "오답이 더 많으니 취약 단어를 먼저 보완하세요."
         }
       : {
           href: `/wordbooks/${wordbookId}/memorize` as Route,
-          label: "Memorize check",
+          label: "암기 점검",
           eta: "3m",
-          reason: "A quick memorize pass right after quiz improves retention."
+          reason: "퀴즈 직후 짧은 암기 복습이 기억 유지에 효과적입니다."
         };
 
   const partButtons = useMemo(() => Array.from({ length: partCount }, (_, idx) => idx + 1), [partCount]);
@@ -146,7 +146,7 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
     <section className="space-y-4">
       <header className="space-y-3">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Wordbook Quiz</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">단어장 퀴즈</p>
           <h1 className="mt-2 text-2xl font-black tracking-tight text-slate-900">
             {mode === "MEANING" ? "의미 퀴즈" : "단어 퀴즈"}
           </h1>
@@ -189,7 +189,7 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
 
       <div className="ui-card p-4">
         <div className="flex flex-wrap items-center gap-2 text-xs">
-          <label className="font-semibold text-slate-700">Part 크기(n)</label>
+          <label className="font-semibold text-slate-700">파트 크기(n)</label>
           <input
             type="number"
             min={1}
@@ -199,7 +199,7 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
             className="w-20 rounded border border-slate-300 bg-white px-2 py-1 text-sm"
           />
           <span className="text-slate-500">
-            총 {totalItems}개 / {partCount}개 part
+            총 {totalItems}개 / {partCount}개 파트
           </span>
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
@@ -215,7 +215,7 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
                   : "ui-tab-inactive"
               ].join(" ")}
             >
-              Part {n}
+              {n}파트
             </button>
           ))}
         </div>
@@ -228,41 +228,41 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
       >
         {!item ? (
           loading ? (
-            <p className="text-sm text-slate-600">Loading...</p>
+            <p className="text-sm text-slate-600">불러오는 중...</p>
           ) : (
             <EmptyStateCard
               title="출제 가능한 문제가 없습니다"
-              description={`Part ${partIndex} (${partItemCount}개)에서 먼저 학습 상태를 만들거나 다른 part를 선택해보세요.`}
+              description={`${partIndex}파트 (${partItemCount}개)에서 먼저 학습 상태를 만들거나 다른 파트를 선택해보세요.`}
               primary={{ label: "단어장 상세로 이동", href: `/wordbooks/${wordbookId}` }}
               secondary={{ label: "암기 시작", href: `/wordbooks/${wordbookId}/memorize` }}
             />
           )
         ) : (
           <>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Question</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">문제</p>
             <p className="mt-1 text-xs text-slate-500">
-              Part {partIndex} / {partItemCount} words
+              {partIndex}파트 / {partItemCount}개 단어
             </p>
             <div className="mt-2 text-3xl font-black tracking-tight text-slate-900">
               {mode === "MEANING" ? item.term : <MeaningView value={item.meaning} mode={meaningMode} />}
             </div>
             {item.example ? (
               <p className="mt-2 text-sm text-slate-500">
-                e.g. {item.example}
+                예문: {item.example}
                 {item.exampleMeaning ? ` - ${item.exampleMeaning}` : ""}
               </p>
             ) : null}
             <form onSubmit={onSubmit} className="mt-4 flex flex-wrap gap-2">
               <label htmlFor="wordbook-quiz-answer" className="sr-only">
-                Answer
+                정답
               </label>
               <input
                 id="wordbook-quiz-answer"
                 value={answer}
                 onChange={(e) => setAnswer(e.target.value)}
                 data-testid="wordbook-quiz-answer"
-                aria-label="Answer"
-                placeholder={mode === "MEANING" ? "meaning" : "word"}
+                aria-label="정답"
+                placeholder={mode === "MEANING" ? "뜻 입력" : "단어 입력"}
                 className="min-w-[240px] flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               />
               <button
@@ -294,7 +294,7 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
                   onClick={() => void loadNext()}
                   className="ui-btn-primary mt-2 px-3 py-1.5 text-xs"
                 >
-                  다음 문제
+                  다음
                 </button>
               </div>
             ) : null}

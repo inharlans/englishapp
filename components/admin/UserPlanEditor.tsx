@@ -33,10 +33,10 @@ export function UserPlanEditor({ user, onUpdated }: { user: UserRow; onUpdated: 
         })
       });
       const json = (await res.json()) as { error?: string };
-      if (!res.ok) throw new Error(json.error ?? "Save failed.");
+      if (!res.ok) throw new Error(json.error ?? "저장에 실패했습니다.");
       onUpdated();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Save failed.");
+      setError(e instanceof Error ? e.message : "저장에 실패했습니다.");
     } finally {
       setLoading(false);
     }
@@ -50,8 +50,8 @@ export function UserPlanEditor({ user, onUpdated }: { user: UserRow; onUpdated: 
         className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-sm"
         disabled={loading}
       >
-        <option value="FREE">FREE</option>
-        <option value="PRO">PRO</option>
+        <option value="FREE">무료</option>
+        <option value="PRO">프로</option>
       </select>
 
       <label className="flex items-center gap-2 text-sm text-slate-700">
@@ -61,13 +61,13 @@ export function UserPlanEditor({ user, onUpdated }: { user: UserRow; onUpdated: 
           onChange={(e) => setIsAdmin(e.target.checked)}
           disabled={loading}
         />
-        admin
+        관리자
       </label>
 
       <input
         value={proUntil}
         onChange={(e) => setProUntil(e.target.value)}
-        placeholder="proUntil ISO (optional)"
+        placeholder="proUntil ISO (선택)"
         className="min-w-[260px] rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-sm"
         disabled={loading}
       />
@@ -78,7 +78,7 @@ export function UserPlanEditor({ user, onUpdated }: { user: UserRow; onUpdated: 
         disabled={loading}
         className="ui-btn-primary px-3 py-1.5 text-sm disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {loading ? "Saving..." : "Save"}
+        {loading ? "저장 중..." : "저장"}
       </button>
 
       {error ? <span className="text-xs text-blue-700">{error}</span> : null}

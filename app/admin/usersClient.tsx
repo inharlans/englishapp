@@ -62,7 +62,7 @@ export function AdminUsersClient({ initialUsers }: { initialUsers: UserRow[] }) 
         }>;
         error?: string;
       };
-      if (!res.ok) throw new Error(json.error ?? "Load failed.");
+      if (!res.ok) throw new Error(json.error ?? "불러오기에 실패했습니다.");
       setUsers((json.users ?? []) as UserRow[]);
 
       const reportRes = await apiFetch("/api/admin/reports");
@@ -75,7 +75,7 @@ export function AdminUsersClient({ initialUsers }: { initialUsers: UserRow[] }) 
         })));
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Load failed.");
+      setError(e instanceof Error ? e.message : "불러오기에 실패했습니다.");
     } finally {
       setLoading(false);
     }
@@ -90,9 +90,9 @@ export function AdminUsersClient({ initialUsers }: { initialUsers: UserRow[] }) 
     <section className="space-y-6">
       <header className="flex flex-wrap items-end gap-3">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Admin</p>
-          <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-900">Users</h1>
-          <p className="mt-2 text-sm text-slate-600">Set plan/admin flags.</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">관리자</p>
+          <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-900">사용자</h1>
+          <p className="mt-2 text-sm text-slate-600">요금제/관리자 권한을 설정합니다.</p>
         </div>
         <div className="ml-auto flex flex-wrap gap-2">
           <button
@@ -107,10 +107,10 @@ export function AdminUsersClient({ initialUsers }: { initialUsers: UserRow[] }) 
                   body: "{}"
                 });
                 const json = (await res.json()) as { error?: string };
-                if (!res.ok) throw new Error(json.error ?? "Recompute failed.");
+                if (!res.ok) throw new Error(json.error ?? "재계산에 실패했습니다.");
                 await reload();
               } catch (e) {
-                setError(e instanceof Error ? e.message : "Recompute failed.");
+                setError(e instanceof Error ? e.message : "재계산에 실패했습니다.");
               } finally {
                 setLoading(false);
               }
@@ -118,7 +118,7 @@ export function AdminUsersClient({ initialUsers }: { initialUsers: UserRow[] }) 
             className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
             disabled={loading}
           >
-            Recompute Rank
+            랭킹 재계산
           </button>
           <button
             type="button"
@@ -126,7 +126,7 @@ export function AdminUsersClient({ initialUsers }: { initialUsers: UserRow[] }) 
             className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
             disabled={loading}
           >
-            {loading ? "Refreshing..." : "Refresh"}
+            {loading ? "새로고침 중..." : "새로고침"}
           </button>
         </div>
       </header>
@@ -146,8 +146,8 @@ export function AdminUsersClient({ initialUsers }: { initialUsers: UserRow[] }) 
                   #{u.id} {u.email}
                 </p>
                 <p className="mt-1 text-xs text-slate-500">
-                  created {u.createdAt.slice(0, 10)} · plan {u.plan}
-                  {u.isAdmin ? " · admin" : ""}
+                  생성일 {u.createdAt.slice(0, 10)} · 요금제 {u.plan}
+                  {u.isAdmin ? " · 관리자" : ""}
                   {u.proUntil ? ` · proUntil ${u.proUntil}` : ""}
                 </p>
               </div>
@@ -158,10 +158,10 @@ export function AdminUsersClient({ initialUsers }: { initialUsers: UserRow[] }) 
       </div>
 
       <section className="space-y-3">
-        <h2 className="text-sm font-black uppercase tracking-[0.2em] text-slate-700">Reports</h2>
+        <h2 className="text-sm font-black uppercase tracking-[0.2em] text-slate-700">신고</h2>
         {reports.length === 0 ? (
           <p className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600">
-            No reports.
+            신고 내역이 없습니다.
           </p>
         ) : (
           reports.map((r) => (
@@ -170,20 +170,20 @@ export function AdminUsersClient({ initialUsers }: { initialUsers: UserRow[] }) 
                 #{r.id} [{r.status}] {r.reason}
               </p>
               <p className="mt-1 text-xs text-slate-500">
-                wordbook #{r.wordbook.id} {r.wordbook.title} by {r.wordbook.owner.email} / reporter{" "}
+                단어장 #{r.wordbook.id} {r.wordbook.title} · 제작자 {r.wordbook.owner.email} / 신고자{" "}
                 {r.reporter.email}
               </p>
               {r.detail ? <p className="mt-2 text-sm text-slate-700">{r.detail}</p> : null}
               {r.moderatorNote ? (
-                <p className="mt-1 text-xs text-slate-500">note: {r.moderatorNote}</p>
+                <p className="mt-1 text-xs text-slate-500">메모: {r.moderatorNote}</p>
               ) : null}
               <p className="mt-1 text-xs text-slate-500">
-                reporter trust: {r.reporterTrustScore}
-                {r.reviewAction ? ` / action ${r.reviewAction}` : ""}
+                신고자 신뢰도: {r.reporterTrustScore}
+                {r.reviewAction ? ` / 조치 ${r.reviewAction}` : ""}
                 {r.previousStatus && r.nextStatus ? ` / ${r.previousStatus} -> ${r.nextStatus}` : ""}
               </p>
               {r.reviewerIpHash ? (
-                <p className="mt-1 text-[11px] text-slate-400">reviewer-ip-hash: {r.reviewerIpHash}</p>
+                <p className="mt-1 text-[11px] text-slate-400">검토자 IP 해시: {r.reviewerIpHash}</p>
               ) : null}
               {r.status === "OPEN" ? (
                 <div className="mt-3 flex flex-wrap gap-2">
@@ -200,13 +200,13 @@ export function AdminUsersClient({ initialUsers }: { initialUsers: UserRow[] }) 
                     }}
                     className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-800 hover:bg-blue-100"
                   >
-                    Resolve
+                    처리 완료
                   </button>
                   <button
                     type="button"
                     data-testid="admin-report-dismiss"
                     onClick={async () => {
-                      const note = window.prompt("Moderator note (optional):", "") ?? "";
+                      const note = window.prompt("관리자 메모 (선택):", "") ?? "";
                       await apiFetch(`/api/admin/reports/${r.id}`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
@@ -216,13 +216,13 @@ export function AdminUsersClient({ initialUsers }: { initialUsers: UserRow[] }) 
                     }}
                     className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold hover:bg-slate-50"
                   >
-                    Dismiss
+                    기각
                   </button>
                   <button
                     type="button"
                     data-testid="admin-report-hide"
                     onClick={async () => {
-                      const note = window.prompt("Hide this wordbook and resolve report. Note:", "") ?? "";
+                      const note = window.prompt("이 단어장을 숨기고 신고를 처리합니다. 메모:", "") ?? "";
                       await apiFetch(`/api/admin/reports/${r.id}`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
@@ -232,7 +232,7 @@ export function AdminUsersClient({ initialUsers }: { initialUsers: UserRow[] }) 
                     }}
                     className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-800 hover:bg-blue-100"
                   >
-                    Hide Wordbook
+                    단어장 숨김
                   </button>
                 </div>
               ) : null}

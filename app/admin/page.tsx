@@ -9,7 +9,7 @@ export default async function AdminPage() {
   if (!user || !user.isAdmin) {
     return (
       <section className="space-y-4">
-        <h1 className="text-2xl font-black tracking-tight text-slate-900">Not found</h1>
+        <h1 className="text-2xl font-black tracking-tight text-slate-900">찾을 수 없습니다</h1>
       </section>
     );
   }
@@ -29,4 +29,3 @@ export default async function AdminPage() {
     />
   );
 }
-

@@ -28,13 +28,13 @@ export function ImportPanel() {
       });
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error ?? "Import failed.");
+        throw new Error(data.error ?? "가져오기에 실패했습니다.");
       }
       setMessage(
         `완료: ${data.importedCount}개 추가, ${data.skippedCount}개 건너뜀 (구분자: ${data.delimiter})`
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Import failed.");
+      setError(err instanceof Error ? err.message : "가져오기에 실패했습니다.");
     } finally {
       setLoading(false);
     }
@@ -42,7 +42,7 @@ export function ImportPanel() {
 
   return (
     <section className="rounded-2xl bg-white p-5 shadow-sm">
-      <h1 className="mb-2 text-2xl font-semibold">단어 데이터 Import</h1>
+      <h1 className="mb-2 text-2xl font-semibold">단어 데이터 가져오기</h1>
       <p className="mb-4 text-sm text-slate-600">
         TSV를 우선 파싱하고 실패하면 CSV로 다시 시도합니다. 헤더에 `en`, `ko` 컬럼이 필요합니다.
       </p>
@@ -57,7 +57,7 @@ export function ImportPanel() {
           disabled={loading}
           className="ui-btn-primary px-4 py-2 disabled:opacity-60"
         >
-          {loading ? "Import 중..." : "Import 실행"}
+          {loading ? "가져오는 중..." : "가져오기 실행"}
         </button>
       </form>
       {message ? <p className="mt-3 text-sm text-blue-700">{message}</p> : null}

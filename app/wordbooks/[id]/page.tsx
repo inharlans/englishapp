@@ -32,12 +32,12 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
   if (!id) {
     return (
       <section className="space-y-4">
-        <h1 className="text-2xl font-black tracking-tight text-slate-900">Invalid wordbook</h1>
+        <h1 className="text-2xl font-black tracking-tight text-slate-900">잘못된 단어장입니다</h1>
         <Link
           href={{ pathname: "/wordbooks/market" }}
           className="text-sm font-semibold text-blue-700 hover:underline"
         >
-          Back
+          뒤로
         </Link>
       </section>
     );
@@ -81,12 +81,12 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
   if (!wordbook) {
     return (
       <section className="space-y-4">
-        <h1 className="text-2xl font-black tracking-tight text-slate-900">Not found</h1>
+        <h1 className="text-2xl font-black tracking-tight text-slate-900">찾을 수 없습니다</h1>
         <Link
           href={{ pathname: "/wordbooks/market" }}
           className="text-sm font-semibold text-blue-700 hover:underline"
         >
-          Back
+          뒤로
         </Link>
       </section>
     );
@@ -96,12 +96,12 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
   if ((!wordbook.isPublic || wordbook.hiddenByAdmin) && !isOwner) {
     return (
       <section className="space-y-4">
-        <h1 className="text-2xl font-black tracking-tight text-slate-900">Not found</h1>
+        <h1 className="text-2xl font-black tracking-tight text-slate-900">찾을 수 없습니다</h1>
         <Link
           href={{ pathname: "/wordbooks/market" }}
           className="text-sm font-semibold text-blue-700 hover:underline"
         >
-          Back
+          뒤로
         </Link>
       </section>
     );
@@ -149,15 +149,15 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
       <header className="flex flex-wrap items-end gap-3">
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-            Wordbook
+            단어장
           </p>
           <h1 className="mt-2 truncate text-3xl font-black tracking-tight text-slate-900">
             {wordbook.title}
           </h1>
           <p className="mt-2 text-sm text-slate-600">
-            by {wordbook.owner.email} | {wordbook.items.length} items | {wordbook.downloadCount}{" "}
-            downloads{downloadedAt ? ` | downloaded ${downloadedAt.toISOString().slice(0, 10)}` : ""} |{" "}
-            {wordbook.isPublic ? "Public" : "Private"}
+            제작자 {wordbook.owner.email} | 단어 {wordbook.items.length}개 | 다운로드 {wordbook.downloadCount}회
+            {downloadedAt ? ` | 다운로드일 ${downloadedAt.toISOString().slice(0, 10)}` : ""} |{" "}
+            {wordbook.isPublic ? "공개" : "비공개"}
           </p>
           {wordbook.description ? (
             <p className="mt-2 max-w-3xl text-sm text-slate-700">{wordbook.description}</p>
@@ -168,7 +168,7 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
             href={{ pathname: "/wordbooks/market" }}
             className="ui-btn-secondary px-4 py-2 text-sm"
           >
-            Back
+            뒤로
           </Link>
           {!isOwner && wordbook.isPublic && !downloadedAt && user ? (
             <DownloadButton wordbookId={id} wordbookTitle={wordbook.title} disabled={freeLimitReached} />
@@ -182,7 +182,7 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
               href={{ pathname: "/pricing" }}
               className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-900 hover:bg-blue-100"
             >
-              Upgrade (limit reached)
+              업그레이드 (한도 도달)
             </Link>
           ) : null}
           {!isOwner && downloadedAt ? <OfflineSaveButton wordbookId={id} /> : null}
@@ -192,7 +192,7 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
               href={{ pathname: "/login", query: { next: `/wordbooks/${id}` } }}
               className="ui-btn-secondary px-4 py-2 text-sm"
             >
-              Login
+              로그인
             </Link>
           ) : null}
           {isOwner && user?.plan === "PRO" ? (
@@ -203,7 +203,7 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
 
       {isOwner && user?.plan === "FREE" ? (
         <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
-          Free plan uploads are forced public. Upgrade to PRO to make wordbooks private.
+          무료 요금제 업로드는 공개로 고정됩니다. 비공개 단어장을 사용하려면 PRO로 업그레이드하세요.
         </div>
       ) : null}
 
@@ -228,7 +228,7 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
                 </div>
               )}
               {!canWriteReview ? (
-                <p className="mt-2 text-xs text-slate-600">Download first to rate.</p>
+                <p className="mt-2 text-xs text-slate-600">평가를 남기려면 먼저 다운로드하세요.</p>
               ) : null}
               <div className="mt-3 flex flex-wrap gap-2">
                 <ReportWordbookButton wordbookId={id} />
@@ -238,14 +238,14 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
           ) : (
             <>
               <p className="text-sm text-slate-700">
-                Public preview mode. Login to rate, comment, or report.
+                공개 미리보기 모드입니다. 평가/댓글/신고는 로그인 후 사용할 수 있습니다.
               </p>
               <div className="mt-3">
                 <Link
                   href={{ pathname: "/login", query: { next: `/wordbooks/${id}` } }}
                   className="ui-btn-secondary px-4 py-2 text-sm"
                 >
-                  Login
+                  로그인
                 </Link>
               </div>
             </>
@@ -261,9 +261,9 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
         <div className="grid gap-4 lg:grid-cols-2">
           <div className="rounded-3xl border border-white/60 bg-white/85 p-6 shadow-[0_20px_50px_-30px_rgba(15,23,42,0.7)] backdrop-blur">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-              Settings
+              설정
             </p>
-            <h2 className="mt-2 text-xl font-black text-slate-900">Edit Wordbook</h2>
+            <h2 className="mt-2 text-xl font-black text-slate-900">단어장 수정</h2>
             <div className="mt-4">
               <WordbookMetaEditor
                 wordbookId={id}
@@ -279,9 +279,9 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
           </div>
           <div className="rounded-3xl border border-white/60 bg-white/85 p-6 shadow-[0_20px_50px_-30px_rgba(15,23,42,0.7)] backdrop-blur">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-              Items
+              항목
             </p>
-            <h2 className="mt-2 text-xl font-black text-slate-900">Add Words</h2>
+            <h2 className="mt-2 text-xl font-black text-slate-900">단어 추가</h2>
             <div className="mt-4">
               <AddItemsForm wordbookId={id} />
             </div>
@@ -293,7 +293,7 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
       ) : (
         <div className="space-y-3">
           <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
-            Downloaded wordbooks are read-only. You can still save them for offline study.
+            다운로드한 단어장은 읽기 전용입니다. 오프라인 학습용 저장은 가능합니다.
           </div>
           {downloadedVersion ? (
             <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700">
@@ -306,7 +306,7 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
               </p>
               {snapshotItemCount !== null && syncedAt ? (
                 <p className="mt-1 text-xs text-slate-500">
-                  Word count change: {snapshotItemCount} to {wordbook.items.length} / last sync{" "}
+                  단어 수 변화: {snapshotItemCount}에서 {wordbook.items.length} / 최근 동기화{" "}
                   {syncedAt.toISOString().slice(0, 10)}
                 </p>
               ) : null}
@@ -321,9 +321,9 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
       )}
 
       <section className="space-y-3">
-        <h2 className="text-sm font-black uppercase tracking-[0.2em] text-slate-700">Words</h2>
+        <h2 className="text-sm font-black uppercase tracking-[0.2em] text-slate-700">단어 목록</h2>
         {wordbook.items.length === 0 ? (
-          <p className="text-sm text-slate-600">No items.</p>
+          <p className="text-sm text-slate-600">등록된 단어가 없습니다.</p>
         ) : (
           <div className="grid gap-2">
             {wordbook.items.map((item) => (

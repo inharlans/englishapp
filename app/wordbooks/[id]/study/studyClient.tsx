@@ -78,7 +78,7 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
         cache: "no-store"
       });
       const json = (await res.json()) as Payload;
-      if (!res.ok || !json.wordbook) throw new Error(json.error ?? "Failed to load study state.");
+      if (!res.ok || !json.wordbook) throw new Error(json.error ?? "학습 상태를 불러오지 못했습니다.");
       setTitle(json.wordbook.title);
       setSpeakLang(json.wordbook.fromLang?.toLowerCase().startsWith("en") ? "en-US" : undefined);
       setItems(json.items ?? []);
@@ -93,7 +93,7 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
       setItems([]);
       setTotalFiltered(0);
       setTotalItems(0);
-      setError(e instanceof Error ? e.message : "Failed to load study state.");
+      setError(e instanceof Error ? e.message : "학습 상태를 불러오지 못했습니다.");
     } finally {
       setLoading(false);
     }
@@ -162,8 +162,8 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
     <section className="space-y-6 pb-28">
       <header className="space-y-3">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Wordbook Memorize</p>
-          <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-900">{title || "Wordbook"}</h1>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">단어장 암기</p>
+          <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-900">{title || "단어장"}</h1>
           <p className="mt-2 text-sm text-slate-600">
             체크 {studyState.studiedCount} / 정답 {studyState.correctCount} / 오답 {studyState.wrongCount}
           </p>
@@ -198,7 +198,7 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
 
       <div className="ui-card p-4">
         <div className="flex items-center justify-between text-xs text-slate-500">
-          <span>Progress</span>
+          <span>진행률</span>
           <span>{progressPercent}%</span>
         </div>
         <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
@@ -222,7 +222,7 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
       <div className="relative min-h-[220px]">
         {loading ? (
           <div className="pointer-events-none absolute right-2 top-2 rounded-full border border-slate-200 bg-white/90 px-3 py-1 text-xs font-semibold text-slate-600 shadow-sm">
-            Loading...
+            불러오는 중...
           </div>
         ) : null}
 
@@ -247,13 +247,13 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
                 <MeaningView value={item.meaning} mode={mode} className="mt-1 text-sm text-slate-700" />
                 {item.example ? (
                   <p className="mt-1 text-xs text-slate-500">
-                    e.g. {item.example}
+                    예문: {item.example}
                     {item.exampleMeaning ? ` - ${item.exampleMeaning}` : ""}
                   </p>
                 ) : null}
                 {item.itemState ? (
                   <p className="mt-1 text-xs text-slate-500">
-                    status {item.itemState.status} / streak {item.itemState.streak}
+                    상태 {item.itemState.status} / 연속 정답 {item.itemState.streak}
                   </p>
                 ) : null}
               </div>
@@ -269,7 +269,7 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
               type="search"
               value={query}
               onChange={(e) => onQueryChange(e.target.value)}
-              placeholder="Search words"
+              placeholder="단어 검색"
               className="min-w-[180px] flex-1 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 outline-none ring-blue-500 focus:ring-2"
             />
             <span className="text-slate-500">개수</span>

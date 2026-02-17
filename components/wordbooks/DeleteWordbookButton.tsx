@@ -15,19 +15,19 @@ export function DeleteWordbookButton({ wordbookId }: Props) {
   const [error, setError] = useState("");
 
   const onDelete = async () => {
-    const ok = window.confirm("Delete this wordbook? This cannot be undone.");
+    const ok = window.confirm("이 단어장을 삭제할까요? 되돌릴 수 없습니다.");
     if (!ok) return;
     setLoading(true);
     setError("");
     try {
       const res = await apiFetch(`/api/wordbooks/${wordbookId}`, { method: "DELETE" });
       const json = (await res.json()) as { ok?: boolean; error?: string };
-      if (!res.ok) throw new Error(json.error ?? "Delete failed.");
+      if (!res.ok) throw new Error(json.error ?? "삭제에 실패했습니다.");
       const href = "/wordbooks";
       router.replace(href as unknown as Parameters<typeof router.replace>[0]);
       router.refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Delete failed.");
+      setError(e instanceof Error ? e.message : "삭제에 실패했습니다.");
     } finally {
       setLoading(false);
     }
@@ -41,7 +41,7 @@ export function DeleteWordbookButton({ wordbookId }: Props) {
         disabled={loading}
         className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-sm font-semibold text-blue-800 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {loading ? "Deleting..." : "Delete"}
+        {loading ? "삭제 중..." : "삭제"}
       </button>
       {error ? <p className="mt-1 text-xs text-blue-700">{error}</p> : null}
     </div>

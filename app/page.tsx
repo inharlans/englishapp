@@ -15,7 +15,7 @@ export default async function HomePage() {
 
         <div className="relative space-y-6">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Englishapp</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">잉글리시앱</p>
             <h1 className="mt-2 text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">
               영어 단어 학습을
               <br />
@@ -29,13 +29,13 @@ export default async function HomePage() {
 
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="rounded-2xl border border-slate-200 bg-white/85 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Step 1</p>
-              <h2 className="mt-1 text-base font-bold text-slate-900">Wordbook Market</h2>
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">1단계</p>
+              <h2 className="mt-1 text-base font-bold text-slate-900">단어장 마켓</h2>
               <p className="mt-1 text-sm text-slate-600">공개 단어장을 먼저 둘러보고 품질을 확인합니다.</p>
             </div>
             <div className="rounded-2xl border border-slate-200 bg-white/85 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Step 2</p>
-              <h2 className="mt-1 text-base font-bold text-slate-900">Memorize & Quiz</h2>
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">2단계</p>
+              <h2 className="mt-1 text-base font-bold text-slate-900">암기와 퀴즈</h2>
               <p className="mt-1 text-sm text-slate-600">로그인 후 내 학습 상태로 암기/퀴즈를 계속 진행합니다.</p>
             </div>
           </div>
@@ -63,12 +63,12 @@ export default async function HomePage() {
         {!user ? (
           <LoginPanel
             nextPath="/wordbooks"
-            title="Start Learning"
+            title="학습 시작"
             subtitle="로그인하고 바로 내 단어장 학습으로 이동하세요."
           />
         ) : (
           <section className="rounded-3xl border border-white/60 bg-white/90 p-6 shadow-[0_24px_55px_-30px_rgba(15,23,42,0.75)] backdrop-blur">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Welcome Back</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">다시 오신 것을 환영합니다</p>
             <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-900">학습 계속하기</h2>
             <p className="mt-2 text-sm text-slate-600">로그인되어 있습니다. 상단 메뉴 또는 왼쪽 버튼으로 학습을 이어가세요.</p>
           </section>

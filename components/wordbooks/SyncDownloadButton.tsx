@@ -29,12 +29,12 @@ export function SyncDownloadButton({ wordbookId }: Props) {
         error?: string;
         summary?: { addedCount: number; updatedCount: number; deletedCount: number };
       };
-      if (!res.ok) throw new Error(json.error ?? "Sync failed.");
+      if (!res.ok) throw new Error(json.error ?? "동기화에 실패했습니다.");
       const s = json.summary ?? { addedCount: 0, updatedCount: 0, deletedCount: 0 };
       setMessage(`동기화 완료: +${s.addedCount} / ~${s.updatedCount} / -${s.deletedCount}`);
       router.refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Sync failed.");
+      setError(e instanceof Error ? e.message : "동기화에 실패했습니다.");
     } finally {
       setLoading(false);
     }

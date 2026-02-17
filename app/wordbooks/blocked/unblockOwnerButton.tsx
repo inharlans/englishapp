@@ -11,7 +11,7 @@ export function UnblockOwnerButton({ ownerId, ownerEmail }: { ownerId: number; o
   const [error, setError] = useState("");
 
   const onClick = async () => {
-    const ok = window.confirm(`Unblock ${ownerEmail}?`);
+    const ok = window.confirm(`${ownerEmail} 차단을 해제할까요?`);
     if (!ok) return;
 
     setLoading(true);
@@ -23,10 +23,10 @@ export function UnblockOwnerButton({ ownerId, ownerEmail }: { ownerId: number; o
         body: JSON.stringify({ ownerId })
       });
       const json = (await res.json()) as { error?: string };
-      if (!res.ok) throw new Error(json.error ?? "Unblock failed.");
+      if (!res.ok) throw new Error(json.error ?? "차단 해제에 실패했습니다.");
       router.refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Unblock failed.");
+      setError(e instanceof Error ? e.message : "차단 해제에 실패했습니다.");
     } finally {
       setLoading(false);
     }
@@ -40,7 +40,7 @@ export function UnblockOwnerButton({ ownerId, ownerEmail }: { ownerId: number; o
         disabled={loading}
         className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold hover:bg-slate-50 disabled:opacity-60"
       >
-        {loading ? "Unblocking..." : "Unblock"}
+        {loading ? "해제 중..." : "차단 해제"}
       </button>
       {error ? <p className="text-xs text-blue-700">{error}</p> : null}
     </div>

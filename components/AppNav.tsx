@@ -4,11 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const links: Array<{ href: string; label: string }> = [
-  { href: "/", label: "Home" },
-  { href: "/wordbooks", label: "Wordbooks" },
-  { href: "/wordbooks/market", label: "Market" },
-  { href: "/offline", label: "Offline" },
-  { href: "/pricing", label: "Pricing" }
+  { href: "/", label: "홈" },
+  { href: "/wordbooks", label: "단어장" },
+  { href: "/wordbooks/market", label: "마켓" },
+  { href: "/offline", label: "오프라인" },
+  { href: "/pricing", label: "요금제" }
 ];
 
 export function AppNav({ isLoggedIn }: { isLoggedIn: boolean }) {
@@ -33,12 +33,12 @@ export function AppNav({ isLoggedIn }: { isLoggedIn: boolean }) {
         <div className="ml-auto flex items-center gap-2">
           {!isLoggedIn ? (
             <Link href="/login" className="ui-btn-secondary px-3 py-2 text-sm">
-              Login
+              로그인
             </Link>
           ) : null}
           {isLoggedIn ? (
             <Link href="/logout" className="ui-btn-ghost px-3 py-2 text-sm">
-              Logout
+              로그아웃
             </Link>
           ) : null}
         </div>

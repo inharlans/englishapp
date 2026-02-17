@@ -81,12 +81,12 @@ export function WordbookListClient({
           cache: "no-store"
         });
         const json = (await res.json()) as Payload;
-        if (!res.ok) throw new Error(json.error ?? "Failed to load list.");
+        if (!res.ok) throw new Error(json.error ?? "목록을 불러오지 못했습니다.");
         setItems(json.items ?? []);
         setTotalItems(json.paging?.totalItems ?? 0);
         setPartStats(json.paging?.partStats ?? []);
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Failed to load list.");
+        setError(e instanceof Error ? e.message : "목록을 불러오지 못했습니다.");
       } finally {
         setLoading(false);
       }
@@ -109,7 +109,7 @@ export function WordbookListClient({
     <section className="space-y-4">
       <header className="space-y-3">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Wordbook List</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">단어장 목록</p>
           <h1 className="mt-2 text-2xl font-black tracking-tight text-slate-900">{title}</h1>
         </div>
         <WordbookStudyTabs wordbookId={wordbookId} active={activeTab(mode)} />
@@ -148,7 +148,7 @@ export function WordbookListClient({
 
       <div className="ui-card p-4">
         <div className="flex flex-wrap items-center gap-2 text-xs">
-          <label className="font-semibold text-slate-700">Part 크기(n)</label>
+          <label className="font-semibold text-slate-700">파트 크기(n)</label>
           <input
             type="number"
             min={1}
@@ -158,7 +158,7 @@ export function WordbookListClient({
             className="w-20 rounded border border-slate-300 bg-white px-2 py-1 text-sm"
           />
           <span className="text-slate-500">
-            총 {totalItems}개 / {partCount}개 part
+            총 {totalItems}개 / {partCount}개 파트
           </span>
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
@@ -174,7 +174,7 @@ export function WordbookListClient({
                   : "ui-tab-inactive"
               ].join(" ")}
             >
-              <span>Part {p.partIndex}</span>
+              <span>{p.partIndex}파트</span>
               <span className={p.partIndex === partIndex ? "ml-2 text-slate-200" : "ml-2 text-slate-500"}>
                 {p.matchedCount}/{p.totalInPart}
               </span>
@@ -190,14 +190,14 @@ export function WordbookListClient({
       <div className="relative min-h-[220px]">
         {loading ? (
           <div className="pointer-events-none absolute right-2 top-2 rounded-full border border-slate-200 bg-white/90 px-3 py-1 text-xs font-semibold text-slate-600 shadow-sm">
-            Loading...
+            불러오는 중...
           </div>
         ) : null}
 
       {!loading && items.length === 0 ? (
         <EmptyStateCard
           title="조건에 맞는 단어가 없습니다"
-          description={`Part ${partIndex}에서 조건에 맞는 단어를 찾지 못했습니다. 다른 part를 선택해보세요.`}
+          description={`${partIndex}파트에서 조건에 맞는 단어를 찾지 못했습니다. 다른 파트를 선택해보세요.`}
           primary={{ label: "암기 화면으로 이동", href: `/wordbooks/${wordbookId}/memorize` }}
           secondary={{ label: "퀴즈 화면으로 이동", href: `/wordbooks/${wordbookId}/quiz-meaning` }}
         />
@@ -212,13 +212,13 @@ export function WordbookListClient({
             </div>
             {item.example ? (
               <p className="mt-2 text-xs text-slate-500">
-                e.g. {item.example}
+                예문: {item.example}
                 {item.exampleMeaning ? ` - ${item.exampleMeaning}` : ""}
               </p>
             ) : null}
             {item.itemState ? (
               <p className="mt-2 text-xs text-slate-500">
-                status {item.itemState.status} / history C:{item.itemState.everCorrect ? "Y" : "N"} W:
+                상태 {item.itemState.status} / 이력 정답:{item.itemState.everCorrect ? "Y" : "N"} 오답:
                 {item.itemState.everWrong ? "Y" : "N"}
               </p>
             ) : null}
