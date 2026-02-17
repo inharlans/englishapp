@@ -239,6 +239,7 @@ export default async function MarketPage(props: {
                         wordbookId={wb.id}
                         wordbookTitle={wb.title}
                         disabled={user.plan === "FREE" && myDownloadsUsed >= 3}
+                        className="rounded-2xl px-4 py-2"
                       />
                     ) : null}
                     {!isDownloaded && user && user.plan === "FREE" && myDownloadsUsed >= 3 ? (
@@ -252,7 +253,7 @@ export default async function MarketPage(props: {
                     {!isDownloaded && !user ? (
                       <Link
                         href={{ pathname: "/login", query: { next: `/wordbooks/${wb.id}` } }}
-                        className="ui-btn-secondary px-3 py-2 text-xs"
+                        className="ui-btn-secondary rounded-xl px-3 py-2 text-xs"
                       >
                         Login to download
                       </Link>

@@ -693,3 +693,13 @@ Additional observations and guardrails:
   - `components/auth/LoginPanel.tsx`
   - shared by both `/` and `/login`
 - `/login` now uses the shared panel while preserving `next` redirect behavior.
+
+## 2026-02-17 Market button hierarchy tuning
+
+- `/wordbooks/market` action hierarchy tightened without layout changes.
+- `Apply` remains primary filled button (`ui-btn-primary`).
+- `Prev/Next` keep soft secondary treatment (`ui-btn-secondary`, no heavy outline style).
+- Card CTA hierarchy clarified:
+  - logged-in `Download`: accent filled with stronger CTA radius (`rounded-2xl`)
+  - guest `Login to download`: soft secondary (`ui-btn-secondary`, `rounded-xl`)
+- `DownloadButton` now supports optional `className` override for page-level CTA tuning.

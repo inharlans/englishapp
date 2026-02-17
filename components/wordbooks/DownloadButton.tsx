@@ -11,9 +11,16 @@ type Props = {
   disabled?: boolean;
   wordbookTitle?: string;
   redirectPath?: string;
+  className?: string;
 };
 
-export function DownloadButton({ wordbookId, disabled, wordbookTitle, redirectPath = "/wordbooks" }: Props) {
+export function DownloadButton({
+  wordbookId,
+  disabled,
+  wordbookTitle,
+  redirectPath = "/wordbooks",
+  className
+}: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -55,7 +62,10 @@ export function DownloadButton({ wordbookId, disabled, wordbookTitle, redirectPa
         onClick={onDownload}
         data-testid="download-wordbook"
         disabled={loading || disabled}
-        className="ui-btn-accent px-3 py-1.5 text-sm disabled:cursor-not-allowed disabled:opacity-60"
+        className={[
+          "ui-btn-accent px-3 py-1.5 text-sm disabled:cursor-not-allowed disabled:opacity-60",
+          className ?? ""
+        ].join(" ")}
       >
         {loading ? "Downloading..." : "Download"}
       </button>
