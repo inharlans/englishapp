@@ -7,11 +7,13 @@ import { apiFetch } from "@/lib/clientApi";
 export function LoginPanel({
   nextPath = "/wordbooks",
   title = "로그인",
-  subtitle = "계속하려면 로그인하세요."
+  subtitle = "계속하려면 로그인하세요.",
+  oauthError
 }: {
   nextPath?: string;
   title?: string;
   subtitle?: string;
+  oauthError?: string;
 }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -85,9 +87,25 @@ export function LoginPanel({
           {loading ? "로그인 중..." : "로그인"}
         </button>
 
+        <button
+          type="button"
+          onClick={() =>
+            window.location.assign(`/api/auth/google?next=${encodeURIComponent(nextPath)}`)
+          }
+          className="ui-btn-secondary w-full px-4 py-2.5 text-sm"
+        >
+          구글로 로그인
+        </button>
+
         {error ? (
           <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
             {error}
+          </p>
+        ) : null}
+
+        {oauthError ? (
+          <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
+            {oauthError}
           </p>
         ) : null}
       </form>

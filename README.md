@@ -866,3 +866,24 @@ Additional observations and guardrails:
   - FREE/PRO 핵심 정책(생성 한도, 다운로드 누적 단어 한도, 공개/비공개 권한)
   - PRO -> FREE 강등 시 비공개 단어장 잠금 정책 명시
 - `/pricing` 텍스트 인코딩 깨짐을 제거하고 UTF-8(무 BOM)으로 재저장
+
+## 2026-02-17 Google OAuth login added
+
+- Added Google OAuth start/callback routes:
+  - `GET /api/auth/google`
+  - `GET /api/auth/google/callback`
+- Login page now provides `구글로 로그인` button and shows OAuth error messages.
+- Callback route behavior:
+  - verifies OAuth `state` cookie
+  - exchanges code for Google token
+  - fetches verified email from Google userinfo
+  - links to existing user by email or creates new user automatically
+  - issues existing app session cookie + csrf cookie
+
+### Required env vars
+- `GOOGLE_CLIENT_ID`
+- `GOOGLE_CLIENT_SECRET`
+
+### Optional env var
+- `GOOGLE_REDIRECT_URI`
+  - if omitted, defaults to `{origin}/api/auth/google/callback`
