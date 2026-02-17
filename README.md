@@ -762,3 +762,10 @@ Additional observations and guardrails:
 
 - Fixed broken Korean placeholder text in `/wordbooks/[id]` review textarea.
 - Updated `RateBox` placeholder to: `리뷰를 입력해주세요 (선택)`.
+
+## 2026-02-17 Review write gating by download status
+
+- Enforced review write UX on `/wordbooks/[id]`: write form is shown only for owner or users who downloaded the wordbook.
+- For non-downloaded users, detail page now shows rating summary + 안내 문구 and hides the review textarea/button.
+- Market review viewing remains read-only (no write controls).
+- Server-side `/api/wordbooks/[id]/rate` download check remains active.

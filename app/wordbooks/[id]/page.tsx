@@ -18,6 +18,7 @@ import { WordbookStudyTabs } from "@/components/wordbooks/WordbookStudyTabs";
 import { SyncDownloadButton } from "@/components/wordbooks/SyncDownloadButton";
 import { ResumeStudyButton } from "@/components/wordbooks/ResumeStudyButton";
 import { aggregateVersionLogs } from "@/lib/wordbookVersion";
+import { StarRating } from "@/components/wordbooks/StarRating";
 
 function parseId(raw: string): number | null {
   const n = Number(raw);
@@ -131,6 +132,7 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
   const speakLang = wordbook.fromLang.toLowerCase().startsWith("en") ? "en-US" : undefined;
   const freeLimitReached =
     user?.plan === "FREE" && !downloadedAt && !isOwner && downloadsUsed >= 3;
+  const canWriteReview = !!user && (isOwner || !!downloadedAt);
 
   const versionSummary =
     downloadedVersion && wordbook.contentVersion > downloadedVersion
@@ -209,15 +211,23 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
         <div className="rounded-2xl border border-slate-200 bg-white p-4">
           {user ? (
             <>
-              <RateBox
-                wordbookId={id}
-                ratingAvg={wordbook.ratingAvg}
-                ratingCount={wordbook.ratingCount}
-                myRating={myRating}
-                myReview={myReview}
-                disabled={!isOwner && !downloadedAt}
-              />
-              {!isOwner && !downloadedAt ? (
+              {canWriteReview ? (
+                <RateBox
+                  wordbookId={id}
+                  ratingAvg={wordbook.ratingAvg}
+                  ratingCount={wordbook.ratingCount}
+                  myRating={myRating}
+                  myReview={myReview}
+                />
+              ) : (
+                <div className="space-y-2">
+                  <StarRating value={wordbook.ratingAvg} count={wordbook.ratingCount} />
+                  <p className="text-xs text-slate-600">
+                    리뷰는 마켓에서 볼 수 있고, 작성은 다운로드 후 이 페이지에서 가능합니다.
+                  </p>
+                </div>
+              )}
+              {!canWriteReview ? (
                 <p className="mt-2 text-xs text-slate-600">Download first to rate.</p>
               ) : null}
               <div className="mt-3 flex flex-wrap gap-2">
