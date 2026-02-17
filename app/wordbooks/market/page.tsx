@@ -2,6 +2,7 @@
 import { cookies } from "next/headers";
 
 import { DownloadButton } from "@/components/wordbooks/DownloadButton";
+import { BlockOwnerButton } from "@/components/wordbooks/BlockOwnerButton";
 import { MarketRatingReviews } from "@/components/wordbooks/MarketRatingReviews";
 import { EmptyStateCard } from "@/components/ui/EmptyStateCard";
 import { getUserFromRequestCookies } from "@/lib/authServer";
@@ -72,7 +73,7 @@ export default async function MarketPage(props: {
         ratingAvg: true,
         ratingCount: true,
         createdAt: true,
-        owner: { select: { email: true } },
+        owner: { select: { id: true, email: true } },
         _count: { select: { items: true } }
       }
     }),
@@ -261,6 +262,11 @@ export default async function MarketPage(props: {
                       >
                         Login to download
                       </Link>
+                    ) : null}
+                    {user && wb.owner.id !== user.id ? (
+                      <div className="mt-2">
+                        <BlockOwnerButton wordbookId={wb.id} ownerEmail={wb.owner.email} />
+                      </div>
                     ) : null}
                   </div>
                 </div>

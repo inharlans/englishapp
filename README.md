@@ -737,3 +737,9 @@ Additional observations and guardrails:
 - Reduced duplicate actions on `/` for logged-in users.
 - Left area now exposes a single primary CTA (`내 단어장 열기`) when authenticated.
 - Removed duplicated right-panel action buttons for authenticated view.
+
+## 2026-02-17 Market block action placement
+
+- Added creator block action directly in market card action area (`/wordbooks/market`).
+- For logged-in users, `Block Creator` now appears below download/login action so blacklist flow is usable where discovery happens.
+- Hidden for the current user's own wordbooks.
