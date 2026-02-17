@@ -725,3 +725,9 @@ Additional observations and guardrails:
 - Updated wordbook title routing from `/wordbooks`:
   - title click now opens `/wordbooks/[id]` (detail)
   - no longer forces `/wordbooks/[id]/memorize` from title click
+
+## 2026-02-17 Market fixed bottom pagination
+
+- Added fixed bottom pagination bar on `/wordbooks/market` so `Prev/Next` are always reachable while scrolling.
+- Uses the same query state (`q`, `sort`, `page`) as top pagination.
+- Added bottom spacing (`pb-24`) to avoid content overlap with fixed controls.

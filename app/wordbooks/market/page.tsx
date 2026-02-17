@@ -91,9 +91,13 @@ export default async function MarketPage(props: {
 
   const downloadedIds = new Set(myDownloads.map((d) => d.wordbookId));
   const maxPage = Math.max(Math.ceil(total / take) - 1, 0);
+  const prevPage = Math.max(page - 1, 0);
+  const nextPage = Math.min(page + 1, maxPage);
+  const prevDisabled = page <= 0;
+  const nextDisabled = page >= maxPage;
 
   return (
-    <section className="space-y-6">
+    <section className="space-y-6 pb-24">
       <header className="flex flex-wrap items-end gap-3">
         <div>
           <p className="ui-kicker">Wordbooks</p>
@@ -171,19 +175,19 @@ export default async function MarketPage(props: {
         </p>
         <div className="flex items-center gap-2">
           <Link
-            href={{ pathname: "/wordbooks/market", query: { q, sort, page: String(Math.max(page - 1, 0)) } }}
+            href={{ pathname: "/wordbooks/market", query: { q, sort, page: String(prevPage) } }}
             className={[
               "ui-btn-secondary px-3 py-1.5 text-sm",
-              page <= 0 ? "pointer-events-none opacity-50" : ""
+              prevDisabled ? "pointer-events-none opacity-50" : ""
             ].join(" ")}
           >
             Prev
           </Link>
           <Link
-            href={{ pathname: "/wordbooks/market", query: { q, sort, page: String(Math.min(page + 1, maxPage)) } }}
+            href={{ pathname: "/wordbooks/market", query: { q, sort, page: String(nextPage) } }}
             className={[
               "ui-btn-secondary px-3 py-1.5 text-sm",
-              page >= maxPage ? "pointer-events-none opacity-50" : ""
+              nextDisabled ? "pointer-events-none opacity-50" : ""
             ].join(" ")}
           >
             Next
@@ -265,6 +269,34 @@ export default async function MarketPage(props: {
           })}
         </div>
       )}
+
+      <div className="pointer-events-none fixed inset-x-0 bottom-4 z-40">
+        <div className="mx-auto w-full max-w-5xl px-6">
+          <div className="pointer-events-auto ui-card flex items-center justify-between gap-2 p-2">
+            <Link
+              href={{ pathname: "/wordbooks/market", query: { q, sort, page: String(prevPage) } }}
+              className={[
+                "ui-btn-secondary px-4 py-2 text-sm",
+                prevDisabled ? "pointer-events-none opacity-50" : ""
+              ].join(" ")}
+            >
+              Prev
+            </Link>
+            <p className="text-xs font-semibold text-slate-600">
+              {page + 1}/{maxPage + 1}
+            </p>
+            <Link
+              href={{ pathname: "/wordbooks/market", query: { q, sort, page: String(nextPage) } }}
+              className={[
+                "ui-btn-secondary px-4 py-2 text-sm",
+                nextDisabled ? "pointer-events-none opacity-50" : ""
+              ].join(" ")}
+            >
+              Next
+            </Link>
+          </div>
+        </div>
+      </div>
     </section>
   );
 }
