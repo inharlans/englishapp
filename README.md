@@ -636,3 +636,22 @@ Additional observations and guardrails:
 - Goal:
   - Keep top-level quick actions as global navigation.
   - Avoid repeating the same destination buttons in lower sections.
+
+## 2026-02-17 Wordbook quiz SRS update
+
+- Updated quiz interval policy for correct answers:
+  - 1st correct: +1 hour
+  - 2nd correct: +1 day
+  - 3rd correct: +3 days
+  - 4th correct: +7 days
+  - 5th+ correct: +30 days
+- Meaning quiz and word quiz are now scheduled independently in wordbook quiz mode.
+  - Correct streak and next-review timestamps are tracked per mode.
+- Wrong-answer requeue policy added for wordbook quiz:
+  - Wrong item reappears after 10 quiz submissions in the same mode.
+  - If fewer than 10 questions remain in cycle, wrong items are brought back at the tail.
+- Added schema support for mode-specific SRS fields:
+  - `WordbookStudyState.meaningQuestionCount`, `WordbookStudyState.wordQuestionCount`
+  - `WordbookStudyItemState.meaningCorrectStreak`, `meaningNextReviewAt`, `meaningWrongRequeueAt`
+  - `WordbookStudyItemState.wordCorrectStreak`, `wordNextReviewAt`, `wordWrongRequeueAt`
+  - New indexes for mode-specific review/requeue lookups.

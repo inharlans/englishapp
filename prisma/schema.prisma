@@ -199,6 +199,8 @@ model WordbookStudyState {
   studiedCount Int      @default(0)
   correctCount Int      @default(0)
   wrongCount   Int      @default(0)
+  meaningQuestionCount Int @default(0)
+  wordQuestionCount Int    @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -216,6 +218,12 @@ model WordbookStudyItemState {
   itemId     Int
   status     WordbookStudyStatus @default(NEW)
   streak     Int       @default(0)
+  meaningCorrectStreak Int @default(0)
+  meaningNextReviewAt DateTime?
+  meaningWrongRequeueAt Int?
+  wordCorrectStreak Int @default(0)
+  wordNextReviewAt DateTime?
+  wordWrongRequeueAt Int?
   everCorrect Boolean  @default(false)
   everWrong   Boolean  @default(false)
   lastResult LastResult?
@@ -233,6 +241,10 @@ model WordbookStudyItemState {
   @@index([userId, wordbookId, status])
   @@index([userId, wordbookId, everCorrect, everWrong])
   @@index([userId, lastResult, updatedAt])
+  @@index([userId, wordbookId, meaningNextReviewAt])
+  @@index([userId, wordbookId, wordNextReviewAt])
+  @@index([userId, wordbookId, meaningWrongRequeueAt])
+  @@index([userId, wordbookId, wordWrongRequeueAt])
 }
 
 model BlockedOwner {

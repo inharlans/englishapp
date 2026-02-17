@@ -1,10 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 
 import { getUserFromRequestCookies } from "@/lib/authServer";
 import { normalizeEn, normalizeKo } from "@/lib/text";
 import { prisma } from "@/lib/prisma";
 import { checkRateLimit, getClientIpFromHeaders } from "@/lib/rateLimit";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
+import { computeNextReviewAt } from "@/lib/scheduling";
 import { invalidateStudyPartStatsCacheForWordbook } from "@/lib/studyPartStatsCache";
 import { parseJsonWithSchema, zPositiveInt } from "@/lib/validation";
 import { canAccessWordbookForStudy } from "@/lib/wordbookAccess";
@@ -107,16 +108,46 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
 
   const existing = await prisma.wordbookStudyItemState.findUnique({
     where: { userId_wordbookId_itemId: { userId: user.id, wordbookId, itemId: item.id } },
-    select: { streak: true, everCorrect: true, everWrong: true }
+    select: {
+      streak: true,
+      everCorrect: true,
+      everWrong: true,
+      meaningCorrectStreak: true,
+      wordCorrectStreak: true
+    }
   });
+
+  const now = new Date();
+
+  const stateRow = await prisma.wordbookStudyState.upsert({
+    where: { userId_wordbookId: { userId: user.id, wordbookId } },
+    create: {
+      userId: user.id,
+      wordbookId,
+      meaningQuestionCount: mode === "MEANING" ? 1 : 0,
+      wordQuestionCount: mode === "WORD" ? 1 : 0
+    },
+    update: {
+      ...(mode === "MEANING"
+        ? { meaningQuestionCount: { increment: 1 } }
+        : { wordQuestionCount: { increment: 1 } })
+    },
+    select: { meaningQuestionCount: true, wordQuestionCount: true }
+  });
+
+  const questionCountAfter = mode === "MEANING" ? stateRow.meaningQuestionCount : stateRow.wordQuestionCount;
+
+  const meaningCurrentStreak = existing?.meaningCorrectStreak ?? 0;
+  const wordCurrentStreak = existing?.wordCorrectStreak ?? 0;
+  const modeCurrentStreak = mode === "MEANING" ? meaningCurrentStreak : wordCurrentStreak;
+  const modeNextStreak = correct ? modeCurrentStreak + 1 : 0;
+  const modeNextReviewAt = correct ? computeNextReviewAt(now, modeNextStreak) : null;
+  const modeWrongRequeueAt = correct ? null : questionCountAfter + 10;
+
   const streak = correct ? (existing?.streak ?? 0) + 1 : 0;
   const everCorrect = (existing?.everCorrect ?? false) || correct;
   const everWrong = (existing?.everWrong ?? false) || !correct;
-  await prisma.wordbookStudyState.upsert({
-    where: { userId_wordbookId: { userId: user.id, wordbookId } },
-    create: { userId: user.id, wordbookId },
-    update: {}
-  });
+
   await prisma.wordbookStudyItemState.upsert({
     where: { userId_wordbookId_itemId: { userId: user.id, wordbookId, itemId: item.id } },
     create: {
@@ -125,6 +156,12 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
       itemId: item.id,
       status: correct ? "CORRECT" : "WRONG",
       streak,
+      meaningCorrectStreak: mode === "MEANING" ? modeNextStreak : 0,
+      meaningNextReviewAt: mode === "MEANING" ? modeNextReviewAt : null,
+      meaningWrongRequeueAt: mode === "MEANING" ? modeWrongRequeueAt : null,
+      wordCorrectStreak: mode === "WORD" ? modeNextStreak : 0,
+      wordNextReviewAt: mode === "WORD" ? modeNextReviewAt : null,
+      wordWrongRequeueAt: mode === "WORD" ? modeWrongRequeueAt : null,
       everCorrect,
       everWrong,
       lastResult: correct ? "CORRECT" : "WRONG"
@@ -132,11 +169,23 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     update: {
       status: correct ? "CORRECT" : "WRONG",
       streak,
+      ...(mode === "MEANING"
+        ? {
+            meaningCorrectStreak: modeNextStreak,
+            meaningNextReviewAt: modeNextReviewAt,
+            meaningWrongRequeueAt: modeWrongRequeueAt
+          }
+        : {
+            wordCorrectStreak: modeNextStreak,
+            wordNextReviewAt: modeNextReviewAt,
+            wordWrongRequeueAt: modeWrongRequeueAt
+          }),
       everCorrect,
       everWrong,
       lastResult: correct ? "CORRECT" : "WRONG"
     }
   });
+
   invalidateStudyPartStatsCacheForWordbook(user.id, wordbookId);
   await syncWordbookStudyState(user.id, wordbookId);
 

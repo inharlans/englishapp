@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+﻿import { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
 import { getUserFromRequestCookies } from "@/lib/authServer";
@@ -98,6 +98,23 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
   const partEndExclusive = partStart + partSize;
   const partItemCount = Math.max(0, Math.min(partSize, totalItems - partStart));
 
+  const state = await prisma.wordbookStudyState.findUnique({
+    where: { userId_wordbookId: { userId: user.id, wordbookId } },
+    select: { meaningQuestionCount: true, wordQuestionCount: true }
+  });
+  const questionCount = mode === "MEANING" ? (state?.meaningQuestionCount ?? 0) : (state?.wordQuestionCount ?? 0);
+  const now = new Date();
+
+  const dueFilter =
+    mode === "MEANING"
+      ? Prisma.sql`ws."meaningCorrectStreak" > 0 AND ws."meaningNextReviewAt" IS NOT NULL AND ws."meaningNextReviewAt" <= ${now}`
+      : Prisma.sql`ws."wordCorrectStreak" > 0 AND ws."wordNextReviewAt" IS NOT NULL AND ws."wordNextReviewAt" <= ${now}`;
+
+  const wrongReadyFilter =
+    mode === "MEANING"
+      ? Prisma.sql`ws."status" = 'WRONG' AND ws."meaningWrongRequeueAt" IS NOT NULL AND ws."meaningWrongRequeueAt" <= ${questionCount}`
+      : Prisma.sql`ws."status" = 'WRONG' AND ws."wordWrongRequeueAt" IS NOT NULL AND ws."wordWrongRequeueAt" <= ${questionCount}`;
+
   const unseen = await pickRandomItem({
     wordbookId,
     userId: user.id,
@@ -105,7 +122,39 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
     partEndExclusive,
     filterSql: Prisma.sql`ws."itemId" IS NULL`
   });
-  const wrong = unseen
+
+  const due = unseen
+    ? null
+    : await pickRandomItem({
+        wordbookId,
+        userId: user.id,
+        partStart,
+        partEndExclusive,
+        filterSql: dueFilter
+      });
+
+  const wrongReady = unseen || due
+    ? null
+    : await pickRandomItem({
+        wordbookId,
+        userId: user.id,
+        partStart,
+        partEndExclusive,
+        filterSql: wrongReadyFilter
+      });
+
+  const fallbackNonWrong = unseen || due || wrongReady
+    ? null
+    : await pickRandomItem({
+        wordbookId,
+        userId: user.id,
+        partStart,
+        partEndExclusive,
+        filterSql: Prisma.sql`ws."itemId" IS NULL OR ws."status" <> 'WRONG'`
+      });
+
+  // End-of-cycle recovery: if less than 10 remain before requeue, bring wrong items back at quiz tail.
+  const wrongAtEnd = unseen || due || wrongReady || fallbackNonWrong
     ? null
     : await pickRandomItem({
         wordbookId,
@@ -114,19 +163,10 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
         partEndExclusive,
         filterSql: Prisma.sql`ws."status" = 'WRONG'`
       });
-  const fallback = unseen || wrong
-    ? null
-    : await pickRandomItem({
-        wordbookId,
-        userId: user.id,
-        partStart,
-        partEndExclusive,
-        filterSql: Prisma.sql`TRUE`
-      });
 
   return NextResponse.json(
     {
-      item: unseen ?? wrong ?? fallback ?? null,
+      item: unseen ?? due ?? wrongReady ?? fallbackNonWrong ?? wrongAtEnd ?? null,
       mode,
       totalItems,
       partSize,

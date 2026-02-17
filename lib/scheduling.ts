@@ -9,6 +9,10 @@ export function computeNextReviewAt(now: Date, streak: number): Date {
     return next;
   }
   if (streak === 3) {
+    next.setDate(next.getDate() + 3);
+    return next;
+  }
+  if (streak === 4) {
     next.setDate(next.getDate() + 7);
     return next;
   }
