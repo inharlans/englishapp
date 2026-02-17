@@ -40,9 +40,28 @@ type ReportRow = {
   };
 };
 
+type RouteMetricRow = {
+  route: string;
+  total: number;
+  status4xx: number;
+  status5xx: number;
+  avgLatencyMs: number;
+  p95LatencyMs: number;
+};
+
+type ErrorMetricRow = {
+  id: number;
+  level: string;
+  route: string | null;
+  message: string;
+  createdAt: string;
+};
+
 export function AdminUsersClient({ initialUsers }: { initialUsers: UserRow[] }) {
   const [users, setUsers] = useState<UserRow[]>(initialUsers);
   const [reports, setReports] = useState<ReportRow[]>([]);
+  const [routeMetrics, setRouteMetrics] = useState<RouteMetricRow[]>([]);
+  const [recentErrors, setRecentErrors] = useState<ErrorMetricRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -73,6 +92,16 @@ export function AdminUsersClient({ initialUsers }: { initialUsers: UserRow[] }) 
           createdAt: new Date(r.createdAt).toISOString(),
           reviewedAt: r.reviewedAt ? new Date(r.reviewedAt).toISOString() : null
         })));
+      }
+
+      const metricRes = await apiFetch("/api/admin/metrics");
+      const metricJson = (await metricRes.json()) as {
+        routeStats?: RouteMetricRow[];
+        recentErrors?: ErrorMetricRow[];
+      };
+      if (metricRes.ok) {
+        setRouteMetrics(metricJson.routeStats ?? []);
+        setRecentErrors(metricJson.recentErrors ?? []);
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "불러오기에 실패했습니다.");
@@ -239,6 +268,64 @@ export function AdminUsersClient({ initialUsers }: { initialUsers: UserRow[] }) 
             </div>
           ))
         )}
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-sm font-black uppercase tracking-[0.2em] text-slate-700">관측성 (최근 24시간)</h2>
+        <div className="overflow-auto rounded-2xl border border-slate-200 bg-white">
+          <table className="min-w-full text-sm">
+            <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
+              <tr>
+                <th className="px-3 py-2">Route</th>
+                <th className="px-3 py-2">Total</th>
+                <th className="px-3 py-2">4xx</th>
+                <th className="px-3 py-2">5xx</th>
+                <th className="px-3 py-2">Avg(ms)</th>
+                <th className="px-3 py-2">P95(ms)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {routeMetrics.length === 0 ? (
+                <tr>
+                  <td className="px-3 py-3 text-slate-500" colSpan={6}>
+                    수집된 지표가 없습니다.
+                  </td>
+                </tr>
+              ) : (
+                routeMetrics.map((m) => (
+                  <tr key={m.route} className="border-t border-slate-100">
+                    <td className="px-3 py-2 font-mono text-xs text-slate-700">{m.route}</td>
+                    <td className="px-3 py-2">{m.total}</td>
+                    <td className="px-3 py-2">{m.status4xx}</td>
+                    <td className="px-3 py-2">{m.status5xx}</td>
+                    <td className="px-3 py-2">{m.avgLatencyMs}</td>
+                    <td className="px-3 py-2">{m.p95LatencyMs}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="space-y-2">
+          <h3 className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">최근 오류 이벤트</h3>
+          {recentErrors.length === 0 ? (
+            <p className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-500">
+              오류 이벤트가 없습니다.
+            </p>
+          ) : (
+            recentErrors.slice(0, 20).map((e) => (
+              <div key={e.id} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm">
+                <p className="font-semibold text-slate-800">
+                  [{e.level}] {e.message}
+                </p>
+                <p className="mt-1 text-xs text-slate-500">
+                  {e.route ?? "n/a"} · {e.createdAt.slice(0, 19).replace("T", " ")}
+                </p>
+              </div>
+            ))
+          )}
+        </div>
       </section>
     </section>
   );

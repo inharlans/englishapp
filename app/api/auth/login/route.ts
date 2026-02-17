@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { checkRateLimit, getClientIpFromHeaders } from "@/lib/rateLimit";
 import { getSessionCookieName, issueSessionToken } from "@/lib/authJwt";
 import { getCsrfCookieName, issueCsrfToken } from "@/lib/csrf";
+import { captureAppError, recordApiMetric } from "@/lib/observability";
 import { verifyPassword } from "@/lib/password";
 import { parseJsonWithSchema } from "@/lib/validation";
 import { z } from "zod";
@@ -14,6 +15,7 @@ const loginSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  const startedAt = Date.now();
   const ip = getClientIpFromHeaders(req.headers);
   const limit = await checkRateLimit({
     key: `authLogin:${ip}`,
@@ -21,10 +23,17 @@ export async function POST(req: NextRequest) {
     windowMs: 60_000
   });
   if (!limit.ok) {
-    return NextResponse.json(
+    const res = NextResponse.json(
       { error: "Too many requests." },
       { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } }
     );
+    await recordApiMetric({
+      route: "/api/auth/login",
+      method: "POST",
+      status: 429,
+      latencyMs: Date.now() - startedAt
+    });
+    return res;
   }
 
   try {
@@ -38,12 +47,26 @@ export async function POST(req: NextRequest) {
       select: { id: true, email: true, passwordHash: true }
     });
     if (!user) {
-      return NextResponse.json({ error: "Invalid credentials." }, { status: 401 });
+      const res = NextResponse.json({ error: "Invalid credentials." }, { status: 401 });
+      await recordApiMetric({
+        route: "/api/auth/login",
+        method: "POST",
+        status: 401,
+        latencyMs: Date.now() - startedAt
+      });
+      return res;
     }
 
     const ok = await verifyPassword(password, user.passwordHash);
     if (!ok) {
-      return NextResponse.json({ error: "Invalid credentials." }, { status: 401 });
+      const res = NextResponse.json({ error: "Invalid credentials." }, { status: 401 });
+      await recordApiMetric({
+        route: "/api/auth/login",
+        method: "POST",
+        status: 401,
+        latencyMs: Date.now() - startedAt
+      });
+      return res;
     }
 
     const token = await issueSessionToken({
@@ -68,11 +91,31 @@ export async function POST(req: NextRequest) {
       path: "/",
       maxAge: 60 * 60 * 24 * 30
     });
+    await recordApiMetric({
+      route: "/api/auth/login",
+      method: "POST",
+      status: 200,
+      latencyMs: Date.now() - startedAt,
+      userId: user.id
+    });
     return res;
   } catch (error) {
-    return NextResponse.json(
+    await captureAppError({
+      route: "/api/auth/login",
+      message: "auth_login_failed",
+      stack: error instanceof Error ? error.stack : undefined,
+      context: { err: error instanceof Error ? error.message : String(error) }
+    });
+    const res = NextResponse.json(
       { error: error instanceof Error ? error.message : "Login failed." },
       { status: 400 }
     );
+    await recordApiMetric({
+      route: "/api/auth/login",
+      method: "POST",
+      status: 400,
+      latencyMs: Date.now() - startedAt
+    });
+    return res;
   }
 }

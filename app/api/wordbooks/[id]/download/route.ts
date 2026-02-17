@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { getUserFromRequestCookies } from "@/lib/authServer";
 import { FREE_DOWNLOAD_WORD_LIMIT } from "@/lib/planLimits";
+import { recordApiMetric } from "@/lib/observability";
 import { prisma } from "@/lib/prisma";
 import { checkRateLimit, getClientIpFromHeaders } from "@/lib/rateLimit";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
@@ -20,6 +21,7 @@ function isPro(user: { plan: "FREE" | "PRO"; proUntil: Date | null }): boolean {
 }
 
 export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
+  const startedAt = Date.now();
   const badReq = assertTrustedMutationRequest(req);
   if (badReq) return badReq;
 
@@ -30,21 +32,42 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     windowMs: 60_000
   });
   if (!limit.ok) {
-    return NextResponse.json(
+    const res = NextResponse.json(
       { error: "Too many requests." },
       { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } }
     );
+    await recordApiMetric({
+      route: "/api/wordbooks/[id]/download",
+      method: "POST",
+      status: 429,
+      latencyMs: Date.now() - startedAt
+    });
+    return res;
   }
 
   const { id: idRaw } = await ctx.params;
   const id = parseId(idRaw);
   if (!id) {
-    return NextResponse.json({ error: "Invalid id." }, { status: 400 });
+    const res = NextResponse.json({ error: "Invalid id." }, { status: 400 });
+    await recordApiMetric({
+      route: "/api/wordbooks/[id]/download",
+      method: "POST",
+      status: 400,
+      latencyMs: Date.now() - startedAt
+    });
+    return res;
   }
 
   const user = await getUserFromRequestCookies(req.cookies);
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+    const res = NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+    await recordApiMetric({
+      route: "/api/wordbooks/[id]/download",
+      method: "POST",
+      status: 401,
+      latencyMs: Date.now() - startedAt
+    });
+    return res;
   }
 
   const result = await prisma.$transaction(async (tx) => {
@@ -134,10 +157,18 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   });
 
   if (!result.ok) {
-    return NextResponse.json({ error: result.error }, { status: result.status });
+    const res = NextResponse.json({ error: result.error }, { status: result.status });
+    await recordApiMetric({
+      route: "/api/wordbooks/[id]/download",
+      method: "POST",
+      status: result.status,
+      latencyMs: Date.now() - startedAt,
+      userId: user.id
+    });
+    return res;
   }
 
-  return NextResponse.json(
+  const res = NextResponse.json(
     {
       ok: true,
       already: result.already,
@@ -147,4 +178,12 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     },
     { status: 200 }
   );
+  await recordApiMetric({
+    route: "/api/wordbooks/[id]/download",
+    method: "POST",
+    status: 200,
+    latencyMs: Date.now() - startedAt,
+    userId: user.id
+  });
+  return res;
 }

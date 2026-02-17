@@ -17,6 +17,7 @@ function isPublicPath(pathname: string): boolean {
   if (pathname === "/login") return true;
   if (pathname === "/preview-access") return true;
   if (pathname.startsWith("/api/auth/")) return true;
+  if (pathname === "/api/payments/webhook") return true;
   if (pathname === "/api/wordbooks/market") return true;
   if (/^\/api\/wordbooks\/\d+\/reviews$/.test(pathname)) return true;
   if (pathname.startsWith("/api/internal/cron/")) return true;

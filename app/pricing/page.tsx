@@ -1,13 +1,16 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
 
+import { PricingActions } from "@/components/payments/PricingActions";
 import { getUserFromRequestCookies } from "@/lib/authServer";
 import { FREE_DOWNLOAD_WORD_LIMIT, getUserDownloadedWordCount } from "@/lib/planLimits";
 
-export default async function PricingPage() {
+export default async function PricingPage(props: { searchParams: Promise<{ payment?: string }> }) {
+  const sp = await props.searchParams;
   const user = await getUserFromRequestCookies(await cookies());
 
   const downloadWordsUsed = user ? await getUserDownloadedWordCount(user.id) : null;
+  const paymentEnabled = Boolean(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_PRICE_MONTHLY && process.env.STRIPE_PRICE_YEARLY);
 
   return (
     <section className="space-y-6">
@@ -52,6 +55,18 @@ export default async function PricingPage() {
         </ul>
       </div>
 
+      {sp.payment === "success" ? (
+        <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
+          결제가 완료되었습니다. 웹훅 처리 후 요금제가 자동 반영됩니다.
+        </div>
+      ) : null}
+
+      {sp.payment === "cancel" ? (
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700">
+          결제가 취소되었습니다.
+        </div>
+      ) : null}
+
       <div className="grid gap-4 md:grid-cols-2">
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_20px_50px_-30px_rgba(15,23,42,0.25)]">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">무료</p>
@@ -79,8 +94,9 @@ export default async function PricingPage() {
             <li>업로드: 공개/비공개 선택 가능</li>
             <li>오프라인 중심 학습 흐름</li>
           </ul>
+          <PricingActions plan={user?.plan ?? null} paymentEnabled={paymentEnabled} />
           <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700">
-            결제는 아직 연동되지 않았습니다. 현재는 관리자가 <code className="rounded bg-slate-100 px-1.5 py-0.5">/admin</code> 에서 계정을 업그레이드할 수 있습니다.
+            결제 및 구독 상태는 Stripe 웹훅으로 자동 반영됩니다. 문제가 있으면 관리자에게 문의하세요.
           </div>
         </div>
       </div>
