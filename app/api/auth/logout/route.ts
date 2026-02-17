@@ -2,26 +2,58 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { getSessionCookieName } from "@/lib/authJwt";
 import { getCsrfCookieName } from "@/lib/csrf";
+import { captureAppError, recordApiMetricFromStart } from "@/lib/observability";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
 
 export async function POST(req: NextRequest) {
+  const startedAt = Date.now();
   const badReq = assertTrustedMutationRequest(req);
-  if (badReq) return badReq;
+  if (badReq) {
+    await recordApiMetricFromStart({
+      route: "/api/auth/logout",
+      method: "POST",
+      status: badReq.status,
+      startedAt
+    });
+    return badReq;
+  }
 
-  const res = NextResponse.json({ ok: true });
-  res.cookies.set(getSessionCookieName(), "", {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: 0
-  });
-  res.cookies.set(getCsrfCookieName(), "", {
-    httpOnly: false,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: 0
-  });
-  return res;
+  try {
+    const res = NextResponse.json({ ok: true });
+    res.cookies.set(getSessionCookieName(), "", {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: 0
+    });
+    res.cookies.set(getCsrfCookieName(), "", {
+      httpOnly: false,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: 0
+    });
+    await recordApiMetricFromStart({
+      route: "/api/auth/logout",
+      method: "POST",
+      status: 200,
+      startedAt
+    });
+    return res;
+  } catch (error) {
+    await captureAppError({
+      route: "/api/auth/logout",
+      message: "auth_logout_failed",
+      stack: error instanceof Error ? error.stack : undefined,
+      context: { err: error instanceof Error ? error.message : String(error) }
+    });
+    await recordApiMetricFromStart({
+      route: "/api/auth/logout",
+      method: "POST",
+      status: 500,
+      startedAt
+    });
+    return NextResponse.json({ error: "Logout failed." }, { status: 500 });
+  }
 }

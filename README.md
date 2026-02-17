@@ -235,9 +235,9 @@ npm run start:railway:seed
 
 아래 3개가 현재 기준 단일 TODO이며, 이 외 섹션은 이력/기록용입니다.
 
-- [ ] 결제 연동(월/연 구독) + 자동 플랜 활성화/만료 처리
-- [ ] OAuth 로그인(구글/네이버/카카오) + 계정 연결
-- [ ] 관측성 스택 추가(구조화 로그, 에러 추적, 라우트별 4xx/5xx/지연 대시보드)
+- [x] 결제 연동(월/연 구독) + 자동 플랜 활성화/만료 처리
+- [x] OAuth 로그인(구글/네이버/카카오) + 계정 연결
+- [x] 관측성 스택 추가(구조화 로그, 에러 추적, 라우트별 4xx/5xx/지연 대시보드)
 
 ## Bootstrap + Login 예시
 
@@ -721,4 +721,31 @@ Additional observations and guardrails:
   - logged-in: `Logout` only
   - logged-out: `Login` only
 - Fixed mojibake text on `/wordbooks/[id]` version section:
+
+## 2026-02-17 Production ops completion (Stripe/Webhook/Cron/Observability)
+
+- Stripe 운영 경로를 완료했습니다.
+  - Checkout: `POST /api/payments/checkout`
+  - Billing portal: `POST /api/payments/portal`
+  - Webhook: `POST /api/payments/webhook`
+- OAuth(구글/네이버/카카오) 시작/콜백 흐름에 라우트별 요청 지표(상태코드, 지연시간) 기록을 추가했습니다.
+- 주요 인증/결제/크론 라우트에 공통 관측성 계측을 확장했습니다.
+  - `recordApiMetricFromStart` 기반으로 `4xx/5xx/latency` 집계
+  - 실패 시 `captureAppError` 기록
+- 내부 크론 자동 실행을 위해 GitHub Actions 스케줄 워크플로를 추가했습니다.
+  - `.github/workflows/cron-jobs.yml`
+  - 30분마다 `plan-expire`, `wordbook-rank` 호출
+  - 필요 시 수동 실행(`workflow_dispatch`) 가능
+
+운영 필수 시크릿/환경변수
+- 앱 런타임:
+  - `STRIPE_SECRET_KEY`
+  - `STRIPE_WEBHOOK_SECRET`
+  - `STRIPE_PRICE_MONTHLY`
+  - `STRIPE_PRICE_YEARLY`
+  - `STRIPE_PORTAL_RETURN_URL`
+  - `CRON_SECRET`
+- GitHub Actions (`cron-jobs.yml`):
+  - `APP_BASE_URL` (예: `https://www.oingapp.com`)
+  - `CRON_SECRET` (앱과 동일 값)
 

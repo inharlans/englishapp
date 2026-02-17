@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPublicOrigin } from "@/lib/publicOrigin";
+import { recordApiMetricFromStart } from "@/lib/observability";
 
 const OAUTH_STATE_COOKIE = "oauth_google_state";
 const OAUTH_NEXT_COOKIE = "oauth_google_next";
@@ -26,9 +27,17 @@ function safeNextPath(raw: string | null): string {
 }
 
 export async function GET(req: NextRequest) {
+  const startedAt = Date.now();
   const config = getGoogleConfig(req);
   if (!config) {
-    return NextResponse.redirect(new URL("/login?error=google_not_configured", getPublicOrigin(req)));
+    const res = NextResponse.redirect(new URL("/login?error=google_not_configured", getPublicOrigin(req)));
+    await recordApiMetricFromStart({
+      route: "/api/auth/google",
+      method: "GET",
+      status: 307,
+      startedAt
+    });
+    return res;
   }
 
   const state = randomHex(24);
@@ -56,6 +65,12 @@ export async function GET(req: NextRequest) {
     secure: process.env.NODE_ENV === "production",
     path: "/",
     maxAge: 60 * 10
+  });
+  await recordApiMetricFromStart({
+    route: "/api/auth/google",
+    method: "GET",
+    status: 307,
+    startedAt
   });
   return res;
 }

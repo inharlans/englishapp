@@ -1,0 +1,27 @@
+name: Scheduled Internal Cron Jobs
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+jobs:
+  run-cron-jobs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate secrets
+        run: |
+          test -n "${{ secrets.APP_BASE_URL }}"
+          test -n "${{ secrets.CRON_SECRET }}"
+      - name: Run plan-expire cron
+        run: |
+          curl --fail --show-error --silent \
+            -X POST "${{ secrets.APP_BASE_URL }}/api/internal/cron/plan-expire" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json"
+      - name: Run wordbook-rank cron
+        run: |
+          curl --fail --show-error --silent \
+            -X POST "${{ secrets.APP_BASE_URL }}/api/internal/cron/wordbook-rank" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json"

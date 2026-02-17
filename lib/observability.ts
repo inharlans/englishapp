@@ -61,3 +61,19 @@ export async function captureAppError(input: {
     });
   }
 }
+
+export async function recordApiMetricFromStart(input: {
+  route: string;
+  method: string;
+  startedAt: number;
+  status: number;
+  userId?: number | null;
+}) {
+  await recordApiMetric({
+    route: input.route,
+    method: input.method,
+    status: input.status,
+    latencyMs: Date.now() - input.startedAt,
+    userId: input.userId ?? null
+  });
+}

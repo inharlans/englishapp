@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { getSessionCookieName, issueSessionToken } from "@/lib/authJwt";
 import { getCsrfCookieName, issueCsrfToken } from "@/lib/csrf";
+import { captureAppError, recordApiMetricFromStart } from "@/lib/observability";
 import { resolveOrLinkOAuthUser } from "@/lib/oauthAccounts";
 import { getPublicOrigin } from "@/lib/publicOrigin";
 
@@ -45,8 +46,20 @@ type KakaoProfile = {
 };
 
 export async function GET(req: NextRequest) {
+  const startedAt = Date.now();
+  const redirectWithMetric = async (code: string) => {
+    const res = redirectWithError(req, code);
+    await recordApiMetricFromStart({
+      route: "/api/auth/kakao/callback",
+      method: "GET",
+      status: 307,
+      startedAt
+    });
+    return res;
+  };
+
   const config = getKakaoConfig(req);
-  if (!config) return redirectWithError(req, "kakao_not_configured");
+  if (!config) return redirectWithMetric("kakao_not_configured");
 
   const code = req.nextUrl.searchParams.get("code");
   const state = req.nextUrl.searchParams.get("state");
@@ -54,7 +67,7 @@ export async function GET(req: NextRequest) {
   const nextPath = safeNextPath(req.cookies.get(OAUTH_NEXT_COOKIE)?.value);
 
   if (!code || !state || !stateCookie || state !== stateCookie) {
-    return redirectWithError(req, "kakao_state_mismatch");
+    return redirectWithMetric("kakao_state_mismatch");
   }
 
   try {
@@ -71,16 +84,16 @@ export async function GET(req: NextRequest) {
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: tokenBody
     });
-    if (!tokenRes.ok) return redirectWithError(req, "kakao_token_exchange_failed");
+    if (!tokenRes.ok) return redirectWithMetric("kakao_token_exchange_failed");
 
     const tokenJson = (await tokenRes.json()) as { access_token?: string };
     const accessToken = tokenJson.access_token;
-    if (!accessToken) return redirectWithError(req, "kakao_token_missing");
+    if (!accessToken) return redirectWithMetric("kakao_token_missing");
 
     const profileRes = await fetchWithTimeout("https://kapi.kakao.com/v2/user/me", {
       headers: { Authorization: `Bearer ${accessToken}` }
     });
-    if (!profileRes.ok) return redirectWithError(req, "kakao_profile_fetch_failed");
+    if (!profileRes.ok) return redirectWithMetric("kakao_profile_fetch_failed");
     const profile = (await profileRes.json()) as KakaoProfile;
 
     const providerUserId = String(profile.id ?? "").trim();
@@ -98,7 +111,7 @@ export async function GET(req: NextRequest) {
       email,
       cookies: req.cookies
     });
-    if (!resolved.ok) return redirectWithError(req, resolved.errorCode);
+    if (!resolved.ok) return redirectWithMetric(resolved.errorCode);
 
     const sessionToken = await issueSessionToken({
       userId: resolved.user.id,
@@ -136,8 +149,21 @@ export async function GET(req: NextRequest) {
       path: "/",
       maxAge: 0
     });
+    await recordApiMetricFromStart({
+      route: "/api/auth/kakao/callback",
+      method: "GET",
+      status: 307,
+      startedAt,
+      userId: resolved.user.id
+    });
     return res;
-  } catch {
-    return redirectWithError(req, "kakao_callback_failed");
+  } catch (error) {
+    await captureAppError({
+      route: "/api/auth/kakao/callback",
+      message: "kakao_callback_failed",
+      stack: error instanceof Error ? error.stack : undefined,
+      context: { err: error instanceof Error ? error.message : String(error) }
+    });
+    return redirectWithMetric("kakao_callback_failed");
   }
 }

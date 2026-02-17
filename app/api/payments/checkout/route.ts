@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { getUserFromRequestCookies } from "@/lib/authServer";
-import { captureAppError, recordApiMetric } from "@/lib/observability";
+import { captureAppError, recordApiMetricFromStart } from "@/lib/observability";
 import { getPriceId, getStripe, normalizeCycle } from "@/lib/payments";
 import { prisma } from "@/lib/prisma";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
@@ -15,32 +15,78 @@ const checkoutSchema = z.object({
 export async function POST(req: NextRequest) {
   const startedAt = Date.now();
   const badReq = assertTrustedMutationRequest(req);
-  if (badReq) return badReq;
+  if (badReq) {
+    await recordApiMetricFromStart({
+      route: "/api/payments/checkout",
+      method: "POST",
+      status: badReq.status,
+      startedAt
+    });
+    return badReq;
+  }
 
   const user = await getUserFromRequestCookies(req.cookies);
-  if (!user) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  if (!user) {
+    const res = NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+    await recordApiMetricFromStart({
+      route: "/api/payments/checkout",
+      method: "POST",
+      status: 401,
+      startedAt
+    });
+    return res;
+  }
 
   try {
     const stripe = getStripe();
     if (!stripe) {
       const res = NextResponse.json({ error: "결제 설정이 아직 완료되지 않았습니다." }, { status: 503 });
-      await recordApiMetric({
+      await recordApiMetricFromStart({
         route: "/api/payments/checkout",
         method: "POST",
         status: 503,
-        latencyMs: Date.now() - startedAt,
+        startedAt,
         userId: user.id
       });
       return res;
     }
 
     const parsed = await parseJsonWithSchema(req, checkoutSchema);
-    if (!parsed.ok) return parsed.response;
+    if (!parsed.ok) {
+      await recordApiMetricFromStart({
+        route: "/api/payments/checkout",
+        method: "POST",
+        status: parsed.response.status,
+        startedAt,
+        userId: user.id
+      });
+      return parsed.response;
+    }
+
     const cycle = normalizeCycle(parsed.data.cycle);
-    if (!cycle) return NextResponse.json({ error: "Invalid cycle." }, { status: 400 });
+    if (!cycle) {
+      const res = NextResponse.json({ error: "Invalid cycle." }, { status: 400 });
+      await recordApiMetricFromStart({
+        route: "/api/payments/checkout",
+        method: "POST",
+        status: 400,
+        startedAt,
+        userId: user.id
+      });
+      return res;
+    }
+
     const priceId = getPriceId(cycle);
     if (!priceId) {
-      return NextResponse.json({ error: "선택한 요금제 가격 설정이 누락되었습니다." }, { status: 503 });
+      const res = NextResponse.json({ error: "선택한 요금제 가격 설정이 누락되었습니다." }, { status: 503 });
+      await recordApiMetricFromStart({
+        route: "/api/payments/checkout",
+        method: "POST",
+        status: 503,
+        startedAt,
+        userId: user.id
+      });
+      return res;
     }
 
     const successUrl = `${req.nextUrl.origin}/pricing?payment=success`;
@@ -79,11 +125,11 @@ export async function POST(req: NextRequest) {
     });
 
     const res = NextResponse.json({ url: session.url }, { status: 200 });
-    await recordApiMetric({
+    await recordApiMetricFromStart({
       route: "/api/payments/checkout",
       method: "POST",
       status: 200,
-      latencyMs: Date.now() - startedAt,
+      startedAt,
       userId: user.id
     });
     return res;
@@ -96,11 +142,11 @@ export async function POST(req: NextRequest) {
       context: { err: error instanceof Error ? error.message : String(error) },
       userId: user.id
     });
-    await recordApiMetric({
+    await recordApiMetricFromStart({
       route: "/api/payments/checkout",
       method: "POST",
       status: 500,
-      latencyMs: Date.now() - startedAt,
+      startedAt,
       userId: user.id
     });
     return NextResponse.json({ error: "결제 세션 생성에 실패했습니다." }, { status: 500 });

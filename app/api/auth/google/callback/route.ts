@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { getSessionCookieName, issueSessionToken } from "@/lib/authJwt";
 import { getCsrfCookieName, issueCsrfToken } from "@/lib/csrf";
+import { captureAppError, recordApiMetricFromStart } from "@/lib/observability";
 import { resolveOrLinkOAuthUser } from "@/lib/oauthAccounts";
 import { getPublicOrigin } from "@/lib/publicOrigin";
 
@@ -42,8 +43,20 @@ type GoogleUserInfo = {
 };
 
 export async function GET(req: NextRequest) {
+  const startedAt = Date.now();
+  const redirectWithMetric = async (code: string) => {
+    const res = redirectWithError(req, code);
+    await recordApiMetricFromStart({
+      route: "/api/auth/google/callback",
+      method: "GET",
+      status: 307,
+      startedAt
+    });
+    return res;
+  };
+
   const config = getGoogleConfig(req);
-  if (!config) return redirectWithError(req, "google_not_configured");
+  if (!config) return redirectWithMetric("google_not_configured");
 
   const code = req.nextUrl.searchParams.get("code");
   const state = req.nextUrl.searchParams.get("state");
@@ -51,7 +64,7 @@ export async function GET(req: NextRequest) {
   const nextPath = safeNextPath(req.cookies.get(OAUTH_NEXT_COOKIE)?.value);
 
   if (!code || !state || !stateCookie || state !== stateCookie) {
-    return redirectWithError(req, "google_state_mismatch");
+    return redirectWithMetric("google_state_mismatch");
   }
 
   try {
@@ -66,21 +79,21 @@ export async function GET(req: NextRequest) {
         grant_type: "authorization_code"
       })
     });
-    if (!tokenRes.ok) return redirectWithError(req, "google_token_exchange_failed");
+    if (!tokenRes.ok) return redirectWithMetric("google_token_exchange_failed");
 
     const tokenJson = (await tokenRes.json()) as { access_token?: string };
     const accessToken = tokenJson.access_token;
-    if (!accessToken) return redirectWithError(req, "google_token_missing");
+    if (!accessToken) return redirectWithMetric("google_token_missing");
 
     const profileRes = await fetchWithTimeout("https://openidconnect.googleapis.com/v1/userinfo", {
       headers: { Authorization: `Bearer ${accessToken}` }
     });
-    if (!profileRes.ok) return redirectWithError(req, "google_profile_fetch_failed");
+    if (!profileRes.ok) return redirectWithMetric("google_profile_fetch_failed");
 
     const profile = (await profileRes.json()) as GoogleUserInfo;
     const email = (profile.email ?? "").trim().toLowerCase();
     if (!email || profile.email_verified !== true) {
-      return redirectWithError(req, "google_email_not_verified");
+      return redirectWithMetric("google_email_not_verified");
     }
 
     const providerUserId = (profile.sub ?? "").trim();
@@ -90,7 +103,7 @@ export async function GET(req: NextRequest) {
       email,
       cookies: req.cookies
     });
-    if (!resolved.ok) return redirectWithError(req, resolved.errorCode);
+    if (!resolved.ok) return redirectWithMetric(resolved.errorCode);
     const user = resolved.user;
 
     const sessionToken = await issueSessionToken({
@@ -129,8 +142,21 @@ export async function GET(req: NextRequest) {
       path: "/",
       maxAge: 0
     });
+    await recordApiMetricFromStart({
+      route: "/api/auth/google/callback",
+      method: "GET",
+      status: 307,
+      startedAt,
+      userId: user.id
+    });
     return res;
-  } catch {
-    return redirectWithError(req, "google_callback_failed");
+  } catch (error) {
+    await captureAppError({
+      route: "/api/auth/google/callback",
+      message: "google_callback_failed",
+      stack: error instanceof Error ? error.stack : undefined,
+      context: { err: error instanceof Error ? error.message : String(error) }
+    });
+    return redirectWithMetric("google_callback_failed");
   }
 }

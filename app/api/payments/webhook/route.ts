@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { captureAppError, recordApiMetricFromStart } from "@/lib/observability";
 import { addDays, BillingCycle, getCycleDays, getStripe, normalizeCycle } from "@/lib/payments";
 import { prisma } from "@/lib/prisma";
 import Stripe from "stripe";
@@ -32,24 +33,55 @@ async function markPro(userId: number, cycle: BillingCycle | null, subId?: strin
 }
 
 export async function POST(req: NextRequest) {
+  const startedAt = Date.now();
   const stripe = getStripe();
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET?.trim() ?? "";
   if (!stripe || !webhookSecret) {
-    return NextResponse.json({ error: "Stripe webhook not configured." }, { status: 503 });
+    const res = NextResponse.json({ error: "Stripe webhook not configured." }, { status: 503 });
+    await recordApiMetricFromStart({
+      route: "/api/payments/webhook",
+      method: "POST",
+      status: 503,
+      startedAt
+    });
+    return res;
   }
 
   const signature = req.headers.get("stripe-signature");
-  if (!signature) return NextResponse.json({ error: "Missing stripe signature." }, { status: 400 });
+  if (!signature) {
+    const res = NextResponse.json({ error: "Missing stripe signature." }, { status: 400 });
+    await recordApiMetricFromStart({
+      route: "/api/payments/webhook",
+      method: "POST",
+      status: 400,
+      startedAt
+    });
+    return res;
+  }
 
   const body = await req.text();
   let event: Stripe.Event;
   try {
     event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
   } catch (error) {
-    return NextResponse.json(
+    await captureAppError({
+      route: "/api/payments/webhook",
+      message: "stripe_webhook_invalid_signature",
+      context: {
+        err: error instanceof Error ? error.message : String(error)
+      }
+    });
+    const res = NextResponse.json(
       { error: `Invalid webhook signature: ${error instanceof Error ? error.message : "unknown"}` },
       { status: 400 }
     );
+    await recordApiMetricFromStart({
+      route: "/api/payments/webhook",
+      method: "POST",
+      status: 400,
+      startedAt
+    });
+    return res;
   }
 
   const existing = await prisma.paymentEvent.findUnique({
@@ -57,7 +89,14 @@ export async function POST(req: NextRequest) {
     select: { id: true }
   });
   if (existing) {
-    return NextResponse.json({ ok: true, duplicate: true }, { status: 200 });
+    const res = NextResponse.json({ ok: true, duplicate: true }, { status: 200 });
+    await recordApiMetricFromStart({
+      route: "/api/payments/webhook",
+      method: "POST",
+      status: 200,
+      startedAt
+    });
+    return res;
   }
 
   let userId: number | null = null;
@@ -93,8 +132,7 @@ export async function POST(req: NextRequest) {
       const invoice = event.data.object as Stripe.Invoice;
       const customerId = typeof invoice.customer === "string" ? invoice.customer : null;
       const subscriptionId = typeof invoice.subscription === "string" ? invoice.subscription : null;
-      const linePriceId =
-        invoice.lines.data[0]?.price?.id ?? null;
+      const linePriceId = invoice.lines.data[0]?.price?.id ?? null;
       const cycle = inferCycleFromPriceId(linePriceId);
       amount = invoice.amount_paid ?? null;
       currency = invoice.currency ?? null;
@@ -126,7 +164,7 @@ export async function POST(req: NextRequest) {
             { stripeSubscriptionId: subscriptionId }
           ]
         },
-        select: { id: true, proUntil: true }
+        select: { id: true }
       });
       userId = u?.id ?? null;
       if (userId) {
@@ -197,22 +235,52 @@ export async function POST(req: NextRequest) {
       }
     });
 
-    return NextResponse.json({ ok: true, status }, { status: 200 });
+    const res = NextResponse.json({ ok: true, status }, { status: 200 });
+    await recordApiMetricFromStart({
+      route: "/api/payments/webhook",
+      method: "POST",
+      status: 200,
+      startedAt,
+      userId
+    });
+    return res;
   } catch (error) {
-    await prisma.paymentEvent.create({
-      data: {
-        userId,
-        provider: "stripe",
-        providerEventId: event.id,
+    await captureAppError({
+      route: "/api/payments/webhook",
+      message: "stripe_webhook_processing_failed",
+      stack: error instanceof Error ? error.stack : undefined,
+      context: {
+        eventId: event.id,
         eventType: event.type,
-        status: "error",
-        amount,
-        currency,
-        rawJson: {
-          event,
-          error: error instanceof Error ? error.message : String(error)
-        } as object
-      }
+        err: error instanceof Error ? error.message : String(error)
+      },
+      userId
+    });
+    try {
+      await prisma.paymentEvent.create({
+        data: {
+          userId,
+          provider: "stripe",
+          providerEventId: event.id,
+          eventType: event.type,
+          status: "error",
+          amount,
+          currency,
+          rawJson: {
+            event,
+            error: error instanceof Error ? error.message : String(error)
+          } as object
+        }
+      });
+    } catch {
+      // Best-effort only: primary error is already captured.
+    }
+    await recordApiMetricFromStart({
+      route: "/api/payments/webhook",
+      method: "POST",
+      status: 500,
+      startedAt,
+      userId
     });
     return NextResponse.json({ error: "Webhook processing failed." }, { status: 500 });
   }

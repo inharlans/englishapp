@@ -62,3 +62,37 @@ curl -X POST "https://<your-domain>/api/internal/cron/wordbook-rank" \
   -H "Authorization: Bearer $CRON_SECRET"
 ```
 
+## 6) Stripe 웹훅 연결
+
+Stripe Dashboard 또는 Stripe CLI에서 아래 엔드포인트를 등록합니다.
+
+- Endpoint: `https://<your-domain>/api/payments/webhook`
+- Secret: 발급된 signing secret 값을 `STRIPE_WEBHOOK_SECRET`에 저장
+- 권장 이벤트:
+  - `checkout.session.completed`
+  - `invoice.payment_succeeded`
+  - `customer.subscription.updated`
+  - `customer.subscription.deleted`
+
+필수 Stripe 환경변수:
+
+- `STRIPE_SECRET_KEY`
+- `STRIPE_WEBHOOK_SECRET`
+- `STRIPE_PRICE_MONTHLY`
+- `STRIPE_PRICE_YEARLY`
+- `STRIPE_PORTAL_RETURN_URL`
+
+## 7) 스케줄러 연결 (GitHub Actions)
+
+레포에 `.github/workflows/cron-jobs.yml`가 포함되어 있으며 30분마다 내부 크론 API를 호출합니다.
+
+필수 GitHub repository secrets:
+
+- `APP_BASE_URL` 예: `https://www.oingapp.com`
+- `CRON_SECRET` 앱의 `CRON_SECRET`과 동일 값
+
+수동 점검:
+
+1. GitHub Actions에서 `Scheduled Internal Cron Jobs`를 수동 실행(`Run workflow`)
+2. 성공 로그 확인
+3. `/api/admin/metrics`에서 `/api/internal/cron/*` route 지표 증가 확인
