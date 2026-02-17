@@ -39,6 +39,12 @@ export default async function PricingPage(props: { searchParams: Promise<{ payme
           )}
         </div>
         <div className="ml-auto flex flex-wrap gap-2">
+          <Link href={{ pathname: "/privacy" }} className="ui-btn-secondary px-4 py-2 text-sm">
+            개인정보처리방침
+          </Link>
+          <Link href={{ pathname: "/terms" }} className="ui-btn-secondary px-4 py-2 text-sm">
+            서비스 약관
+          </Link>
           <Link href={{ pathname: "/wordbooks" }} className="ui-btn-secondary px-4 py-2 text-sm">
             내 단어장
           </Link>
