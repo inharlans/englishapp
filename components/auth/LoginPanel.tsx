@@ -97,6 +97,26 @@ export function LoginPanel({
           구글로 로그인
         </button>
 
+        <button
+          type="button"
+          onClick={() =>
+            window.location.assign(`/api/auth/naver?next=${encodeURIComponent(nextPath)}`)
+          }
+          className="ui-btn-secondary w-full px-4 py-2.5 text-sm"
+        >
+          네이버로 로그인
+        </button>
+
+        <button
+          type="button"
+          onClick={() =>
+            window.location.assign(`/api/auth/kakao?next=${encodeURIComponent(nextPath)}`)
+          }
+          className="ui-btn-secondary w-full px-4 py-2.5 text-sm"
+        >
+          카카오로 로그인
+        </button>
+
         {error ? (
           <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
             {error}

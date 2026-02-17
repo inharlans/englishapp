@@ -4,14 +4,14 @@ import { getSessionCookieName, issueSessionToken } from "@/lib/authJwt";
 import { getCsrfCookieName, issueCsrfToken } from "@/lib/csrf";
 import { resolveOrLinkOAuthUser } from "@/lib/oauthAccounts";
 
-const OAUTH_STATE_COOKIE = "oauth_google_state";
-const OAUTH_NEXT_COOKIE = "oauth_google_next";
+const OAUTH_STATE_COOKIE = "oauth_naver_state";
+const OAUTH_NEXT_COOKIE = "oauth_naver_next";
 
-function getGoogleConfig(req: NextRequest): { clientId: string; clientSecret: string; redirectUri: string } | null {
-  const clientId = process.env.GOOGLE_CLIENT_ID?.trim() ?? "";
-  const clientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim() ?? "";
-  const configuredRedirect = process.env.GOOGLE_REDIRECT_URI?.trim() ?? "";
-  const redirectUri = configuredRedirect || `${req.nextUrl.origin}/api/auth/google/callback`;
+function getNaverConfig(req: NextRequest): { clientId: string; clientSecret: string; redirectUri: string } | null {
+  const clientId = process.env.NAVER_CLIENT_ID?.trim() ?? "";
+  const clientSecret = process.env.NAVER_CLIENT_SECRET?.trim() ?? "";
+  const configuredRedirect = process.env.NAVER_REDIRECT_URI?.trim() ?? "";
+  const redirectUri = configuredRedirect || `${req.nextUrl.origin}/api/auth/naver/callback`;
   if (!clientId || !clientSecret) return null;
   return { clientId, clientSecret, redirectUri };
 }
@@ -27,15 +27,17 @@ function redirectWithError(req: NextRequest, code: string): NextResponse {
   return NextResponse.redirect(new URL(`/login?error=${encodeURIComponent(code)}`, req.url));
 }
 
-type GoogleUserInfo = {
-  sub?: string;
-  email?: string;
-  email_verified?: boolean;
+type NaverUserInfo = {
+  resultcode?: string;
+  response?: {
+    id?: string;
+    email?: string;
+  };
 };
 
 export async function GET(req: NextRequest) {
-  const config = getGoogleConfig(req);
-  if (!config) return redirectWithError(req, "google_not_configured");
+  const config = getNaverConfig(req);
+  if (!config) return redirectWithError(req, "naver_not_configured");
 
   const code = req.nextUrl.searchParams.get("code");
   const state = req.nextUrl.searchParams.get("state");
@@ -43,51 +45,43 @@ export async function GET(req: NextRequest) {
   const nextPath = safeNextPath(req.cookies.get(OAUTH_NEXT_COOKIE)?.value);
 
   if (!code || !state || !stateCookie || state !== stateCookie) {
-    return redirectWithError(req, "google_state_mismatch");
+    return redirectWithError(req, "naver_state_mismatch");
   }
 
   try {
-    const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        code,
-        client_id: config.clientId,
-        client_secret: config.clientSecret,
-        redirect_uri: config.redirectUri,
-        grant_type: "authorization_code"
-      })
-    });
-    if (!tokenRes.ok) return redirectWithError(req, "google_token_exchange_failed");
+    const tokenUrl = new URL("https://nid.naver.com/oauth2.0/token");
+    tokenUrl.searchParams.set("grant_type", "authorization_code");
+    tokenUrl.searchParams.set("client_id", config.clientId);
+    tokenUrl.searchParams.set("client_secret", config.clientSecret);
+    tokenUrl.searchParams.set("code", code);
+    tokenUrl.searchParams.set("state", state);
 
+    const tokenRes = await fetch(tokenUrl);
+    if (!tokenRes.ok) return redirectWithError(req, "naver_token_exchange_failed");
     const tokenJson = (await tokenRes.json()) as { access_token?: string };
     const accessToken = tokenJson.access_token;
-    if (!accessToken) return redirectWithError(req, "google_token_missing");
+    if (!accessToken) return redirectWithError(req, "naver_token_missing");
 
-    const profileRes = await fetch("https://openidconnect.googleapis.com/v1/userinfo", {
+    const profileRes = await fetch("https://openapi.naver.com/v1/nid/me", {
       headers: { Authorization: `Bearer ${accessToken}` }
     });
-    if (!profileRes.ok) return redirectWithError(req, "google_profile_fetch_failed");
+    if (!profileRes.ok) return redirectWithError(req, "naver_profile_fetch_failed");
+    const profile = (await profileRes.json()) as NaverUserInfo;
+    if (profile.resultcode !== "00") return redirectWithError(req, "naver_profile_fetch_failed");
 
-    const profile = (await profileRes.json()) as GoogleUserInfo;
-    const email = (profile.email ?? "").trim().toLowerCase();
-    if (!email || profile.email_verified !== true) {
-      return redirectWithError(req, "google_email_not_verified");
-    }
-
-    const providerUserId = (profile.sub ?? "").trim();
+    const providerUserId = (profile.response?.id ?? "").trim();
+    const email = (profile.response?.email ?? "").trim().toLowerCase() || null;
     const resolved = await resolveOrLinkOAuthUser({
-      provider: "google",
+      provider: "naver",
       providerUserId,
       email,
       cookies: req.cookies
     });
     if (!resolved.ok) return redirectWithError(req, resolved.errorCode);
-    const user = resolved.user;
 
     const sessionToken = await issueSessionToken({
-      userId: user.id,
-      email: user.email,
+      userId: resolved.user.id,
+      email: resolved.user.email,
       ttlSeconds: 60 * 60 * 24 * 30
     });
     const csrfToken = issueCsrfToken();
@@ -123,6 +117,6 @@ export async function GET(req: NextRequest) {
     });
     return res;
   } catch {
-    return redirectWithError(req, "google_callback_failed");
+    return redirectWithError(req, "naver_callback_failed");
   }
 }

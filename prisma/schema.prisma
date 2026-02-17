@@ -85,6 +85,23 @@ model User {
   blockedByUsers BlockedOwner[] @relation("BlockedOwnerUser")
   submittedReports WordbookReport[] @relation("ReportByUser")
   reviewedReports WordbookReport[] @relation("ReportReviewedByUser")
+  oauthAccounts OAuthAccount[]
+}
+
+model OAuthAccount {
+  id             Int      @id @default(autoincrement())
+  userId         Int
+  provider       String
+  providerUserId String
+  linkedEmail    String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerUserId])
+  @@unique([userId, provider])
+  @@index([userId])
 }
 
 model Wordbook {

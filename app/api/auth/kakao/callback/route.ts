@@ -4,15 +4,15 @@ import { getSessionCookieName, issueSessionToken } from "@/lib/authJwt";
 import { getCsrfCookieName, issueCsrfToken } from "@/lib/csrf";
 import { resolveOrLinkOAuthUser } from "@/lib/oauthAccounts";
 
-const OAUTH_STATE_COOKIE = "oauth_google_state";
-const OAUTH_NEXT_COOKIE = "oauth_google_next";
+const OAUTH_STATE_COOKIE = "oauth_kakao_state";
+const OAUTH_NEXT_COOKIE = "oauth_kakao_next";
 
-function getGoogleConfig(req: NextRequest): { clientId: string; clientSecret: string; redirectUri: string } | null {
-  const clientId = process.env.GOOGLE_CLIENT_ID?.trim() ?? "";
-  const clientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim() ?? "";
-  const configuredRedirect = process.env.GOOGLE_REDIRECT_URI?.trim() ?? "";
-  const redirectUri = configuredRedirect || `${req.nextUrl.origin}/api/auth/google/callback`;
-  if (!clientId || !clientSecret) return null;
+function getKakaoConfig(req: NextRequest): { clientId: string; clientSecret: string; redirectUri: string } | null {
+  const clientId = process.env.KAKAO_CLIENT_ID?.trim() ?? "";
+  const clientSecret = process.env.KAKAO_CLIENT_SECRET?.trim() ?? "";
+  const configuredRedirect = process.env.KAKAO_REDIRECT_URI?.trim() ?? "";
+  const redirectUri = configuredRedirect || `${req.nextUrl.origin}/api/auth/kakao/callback`;
+  if (!clientId) return null;
   return { clientId, clientSecret, redirectUri };
 }
 
@@ -27,15 +27,18 @@ function redirectWithError(req: NextRequest, code: string): NextResponse {
   return NextResponse.redirect(new URL(`/login?error=${encodeURIComponent(code)}`, req.url));
 }
 
-type GoogleUserInfo = {
-  sub?: string;
-  email?: string;
-  email_verified?: boolean;
+type KakaoProfile = {
+  id?: number | string;
+  kakao_account?: {
+    email?: string;
+    is_email_valid?: boolean;
+    is_email_verified?: boolean;
+  };
 };
 
 export async function GET(req: NextRequest) {
-  const config = getGoogleConfig(req);
-  if (!config) return redirectWithError(req, "google_not_configured");
+  const config = getKakaoConfig(req);
+  if (!config) return redirectWithError(req, "kakao_not_configured");
 
   const code = req.nextUrl.searchParams.get("code");
   const state = req.nextUrl.searchParams.get("state");
@@ -43,51 +46,55 @@ export async function GET(req: NextRequest) {
   const nextPath = safeNextPath(req.cookies.get(OAUTH_NEXT_COOKIE)?.value);
 
   if (!code || !state || !stateCookie || state !== stateCookie) {
-    return redirectWithError(req, "google_state_mismatch");
+    return redirectWithError(req, "kakao_state_mismatch");
   }
 
   try {
-    const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
+    const tokenBody = new URLSearchParams({
+      grant_type: "authorization_code",
+      client_id: config.clientId,
+      redirect_uri: config.redirectUri,
+      code
+    });
+    if (config.clientSecret) tokenBody.set("client_secret", config.clientSecret);
+
+    const tokenRes = await fetch("https://kauth.kakao.com/oauth/token", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        code,
-        client_id: config.clientId,
-        client_secret: config.clientSecret,
-        redirect_uri: config.redirectUri,
-        grant_type: "authorization_code"
-      })
+      body: tokenBody
     });
-    if (!tokenRes.ok) return redirectWithError(req, "google_token_exchange_failed");
+    if (!tokenRes.ok) return redirectWithError(req, "kakao_token_exchange_failed");
 
     const tokenJson = (await tokenRes.json()) as { access_token?: string };
     const accessToken = tokenJson.access_token;
-    if (!accessToken) return redirectWithError(req, "google_token_missing");
+    if (!accessToken) return redirectWithError(req, "kakao_token_missing");
 
-    const profileRes = await fetch("https://openidconnect.googleapis.com/v1/userinfo", {
+    const profileRes = await fetch("https://kapi.kakao.com/v2/user/me", {
       headers: { Authorization: `Bearer ${accessToken}` }
     });
-    if (!profileRes.ok) return redirectWithError(req, "google_profile_fetch_failed");
+    if (!profileRes.ok) return redirectWithError(req, "kakao_profile_fetch_failed");
+    const profile = (await profileRes.json()) as KakaoProfile;
 
-    const profile = (await profileRes.json()) as GoogleUserInfo;
-    const email = (profile.email ?? "").trim().toLowerCase();
-    if (!email || profile.email_verified !== true) {
-      return redirectWithError(req, "google_email_not_verified");
-    }
+    const providerUserId = String(profile.id ?? "").trim();
+    const emailRaw = (profile.kakao_account?.email ?? "").trim().toLowerCase();
+    const email =
+      emailRaw &&
+      profile.kakao_account?.is_email_valid === true &&
+      profile.kakao_account?.is_email_verified === true
+        ? emailRaw
+        : null;
 
-    const providerUserId = (profile.sub ?? "").trim();
     const resolved = await resolveOrLinkOAuthUser({
-      provider: "google",
+      provider: "kakao",
       providerUserId,
       email,
       cookies: req.cookies
     });
     if (!resolved.ok) return redirectWithError(req, resolved.errorCode);
-    const user = resolved.user;
 
     const sessionToken = await issueSessionToken({
-      userId: user.id,
-      email: user.email,
+      userId: resolved.user.id,
+      email: resolved.user.email,
       ttlSeconds: 60 * 60 * 24 * 30
     });
     const csrfToken = issueCsrfToken();
@@ -123,6 +130,6 @@ export async function GET(req: NextRequest) {
     });
     return res;
   } catch {
-    return redirectWithError(req, "google_callback_failed");
+    return redirectWithError(req, "kakao_callback_failed");
   }
 }
