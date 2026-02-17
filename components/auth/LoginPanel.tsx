@@ -1,5 +1,6 @@
-﻿"use client";
+"use client";
 
+import Link from "next/link";
 import { useState } from "react";
 
 import { apiFetch } from "@/lib/clientApi";
@@ -50,9 +51,7 @@ export function LoginPanel({
 
       <form onSubmit={onSubmit} className="mt-6 space-y-3">
         <label className="block">
-          <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
-            이메일
-          </span>
+          <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">이메일</span>
           <input
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -65,9 +64,7 @@ export function LoginPanel({
         </label>
 
         <label className="block">
-          <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
-            비밀번호
-          </span>
+          <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">비밀번호</span>
           <input
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -87,50 +84,51 @@ export function LoginPanel({
           {loading ? "로그인 중..." : "로그인"}
         </button>
 
-        <button
-          type="button"
-          onClick={() =>
-            window.location.assign(`/api/auth/google?next=${encodeURIComponent(nextPath)}`)
-          }
-          className="ui-btn-secondary w-full px-4 py-2.5 text-sm"
-        >
-          구글로 로그인
-        </button>
-
-        <button
-          type="button"
-          onClick={() =>
-            window.location.assign(`/api/auth/naver?next=${encodeURIComponent(nextPath)}`)
-          }
-          className="ui-btn-secondary w-full px-4 py-2.5 text-sm"
-        >
-          네이버로 로그인
-        </button>
-
-        <button
-          type="button"
-          onClick={() =>
-            window.location.assign(`/api/auth/kakao?next=${encodeURIComponent(nextPath)}`)
-          }
-          className="ui-btn-secondary w-full px-4 py-2.5 text-sm"
-        >
-          카카오로 로그인
-        </button>
-
         {error ? (
-          <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
-            {error}
-          </p>
+          <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">{error}</p>
         ) : null}
 
         {oauthError ? (
-          <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
-            {oauthError}
-          </p>
+          <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">{oauthError}</p>
         ) : null}
       </form>
+
+      <div className="mt-5">
+        <div className="mb-3 flex items-center gap-2">
+          <div className="h-px flex-1 bg-slate-200" />
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">간편 로그인</p>
+          <div className="h-px flex-1 bg-slate-200" />
+        </div>
+
+        <div className="space-y-2">
+          <Link
+            href={`/api/auth/google?next=${encodeURIComponent(nextPath)}`}
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-50"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                fill="#EA4335"
+                d="M12 10.2v3.9h5.5c-.2 1.3-1.5 3.8-5.5 3.8-3.3 0-6-2.8-6-6.2s2.7-6.2 6-6.2c1.9 0 3.2.8 3.9 1.5l2.7-2.7C16.9 2.7 14.7 1.8 12 1.8 6.9 1.8 2.8 6 2.8 11.2S6.9 20.6 12 20.6c6.9 0 9.2-4.9 9.2-7.4 0-.5 0-.9-.1-1.3H12z"
+              />
+            </svg>
+            Google로 계속하기
+          </Link>
+
+          <Link
+            href={`/api/auth/naver?next=${encodeURIComponent(nextPath)}`}
+            className="flex w-full items-center justify-center rounded-xl border border-[#03C75A] bg-[#03C75A] px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-95"
+          >
+            네이버로 계속하기
+          </Link>
+
+          <Link
+            href={`/api/auth/kakao?next=${encodeURIComponent(nextPath)}`}
+            className="flex w-full items-center justify-center rounded-xl border border-[#FEE500] bg-[#FEE500] px-4 py-2.5 text-sm font-semibold text-[#191919] transition hover:brightness-95"
+          >
+            카카오로 계속하기
+          </Link>
+        </div>
+      </div>
     </section>
   );
 }
-
-
