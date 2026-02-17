@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { getUserFromRequestCookies } from "@/lib/authServer";
+import { FREE_DOWNLOAD_WORD_LIMIT } from "@/lib/planLimits";
 import { prisma } from "@/lib/prisma";
 import { checkRateLimit, getClientIpFromHeaders } from "@/lib/rateLimit";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
@@ -70,21 +71,40 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
       };
     }
 
-    // Plan enforcement: FREE => 3 downloads lifetime.
+    const itemCount = await tx.wordbookItem.count({ where: { wordbookId: id } });
+
+    // Plan enforcement: FREE => cumulative downloaded words limit.
     if (!isPro(user)) {
-      const used = await tx.wordbookDownload.count({
-        where: { userId: user.id }
+      const usedRows = await tx.wordbookDownload.findMany({
+        where: { userId: user.id },
+        select: { wordbookId: true, snapshotItemCount: true }
       });
-      if (used >= 3) {
+      let usedWords = 0;
+      const missingWordbookIds: number[] = [];
+      for (const row of usedRows) {
+        if (typeof row.snapshotItemCount === "number") {
+          usedWords += Math.max(0, row.snapshotItemCount);
+        } else {
+          missingWordbookIds.push(row.wordbookId);
+        }
+      }
+      if (missingWordbookIds.length > 0) {
+        const grouped = await tx.wordbookItem.groupBy({
+          by: ["wordbookId"],
+          where: { wordbookId: { in: missingWordbookIds } },
+          _count: { _all: true }
+        });
+        usedWords += grouped.reduce((acc, row) => acc + row._count._all, 0);
+      }
+
+      if (usedWords + itemCount > FREE_DOWNLOAD_WORD_LIMIT) {
         return {
           ok: false as const,
           status: 402,
-          error: "Free plan download limit reached (3 lifetime)."
+          error: `무료 요금제 누적 다운로드 한도(${FREE_DOWNLOAD_WORD_LIMIT}단어)에 도달했습니다.`
         };
       }
     }
-
-    const itemCount = await tx.wordbookItem.count({ where: { wordbookId: id } });
 
     const created = await tx.wordbookDownload.create({
       data: {

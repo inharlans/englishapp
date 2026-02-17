@@ -17,6 +17,7 @@ import { WordbookMetaEditor } from "@/components/wordbooks/WordbookMetaEditor";
 import { WordbookStudyTabs } from "@/components/wordbooks/WordbookStudyTabs";
 import { SyncDownloadButton } from "@/components/wordbooks/SyncDownloadButton";
 import { ResumeStudyButton } from "@/components/wordbooks/ResumeStudyButton";
+import { FREE_DOWNLOAD_WORD_LIMIT, getUserDownloadedWordCount } from "@/lib/planLimits";
 import { aggregateVersionLogs } from "@/lib/wordbookVersion";
 import { StarRating } from "@/components/wordbooks/StarRating";
 import { PendingWordbookItemsRetryBanner } from "@/components/wordbooks/PendingWordbookItemsRetryBanner";
@@ -109,7 +110,7 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
     );
   }
 
-  const [downloadRow, ratingRow, downloadsUsed] = user
+  const [downloadRow, ratingRow, downloadedWordCount] = user
     ? await Promise.all([
         prisma.wordbookDownload.findUnique({
           where: { userId_wordbookId: { userId: user.id, wordbookId: id } },
@@ -119,9 +120,7 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
           where: { userId_wordbookId: { userId: user.id, wordbookId: id } },
           select: { rating: true, review: true }
         }),
-        prisma.wordbookDownload.count({
-          where: { userId: user.id }
-        })
+        getUserDownloadedWordCount(user.id)
       ])
     : [null, null, 0];
 
@@ -133,7 +132,10 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
   const myReview = ratingRow?.review ?? null;
   const speakLang = wordbook.fromLang.toLowerCase().startsWith("en") ? "en-US" : undefined;
   const freeLimitReached =
-    user?.plan === "FREE" && !downloadedAt && !isOwner && downloadsUsed >= 3;
+    user?.plan === "FREE" &&
+    !downloadedAt &&
+    !isOwner &&
+    downloadedWordCount + wordbook.items.length > FREE_DOWNLOAD_WORD_LIMIT;
   const isPrivateLocked =
     !!user &&
     isPrivateWordbookLockedForFree({
@@ -187,7 +189,7 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
           wordbook.isPublic &&
           !downloadedAt &&
           user?.plan === "FREE" &&
-          downloadsUsed >= 3 ? (
+          downloadedWordCount + wordbook.items.length > FREE_DOWNLOAD_WORD_LIMIT ? (
             <Link
               href={{ pathname: "/pricing" }}
               className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-900 hover:bg-blue-100"

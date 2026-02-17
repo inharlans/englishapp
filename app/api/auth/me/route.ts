@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getUserFromRequestCookies } from "@/lib/authServer";
 import { getCsrfCookieName, issueCsrfToken } from "@/lib/csrf";
+import { FREE_DOWNLOAD_WORD_LIMIT, getUserDownloadedWordCount } from "@/lib/planLimits";
 
 function isPro(user: { plan: "FREE" | "PRO"; proUntil: Date | null }): boolean {
   if (user.plan !== "PRO") return false;
@@ -16,9 +17,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ user: null }, { status: 200 });
   }
 
-  const downloadsUsed = await prisma.wordbookDownload.count({
-    where: { userId: user.id }
-  });
+  const downloadWordsUsed = await getUserDownloadedWordCount(user.id);
 
   const pro = isPro(user);
 
@@ -29,9 +28,9 @@ export async function GET(req: NextRequest) {
         code: pro ? "PRO" : "FREE",
         raw: user.plan,
         proUntil: user.proUntil,
-        downloadsUsed,
-        freeDownloadLimit: 3,
-        freeDownloadsRemaining: pro ? null : Math.max(0, 3 - downloadsUsed),
+        downloadWordsUsed,
+        freeDownloadWordLimit: FREE_DOWNLOAD_WORD_LIMIT,
+        freeDownloadWordsRemaining: pro ? null : Math.max(0, FREE_DOWNLOAD_WORD_LIMIT - downloadWordsUsed),
         priceMonthlyKrw: 2900,
         priceYearlyKrw: 29000
       }

@@ -9,6 +9,7 @@ import { OfflineSaveButton } from "@/components/wordbooks/OfflineSaveButton";
 import { SyncDownloadButton } from "@/components/wordbooks/SyncDownloadButton";
 import { PostDownloadOnboardingBanner } from "@/components/wordbooks/PostDownloadOnboardingBanner";
 import { LearningDashboardHeader } from "@/components/wordbooks/LearningDashboardHeader";
+import { FREE_DOWNLOAD_WORD_LIMIT, getUserDownloadedWordCount } from "@/lib/planLimits";
 import { aggregateVersionLogs } from "@/lib/wordbookVersion";
 import { EmptyStateCard } from "@/components/ui/EmptyStateCard";
 
@@ -30,7 +31,7 @@ export default async function WordbooksPage() {
   const dayEnd = new Date(dayStart);
   dayEnd.setDate(dayEnd.getDate() + 1);
 
-  const [mine, downloaded, downloadsUsed, todayCorrect] = await Promise.all([
+  const [mine, downloaded, downloadedWordCount, todayCorrect] = await Promise.all([
     prisma.wordbook.findMany({
       where: { ownerId: user.id },
       orderBy: { updatedAt: "desc" },
@@ -71,9 +72,7 @@ export default async function WordbooksPage() {
         }
       }
     }),
-    prisma.wordbookDownload.count({
-      where: { userId: user.id }
-    }),
+    getUserDownloadedWordCount(user.id),
     prisma.wordbookStudyItemState.count({
       where: {
         userId: user.id,
@@ -162,7 +161,7 @@ export default async function WordbooksPage() {
             {user.plan === "FREE" ? (
               <>
                 {" "}
-                - 다운로드 사용량: <span className="font-semibold">{downloadsUsed}/3</span> - 무료
+                - 다운로드 사용량: <span className="font-semibold">{downloadedWordCount}/{FREE_DOWNLOAD_WORD_LIMIT}단어</span> - 무료
                 업로드는 공개 고정 -{" "}
                 <Link
                   href={{ pathname: "/pricing" }}

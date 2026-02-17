@@ -815,3 +815,19 @@ Additional observations and guardrails:
   - lock notice banner for FREE + private owner
   - hide study/edit/import actions while locked
   - keep publish toggle visible for private owners so they can switch to public
+
+## 2026-02-17 Free plan download limit changed to cumulative words
+
+- Replaced FREE download policy from "lifetime number of downloads" to "cumulative downloaded word count".
+- Introduced shared limit/token in `lib/planLimits.ts`:
+  - `FREE_DOWNLOAD_WORD_LIMIT = 1000`
+  - `getUserDownloadedWordCount(userId)` uses `snapshotItemCount` with fallback aggregation.
+- Enforced in `POST /api/wordbooks/[id]/download`:
+  - FREE users are blocked when `usedWords + targetWordbookItemCount > FREE_DOWNLOAD_WORD_LIMIT`.
+- Updated UI/plan surfaces to show word-based usage:
+  - `/wordbooks`
+  - `/wordbooks/market`
+  - `/wordbooks/[id]`
+  - `/pricing`
+- Updated auth plan payload in `/api/auth/me`:
+  - `downloadWordsUsed`, `freeDownloadWordLimit`, `freeDownloadWordsRemaining`

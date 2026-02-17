@@ -6,6 +6,7 @@ import { BlockOwnerButton } from "@/components/wordbooks/BlockOwnerButton";
 import { MarketRatingReviews } from "@/components/wordbooks/MarketRatingReviews";
 import { EmptyStateCard } from "@/components/ui/EmptyStateCard";
 import { getUserFromRequestCookies } from "@/lib/authServer";
+import { FREE_DOWNLOAD_WORD_LIMIT, getUserDownloadedWordCount } from "@/lib/planLimits";
 import { prisma } from "@/lib/prisma";
 
 type SortMode = "top" | "new" | "downloads";
@@ -56,7 +57,7 @@ export default async function MarketPage(props: {
         ? [{ downloadCount: "desc" as const }, { ratingAvg: "desc" as const }]
         : [{ rankScore: "desc" as const }, { createdAt: "desc" as const }];
 
-  const [total, wordbooks, myDownloads, myDownloadsUsed] = await Promise.all([
+  const [total, wordbooks, myDownloads, myDownloadedWordCount] = await Promise.all([
     prisma.wordbook.count({ where }),
     prisma.wordbook.findMany({
       where,
@@ -83,11 +84,7 @@ export default async function MarketPage(props: {
           select: { wordbookId: true }
         })
       : Promise.resolve([]),
-    user
-      ? prisma.wordbookDownload.count({
-          where: { userId: user.id }
-        })
-      : Promise.resolve(0)
+    user ? getUserDownloadedWordCount(user.id) : Promise.resolve(0)
   ]);
 
   const downloadedIds = new Set(myDownloads.map((d) => d.wordbookId));
@@ -110,7 +107,7 @@ export default async function MarketPage(props: {
               {user.plan === "FREE" ? (
                 <>
                   {" "}
-                  - 다운로드 사용량: <span className="font-semibold">{myDownloadsUsed}/3</span> -{" "}
+                  - 다운로드 사용량: <span className="font-semibold">{myDownloadedWordCount}/{FREE_DOWNLOAD_WORD_LIMIT}단어</span> -{" "}
                   <Link
                     href={{ pathname: "/pricing" }}
                     className="font-semibold text-blue-700 hover:underline"
@@ -243,11 +240,17 @@ export default async function MarketPage(props: {
                       <DownloadButton
                         wordbookId={wb.id}
                         wordbookTitle={wb.title}
-                        disabled={user.plan === "FREE" && myDownloadsUsed >= 3}
+                        disabled={
+                          user.plan === "FREE" &&
+                          myDownloadedWordCount + wb._count.items > FREE_DOWNLOAD_WORD_LIMIT
+                        }
                         className="rounded-2xl px-4 py-2"
                       />
                     ) : null}
-                    {!isDownloaded && user && user.plan === "FREE" && myDownloadsUsed >= 3 ? (
+                    {!isDownloaded &&
+                    user &&
+                    user.plan === "FREE" &&
+                    myDownloadedWordCount + wb._count.items > FREE_DOWNLOAD_WORD_LIMIT ? (
                       <p className="mt-1 text-[11px] font-semibold text-blue-700">
                         한도 도달 -{" "}
                         <Link href={{ pathname: "/pricing" }} className="text-blue-700 hover:underline">
