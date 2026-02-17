@@ -13,76 +13,76 @@ export default async function PricingPage() {
     <section className="space-y-6">
       <header className="flex flex-wrap items-end gap-3">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">¿ä±ÝÁ¦</p>
-          <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-900">¹«·á vs ÇÁ·Î</h1>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">ìš”ê¸ˆì œ</p>
+          <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-900">ë¬´ë£Œ vs í”„ë¡œ</h1>
           <p className="mt-2 text-sm text-slate-600">
-            ÇÁ·Î ¿ä±ÝÁ¦´Â ´Ù¿î·Îµå Á¦ÇÑÀ» ÇØÁ¦ÇÏ°í ºñ°ø°³ ´Ü¾îÀåÀ» »ç¿ëÇÒ ¼ö ÀÖ½À´Ï´Ù.
+            í”„ë¡œ ìš”ê¸ˆì œëŠ” ë‹¤ìš´ë¡œë“œ ì œí•œì„ í•´ì œí•˜ê³  ë¹„ê³µê°œ ë‹¨ì–´ìž¥ì„ ì‚¬ìš©í•  ìˆ˜ ìžˆìŠµë‹ˆë‹¤.
           </p>
           {user ? (
             <p className="mt-1 text-xs text-slate-500">
-              ÇöÀç ¿ä±ÝÁ¦: <span className="font-semibold">{planLabel(user.plan)}</span>
+              í˜„ìž¬ ìš”ê¸ˆì œ: <span className="font-semibold">{planLabel(user.plan)}</span>
               {user.plan === "FREE" && typeof downloadWordsUsed === "number" ? (
                 <>
                   {" "}
-                  - ´Ù¿î·Îµå »ç¿ë·®:{" "}
+                  - ë‹¤ìš´ë¡œë“œ ì‚¬ìš©ëŸ‰:{" "}
                   <span className="font-semibold">
-                    {downloadWordsUsed}/{FREE_DOWNLOAD_WORD_LIMIT}´Ü¾î
+                    {downloadWordsUsed}/{FREE_DOWNLOAD_WORD_LIMIT}ë‹¨ì–´
                   </span>
                 </>
               ) : null}
             </p>
           ) : (
-            <p className="mt-1 text-xs text-slate-500">·Î±×ÀÎÇÏ¸é »ç¿ë·®À» º¼ ¼ö ÀÖ½À´Ï´Ù.</p>
+            <p className="mt-1 text-xs text-slate-500">ë¡œê·¸ì¸í•˜ë©´ ì‚¬ìš©ëŸ‰ì„ ë³¼ ìˆ˜ ìžˆìŠµë‹ˆë‹¤.</p>
           )}
         </div>
         <div className="ml-auto flex flex-wrap gap-2">
           <Link href={{ pathname: "/wordbooks" }} className="ui-btn-secondary px-4 py-2 text-sm">
-            ³» ´Ü¾îÀå
+            ë‚´ ë‹¨ì–´ìž¥
           </Link>
         </div>
       </header>
 
       <div className="grid gap-4 md:grid-cols-2">
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_20px_50px_-30px_rgba(15,23,42,0.25)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">¹«·á</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">ë¬´ë£Œ</p>
           <p className="mt-2 text-3xl font-black text-slate-900">0 KRW</p>
           <ul className="mt-4 space-y-2 text-sm text-slate-700">
-            <li>´Ù¿î·Îµå: ´©Àû {FREE_DOWNLOAD_WORD_LIMIT}´Ü¾î</li>
-            <li>¾÷·Îµå: °ø°³ °íÁ¤</li>
-            <li>´Ù¿î·ÎµåÇÑ ´Ü¾îÀå ¿ÀÇÁ¶óÀÎ ÀúÀå</li>
+            <li>ë‹¤ìš´ë¡œë“œ: ëˆ„ì  {FREE_DOWNLOAD_WORD_LIMIT}ë‹¨ì–´</li>
+            <li>ì—…ë¡œë“œ: ê³µê°œ ê³ ì •</li>
+            <li>ë‹¤ìš´ë¡œë“œí•œ ë‹¨ì–´ìž¥ ì˜¤í”„ë¼ì¸ ì €ìž¥</li>
           </ul>
         </div>
 
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_20px_50px_-30px_rgba(15,23,42,0.25)]">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-700">ÇÁ·Î</p>
-              <p className="mt-2 text-3xl font-black text-slate-900">¿ù 2,900¿ø</p>
-              <p className="mt-1 text-sm font-semibold text-slate-700">¿¬ 29,000¿ø</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-700">í”„ë¡œ</p>
+              <p className="mt-2 text-3xl font-black text-slate-900">ì›” 2,900ì›</p>
+              <p className="mt-1 text-sm font-semibold text-slate-700">ì—° 29,000ì›</p>
             </div>
-            <span className="ui-badge-accent px-3 py-1 text-xs">ÃßÃµ</span>
+            <span className="ui-badge-accent px-3 py-1 text-xs">ì¶”ì²œ</span>
           </div>
           <ul className="mt-4 space-y-2 text-sm text-slate-700">
-            <li>´Ù¿î·Îµå: ¹«Á¦ÇÑ</li>
-            <li>¾÷·Îµå: °ø°³/ºñ°ø°³ ¼±ÅÃ °¡´É</li>
-            <li>¿ÀÇÁ¶óÀÎ Áß½É ÇÐ½À Èå¸§</li>
+            <li>ë‹¤ìš´ë¡œë“œ: ë¬´ì œí•œ</li>
+            <li>ì—…ë¡œë“œ: ê³µê°œ/ë¹„ê³µê°œ ì„ íƒ ê°€ëŠ¥</li>
+            <li>ì˜¤í”„ë¼ì¸ ì¤‘ì‹¬ í•™ìŠµ íë¦„</li>
           </ul>
           <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700">
-            °áÁ¦´Â ¾ÆÁ÷ ¿¬µ¿µÇÁö ¾Ê¾Ò½À´Ï´Ù. ÇöÀç´Â °ü¸®ÀÚ°¡ <code className="rounded bg-slate-100 px-1.5 py-0.5">/admin</code> ¿¡¼­ °èÁ¤À» ¾÷±×·¹ÀÌµåÇÒ ¼ö ÀÖ½À´Ï´Ù.
+            ê²°ì œëŠ” ì•„ì§ ì—°ë™ë˜ì§€ ì•Šì•˜ìŠµë‹ˆë‹¤. í˜„ìž¬ëŠ” ê´€ë¦¬ìžê°€ <code className="rounded bg-slate-100 px-1.5 py-0.5">/admin</code> ì—ì„œ ê³„ì •ì„ ì—…ê·¸ë ˆì´ë“œí•  ìˆ˜ ìžˆìŠµë‹ˆë‹¤.
           </div>
         </div>
       </div>
 
       <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700">
-        ¹«·á ´Ù¿î·Îµå ´©Àû ´Ü¾î ÇÑµµ¿¡ µµ´ÞÇÏ¸é ÇÁ·Î·Î ¾÷±×·¹ÀÌµåÇØ °è¼Ó ´Ù¿î·ÎµåÇÒ ¼ö ÀÖ½À´Ï´Ù.
+        ë¬´ë£Œ ë‹¤ìš´ë¡œë“œ ëˆ„ì  ë‹¨ì–´ í•œë„ì— ë„ë‹¬í•˜ë©´ í”„ë¡œë¡œ ì—…ê·¸ë ˆì´ë“œí•´ ê³„ì† ë‹¤ìš´ë¡œë“œí•  ìˆ˜ ìžˆìŠµë‹ˆë‹¤.
       </div>
 
       <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-        ±¸µ¶ ÇØÁö ¶Ç´Â PRO¿¡¼­ FREE·Î º¯°æµÇ¸é, ±âÁ¸ ºñ°ø°³ ´Ü¾îÀåÀº ÀÚµ¿ »èÁ¦µÇÁö ¾ÊÁö¸¸ Àá±Ý »óÅÂ°¡ µË´Ï´Ù.
-        Àá±Ý »óÅÂ¿¡¼­´Â ÇÐ½À/¼öÁ¤ÀÌ ºÒ°¡ÇÏ¸ç °ø°³ ÀüÈ¯ ¶Ç´Â PRO Àç±¸µ¶ ÈÄ ´Ù½Ã »ç¿ëÇÒ ¼ö ÀÖ½À´Ï´Ù.
+        êµ¬ë… í•´ì§€ ë˜ëŠ” PROì—ì„œ FREEë¡œ ë³€ê²½ë˜ë©´, ê¸°ì¡´ ë¹„ê³µê°œ ë‹¨ì–´ìž¥ì€ ìžë™ ì‚­ì œë˜ì§€ ì•Šì§€ë§Œ ìž ê¸ˆ ìƒíƒœê°€ ë©ë‹ˆë‹¤.
+        ìž ê¸ˆ ìƒíƒœì—ì„œëŠ” í•™ìŠµ/ìˆ˜ì •ì´ ë¶ˆê°€í•˜ë©° ê³µê°œ ì „í™˜ ë˜ëŠ” PRO ìž¬êµ¬ë… í›„ ë‹¤ì‹œ ì‚¬ìš©í•  ìˆ˜ ìžˆìŠµë‹ˆë‹¤.
       </div>
     </section>
   );
 }
 
-const planLabel = (plan: "FREE" | "PRO") => (plan === "FREE" ? "¹«·á" : "ÇÁ·Î");
+const planLabel = (plan: "FREE" | "PRO") => (plan === "FREE" ? "ë¬´ë£Œ" : "í”„ë¡œ");

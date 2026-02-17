@@ -16,8 +16,8 @@ export default async function WordbookListHalfPage(props: { params: Promise<{ id
   if (!user) {
     return (
       <section className="space-y-4">
-        <h1 className="text-2xl font-black tracking-tight text-slate-900">´Ü¾îÀå ¸ñ·Ï</h1>
-        <p className="text-sm text-slate-600">·Î±×ÀÎÀÌ ÇÊ¿äÇÕ´Ï´Ù.</p>
+        <h1 className="text-2xl font-black tracking-tight text-slate-900">ë‹¨ì–´ì¥ ëª©ë¡</h1>
+        <p className="text-sm text-slate-600">ë¡œê·¸ì¸ì´ í•„ìš”í•©ë‹ˆë‹¤.</p>
       </section>
     );
   }
@@ -27,9 +27,9 @@ export default async function WordbookListHalfPage(props: { params: Promise<{ id
   if (!id) {
     return (
       <section className="space-y-4">
-        <h1 className="text-2xl font-black tracking-tight text-slate-900">Àß¸øµÈ ´Ü¾îÀåÀÔ´Ï´Ù</h1>
+        <h1 className="text-2xl font-black tracking-tight text-slate-900">ì˜ëª»ëœ ë‹¨ì–´ì¥ì…ë‹ˆë‹¤</h1>
         <Link href={{ pathname: "/wordbooks" }} className="text-sm font-semibold text-blue-700 hover:underline">
-          µÚ·Î
+          ë’¤ë¡œ
         </Link>
       </section>
     );
@@ -39,13 +39,13 @@ export default async function WordbookListHalfPage(props: { params: Promise<{ id
   if (!allowed) {
     return (
       <section className="space-y-4">
-        <h1 className="text-2xl font-black tracking-tight text-slate-900">Á¢±ÙÇÒ ¼ö ¾ø½À´Ï´Ù</h1>
-        <p className="text-sm text-slate-600">¸ÕÀú ÀÌ ´Ü¾îÀåÀ» ´Ù¿î·ÎµåÇÏ¼¼¿ä.</p>
+        <h1 className="text-2xl font-black tracking-tight text-slate-900">ì ‘ê·¼í•  ìˆ˜ ì—†ìŠµë‹ˆë‹¤</h1>
+        <p className="text-sm text-slate-600">ë¨¼ì € ì´ ë‹¨ì–´ì¥ì„ ë‹¤ìš´ë¡œë“œí•˜ì„¸ìš”.</p>
       </section>
     );
   }
 
-  return <WordbookListClient wordbookId={id} mode="listHalf" title="È¸º¹ ¸ñ·Ï" />;
+  return <WordbookListClient wordbookId={id} mode="listHalf" title="íšŒë³µ ëª©ë¡" />;
 }
 
 

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { prisma } from "@/lib/prisma";
 import { getUserFromRequestCookies } from "@/lib/authServer";
 import { getCsrfCookieName, issueCsrfToken } from "@/lib/csrf";
 import { FREE_DOWNLOAD_WORD_LIMIT, getUserDownloadedWordCount } from "@/lib/planLimits";
