@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
 
   const res = NextResponse.json(
     {
-      user: { id: user.id, email: user.email, isAdmin: user.isAdmin },
+      user: { id: user.id, email: user.email, isAdmin: user.isAdmin, dailyGoal: user.dailyGoal },
       plan: {
         code: pro ? "PRO" : "FREE",
         raw: user.plan,

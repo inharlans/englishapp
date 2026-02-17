@@ -1,8 +1,12 @@
 ﻿import Link from "next/link";
 import type { Route } from "next";
 
+import { DailyGoalSetter } from "@/components/wordbooks/DailyGoalSetter";
+
 type Props = {
   studyRate: number;
+  todayCorrect: number;
+  dailyGoal: number;
   activeDecks: number;
   staleDecks: number;
   suggestedHref: string;
@@ -11,6 +15,8 @@ type Props = {
 
 export function LearningDashboardHeader({
   studyRate,
+  todayCorrect,
+  dailyGoal,
   activeDecks,
   staleDecks,
   suggestedHref,
@@ -23,6 +29,9 @@ export function LearningDashboardHeader({
           <p className="ui-kicker">Learning Dashboard</p>
           <h2 className="ui-h2 mt-2">오늘 학습 상태</h2>
           <p className="ui-body mt-2">핵심 지표를 먼저 보고 바로 학습 액션으로 이동하세요.</p>
+          <div className="mt-3">
+            <DailyGoalSetter initialGoal={dailyGoal} />
+          </div>
         </div>
         <div className="flex flex-wrap gap-2">
           <Link href={suggestedHref as Route} className="ui-btn-accent px-4 py-2 text-sm">
@@ -41,7 +50,7 @@ export function LearningDashboardHeader({
         <article className="ui-card p-4">
           <p className="text-xs font-semibold uppercase tracking-[0.15em] text-slate-500">오늘 진행률</p>
           <p className="mt-2 text-2xl font-black text-slate-900">{studyRate}%</p>
-          <p className="mt-1 text-xs text-slate-600">최근 학습 상태 기준</p>
+          <p className="mt-1 text-xs text-slate-600">오늘 정답 {todayCorrect} / 목표 {dailyGoal}</p>
         </article>
         <article className="ui-card p-4">
           <p className="text-xs font-semibold uppercase tracking-[0.15em] text-slate-500">활성 단어장</p>

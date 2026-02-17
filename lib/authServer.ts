@@ -9,6 +9,7 @@ export async function getUserFromRequestCookies(cookies: {
   isAdmin: boolean;
   plan: "FREE" | "PRO";
   proUntil: Date | null;
+  dailyGoal: number;
 } | null> {
   const token = cookies.get(getSessionCookieName())?.value;
   if (!token) {
@@ -27,7 +28,7 @@ export async function getUserFromRequestCookies(cookies: {
 
   const user = await prisma.user.findUnique({
     where: { id: Math.floor(userId) },
-    select: { id: true, email: true, isAdmin: true, plan: true, proUntil: true }
+    select: { id: true, email: true, isAdmin: true, plan: true, proUntil: true, dailyGoal: true }
   });
   return user ?? null;
 }

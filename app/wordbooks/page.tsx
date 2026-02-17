@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 
 import { getUserFromRequestCookies } from "@/lib/authServer";
 import { prisma } from "@/lib/prisma";
+import { LastResult } from "@prisma/client";
 import { StarRating } from "@/components/wordbooks/StarRating";
 import { OfflineSaveButton } from "@/components/wordbooks/OfflineSaveButton";
 import { SyncDownloadButton } from "@/components/wordbooks/SyncDownloadButton";
@@ -23,7 +24,13 @@ export default async function WordbooksPage() {
     );
   }
 
-  const [mine, downloaded, downloadsUsed, studyAgg] = await Promise.all([
+  const now = new Date();
+  const dayStart = new Date(now);
+  dayStart.setHours(0, 0, 0, 0);
+  const dayEnd = new Date(dayStart);
+  dayEnd.setDate(dayEnd.getDate() + 1);
+
+  const [mine, downloaded, downloadsUsed, todayCorrect] = await Promise.all([
     prisma.wordbook.findMany({
       where: { ownerId: user.id },
       orderBy: { updatedAt: "desc" },
@@ -67,9 +74,15 @@ export default async function WordbooksPage() {
     prisma.wordbookDownload.count({
       where: { userId: user.id }
     }),
-    prisma.wordbookStudyState.aggregate({
-      where: { userId: user.id },
-      _sum: { studiedCount: true, correctCount: true }
+    prisma.wordbookStudyItemState.count({
+      where: {
+        userId: user.id,
+        lastResult: LastResult.CORRECT,
+        updatedAt: {
+          gte: dayStart,
+          lt: dayEnd
+        }
+      }
     })
   ]);
 
@@ -100,9 +113,8 @@ export default async function WordbooksPage() {
 
   const staleDecks = downloaded.filter((d) => d.wordbook.contentVersion > d.downloadedVersion).length;
   const activeDecks = mine.length + downloaded.length;
-  const studiedSum = studyAgg._sum.studiedCount ?? 0;
-  const correctSum = studyAgg._sum.correctCount ?? 0;
-  const studyRate = studiedSum > 0 ? Math.round((correctSum / studiedSum) * 100) : 0;
+  const dailyGoal = Math.max(1, user.dailyGoal || 30);
+  const studyRate = Math.min(100, Math.round((todayCorrect / dailyGoal) * 100));
 
   const lastStudyIdRaw = reqCookies.get("last_study_wordbook_id")?.value ?? "";
   const lastStudyIdNum = Number(lastStudyIdRaw);
@@ -129,6 +141,8 @@ export default async function WordbooksPage() {
       <PostDownloadOnboardingBanner availableWordbookIds={downloadedWordbookIds} />
       <LearningDashboardHeader
         studyRate={studyRate}
+        todayCorrect={todayCorrect}
+        dailyGoal={dailyGoal}
         activeDecks={activeDecks}
         staleDecks={staleDecks}
         suggestedHref={suggestedHref}

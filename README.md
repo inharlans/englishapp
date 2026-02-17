@@ -613,3 +613,17 @@ Additional observations and guardrails:
 - Memorize bottom fixed bar stability:
   - Bottom control bar now stays mounted while loading (no disappear/reappear flicker).
   - Controls are disabled during loading instead of unmounting the bar.
+
+## 2026-02-17 Daily goal dashboard update
+
+- Added per-user daily goal setting (`User.dailyGoal`, default `30`).
+- New endpoint: `POST /api/users/me/daily-goal`
+  - payload: `{ "dailyGoal": number }` (`1..500`)
+- Dashboard metric changed:
+  - Old: cumulative accuracy (`correctCount / studiedCount`)
+  - New: daily progress (`todayCorrect / dailyGoal * 100`, capped at 100)
+- Daily correct count uses `WordbookStudyItemState`:
+  - condition: `lastResult = CORRECT` and `updatedAt` within today.
+- Added index for daily aggregation performance:
+  - `WordbookStudyItemState(userId, lastResult, updatedAt)`
+- Added UI control to update daily goal in Learning Dashboard.

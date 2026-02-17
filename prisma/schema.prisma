@@ -71,6 +71,7 @@ model User {
   isAdmin  Boolean   @default(false)
   plan     UserPlan  @default(FREE)
   proUntil DateTime?
+  dailyGoal Int      @default(30)
 
   wordbooks Wordbook[]
   downloads WordbookDownload[]
@@ -231,6 +232,7 @@ model WordbookStudyItemState {
   @@index([userId, itemId])
   @@index([userId, wordbookId, status])
   @@index([userId, wordbookId, everCorrect, everWrong])
+  @@index([userId, lastResult, updatedAt])
 }
 
 model BlockedOwner {
