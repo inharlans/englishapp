@@ -209,7 +209,7 @@ export default async function WordbooksPage() {
             href={{ pathname: "/wordbooks/blocked" }}
             className="ui-btn-secondary px-4 py-2 text-sm"
           >
-            Blocked
+            블랙리스트
           </Link>
         </div>
       </header>

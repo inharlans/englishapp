@@ -178,7 +178,7 @@ async function runMobileAndKeyboardCheck() {
   await page.keyboard.press("Tab");
   await page.getByText("본문으로 건너뛰기").waitFor({ timeout: 10_000 });
   await page.goto(`${BASE_URL}/wordbooks`, { waitUntil: "domcontentloaded" });
-  await page.getByRole("link", { name: "Blocked" }).waitFor({ timeout: 10_000 });
+  await page.getByRole("link", { name: "블랙리스트" }).waitFor({ timeout: 10_000 });
 
   await context.close();
   await browser.close();

@@ -16,7 +16,7 @@ export function BlockOwnerButton({ wordbookId }: Props) {
 
   const onBlock = async () => {
     const ok = window.confirm(
-      `진짜 블랙 하시겠습니까?\n블랙 해제는 내 단어장의 블랙 안에서 해제할수있습니다.`
+      `진짜 블랙 하시겠습니까?\n블랙 해제는 내 단어장의 블랙리스트 안에서 해제할수있습니다.`
     );
     if (!ok) return;
 
