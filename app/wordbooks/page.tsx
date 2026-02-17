@@ -223,7 +223,6 @@ export default async function WordbooksPage() {
             title="아직 만든 단어장이 없습니다"
             description="첫 단어장을 만들고 학습 루틴을 시작해보세요."
             primary={{ label: "새 단어장 만들기", href: "/wordbooks/new" }}
-            secondary={{ label: "마켓 둘러보기", href: "/wordbooks/market" }}
           />
         ) : (
           <div className="grid gap-3 md:grid-cols-2">
@@ -275,7 +274,6 @@ export default async function WordbooksPage() {
             title="다운로드한 단어장이 없습니다"
             description="마켓에서 단어장을 내려받아 바로 암기/퀴즈를 시작할 수 있습니다."
             primary={{ label: "마켓 둘러보기", href: "/wordbooks/market" }}
-            secondary={{ label: "내 단어장 만들기", href: "/wordbooks/new" }}
           />
         ) : (
           <div className="grid gap-3 md:grid-cols-2">

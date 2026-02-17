@@ -37,9 +37,6 @@ export function LearningDashboardHeader({
           <Link href={suggestedHref as Route} className="ui-btn-accent px-4 py-2 text-sm">
             {suggestedLabel}
           </Link>
-          <Link href="/wordbooks/market" className="ui-btn-secondary px-4 py-2 text-sm">
-            단어장 더 찾기
-          </Link>
           <Link href="/offline" className="ui-btn-secondary px-4 py-2 text-sm">
             오프라인 보기
           </Link>

@@ -627,3 +627,12 @@ Additional observations and guardrails:
 - Added index for daily aggregation performance:
   - `WordbookStudyItemState(userId, lastResult, updatedAt)`
 - Added UI control to update daily goal in Learning Dashboard.
+
+## 2026-02-17 Wordbooks CTA deduplication
+
+- Simplified duplicated navigation actions in `/wordbooks`:
+  - Removed dashboard-level `단어장 더 찾기` button (duplicate of top `Market` action).
+  - Reduced lower empty-state actions to a single primary CTA each.
+- Goal:
+  - Keep top-level quick actions as global navigation.
+  - Avoid repeating the same destination buttons in lower sections.
