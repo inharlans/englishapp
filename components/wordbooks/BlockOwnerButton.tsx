@@ -7,16 +7,17 @@ import { useState } from "react";
 
 type Props = {
   wordbookId: number;
-  ownerEmail: string;
 };
 
-export function BlockOwnerButton({ wordbookId, ownerEmail }: Props) {
+export function BlockOwnerButton({ wordbookId }: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
   const onBlock = async () => {
-    const ok = window.confirm(`Block creator ${ownerEmail}? Their public wordbooks will be hidden.`);
+    const ok = window.confirm(
+      `진짜 블랙 하시겠습니까?\n블랙 해제는 내 단어장의 블랙 안에서 해제할수있습니다.`
+    );
     if (!ok) return;
 
     setLoading(true);

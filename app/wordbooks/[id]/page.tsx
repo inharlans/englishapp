@@ -222,7 +222,7 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
               ) : null}
               <div className="mt-3 flex flex-wrap gap-2">
                 <ReportWordbookButton wordbookId={id} />
-                {!isOwner ? <BlockOwnerButton wordbookId={id} ownerEmail={wordbook.owner.email} /> : null}
+                {!isOwner ? <BlockOwnerButton wordbookId={id} /> : null}
               </div>
             </>
           ) : (

@@ -743,3 +743,10 @@ Additional observations and guardrails:
 - Added creator block action directly in market card action area (`/wordbooks/market`).
 - For logged-in users, `Block Creator` now appears below download/login action so blacklist flow is usable where discovery happens.
 - Hidden for the current user's own wordbooks.
+
+## 2026-02-17 Block confirmation copy update
+
+- Updated block confirmation dialog copy to:
+  - "진짜 블랙 하시겠습니까?"
+  - "블랙 해제는 내 단어장의 블랙 안에서 해제할수있습니다."
+- Removed unused `ownerEmail` prop from `BlockOwnerButton` and updated call sites.

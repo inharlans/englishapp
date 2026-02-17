@@ -265,7 +265,7 @@ export default async function MarketPage(props: {
                     ) : null}
                     {user && wb.owner.id !== user.id ? (
                       <div className="mt-2">
-                        <BlockOwnerButton wordbookId={wb.id} ownerEmail={wb.owner.email} />
+                        <BlockOwnerButton wordbookId={wb.id} />
                       </div>
                     ) : null}
                   </div>
