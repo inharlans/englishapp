@@ -19,6 +19,7 @@ import { SyncDownloadButton } from "@/components/wordbooks/SyncDownloadButton";
 import { ResumeStudyButton } from "@/components/wordbooks/ResumeStudyButton";
 import { aggregateVersionLogs } from "@/lib/wordbookVersion";
 import { StarRating } from "@/components/wordbooks/StarRating";
+import { PendingWordbookItemsRetryBanner } from "@/components/wordbooks/PendingWordbookItemsRetryBanner";
 
 function parseId(raw: string): number | null {
   const n = Number(raw);
@@ -146,6 +147,7 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
 
   return (
     <section className="space-y-6">
+      {isOwner ? <PendingWordbookItemsRetryBanner wordbookId={id} /> : null}
       <header className="flex flex-wrap items-end gap-3">
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">

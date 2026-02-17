@@ -780,3 +780,23 @@ Additional observations and guardrails:
   - `components/wordbooks/DailyGoalSetter.tsx`
   - `app/wordbooks/[id]/error.tsx`
 - Kept technical literals where appropriate (e.g., `TSV/CSV`, enum values) while localizing visible labels.
+
+## 2026-02-17 Wordbook create UX upgrade (paste/upload/manual + preview/validation)
+
+- Saved execution spec and checklist:
+  - `docs/commands/wordbook-create-ux-final.md`
+  - `docs/commands/wordbook-create-ux-checklist.md`
+- Rebuilt `/wordbooks/new` create flow:
+  - top format guide with TSV/CSV examples, copy buttons, CSV template download
+  - 3 import tabs (붙여넣기 / 파일 업로드 / 수동 입력)
+  - shared preview table + validation summary (valid/invalid/duplicate warning)
+  - save guard: title required + valid rows >= 1
+  - final save transform to `{ position, term, meaning }` with sequential position re-generation
+- Implemented 2-step failure handling:
+  - Step1(create) failure keeps input and shows error
+  - Step2(items save) failure stores `pending_wordbook_items_${wordbookId}` and redirects to detail
+- Added detail-page retry banner component:
+  - `components/wordbooks/PendingWordbookItemsRetryBanner.tsx`
+  - shows warning + `단어 다시 업로드` action when pending items exist in localStorage
+  - retry success clears pending localStorage
+- Wired detail page to render retry/flash banner for owner view.
