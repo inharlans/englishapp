@@ -42,12 +42,23 @@ export default async function PricingPage() {
         </div>
       </header>
 
+      <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
+        <p className="font-semibold">요금제 정책 요약</p>
+        <ul className="mt-2 list-disc space-y-1 pl-5">
+          <li>FREE: 단어장 생성 1개, 다운로드 누적 {FREE_DOWNLOAD_WORD_LIMIT}단어, 비공개 업로드 불가</li>
+          <li>PRO: 단어장 생성/다운로드 무제한, 공개/비공개 선택 가능</li>
+          <li>PRO에서 FREE로 변경 시 기존 비공개 단어장은 삭제되지 않지만 잠금 상태가 됩니다.</li>
+          <li>잠금 상태에서는 학습/수정이 불가하며 공개 전환 또는 PRO 재구독 후 다시 사용 가능합니다.</li>
+        </ul>
+      </div>
+
       <div className="grid gap-4 md:grid-cols-2">
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_20px_50px_-30px_rgba(15,23,42,0.25)]">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">무료</p>
           <p className="mt-2 text-3xl font-black text-slate-900">0 KRW</p>
           <ul className="mt-4 space-y-2 text-sm text-slate-700">
             <li>다운로드: 누적 {FREE_DOWNLOAD_WORD_LIMIT}단어</li>
+            <li>단어장 생성: 평생 1개</li>
             <li>업로드: 공개 고정</li>
             <li>다운로드한 단어장 오프라인 저장</li>
           </ul>
@@ -64,6 +75,7 @@ export default async function PricingPage() {
           </div>
           <ul className="mt-4 space-y-2 text-sm text-slate-700">
             <li>다운로드: 무제한</li>
+            <li>단어장 생성: 무제한</li>
             <li>업로드: 공개/비공개 선택 가능</li>
             <li>오프라인 중심 학습 흐름</li>
           </ul>

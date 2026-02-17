@@ -862,3 +862,7 @@ Additional observations and guardrails:
 - 다운로드 제한은 서버 API(`POST /api/wordbooks/[id]/download`)에서 강제
 - FREE + 비공개(소유자) 잠금 정책은 학습/수정 API와 화면에서 함께 강제/안내
 - 관련 안내 문구는 `/pricing`, 관리자 플랜 변경 UI, 단어장 상세 화면에 반영
+- `/pricing` 페이지에 요금제 정책 요약 블록을 추가해 화면에서 바로 확인 가능하도록 변경
+  - FREE/PRO 핵심 정책(생성 한도, 다운로드 누적 단어 한도, 공개/비공개 권한)
+  - PRO -> FREE 강등 시 비공개 단어장 잠금 정책 명시
+- `/pricing` 텍스트 인코딩 깨짐을 제거하고 UTF-8(무 BOM)으로 재저장
