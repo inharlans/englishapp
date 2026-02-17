@@ -703,3 +703,11 @@ Additional observations and guardrails:
   - logged-in `Download`: accent filled with stronger CTA radius (`rounded-2xl`)
   - guest `Login to download`: soft secondary (`ui-btn-secondary`, `rounded-xl`)
 - `DownloadButton` now supports optional `className` override for page-level CTA tuning.
+
+## 2026-02-17 CI scheduling test alignment
+
+- Synced `lib/scheduling.test.ts` expectations with active SRS policy:
+  - streak 3 => +3 days
+  - streak 4 => +7 days
+  - streak 5+ => +30 days
+- Fixes failing `npm run test` check in CI.

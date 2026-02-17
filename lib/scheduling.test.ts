@@ -14,15 +14,19 @@ describe("computeNextReviewAt", () => {
     expect(computeNextReviewAt(now, 2).toISOString()).toBe("2026-02-16T00:00:00.000Z");
   });
 
-  it("adds 7 days for streak 3", () => {
+  it("adds 3 days for streak 3", () => {
     const now = new Date("2026-02-15T00:00:00.000Z");
-    expect(computeNextReviewAt(now, 3).toISOString()).toBe("2026-02-22T00:00:00.000Z");
+    expect(computeNextReviewAt(now, 3).toISOString()).toBe("2026-02-18T00:00:00.000Z");
   });
 
-  it("adds 30 days for streak >= 4", () => {
+  it("adds 7 days for streak 4", () => {
     const now = new Date("2026-02-15T00:00:00.000Z");
-    expect(computeNextReviewAt(now, 4).toISOString()).toBe("2026-03-17T00:00:00.000Z");
+    expect(computeNextReviewAt(now, 4).toISOString()).toBe("2026-02-22T00:00:00.000Z");
+  });
+
+  it("adds 30 days for streak >= 5", () => {
+    const now = new Date("2026-02-15T00:00:00.000Z");
+    expect(computeNextReviewAt(now, 5).toISOString()).toBe("2026-03-17T00:00:00.000Z");
     expect(computeNextReviewAt(now, 10).toISOString()).toBe("2026-03-17T00:00:00.000Z");
   });
 });
-
