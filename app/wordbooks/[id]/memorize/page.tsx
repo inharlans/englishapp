@@ -35,7 +35,7 @@ export default async function WordbookMemorizePage(props: { params: Promise<{ id
     );
   }
 
-  const allowed = await canAccessWordbookForStudy({ userId: user.id, wordbookId: id });
+  const allowed = await canAccessWordbookForStudy({ userId: user.id, wordbookId: id, userPlan: user.plan });
   if (!allowed) {
     return (
       <section className="space-y-4">

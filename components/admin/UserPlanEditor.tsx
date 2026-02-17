@@ -20,6 +20,15 @@ export function UserPlanEditor({ user, onUpdated }: { user: UserRow; onUpdated: 
   const [error, setError] = useState("");
 
   const onSave = async () => {
+    if (
+      user.plan === "PRO" &&
+      plan === "FREE" &&
+      !window.confirm(
+        "PRO를 FREE로 변경하면 사용자의 비공개 단어장은 잠금 상태가 되어 학습/수정이 불가합니다. 계속하시겠습니까?"
+      )
+    ) {
+      return;
+    }
     setLoading(true);
     setError("");
     try {

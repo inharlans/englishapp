@@ -20,6 +20,7 @@ import { ResumeStudyButton } from "@/components/wordbooks/ResumeStudyButton";
 import { aggregateVersionLogs } from "@/lib/wordbookVersion";
 import { StarRating } from "@/components/wordbooks/StarRating";
 import { PendingWordbookItemsRetryBanner } from "@/components/wordbooks/PendingWordbookItemsRetryBanner";
+import { isPrivateWordbookLockedForFree } from "@/lib/wordbookAccess";
 
 function parseId(raw: string): number | null {
   const n = Number(raw);
@@ -133,6 +134,13 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
   const speakLang = wordbook.fromLang.toLowerCase().startsWith("en") ? "en-US" : undefined;
   const freeLimitReached =
     user?.plan === "FREE" && !downloadedAt && !isOwner && downloadsUsed >= 3;
+  const isPrivateLocked =
+    !!user &&
+    isPrivateWordbookLockedForFree({
+      plan: user.plan,
+      isOwner,
+      isPublic: wordbook.isPublic
+    });
   const canWriteReview = !!user && (isOwner || !!downloadedAt);
 
   const versionSummary =
@@ -188,7 +196,7 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
             </Link>
           ) : null}
           {!isOwner && downloadedAt ? <OfflineSaveButton wordbookId={id} /> : null}
-          {(isOwner || downloadedAt) ? <ResumeStudyButton wordbookId={id} /> : null}
+          {(isOwner || downloadedAt) && !isPrivateLocked ? <ResumeStudyButton wordbookId={id} /> : null}
           {!user ? (
             <Link
               href={{ pathname: "/login", query: { next: `/wordbooks/${id}` } }}
@@ -197,16 +205,32 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
               로그인
             </Link>
           ) : null}
-          {isOwner && user?.plan === "PRO" ? (
+          {isOwner && (user?.plan === "PRO" || !wordbook.isPublic) ? (
             <PublishToggle wordbookId={id} isPublic={wordbook.isPublic} />
           ) : null}
         </div>
       </header>
 
       {isOwner && user?.plan === "FREE" ? (
-        <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
-          무료 요금제 업로드는 공개로 고정됩니다. 비공개 단어장을 사용하려면 PRO로 업그레이드하세요.
-        </div>
+        isPrivateLocked ? (
+          <div className="space-y-3 rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
+            <p className="font-semibold">
+              현재 비공개 단어장이 잠금 상태입니다.
+            </p>
+            <p>
+              무료 요금제에서는 비공개 단어장을 학습/수정할 수 없습니다. 공개로 전환하거나 PRO로 업그레이드하세요.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Link href={{ pathname: "/pricing" }} className="ui-btn-accent px-4 py-2 text-sm">
+                PRO 업그레이드
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
+            무료 요금제 업로드는 공개로 고정됩니다. 비공개 단어장을 사용하려면 PRO로 업그레이드하세요.
+          </div>
+        )
       ) : null}
 
       {wordbook.isPublic ? (
@@ -255,11 +279,11 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
         </div>
       ) : null}
 
-      {(isOwner || downloadedAt) && (
+      {(isOwner || downloadedAt) && !isPrivateLocked && (
         <WordbookStudyTabs wordbookId={id} active="memorize" />
       )}
 
-      {isOwner ? (
+      {isOwner && !isPrivateLocked ? (
         <div className="grid gap-4 lg:grid-cols-2">
           <div className="rounded-3xl border border-white/60 bg-white/85 p-6 shadow-[0_20px_50px_-30px_rgba(15,23,42,0.7)] backdrop-blur">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
@@ -292,7 +316,7 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
             </div>
           </div>
         </div>
-      ) : (
+      ) : !isOwner ? (
         <div className="space-y-3">
           <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
             다운로드한 단어장은 읽기 전용입니다. 오프라인 학습용 저장은 가능합니다.
@@ -320,7 +344,7 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
             </div>
           ) : null}
         </div>
-      )}
+      ) : null}
 
       <section className="space-y-3">
         <h2 className="text-sm font-black uppercase tracking-[0.2em] text-slate-700">단어 목록</h2>
@@ -333,7 +357,7 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
                 key={item.id}
                 wordbookId={id}
                 item={item}
-                editable={isOwner}
+                editable={isOwner && !isPrivateLocked}
                 speakLang={speakLang}
               />
             ))}

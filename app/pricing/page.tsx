@@ -84,6 +84,11 @@ export default async function PricingPage() {
       <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700">
         무료 다운로드 한도에 도달하면 프로로 업그레이드해 계속 다운로드할 수 있습니다.
       </div>
+
+      <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+        구독 해지 또는 PRO에서 FREE로 변경되면, 기존 비공개 단어장은 자동 삭제되지 않지만 잠금 상태가 됩니다.
+        잠금 상태에서는 학습/수정이 불가하며 공개 전환 또는 PRO 재구독 후 다시 사용할 수 있습니다.
+      </div>
     </section>
   );
 }

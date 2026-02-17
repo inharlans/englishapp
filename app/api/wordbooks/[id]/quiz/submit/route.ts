@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 import { getUserFromRequestCookies } from "@/lib/authServer";
 import { normalizeEn, normalizeKo } from "@/lib/text";
@@ -82,7 +82,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
-  const allowed = await canAccessWordbookForStudy({ userId: user.id, wordbookId });
+  const allowed = await canAccessWordbookForStudy({ userId: user.id, wordbookId, userPlan: user.plan });
   if (!allowed) {
     return NextResponse.json({ error: "Forbidden." }, { status: 403 });
   }
@@ -197,3 +197,4 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     { status: 200 }
   );
 }
+

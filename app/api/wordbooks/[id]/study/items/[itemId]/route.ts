@@ -69,7 +69,7 @@ export async function POST(
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
-  const allowed = await canAccessWordbookForStudy({ userId: user.id, wordbookId });
+  const allowed = await canAccessWordbookForStudy({ userId: user.id, wordbookId, userPlan: user.plan });
   if (!allowed) {
     return NextResponse.json({ error: "Forbidden." }, { status: 403 });
   }
@@ -144,3 +144,4 @@ export async function POST(
   const studyState = await syncWordbookStudyState(user.id, wordbookId);
   return NextResponse.json({ ok: true, itemState, studyState }, { status: 200 });
 }
+

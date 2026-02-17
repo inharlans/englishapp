@@ -800,3 +800,18 @@ Additional observations and guardrails:
   - shows warning + `단어 다시 업로드` action when pending items exist in localStorage
   - retry success clears pending localStorage
 - Wired detail page to render retry/flash banner for owner view.
+
+## 2026-02-17 Plan downgrade warning + private lock policy (Plan B)
+
+- Added cancellation/downgrade warning on `/pricing`:
+  - PRO -> FREE does not delete private wordbooks, but locks study/edit until republish(public) or re-upgrade.
+- Added admin downgrade confirmation warning in `components/admin/UserPlanEditor.tsx`.
+- Enforced private-lock mutation guard for FREE owners on private wordbooks:
+  - `PATCH /api/wordbooks/[id]`
+  - `POST /api/wordbooks/[id]/items`
+  - `PATCH|DELETE /api/wordbooks/[id]/items/[itemId]`
+  - `POST /api/wordbooks/[id]/import`
+- Updated `/wordbooks/[id]` owner UX:
+  - lock notice banner for FREE + private owner
+  - hide study/edit/import actions while locked
+  - keep publish toggle visible for private owners so they can switch to public

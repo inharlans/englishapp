@@ -4,6 +4,7 @@ import { getUserFromRequestCookies } from "@/lib/authServer";
 import { prisma } from "@/lib/prisma";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
 import { parseJsonWithSchema } from "@/lib/validation";
+import { isPrivateWordbookLockedForFree } from "@/lib/wordbookAccess";
 import { bumpWordbookVersion } from "@/lib/wordbookVersion";
 import { z } from "zod";
 
@@ -116,13 +117,25 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
 
   const existing = await prisma.wordbook.findUnique({
     where: { id },
-    select: { ownerId: true }
+    select: { ownerId: true, isPublic: true }
   });
   if (!existing) {
     return NextResponse.json({ error: "Not found." }, { status: 404 });
   }
   if (existing.ownerId !== user.id) {
     return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+  }
+  if (
+    isPrivateWordbookLockedForFree({
+      plan: user.plan,
+      isOwner: true,
+      isPublic: existing.isPublic
+    })
+  ) {
+    return NextResponse.json(
+      { error: "무료 요금제에서는 비공개 단어장을 수정할 수 없습니다. 공개 전환 또는 업그레이드가 필요합니다." },
+      { status: 403 }
+    );
   }
 
   const parsedBody = await parseJsonWithSchema(req, patchWordbookSchema);
