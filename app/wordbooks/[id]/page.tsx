@@ -288,10 +288,10 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
           {downloadedVersion ? (
             <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700">
               <p className="font-semibold text-slate-900">
-                ??踰꾩쟾 v{downloadedVersion} / 理쒖떊 v{wordbook.contentVersion}
+                내 버전 v{downloadedVersion} / 최신 v{wordbook.contentVersion}
               </p>
               <p className="mt-1 text-xs text-slate-600">
-                蹂寃??붿빟: +{versionSummary.addedCount} / ~{versionSummary.updatedCount} / -
+                변경 요약: +{versionSummary.addedCount} / ~{versionSummary.updatedCount} / -
                 {versionSummary.deletedCount}
               </p>
               {snapshotItemCount !== null && syncedAt ? (

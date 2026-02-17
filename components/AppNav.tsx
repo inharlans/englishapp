@@ -11,7 +11,7 @@ const links: Array<{ href: string; label: string }> = [
   { href: "/pricing", label: "Pricing" }
 ];
 
-export function AppNav() {
+export function AppNav({ isLoggedIn }: { isLoggedIn: boolean }) {
   const pathname = usePathname();
 
   return (
@@ -31,12 +31,16 @@ export function AppNav() {
           </Link>
         ))}
         <div className="ml-auto flex items-center gap-2">
-          <Link href="/login" className="ui-btn-secondary px-3 py-2 text-sm">
-            Login
-          </Link>
-          <Link href="/logout" className="ui-btn-ghost px-3 py-2 text-sm">
-            Logout
-          </Link>
+          {!isLoggedIn ? (
+            <Link href="/login" className="ui-btn-secondary px-3 py-2 text-sm">
+              Login
+            </Link>
+          ) : null}
+          {isLoggedIn ? (
+            <Link href="/logout" className="ui-btn-ghost px-3 py-2 text-sm">
+              Logout
+            </Link>
+          ) : null}
         </div>
       </div>
     </nav>

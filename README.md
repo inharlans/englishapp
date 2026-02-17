@@ -711,3 +711,17 @@ Additional observations and guardrails:
   - streak 4 => +7 days
   - streak 5+ => +30 days
 - Fixes failing `npm run test` check in CI.
+
+## 2026-02-17 Auth-aware home/nav and wordbook detail text/link fixes
+
+- Home page (`/`) is now auth-aware:
+  - logged-out users see the right-side login panel
+  - logged-in users no longer see login form and get quick action cards instead
+- Global nav auth actions are now conditional:
+  - logged-in: `Logout` only
+  - logged-out: `Login` only
+- Fixed mojibake text on `/wordbooks/[id]` version section:
+  - restored `내 버전 / 최신 버전`, `변경 요약` labels
+- Updated wordbook title routing from `/wordbooks`:
+  - title click now opens `/wordbooks/[id]` (detail)
+  - no longer forces `/wordbooks/[id]/memorize` from title click

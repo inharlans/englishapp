@@ -229,7 +229,7 @@ export default async function WordbooksPage() {
             {mine.map((wb) => (
               <Link
                 key={wb.id}
-                href={{ pathname: `/wordbooks/${wb.id}/memorize` }}
+                href={{ pathname: `/wordbooks/${wb.id}` }}
                 className="ui-card p-4 transition hover:-translate-y-0.5 hover:border-blue-300"
               >
                 <div className="flex items-start gap-3">
@@ -286,7 +286,7 @@ export default async function WordbooksPage() {
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <Link
-                        href={{ pathname: `/wordbooks/${d.wordbook.id}/memorize` }}
+                        href={{ pathname: `/wordbooks/${d.wordbook.id}` }}
                         className="truncate text-lg font-black text-slate-900 hover:underline"
                       >
                         {d.wordbook.title}

@@ -1,11 +1,13 @@
 ﻿import type { Metadata } from "next";
 import { Manrope, Noto_Sans_KR } from "next/font/google";
+import { cookies } from "next/headers";
 
 import "./globals.css";
 import { AppNav } from "@/components/AppNav";
 import { KeyboardPageNavigator } from "@/components/KeyboardPageNavigator";
 import { PwaInstallPrompt } from "@/components/PwaInstallPrompt";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
+import { getUserFromRequestCookies } from "@/lib/authServer";
 
 export const metadata: Metadata = {
   title: "Englishapp",
@@ -24,11 +26,13 @@ const notoSansKr = Noto_Sans_KR({
   variable: "--font-noto-kr"
 });
 
-export default function RootLayout({
+export default async function RootLayout({
   children
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const user = await getUserFromRequestCookies(await cookies());
+
   return (
     <html lang="ko">
       <body className={`${manrope.variable} ${notoSansKr.variable}`}>
@@ -42,7 +46,7 @@ export default function RootLayout({
         <ServiceWorkerRegister />
         <main id="main-content" className="mx-auto min-h-screen w-full max-w-5xl p-6">
           <PwaInstallPrompt />
-          <AppNav />
+          <AppNav isLoggedIn={Boolean(user)} />
           {children}
         </main>
       </body>
