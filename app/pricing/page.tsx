@@ -10,7 +10,9 @@ export default async function PricingPage(props: { searchParams: Promise<{ payme
   const user = await getUserFromRequestCookies(await cookies());
 
   const downloadWordsUsed = user ? await getUserDownloadedWordCount(user.id) : null;
-  const paymentEnabled = Boolean(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_PRICE_MONTHLY && process.env.STRIPE_PRICE_YEARLY);
+  const paymentEnabled = Boolean(
+    process.env.STRIPE_SECRET_KEY && process.env.STRIPE_PRICE_MONTHLY && process.env.STRIPE_PRICE_YEARLY
+  );
 
   return (
     <section className="space-y-6">
@@ -27,7 +29,7 @@ export default async function PricingPage(props: { searchParams: Promise<{ payme
               {user.plan === "FREE" && typeof downloadWordsUsed === "number" ? (
                 <>
                   {" "}
-                  - 다운로드 사용량:{" "}
+                  - 다운로드 사용량{" "}
                   <span className="font-semibold">
                     {downloadWordsUsed}/{FREE_DOWNLOAD_WORD_LIMIT}단어
                   </span>
@@ -37,6 +39,11 @@ export default async function PricingPage(props: { searchParams: Promise<{ payme
           ) : (
             <p className="mt-1 text-xs text-slate-500">로그인하면 사용량을 볼 수 있습니다.</p>
           )}
+          {user ? (
+            <p className="mt-1 text-xs text-slate-500">
+              Logged-in email: <span className="font-semibold">{user.email}</span>
+            </p>
+          ) : null}
         </div>
         <div className="ml-auto flex flex-wrap gap-2">
           <Link href={{ pathname: "/privacy" }} className="ui-btn-secondary px-4 py-2 text-sm">
@@ -56,8 +63,8 @@ export default async function PricingPage(props: { searchParams: Promise<{ payme
         <ul className="mt-2 list-disc space-y-1 pl-5">
           <li>FREE: 단어장 생성 1개, 다운로드 누적 {FREE_DOWNLOAD_WORD_LIMIT}단어, 비공개 업로드 불가</li>
           <li>PRO: 단어장 생성/다운로드 무제한, 공개/비공개 선택 가능</li>
-          <li>PRO에서 FREE로 변경 시 기존 비공개 단어장은 삭제되지 않지만 잠금 상태가 됩니다.</li>
-          <li>잠금 상태에서는 학습/수정이 불가하며 공개 전환 또는 PRO 재구독 후 다시 사용 가능합니다.</li>
+          <li>PRO에서 FREE로 변경돼도 기존 비공개 단어장은 삭제되지 않고 잠금 상태가 됩니다.</li>
+          <li>잠금 상태에서는 학습/수정이 불가하며 공개 전환 또는 PRO 재구독 후 다시 사용할 수 있습니다.</li>
         </ul>
       </div>
 
@@ -98,11 +105,11 @@ export default async function PricingPage(props: { searchParams: Promise<{ payme
             <li>다운로드: 무제한</li>
             <li>단어장 생성: 무제한</li>
             <li>업로드: 공개/비공개 선택 가능</li>
-            <li>오프라인 중심 학습 흐름</li>
+            <li>오프라인 중단 없는 학습 흐름</li>
           </ul>
           <PricingActions plan={user?.plan ?? null} paymentEnabled={paymentEnabled} />
           <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700">
-            결제 및 구독 상태는 Stripe 웹훅으로 자동 반영됩니다. 문제가 있으면 관리자에게 문의하세요.
+            결제 및 구독 상태는 Stripe 웹훅으로 자동 반영됩니다. 문제가 있으면 관리자에게 문의해주세요.
           </div>
         </div>
       </div>
@@ -112,7 +119,7 @@ export default async function PricingPage(props: { searchParams: Promise<{ payme
       </div>
 
       <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-        구독 해지 또는 PRO에서 FREE로 변경되면, 기존 비공개 단어장은 자동 삭제되지 않지만 잠금 상태가 됩니다.
+        구독 해지 또는 PRO에서 FREE로 변경되면 기존 비공개 단어장은 자동 삭제되지 않지만 잠금 상태가 됩니다.
         잠금 상태에서는 학습/수정이 불가하며 공개 전환 또는 PRO 재구독 후 다시 사용할 수 있습니다.
       </div>
     </section>
