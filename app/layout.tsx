@@ -9,9 +9,28 @@ import { PwaInstallPrompt } from "@/components/PwaInstallPrompt";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import { getUserFromRequestCookies } from "@/lib/authServer";
 
+const appBaseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
 export const metadata: Metadata = {
   title: "Englishapp",
-  description: "영어 단어 학습과 다운로드 단어장을 제공하는 학습 플랫폼입니다."
+  description: "영어 단어 학습과 다운로드 단어장을 제공하는 학습 플랫폼입니다.",
+  metadataBase: new URL(appBaseUrl),
+  icons: {
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/favicon-32x32.png", type: "image/png", sizes: "32x32" },
+      { url: "/favicon-16x16.png", type: "image/png", sizes: "16x16" }
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }]
+  },
+  openGraph: {
+    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Oingapp" }]
+  },
+  twitter: {
+    card: "summary_large_image",
+    images: ["/og-image.png"]
+  },
+  manifest: "/site.webmanifest"
 };
 
 const manrope = Manrope({
