@@ -26,3 +26,12 @@ For implementation tasks that change behavior or code:
   - `package.json` scripts
   - CI workflow files and related docs (`README.md`, `AGENTS.md`)
 - When updating the pattern, keep it stable/reusable (avoid one-off command variants), and document why it changed.
+
+## Encoding Guardrail (UTF-8)
+
+- All source/code/config/docs files must be saved as `UTF-8` (without BOM).
+- Do not commit files encoded as ANSI/CP949/EUC-KR or UTF-16.
+- Before finishing edits that touched text-heavy files, run a local production build once:
+  - `npm run build`
+- If using PowerShell to write files, use explicit UTF-8 output (no BOM) and avoid implicit default encodings.
+- If a file shows mojibake or build errors like `stream did not contain valid UTF-8`, immediately re-save that file as UTF-8 and re-run `npm run build`.

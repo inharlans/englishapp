@@ -39,6 +39,7 @@ jobs:
       - run: npm run prisma:generate
       - run: npm run prisma:deploy
       - run: npm run typecheck
+      - run: npm run build
       - run: npm run test
       - run: npm run dev -- --hostname 127.0.0.1 --port 3000 > /tmp/next-dev.log 2>&1 &
       - run: |

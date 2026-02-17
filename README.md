@@ -831,3 +831,11 @@ Additional observations and guardrails:
   - `/pricing`
 - Updated auth plan payload in `/api/auth/me`:
   - `downloadWordsUsed`, `freeDownloadWordLimit`, `freeDownloadWordsRemaining`
+
+## 2026-02-17 Encoding safety guardrails
+
+- Added repository-level encoding guardrails to prevent non-UTF-8 source issues:
+  - `AGENTS.md`: UTF-8 (no BOM) policy + required `npm run build` check after text-heavy edits.
+  - `.editorconfig`: `charset = utf-8`, `end_of_line = lf`, final newline policy.
+  - `.gitattributes`: text normalization and LF policy for source/config file types.
+- Strengthened CI (`.github/workflows/ci.yml`) by adding `npm run build` so encoding problems are caught before deployment.
