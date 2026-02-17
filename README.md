@@ -655,3 +655,9 @@ Additional observations and guardrails:
   - `WordbookStudyItemState.meaningCorrectStreak`, `meaningNextReviewAt`, `meaningWrongRequeueAt`
   - `WordbookStudyItemState.wordCorrectStreak`, `wordNextReviewAt`, `wordWrongRequeueAt`
   - New indexes for mode-specific review/requeue lookups.
+
+## 2026-02-17 Wordbook detail error fallback
+
+- Added route-level error UI for `/wordbooks/[id]`:
+  - file: `app/wordbooks/[id]/error.tsx`
+  - replaces generic production `Application error` screen with a recoverable page (`다시 시도`, `내 단어장으로 이동`).
