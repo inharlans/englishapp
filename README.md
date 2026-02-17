@@ -682,3 +682,14 @@ Additional observations and guardrails:
   - Validates `PREVIEW_ACCESS_TOKEN` and sets `preview_access` cookie (`HttpOnly`, `Secure`, `SameSite=Lax`, 1h).
   - Middleware bypasses login redirect while cookie is valid.
 - Market/detail pages now render guest read-only mode and show login CTA for download/rating/report actions.
+
+## 2026-02-17 Public landing and embedded login UX
+
+- Made `/` publicly accessible in middleware so first-time visitors are not forced into immediate redirect.
+- Reworked home page into a landing layout:
+  - left: product value/flow cards
+  - right: embedded login panel
+- Added reusable login component:
+  - `components/auth/LoginPanel.tsx`
+  - shared by both `/` and `/login`
+- `/login` now uses the shared panel while preserving `next` redirect behavior.

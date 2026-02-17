@@ -1,66 +1,60 @@
 ﻿import Link from "next/link";
 
+import { LoginPanel } from "@/components/auth/LoginPanel";
+
 export default function HomePage() {
   return (
-    <section className="space-y-6">
+    <section className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr] lg:items-stretch">
       <div className="relative overflow-hidden rounded-3xl border border-white/70 bg-white/90 p-7 shadow-[0_24px_55px_-30px_rgba(15,23,42,0.7)] backdrop-blur">
-        <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-blue-300/35 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-16 left-10 h-52 w-52 rounded-full bg-blue-300/30 blur-3xl" />
+        <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-blue-300/35 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-16 left-8 h-52 w-52 rounded-full bg-orange-300/30 blur-3xl" />
 
-        <div className="relative">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Englishapp</p>
-          <h1 className="mt-2 text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">
-            단어장 선택 후 학습하는 구조
-          </h1>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
-            이제 학습은 단어장 내부에서만 진행됩니다.
-            <br />
-            `/wordbooks/[id]/memorize`, `/quiz-meaning`, `/quiz-word`, `/list-*` 경로로 바로 이동해 같은 단어장 기준으로 학습 상태를 관리합니다.
-          </p>
+        <div className="relative space-y-6">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Englishapp</p>
+            <h1 className="mt-2 text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">
+              영어 단어 학습을
+              <br />
+              단어장 단위로 빠르게
+            </h1>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
+              마켓에서 단어장을 살펴보고, 로그인 후 바로 암기와 퀴즈를 이어서 진행하세요.
+              오늘 학습량과 정오답 이력도 단어장 기준으로 누적됩니다.
+            </p>
+          </div>
 
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Link href="/wordbooks" className="ui-btn-primary px-5 py-2.5 text-sm transition hover:-translate-y-0.5">
-              내 단어장 열기
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="rounded-2xl border border-slate-200 bg-white/85 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Step 1</p>
+              <h2 className="mt-1 text-base font-bold text-slate-900">Wordbook Market</h2>
+              <p className="mt-1 text-sm text-slate-600">공개 단어장을 먼저 둘러보고 품질을 확인합니다.</p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-white/85 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Step 2</p>
+              <h2 className="mt-1 text-base font-bold text-slate-900">Memorize & Quiz</h2>
+              <p className="mt-1 text-sm text-slate-600">로그인 후 내 학습 상태로 암기/퀴즈를 계속 진행합니다.</p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-3">
+            <Link href="/wordbooks/market" className="ui-btn-primary px-5 py-2.5 text-sm">
+              마켓 먼저 보기
             </Link>
-            <Link href="/wordbooks/market" className="ui-btn-secondary px-5 py-2.5 text-sm transition hover:-translate-y-0.5">
-              마켓 둘러보기
+            <Link href="/login?next=/wordbooks" className="ui-btn-secondary px-5 py-2.5 text-sm">
+              로그인 페이지 열기
             </Link>
           </div>
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <Link
-          href="/wordbooks"
-          className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_14px_34px_-24px_rgba(15,23,42,0.55)] transition hover:-translate-y-1 hover:border-blue-300"
-        >
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-blue-500/20 to-blue-400/15 opacity-70" />
-          <div className="relative">
-            <h2 className="text-xl font-bold text-slate-900">내 단어장</h2>
-            <p className="mt-2 text-sm text-slate-700">다운로드한 단어장을 선택해 암기/퀴즈/리스트로 이동합니다.</p>
-          </div>
-        </Link>
-
-        <Link
-          href="/wordbooks/market"
-          className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_14px_34px_-24px_rgba(15,23,42,0.55)] transition hover:-translate-y-1 hover:border-blue-300"
-        >
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-blue-500/20 to-blue-400/15 opacity-70" />
-          <div className="relative">
-            <h2 className="text-xl font-bold text-slate-900">Wordbook Market</h2>
-            <p className="mt-2 text-sm text-slate-700">공개 단어장을 다운로드한 뒤 바로 단어장 내부 학습으로 이어집니다.</p>
-          </div>
-        </Link>
-      </div>
-
-      <div className="rounded-2xl border border-white/70 bg-white/85 p-5 shadow-[0_18px_44px_-30px_rgba(15,23,42,0.7)] backdrop-blur">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Policy</p>
-        <p className="mt-2 text-sm text-slate-700">
-          다운로드 단어장은 원본 변경이 금지됩니다. 정답/오답/회복 같은 학습 상태만 사용자별로 저장됩니다.
-        </p>
+      <div className="lg:pt-2">
+        <LoginPanel
+          nextPath="/wordbooks"
+          title="Start Learning"
+          subtitle="로그인하고 바로 내 단어장 학습으로 이동하세요."
+        />
       </div>
     </section>
   );
 }
-
 

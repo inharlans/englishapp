@@ -13,6 +13,7 @@ function hasValidPreviewAccess(req: NextRequest): boolean {
 }
 
 function isPublicPath(pathname: string): boolean {
+  if (pathname === "/") return true;
   if (pathname === "/login") return true;
   if (pathname === "/preview-access") return true;
   if (pathname.startsWith("/api/auth/")) return true;
