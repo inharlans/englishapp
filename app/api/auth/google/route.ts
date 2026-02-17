@@ -3,18 +3,12 @@ import { NextRequest, NextResponse } from "next/server";
 const OAUTH_STATE_COOKIE = "oauth_google_state";
 const OAUTH_NEXT_COOKIE = "oauth_google_next";
 
-function getGoogleConfig(req: NextRequest): { clientId: string; redirectUri: string; redirectOrigin: string } | null {
+function getGoogleConfig(req: NextRequest): { clientId: string; redirectUri: string } | null {
   const clientId = process.env.GOOGLE_CLIENT_ID?.trim() ?? "";
   const configuredRedirect = process.env.GOOGLE_REDIRECT_URI?.trim() ?? "";
   const redirectUri = configuredRedirect || `${req.nextUrl.origin}/api/auth/google/callback`;
   if (!clientId) return null;
-  let redirectOrigin = req.nextUrl.origin;
-  try {
-    redirectOrigin = new URL(redirectUri).origin;
-  } catch {
-    redirectOrigin = req.nextUrl.origin;
-  }
-  return { clientId, redirectUri, redirectOrigin };
+  return { clientId, redirectUri };
 }
 
 function randomHex(bytes: number): string {
@@ -34,11 +28,6 @@ export async function GET(req: NextRequest) {
   const config = getGoogleConfig(req);
   if (!config) {
     return NextResponse.redirect(new URL("/login?error=google_not_configured", req.url));
-  }
-
-  if (config.redirectOrigin !== req.nextUrl.origin) {
-    const canonical = new URL(req.nextUrl.pathname + req.nextUrl.search, config.redirectOrigin);
-    return NextResponse.redirect(canonical);
   }
 
   const state = randomHex(24);
