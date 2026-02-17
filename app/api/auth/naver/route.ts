@@ -3,12 +3,18 @@ import { NextRequest, NextResponse } from "next/server";
 const OAUTH_STATE_COOKIE = "oauth_naver_state";
 const OAUTH_NEXT_COOKIE = "oauth_naver_next";
 
-function getNaverConfig(req: NextRequest): { clientId: string; redirectUri: string } | null {
+function getNaverConfig(req: NextRequest): { clientId: string; redirectUri: string; redirectOrigin: string } | null {
   const clientId = process.env.NAVER_CLIENT_ID?.trim() ?? "";
   const configuredRedirect = process.env.NAVER_REDIRECT_URI?.trim() ?? "";
   const redirectUri = configuredRedirect || `${req.nextUrl.origin}/api/auth/naver/callback`;
   if (!clientId) return null;
-  return { clientId, redirectUri };
+  let redirectOrigin = req.nextUrl.origin;
+  try {
+    redirectOrigin = new URL(redirectUri).origin;
+  } catch {
+    redirectOrigin = req.nextUrl.origin;
+  }
+  return { clientId, redirectUri, redirectOrigin };
 }
 
 function randomHex(bytes: number): string {
@@ -28,6 +34,11 @@ export async function GET(req: NextRequest) {
   const config = getNaverConfig(req);
   if (!config) {
     return NextResponse.redirect(new URL("/login?error=naver_not_configured", req.url));
+  }
+
+  if (config.redirectOrigin !== req.nextUrl.origin) {
+    const canonical = new URL(req.nextUrl.pathname + req.nextUrl.search, config.redirectOrigin);
+    return NextResponse.redirect(canonical);
   }
 
   const state = randomHex(24);

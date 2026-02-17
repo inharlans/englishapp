@@ -27,6 +27,13 @@ function redirectWithError(req: NextRequest, code: string): NextResponse {
   return NextResponse.redirect(new URL(`/login?error=${encodeURIComponent(code)}`, req.url));
 }
 
+async function fetchWithTimeout(input: string, init?: RequestInit, timeoutMs = 10000): Promise<Response> {
+  return fetch(input, {
+    ...(init ?? {}),
+    signal: AbortSignal.timeout(timeoutMs)
+  });
+}
+
 type GoogleUserInfo = {
   sub?: string;
   email?: string;
@@ -47,7 +54,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
+    const tokenRes = await fetchWithTimeout("https://oauth2.googleapis.com/token", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
@@ -64,7 +71,7 @@ export async function GET(req: NextRequest) {
     const accessToken = tokenJson.access_token;
     if (!accessToken) return redirectWithError(req, "google_token_missing");
 
-    const profileRes = await fetch("https://openidconnect.googleapis.com/v1/userinfo", {
+    const profileRes = await fetchWithTimeout("https://openidconnect.googleapis.com/v1/userinfo", {
       headers: { Authorization: `Bearer ${accessToken}` }
     });
     if (!profileRes.ok) return redirectWithError(req, "google_profile_fetch_failed");

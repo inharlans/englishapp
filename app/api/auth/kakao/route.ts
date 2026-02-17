@@ -3,12 +3,18 @@ import { NextRequest, NextResponse } from "next/server";
 const OAUTH_STATE_COOKIE = "oauth_kakao_state";
 const OAUTH_NEXT_COOKIE = "oauth_kakao_next";
 
-function getKakaoConfig(req: NextRequest): { clientId: string; redirectUri: string } | null {
+function getKakaoConfig(req: NextRequest): { clientId: string; redirectUri: string; redirectOrigin: string } | null {
   const clientId = process.env.KAKAO_CLIENT_ID?.trim() ?? "";
   const configuredRedirect = process.env.KAKAO_REDIRECT_URI?.trim() ?? "";
   const redirectUri = configuredRedirect || `${req.nextUrl.origin}/api/auth/kakao/callback`;
   if (!clientId) return null;
-  return { clientId, redirectUri };
+  let redirectOrigin = req.nextUrl.origin;
+  try {
+    redirectOrigin = new URL(redirectUri).origin;
+  } catch {
+    redirectOrigin = req.nextUrl.origin;
+  }
+  return { clientId, redirectUri, redirectOrigin };
 }
 
 function randomHex(bytes: number): string {
@@ -28,6 +34,11 @@ export async function GET(req: NextRequest) {
   const config = getKakaoConfig(req);
   if (!config) {
     return NextResponse.redirect(new URL("/login?error=kakao_not_configured", req.url));
+  }
+
+  if (config.redirectOrigin !== req.nextUrl.origin) {
+    const canonical = new URL(req.nextUrl.pathname + req.nextUrl.search, config.redirectOrigin);
+    return NextResponse.redirect(canonical);
   }
 
   const state = randomHex(24);

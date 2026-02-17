@@ -27,6 +27,13 @@ function redirectWithError(req: NextRequest, code: string): NextResponse {
   return NextResponse.redirect(new URL(`/login?error=${encodeURIComponent(code)}`, req.url));
 }
 
+async function fetchWithTimeout(input: string, init?: RequestInit, timeoutMs = 10000): Promise<Response> {
+  return fetch(input, {
+    ...(init ?? {}),
+    signal: AbortSignal.timeout(timeoutMs)
+  });
+}
+
 type KakaoProfile = {
   id?: number | string;
   kakao_account?: {
@@ -58,7 +65,7 @@ export async function GET(req: NextRequest) {
     });
     if (config.clientSecret) tokenBody.set("client_secret", config.clientSecret);
 
-    const tokenRes = await fetch("https://kauth.kakao.com/oauth/token", {
+    const tokenRes = await fetchWithTimeout("https://kauth.kakao.com/oauth/token", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: tokenBody
@@ -69,7 +76,7 @@ export async function GET(req: NextRequest) {
     const accessToken = tokenJson.access_token;
     if (!accessToken) return redirectWithError(req, "kakao_token_missing");
 
-    const profileRes = await fetch("https://kapi.kakao.com/v2/user/me", {
+    const profileRes = await fetchWithTimeout("https://kapi.kakao.com/v2/user/me", {
       headers: { Authorization: `Bearer ${accessToken}` }
     });
     if (!profileRes.ok) return redirectWithError(req, "kakao_profile_fetch_failed");

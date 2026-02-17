@@ -27,6 +27,13 @@ function redirectWithError(req: NextRequest, code: string): NextResponse {
   return NextResponse.redirect(new URL(`/login?error=${encodeURIComponent(code)}`, req.url));
 }
 
+async function fetchWithTimeout(input: string, init?: RequestInit, timeoutMs = 10000): Promise<Response> {
+  return fetch(input, {
+    ...(init ?? {}),
+    signal: AbortSignal.timeout(timeoutMs)
+  });
+}
+
 type NaverUserInfo = {
   resultcode?: string;
   response?: {
@@ -56,13 +63,13 @@ export async function GET(req: NextRequest) {
     tokenUrl.searchParams.set("code", code);
     tokenUrl.searchParams.set("state", state);
 
-    const tokenRes = await fetch(tokenUrl);
+    const tokenRes = await fetchWithTimeout(tokenUrl.toString());
     if (!tokenRes.ok) return redirectWithError(req, "naver_token_exchange_failed");
     const tokenJson = (await tokenRes.json()) as { access_token?: string };
     const accessToken = tokenJson.access_token;
     if (!accessToken) return redirectWithError(req, "naver_token_missing");
 
-    const profileRes = await fetch("https://openapi.naver.com/v1/nid/me", {
+    const profileRes = await fetchWithTimeout("https://openapi.naver.com/v1/nid/me", {
       headers: { Authorization: `Bearer ${accessToken}` }
     });
     if (!profileRes.ok) return redirectWithError(req, "naver_profile_fetch_failed");
