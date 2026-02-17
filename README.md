@@ -757,3 +757,8 @@ Additional observations and guardrails:
 - Updated blocked owners page copy to `블랙리스트` terminology.
 - Updated block confirmation copy to: "블랙 해제는 내 단어장의 블랙리스트 안에서 해제할수있습니다."
 - Synced e2e UI flow assertion to wait for `블랙리스트` link text.
+
+## 2026-02-17 Fix mojibake text in wordbook review input
+
+- Fixed broken Korean placeholder text in `/wordbooks/[id]` review textarea.
+- Updated `RateBox` placeholder to: `리뷰를 입력해주세요 (선택)`.

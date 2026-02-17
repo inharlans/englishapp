@@ -66,7 +66,7 @@ export function RateBox({ wordbookId, ratingAvg, ratingCount, myRating, myReview
           disabled={disabled || loading}
           rows={3}
           maxLength={1000}
-          placeholder="由щ럭瑜??④꺼二쇱꽭??(?좏깮)"
+          placeholder="리뷰를 입력해주세요 (선택)"
           className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:opacity-60"
         />
       </label>
