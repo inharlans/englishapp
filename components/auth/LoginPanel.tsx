@@ -1,6 +1,4 @@
 "use client";
-
-import Link from "next/link";
 import { useState } from "react";
 
 import { apiFetch } from "@/lib/clientApi";
@@ -101,32 +99,35 @@ export function LoginPanel({
         </div>
 
         <div className="space-y-2">
-          <Link
+          <a
             href={`/api/auth/google?next=${encodeURIComponent(nextPath)}`}
-            className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-50"
+            className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-50"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
               <path
-                fill="#EA4335"
-                d="M12 10.2v3.9h5.5c-.2 1.3-1.5 3.8-5.5 3.8-3.3 0-6-2.8-6-6.2s2.7-6.2 6-6.2c1.9 0 3.2.8 3.9 1.5l2.7-2.7C16.9 2.7 14.7 1.8 12 1.8 6.9 1.8 2.8 6 2.8 11.2S6.9 20.6 12 20.6c6.9 0 9.2-4.9 9.2-7.4 0-.5 0-.9-.1-1.3H12z"
+                fill="#FFC107"
+                d="M21.35 11.1h-9.18v2.98h5.28c-.23 1.52-1.75 4.46-5.28 4.46-3.18 0-5.76-2.63-5.76-5.88s2.58-5.88 5.76-5.88c1.81 0 3.02.77 3.71 1.44l2.54-2.46C16.79 4.25 14.72 3.3 12.17 3.3 7.07 3.3 2.93 7.48 2.93 12.66s4.14 9.36 9.24 9.36c5.33 0 8.86-3.74 8.86-9.01 0-.61-.07-1.07-.16-1.51z"
               />
+              <path fill="#FF3D00" d="M2.93 7.22l3.47 2.54c.94-1.86 2.87-3.14 5.77-3.14 1.81 0 3.02.77 3.71 1.44l2.54-2.46C16.79 4.25 14.72 3.3 12.17 3.3c-3.55 0-6.57 2.03-8.24 4.92z" />
+              <path fill="#4CAF50" d="M12.17 22.02c2.48 0 4.56-.82 6.08-2.22l-2.81-2.3c-.75.53-1.74.9-3.27.9-3.47 0-4.95-2.31-5.3-3.47l-3.45 2.66c1.65 3.1 4.88 4.43 8.75 4.43z" />
+              <path fill="#1976D2" d="M21.35 11.1h-9.18v2.98h5.28c-.11.71-.52 1.74-1.31 2.49l.01-.01 2.81 2.3c-.2.18 3.07-2.25 3.07-6.2 0-.61-.07-1.07-.16-1.51z" />
             </svg>
             Google로 계속하기
-          </Link>
+          </a>
 
-          <Link
+          <a
             href={`/api/auth/naver?next=${encodeURIComponent(nextPath)}`}
-            className="flex w-full items-center justify-center rounded-xl border border-[#03C75A] bg-[#03C75A] px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-95"
+            className="flex w-full cursor-pointer items-center justify-center rounded-xl border border-[#03C75A] bg-[#03C75A] px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-95"
           >
             네이버로 계속하기
-          </Link>
+          </a>
 
-          <Link
+          <a
             href={`/api/auth/kakao?next=${encodeURIComponent(nextPath)}`}
-            className="flex w-full items-center justify-center rounded-xl border border-[#FEE500] bg-[#FEE500] px-4 py-2.5 text-sm font-semibold text-[#191919] transition hover:brightness-95"
+            className="flex w-full cursor-pointer items-center justify-center rounded-xl border border-[#FEE500] bg-[#FEE500] px-4 py-2.5 text-sm font-semibold text-[#191919] transition hover:brightness-95"
           >
             카카오로 계속하기
-          </Link>
+          </a>
         </div>
       </div>
     </section>
