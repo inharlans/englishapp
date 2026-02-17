@@ -977,6 +977,9 @@ Additional observations and guardrails:
 - Applied same fix to preview access redirect route.
 - Impact:
   - Stops post-login redirect loops/infinite loading caused by wrong callback return host.
+- Added `lib/publicOrigin.ts`:
+  - resolves public origin using `NEXT_PUBLIC_APP_URL` or proxy headers (`x-forwarded-host` / `x-forwarded-proto`)
+  - avoids internal host leakage in edge/proxy runtime.
 
 ### Operational notes
 

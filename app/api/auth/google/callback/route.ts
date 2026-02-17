@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionCookieName, issueSessionToken } from "@/lib/authJwt";
 import { getCsrfCookieName, issueCsrfToken } from "@/lib/csrf";
 import { resolveOrLinkOAuthUser } from "@/lib/oauthAccounts";
+import { getPublicOrigin } from "@/lib/publicOrigin";
 
 const OAUTH_STATE_COOKIE = "oauth_google_state";
 const OAUTH_NEXT_COOKIE = "oauth_google_next";
@@ -11,7 +12,7 @@ function getGoogleConfig(req: NextRequest): { clientId: string; clientSecret: st
   const clientId = process.env.GOOGLE_CLIENT_ID?.trim() ?? "";
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim() ?? "";
   const configuredRedirect = process.env.GOOGLE_REDIRECT_URI?.trim() ?? "";
-  const redirectUri = configuredRedirect || `${req.nextUrl.origin}/api/auth/google/callback`;
+  const redirectUri = configuredRedirect || `${getPublicOrigin(req)}/api/auth/google/callback`;
   if (!clientId || !clientSecret) return null;
   return { clientId, clientSecret, redirectUri };
 }
@@ -24,7 +25,7 @@ function safeNextPath(raw: string | undefined): string {
 }
 
 function redirectWithError(req: NextRequest, code: string): NextResponse {
-  return NextResponse.redirect(new URL(`/login?error=${encodeURIComponent(code)}`, req.nextUrl.origin));
+  return NextResponse.redirect(new URL(`/login?error=${encodeURIComponent(code)}`, getPublicOrigin(req)));
 }
 
 async function fetchWithTimeout(input: string, init?: RequestInit, timeoutMs = 10000): Promise<Response> {
@@ -99,7 +100,7 @@ export async function GET(req: NextRequest) {
     });
     const csrfToken = issueCsrfToken();
 
-    const res = NextResponse.redirect(new URL(nextPath, req.nextUrl.origin));
+    const res = NextResponse.redirect(new URL(nextPath, getPublicOrigin(req)));
     res.cookies.set(getSessionCookieName(), sessionToken, {
       httpOnly: true,
       sameSite: "lax",

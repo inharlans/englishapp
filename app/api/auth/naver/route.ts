@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getPublicOrigin } from "@/lib/publicOrigin";
 
 const OAUTH_STATE_COOKIE = "oauth_naver_state";
 const OAUTH_NEXT_COOKIE = "oauth_naver_next";
@@ -6,7 +7,7 @@ const OAUTH_NEXT_COOKIE = "oauth_naver_next";
 function getNaverConfig(req: NextRequest): { clientId: string; redirectUri: string } | null {
   const clientId = process.env.NAVER_CLIENT_ID?.trim() ?? "";
   const configuredRedirect = process.env.NAVER_REDIRECT_URI?.trim() ?? "";
-  const redirectUri = configuredRedirect || `${req.nextUrl.origin}/api/auth/naver/callback`;
+  const redirectUri = configuredRedirect || `${getPublicOrigin(req)}/api/auth/naver/callback`;
   if (!clientId) return null;
   return { clientId, redirectUri };
 }
@@ -27,7 +28,7 @@ function safeNextPath(raw: string | null): string {
 export async function GET(req: NextRequest) {
   const config = getNaverConfig(req);
   if (!config) {
-    return NextResponse.redirect(new URL("/login?error=naver_not_configured", req.nextUrl.origin));
+    return NextResponse.redirect(new URL("/login?error=naver_not_configured", getPublicOrigin(req)));
   }
 
   const state = randomHex(24);

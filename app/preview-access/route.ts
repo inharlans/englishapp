@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getPublicOrigin } from "@/lib/publicOrigin";
 
 const PREVIEW_COOKIE_NAME = "preview_access";
 
@@ -18,7 +19,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Invalid preview token." }, { status: 401 });
   }
 
-  const res = NextResponse.redirect(new URL(nextPath, req.nextUrl.origin));
+  const res = NextResponse.redirect(new URL(nextPath, getPublicOrigin(req)));
   res.cookies.set(PREVIEW_COOKIE_NAME, expected, {
     httpOnly: true,
     secure: true,
