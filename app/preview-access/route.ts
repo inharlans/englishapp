@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Invalid preview token." }, { status: 401 });
   }
 
-  const res = NextResponse.redirect(new URL(nextPath, req.url));
+  const res = NextResponse.redirect(new URL(nextPath, req.nextUrl.origin));
   res.cookies.set(PREVIEW_COOKIE_NAME, expected, {
     httpOnly: true,
     secure: true,

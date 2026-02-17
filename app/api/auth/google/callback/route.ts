@@ -24,7 +24,7 @@ function safeNextPath(raw: string | undefined): string {
 }
 
 function redirectWithError(req: NextRequest, code: string): NextResponse {
-  return NextResponse.redirect(new URL(`/login?error=${encodeURIComponent(code)}`, req.url));
+  return NextResponse.redirect(new URL(`/login?error=${encodeURIComponent(code)}`, req.nextUrl.origin));
 }
 
 async function fetchWithTimeout(input: string, init?: RequestInit, timeoutMs = 10000): Promise<Response> {
@@ -99,7 +99,7 @@ export async function GET(req: NextRequest) {
     });
     const csrfToken = issueCsrfToken();
 
-    const res = NextResponse.redirect(new URL(nextPath, req.url));
+    const res = NextResponse.redirect(new URL(nextPath, req.nextUrl.origin));
     res.cookies.set(getSessionCookieName(), sessionToken, {
       httpOnly: true,
       sameSite: "lax",

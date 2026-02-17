@@ -27,7 +27,7 @@ function safeNextPath(raw: string | null): string {
 export async function GET(req: NextRequest) {
   const config = getNaverConfig(req);
   if (!config) {
-    return NextResponse.redirect(new URL("/login?error=naver_not_configured", req.url));
+    return NextResponse.redirect(new URL("/login?error=naver_not_configured", req.nextUrl.origin));
   }
 
   const state = randomHex(24);
