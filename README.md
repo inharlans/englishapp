@@ -823,31 +823,31 @@ Required runtime env vars:
 - `/api/internal/cron/plan-expire`
 - `/api/internal/cron/wordbook-rank`
 
-## Recent Update (2026-02-18)
+## 최근 업데이트 (2026-02-18)
 
-- Payment entitlement hardening:
-  - Added idempotent entitlement apply guard keyed by `paymentId` to prevent double PRO extension when both `confirm` and `webhook` process the same payment.
-  - Normalized next billing schedule time to `nextProUntil` (removed unintended extra-cycle delay).
-- Plan enforcement consistency without external scheduler:
-  - Introduced effective-plan evaluation (`plan + proUntil`) and applied it across wordbook create/publish/edit/import/download/study access paths.
-  - Expired PRO users are now treated as FREE immediately by API checks even if cron is delayed or absent.
-- Bootstrap safety:
-  - Added transactional advisory lock in bootstrap to avoid concurrent first-admin creation race.
-- Tests:
-  - Added `lib/userPlan.test.ts` and `lib/paymentsEntitlement.test.ts`.
-  - Added payment route tests:
+- 결제 권한 반영 강화:
+  - `paymentId` 기준 멱등 가드를 추가해 `confirm`과 `webhook`이 같은 결제를 처리해도 PRO 기간이 중복 연장되지 않도록 수정했습니다.
+  - 다음 정기결제 예약 시점을 `nextProUntil` 기준으로 정규화해 한 주기 지연 가능성을 제거했습니다.
+- 외부 스케줄러 없이도 요금제 판정 일관화:
+  - `plan + proUntil` 기반의 유효 요금제 판정을 도입하고, 단어장 생성/공개/수정/가져오기/다운로드/학습 접근 경로에 적용했습니다.
+  - cron 지연/미실행 상황에서도 만료된 PRO 사용자는 API에서 즉시 FREE로 처리됩니다.
+- bootstrap 안정성:
+  - 최초 관리자 생성 시 동시 요청 경쟁 상태를 막기 위해 트랜잭션 advisory lock을 추가했습니다.
+- 테스트:
+  - `lib/userPlan.test.ts`, `lib/paymentsEntitlement.test.ts`를 추가했습니다.
+  - 결제 라우트 테스트를 추가했습니다.
     - `app/api/payments/confirm/route.test.ts`
     - `app/api/payments/webhook/route.test.ts`
 
-## OAuth Brand Verification Fixes (2026-02-18)
+## OAuth 브랜드 인증 대응 (2026-02-18)
 
-- Exposed policy pages as public routes in middleware:
+- 정책 페이지를 미들웨어 공개 경로로 열었습니다.
   - `/privacy`
   - `/terms`
-- Added visible legal links on homepage (`/`):
+- 홈페이지(`/`)에 법적 문서 링크를 명시적으로 노출했습니다.
   - Privacy Policy
   - Terms of Service
-- Replaced policy page content with UTF-8 safe HTML text:
+- 정책 페이지 본문을 UTF-8 안전 HTML 텍스트로 교체했습니다.
   - `app/privacy/page.tsx`
   - `app/terms/page.tsx`
-- Unified homepage/meta brand label to `englishapp` to reduce OAuth consent/name mismatch risk.
+- OAuth 동의화면 이름 불일치 위험을 줄이기 위해 홈페이지/메타 브랜드 표기를 `englishapp`으로 통일했습니다.

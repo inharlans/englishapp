@@ -1,33 +1,30 @@
 export default function TermsPage() {
   return (
     <section className="ui-card-soft p-6 sm:p-8">
-      <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">Terms of Service</h1>
+      <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">서비스 이용약관</h1>
       <p className="mt-3 text-sm leading-6 text-slate-700">
-        These terms govern your access to and use of Englishapp.
+        본 약관은 englishapp 서비스의 이용과 관련된 권리, 의무, 책임 사항을 규정합니다.
       </p>
 
       <div className="mt-6 space-y-4 text-sm leading-6 text-slate-700">
         <p>
-          1. You are responsible for account security and for all activity under your account.
+          1. 이용자는 계정 보안을 유지할 책임이 있으며, 계정에서 발생하는 활동에 대해 책임을 집니다.
         </p>
         <p>
-          2. You must not misuse the service, interfere with operations, or violate applicable
-          law.
+          2. 이용자는 서비스 오남용, 운영 방해, 관련 법령 위반 행위를 해서는 안 됩니다.
         </p>
         <p>
-          3. Service features may change over time. We may update or discontinue features with
-          reasonable notice when possible.
+          3. 서비스 기능은 변경될 수 있으며, 가능한 경우 사전 고지를 통해 변경 또는 중단될 수 있습니다.
         </p>
         <p>
-          4. Paid plans and recurring billing follow the pricing and payment terms shown on the
-          pricing page.
+          4. 유료 요금제 및 정기 결제는 가격 페이지에 표시된 요금 및 결제 조건을 따릅니다.
         </p>
         <p>
-          5. You may request account deletion, subject to legal retention requirements.
+          5. 이용자는 계정 삭제를 요청할 수 있으며, 법령상 보관 의무가 있는 정보는 예외로 합니다.
         </p>
       </div>
 
-      <p className="mt-6 text-xs text-slate-500">Effective date: February 18, 2026</p>
+      <p className="mt-6 text-xs text-slate-500">시행일: 2026년 2월 18일</p>
     </section>
   );
 }
