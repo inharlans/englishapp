@@ -838,3 +838,16 @@ Required runtime env vars:
   - Added payment route tests:
     - `app/api/payments/confirm/route.test.ts`
     - `app/api/payments/webhook/route.test.ts`
+
+## OAuth Brand Verification Fixes (2026-02-18)
+
+- Exposed policy pages as public routes in middleware:
+  - `/privacy`
+  - `/terms`
+- Added visible legal links on homepage (`/`):
+  - Privacy Policy
+  - Terms of Service
+- Replaced policy page content with UTF-8 safe HTML text:
+  - `app/privacy/page.tsx`
+  - `app/terms/page.tsx`
+- Unified homepage/meta brand label to `englishapp` to reduce OAuth consent/name mismatch risk.

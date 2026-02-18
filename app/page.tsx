@@ -15,7 +15,7 @@ export default async function HomePage() {
 
         <div className="relative space-y-6">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">잉글리시앱</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">englishapp</p>
             <h1 className="mt-2 text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">
               영어 단어 학습을
               <br />
@@ -55,6 +55,15 @@ export default async function HomePage() {
                 내 단어장 열기
               </Link>
             )}
+          </div>
+
+          <div className="flex flex-wrap gap-4 text-xs text-slate-500">
+            <Link href="/privacy" className="underline underline-offset-4 hover:text-slate-700">
+              Privacy Policy
+            </Link>
+            <Link href="/terms" className="underline underline-offset-4 hover:text-slate-700">
+              Terms of Service
+            </Link>
           </div>
         </div>
       </div>

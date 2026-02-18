@@ -12,7 +12,7 @@ import { getUserFromRequestCookies } from "@/lib/authServer";
 const appBaseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
 export const metadata: Metadata = {
-  title: "Englishapp",
+  title: "englishapp",
   description: "영어 단어 학습과 다운로드 단어장을 제공하는 학습 플랫폼입니다.",
   metadataBase: new URL(appBaseUrl),
   icons: {
