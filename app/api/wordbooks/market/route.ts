@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { getUserFromRequestCookies } from "@/lib/authServer";
 import { prisma } from "@/lib/prisma";
-import { MARKET_MIN_ITEM_COUNT } from "@/lib/wordbookPolicy";
+import { shouldHideWordbookFromMarket } from "@/lib/wordbookPolicy";
 
 type SortMode = "top" | "new" | "downloads";
 
@@ -55,11 +55,22 @@ export async function GET(req: NextRequest) {
     orderBy: orderByForDb,
     select: {
       id: true,
+      title: true,
+      description: true,
+      owner: { select: { email: true } },
       _count: { select: { items: true } }
     }
   });
   const eligibleIds = candidates
-    .filter((wb) => wb._count.items >= MARKET_MIN_ITEM_COUNT)
+    .filter(
+      (wb) =>
+        !shouldHideWordbookFromMarket({
+          title: wb.title,
+          description: wb.description,
+          ownerEmail: wb.owner.email,
+          itemCount: wb._count.items
+        })
+    )
     .map((wb) => wb.id);
   const total = eligibleIds.length;
   const pageIds = eligibleIds.slice(page * take, page * take + take);

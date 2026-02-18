@@ -22,6 +22,7 @@ import { aggregateVersionLogs } from "@/lib/wordbookVersion";
 import { StarRating } from "@/components/wordbooks/StarRating";
 import { PendingWordbookItemsRetryBanner } from "@/components/wordbooks/PendingWordbookItemsRetryBanner";
 import { isPrivateWordbookLockedForFree } from "@/lib/wordbookAccess";
+import { maskEmailAddress } from "@/lib/textQuality";
 
 function parseId(raw: string): number | null {
   const n = Number(raw);
@@ -167,7 +168,7 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
             {wordbook.title}
           </h1>
           <p className="mt-2 text-sm text-slate-600">
-            제작자 {wordbook.owner.email} | 단어 {wordbook.items.length}개 | 다운로드 {wordbook.downloadCount}회
+            제작자 {maskEmailAddress(wordbook.owner.email)} | 단어 {wordbook.items.length}개 | 다운로드 {wordbook.downloadCount}회
             {downloadedAt ? ` | 다운로드일 ${downloadedAt.toISOString().slice(0, 10)}` : ""} |{" "}
             {wordbook.isPublic ? "공개" : "비공개"}
           </p>

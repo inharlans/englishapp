@@ -36,7 +36,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   });
   if (!limit.ok) {
     return NextResponse.json(
-      { error: "Too many requests." },
+      { error: "요청이 너무 많습니다. 잠시 후 다시 시도해주세요." },
       { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } }
     );
   }
@@ -78,7 +78,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
 
   const parsed = parseWordbookText({ rawText, format, fillPronunciation });
   if (parsed.length === 0) {
-    return NextResponse.json({ error: "No valid rows." }, { status: 400 });
+    return NextResponse.json({ error: "유효한 행이 없습니다. 깨진 텍스트 또는 빈 값을 확인해주세요." }, { status: 400 });
   }
 
   await prisma.$transaction(async (tx) => {
@@ -112,3 +112,4 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
 
   return NextResponse.json({ ok: true, importedCount: parsed.length }, { status: 201 });
 }
+

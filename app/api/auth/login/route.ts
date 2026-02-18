@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
   });
   if (!limit.ok) {
     const res = NextResponse.json(
-      { error: "Too many requests." },
+      { error: "요청이 너무 많습니다. 잠시 후 다시 시도해주세요." },
       { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } }
     );
     await recordApiMetric({
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
       select: { id: true, email: true, passwordHash: true }
     });
     if (!user) {
-      const res = NextResponse.json({ error: "Invalid credentials." }, { status: 401 });
+      const res = NextResponse.json({ error: "이메일 또는 비밀번호가 올바르지 않습니다." }, { status: 401 });
       await recordApiMetric({
         route: "/api/auth/login",
         method: "POST",
@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
 
     const ok = await verifyPassword(password, user.passwordHash);
     if (!ok) {
-      const res = NextResponse.json({ error: "Invalid credentials." }, { status: 401 });
+      const res = NextResponse.json({ error: "이메일 또는 비밀번호가 올바르지 않습니다." }, { status: 401 });
       await recordApiMetric({
         route: "/api/auth/login",
         method: "POST",
@@ -107,7 +107,7 @@ export async function POST(req: NextRequest) {
       context: { err: error instanceof Error ? error.message : String(error) }
     });
     const res = NextResponse.json(
-      { error: error instanceof Error ? error.message : "Login failed." },
+      { error: error instanceof Error ? error.message : "로그인 처리에 실패했습니다." },
       { status: 400 }
     );
     await recordApiMetric({

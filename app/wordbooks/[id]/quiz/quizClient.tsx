@@ -13,6 +13,7 @@ import { useWordbookParting } from "@/components/wordbooks/useWordbookParting";
 import { DensityModeToggle } from "@/components/ui/DensityModeToggle";
 import { useDensityMode } from "@/components/ui/useDensityMode";
 import { EmptyStateCard } from "@/components/ui/EmptyStateCard";
+import { sanitizeUserText } from "@/lib/textQuality";
 
 type QuizItem = {
   id: number;
@@ -286,7 +287,8 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
                 <p>{feedback.isCorrect ? "정답" : "오답"}</p>
                 {!feedback.isCorrect && feedback.correctAnswer ? (
                   <p className="mt-1 text-xs font-medium text-red-700">
-                    정답: {feedback.correctAnswer.term} / {feedback.correctAnswer.meaning}
+                    정답: {feedback.correctAnswer.term} /{" "}
+                    {sanitizeUserText(feedback.correctAnswer.meaning, "의미 데이터 점검 중입니다")}
                   </p>
                 ) : null}
                 <button

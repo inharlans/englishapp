@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { getOfflineWordbook, type OfflineWordbook } from "@/lib/offlineWordbooks";
 import { SpeakButton } from "@/components/wordbooks/SpeakButton";
+import { sanitizeUserText } from "@/lib/textQuality";
 
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
@@ -123,7 +124,9 @@ export function StudyClient({ id }: { id: number }) {
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
                   뜻
                 </p>
-                <p className="mt-2 text-xl font-bold text-slate-900">{current.meaning}</p>
+                <p className="mt-2 text-xl font-bold text-slate-900">
+                  {sanitizeUserText(current.meaning, "의미 데이터 점검 중입니다")}
+                </p>
               </div>
             ) : (
               <button

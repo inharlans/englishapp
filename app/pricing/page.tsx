@@ -37,13 +37,10 @@ export default async function PricingPage(props: { searchParams: Promise<{ payme
               ) : null}
             </p>
           ) : (
-            <p className="mt-1 text-xs text-slate-500">로그인하면 사용량을 볼 수 있습니다.</p>
-          )}
-          {user ? (
             <p className="mt-1 text-xs text-slate-500">
-              Logged-in email: <span className="font-semibold">{user.email}</span>
+              가격/정책은 비로그인 상태에서도 볼 수 있으며, 실제 결제 단계에서 로그인합니다.
             </p>
-          ) : null}
+          )}
         </div>
         <div className="ml-auto flex flex-wrap gap-2">
           <Link href={{ pathname: "/privacy" }} className="ui-btn-secondary px-4 py-2 text-sm">
@@ -107,7 +104,7 @@ export default async function PricingPage(props: { searchParams: Promise<{ payme
             <li>업로드: 공개/비공개 선택 가능</li>
             <li>오프라인 중단 없는 학습 흐름</li>
           </ul>
-          <PricingActions plan={user?.plan ?? null} paymentEnabled={paymentEnabled} />
+          <PricingActions plan={user?.plan ?? null} paymentEnabled={paymentEnabled} isLoggedIn={Boolean(user)} />
           <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700">
             결제 및 구독 상태는 PortOne 웹훅으로 자동 반영됩니다. 문제가 있으면 관리자에게 문의해주세요.
           </div>
@@ -127,3 +124,4 @@ export default async function PricingPage(props: { searchParams: Promise<{ payme
 }
 
 const planLabel = (plan: "FREE" | "PRO") => (plan === "FREE" ? "무료" : "프로");
+

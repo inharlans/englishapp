@@ -118,7 +118,7 @@ export async function POST(req: NextRequest) {
 
     const cycle = normalizeCycle(parsed.data.cycle);
     if (!cycle) {
-      const res = NextResponse.json({ error: "Invalid cycle." }, { status: 400 });
+      const res = NextResponse.json({ error: "지원하지 않는 결제 주기입니다." }, { status: 400 });
       await recordApiMetricFromStart({
         route: "/api/payments/confirm",
         method: "POST",

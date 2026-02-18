@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 
 import { apiFetch } from "@/lib/clientApi";
 import PortOne from "@portone/browser-sdk/v2";
@@ -23,7 +24,11 @@ type CheckoutRequest = {
   };
 };
 
-export function PricingActions(props: { plan: "FREE" | "PRO" | null; paymentEnabled: boolean }) {
+export function PricingActions(props: {
+  plan: "FREE" | "PRO" | null;
+  paymentEnabled: boolean;
+  isLoggedIn: boolean;
+}) {
   const [loading, setLoading] = useState<"monthly" | "yearly" | "portal" | null>(null);
   const [error, setError] = useState("");
 
@@ -43,7 +48,7 @@ export function PricingActions(props: { plan: "FREE" | "PRO" | null; paymentEnab
 
       const issueResult = await PortOne.requestIssueBillingKey(checkoutJson.request);
       if (!issueResult) {
-        throw new Error("빌링키 발급 결과를 확인할 수 없습니다. 잠시 후 다시 시도해 주세요.");
+        throw new Error("빌링키 발급 결과를 확인할 수 없습니다. 잠시 후 다시 시도해주세요.");
       }
       if (issueResult.code || issueResult.message) {
         throw new Error(issueResult.message ?? issueResult.code ?? "빌링키 발급에 실패했습니다.");
@@ -89,6 +94,17 @@ export function PricingActions(props: { plan: "FREE" | "PRO" | null; paymentEnab
     return <p className="mt-3 text-xs text-slate-500">결제 키가 설정되지 않아 실제 결제는 비활성화 상태입니다.</p>;
   }
 
+  if (!props.isLoggedIn) {
+    return (
+      <div className="mt-4 space-y-2">
+        <Link href={{ pathname: "/login", query: { next: "/pricing" } }} className="ui-btn-primary block w-full px-4 py-2.5 text-center text-sm">
+          로그인 후 결제하기
+        </Link>
+        <p className="text-xs text-slate-500">실제 결제는 로그인 후에만 진행됩니다.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="mt-4 space-y-2">
       {props.plan === "PRO" ? (
@@ -128,3 +144,4 @@ export function PricingActions(props: { plan: "FREE" | "PRO" | null; paymentEnab
     </div>
   );
 }
+

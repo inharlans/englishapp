@@ -67,8 +67,7 @@ export async function POST(req: NextRequest) {
     if (createdCount >= 1) {
       return NextResponse.json(
         {
-          error:
-            "Free plan can create only 1 wordbook. Upgrade to PRO for unlimited wordbooks."
+          error: "무료 요금제는 단어장 1개만 생성할 수 있습니다. PRO로 업그레이드해주세요."
         },
         { status: 403 }
       );

@@ -26,13 +26,33 @@ jobs:
           fi
       - name: Run plan-expire cron
         run: |
-          curl --fail --show-error --silent \
-            -X POST "${{ secrets.APP_BASE_URL }}/api/internal/cron/plan-expire" \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            -H "Content-Type: application/json"
+          set -euo pipefail
+          url="${{ secrets.APP_BASE_URL }}/api/internal/cron/plan-expire"
+          status=$(curl --silent --show-error --location \
+            --request POST "$url" \
+            --header "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            --header "Content-Type: application/json" \
+            --output /tmp/cron-plan-expire-body.txt \
+            --write-out "%{http_code}")
+          echo "plan-expire status=$status url=$url"
+          cat /tmp/cron-plan-expire-body.txt || true
+          if [ "$status" -lt 200 ] || [ "$status" -ge 300 ]; then
+            echo "plan-expire failed (status=$status)"
+            exit 1
+          fi
       - name: Run wordbook-rank cron
         run: |
-          curl --fail --show-error --silent \
-            -X POST "${{ secrets.APP_BASE_URL }}/api/internal/cron/wordbook-rank" \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            -H "Content-Type: application/json"
+          set -euo pipefail
+          url="${{ secrets.APP_BASE_URL }}/api/internal/cron/wordbook-rank"
+          status=$(curl --silent --show-error --location \
+            --request POST "$url" \
+            --header "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            --header "Content-Type: application/json" \
+            --output /tmp/cron-wordbook-rank-body.txt \
+            --write-out "%{http_code}")
+          echo "wordbook-rank status=$status url=$url"
+          cat /tmp/cron-wordbook-rank-body.txt || true
+          if [ "$status" -lt 200 ] || [ "$status" -ge 300 ]; then
+            echo "wordbook-rank failed (status=$status)"
+            exit 1
+          fi

@@ -1,3 +1,5 @@
+import { isBrokenUserText } from "@/lib/textQuality";
+
 export type ParsedWordbookRow = {
   term: string;
   meaning: string;
@@ -64,10 +66,12 @@ export function parseWordbookText(input: {
     const term = cols[0] ?? "";
     const meaning = cols[1] ?? "";
     if (!term || !meaning) continue;
+    if (isBrokenUserText(meaning)) continue;
 
     const pronunciationRaw = cols[2] ?? "";
     const example = cols[3] ? cols[3] : null;
     const exampleMeaning = cols[4] ? cols[4] : null;
+    if (isBrokenUserText(exampleMeaning)) continue;
     const pronunciation =
       pronunciationRaw ||
       !input.fillPronunciation
@@ -107,4 +111,3 @@ export function toDelimitedWordbook(input: {
   }
   return `${lines.map((line) => line.join("\t")).join("\n")}\n`;
 }
-

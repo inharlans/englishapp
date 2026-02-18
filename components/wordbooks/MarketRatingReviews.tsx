@@ -5,6 +5,7 @@ import { apiFetch } from "@/lib/clientApi";
 import { useState } from "react";
 
 import { StarRating } from "@/components/wordbooks/StarRating";
+import { maskEmailAddress } from "@/lib/textQuality";
 
 type Review = {
   id: number;
@@ -13,13 +14,6 @@ type Review = {
   updatedAt: string;
   userEmail: string;
 };
-
-function maskEmail(email: string): string {
-  const [name, domain] = email.split("@");
-  if (!name || !domain) return email;
-  if (name.length <= 2) return `${name[0] ?? "*"}*@${domain}`;
-  return `${name.slice(0, 2)}***@${domain}`;
-}
 
 export function MarketRatingReviews({
   wordbookId,
@@ -78,7 +72,7 @@ export function MarketRatingReviews({
                 <article key={r.id} className="rounded-lg border border-slate-200 bg-white p-2">
                   <div className="flex items-center gap-2">
                     <StarRating value={r.rating} />
-                    <span className="text-[11px] text-slate-500">{maskEmail(r.userEmail)}</span>
+                    <span className="text-[11px] text-slate-500">{maskEmailAddress(r.userEmail)}</span>
                     <span className="text-[11px] text-slate-400">
                       {new Date(r.updatedAt).toISOString().slice(0, 10)}
                     </span>

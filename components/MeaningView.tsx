@@ -1,4 +1,5 @@
-﻿import type { MeaningViewMode } from "@/components/wordbooks/useMeaningViewMode";
+import type { MeaningViewMode } from "@/components/wordbooks/useMeaningViewMode";
+import { sanitizeUserText } from "@/lib/textQuality";
 
 type MeaningEntry = {
   tag: string | null;
@@ -119,10 +120,11 @@ export function MeaningView({
   className?: string;
   mode?: MeaningViewMode;
 }) {
-  const entries = parseMeaningEntries(value);
+  const safeValue = sanitizeUserText(value, "의미 데이터 점검 중입니다");
+  const entries = parseMeaningEntries(safeValue);
 
   if (entries.length === 0) {
-    return <span className={className}>{value}</span>;
+    return <span className={className}>{safeValue}</span>;
   }
 
   if (mode === "detailed") {

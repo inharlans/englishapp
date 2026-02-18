@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getUserFromRequestCookies } from "@/lib/authServer";
 import { prisma } from "@/lib/prisma";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
+import { isBrokenUserText } from "@/lib/textQuality";
 import { parseJsonWithSchema } from "@/lib/validation";
 import { isPrivateWordbookLockedForFree } from "@/lib/wordbookAccess";
 import { bumpWordbookVersion } from "@/lib/wordbookVersion";
@@ -72,6 +73,13 @@ export async function PATCH(
   if (!parsedBody.ok) return parsedBody.response;
   const body = parsedBody.data;
 
+  if (typeof body.meaning === "string" && isBrokenUserText(body.meaning)) {
+    return NextResponse.json({ error: "의미 텍스트가 올바르지 않습니다." }, { status: 400 });
+  }
+  if (typeof body.exampleMeaning === "string" && isBrokenUserText(body.exampleMeaning)) {
+    return NextResponse.json({ error: "예문 뜻 텍스트가 올바르지 않습니다." }, { status: 400 });
+  }
+
   const data: {
     term?: string;
     meaning?: string;
@@ -82,12 +90,10 @@ export async function PATCH(
   } = {};
 
   if ("term" in body && typeof body.term === "string") {
-    const t = body.term.trim();
-    data.term = t;
+    data.term = body.term.trim();
   }
   if ("meaning" in body && typeof body.meaning === "string") {
-    const m = body.meaning.trim();
-    data.meaning = m;
+    data.meaning = body.meaning.trim();
   }
   if ("pronunciation" in body) {
     data.pronunciation = body.pronunciation ? String(body.pronunciation).trim() : null;
@@ -171,3 +177,4 @@ export async function DELETE(
   });
   return NextResponse.json({ ok: true }, { status: 200 });
 }
+

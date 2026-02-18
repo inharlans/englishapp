@@ -62,11 +62,12 @@ export function AdminUsersClient({ initialUsers }: { initialUsers: UserRow[] }) 
   const [reports, setReports] = useState<ReportRow[]>([]);
   const [routeMetrics, setRouteMetrics] = useState<RouteMetricRow[]>([]);
   const [recentErrors, setRecentErrors] = useState<ErrorMetricRow[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [recomputing, setRecomputing] = useState(false);
   const [error, setError] = useState("");
 
   const reload = async () => {
-    setLoading(true);
+    setRefreshing(true);
     setError("");
     try {
       const res = await apiFetch("/api/admin/users");
@@ -106,7 +107,7 @@ export function AdminUsersClient({ initialUsers }: { initialUsers: UserRow[] }) 
     } catch (e) {
       setError(e instanceof Error ? e.message : "불러오기에 실패했습니다.");
     } finally {
-      setLoading(false);
+      setRefreshing(false);
     }
   };
 
@@ -127,7 +128,7 @@ export function AdminUsersClient({ initialUsers }: { initialUsers: UserRow[] }) 
           <button
             type="button"
             onClick={async () => {
-              setLoading(true);
+              setRecomputing(true);
               setError("");
               try {
                 const res = await apiFetch("/api/admin/wordbooks/recompute-rank", {
@@ -141,21 +142,21 @@ export function AdminUsersClient({ initialUsers }: { initialUsers: UserRow[] }) 
               } catch (e) {
                 setError(e instanceof Error ? e.message : "재계산에 실패했습니다.");
               } finally {
-                setLoading(false);
+                setRecomputing(false);
               }
             }}
             className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
-            disabled={loading}
+            disabled={refreshing || recomputing}
           >
-            랭킹 재계산
+            {recomputing ? "랭킹 재계산 중..." : "랭킹 재계산"}
           </button>
           <button
             type="button"
             onClick={() => void reload()}
             className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
-            disabled={loading}
+            disabled={refreshing || recomputing}
           >
-            {loading ? "새로고침 중..." : "새로고침"}
+            {refreshing ? "새로고침 중..." : "새로고침"}
           </button>
         </div>
       </header>

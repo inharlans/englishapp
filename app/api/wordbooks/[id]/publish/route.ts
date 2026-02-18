@@ -40,7 +40,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   const effectivePlan = getEffectivePlan({ plan: user.plan, proUntil: user.proUntil });
   if (effectivePlan === "FREE" && body.isPublic === false) {
     return NextResponse.json(
-      { error: "Free plan wordbooks must be public." },
+      { error: "무료 요금제 단어장은 공개 상태여야 합니다." },
       { status: 403 }
     );
   }

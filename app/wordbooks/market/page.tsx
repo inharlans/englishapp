@@ -8,7 +8,8 @@ import { EmptyStateCard } from "@/components/ui/EmptyStateCard";
 import { getUserFromRequestCookies } from "@/lib/authServer";
 import { FREE_DOWNLOAD_WORD_LIMIT, getUserDownloadedWordCount } from "@/lib/planLimits";
 import { prisma } from "@/lib/prisma";
-import { MARKET_MIN_ITEM_COUNT } from "@/lib/wordbookPolicy";
+import { MARKET_MIN_ITEM_COUNT, shouldHideWordbookFromMarket } from "@/lib/wordbookPolicy";
+import { maskEmailAddress } from "@/lib/textQuality";
 
 type SortMode = "top" | "new" | "downloads";
 
@@ -63,11 +64,22 @@ export default async function MarketPage(props: {
     orderBy,
     select: {
       id: true,
+      title: true,
+      description: true,
+      owner: { select: { email: true } },
       _count: { select: { items: true } }
     }
   });
   const eligibleIds = candidates
-    .filter((wb) => wb._count.items >= MARKET_MIN_ITEM_COUNT)
+    .filter(
+      (wb) =>
+        !shouldHideWordbookFromMarket({
+          title: wb.title,
+          description: wb.description,
+          ownerEmail: wb.owner.email,
+          itemCount: wb._count.items
+        })
+    )
     .map((wb) => wb.id);
   const total = eligibleIds.length;
   const pageIds = eligibleIds.slice(page * take, page * take + take);
@@ -236,7 +248,7 @@ export default async function MarketPage(props: {
                         </span>
                       ) : null}
                     </div>
-                    <p className="mt-1 text-xs text-slate-500">제작자 {wb.owner.email}</p>
+                    <p className="mt-1 text-xs text-slate-500">제작자 {maskEmailAddress(wb.owner.email)}</p>
                     {wb.description ? (
                       <p className="mt-2 line-clamp-2 text-sm text-slate-600">{wb.description}</p>
                     ) : null}
