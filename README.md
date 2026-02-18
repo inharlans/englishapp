@@ -722,30 +722,102 @@ Additional observations and guardrails:
   - logged-out: `Login` only
 - Fixed mojibake text on `/wordbooks/[id]` version section:
 
-## 2026-02-17 Production ops completion (Stripe/Webhook/Cron/Observability)
+## 2026-02-18 PortOne migration (Stripe -> PortOne)
 
-- Stripe 운영 경로를 완료했습니다.
-  - Checkout: `POST /api/payments/checkout`
-  - Billing portal: `POST /api/payments/portal`
-  - Webhook: `POST /api/payments/webhook`
-- OAuth(구글/네이버/카카오) 시작/콜백 흐름에 라우트별 요청 지표(상태코드, 지연시간) 기록을 추가했습니다.
-- 주요 인증/결제/크론 라우트에 공통 관측성 계측을 확장했습니다.
-  - `recordApiMetricFromStart` 기반으로 `4xx/5xx/latency` 집계
-  - 실패 시 `captureAppError` 기록
-- 내부 크론 자동 실행을 위해 GitHub Actions 스케줄 워크플로를 추가했습니다.
-  - `.github/workflows/cron-jobs.yml`
-  - 30분마다 `plan-expire`, `wordbook-rank` 호출
-  - 필요 시 수동 실행(`workflow_dispatch`) 가능
+- Payment provider switched from Stripe to PortOne V2.
+- Billing flow:
+  - `POST /api/payments/checkout` creates PortOne billing+first-payment request payload.
+  - Browser executes PortOne SDK (`requestIssueBillingKey`).
+  - `POST /api/payments/confirm` verifies payment server-side and upgrades plan.
+  - `POST /api/payments/webhook` verifies PortOne webhook signature and processes renewals.
+- Subscription management:
+  - `POST /api/payments/portal` now means "cancel auto-renewal" (revoke scheduled renewals).
+  - Existing PRO period remains usable until `proUntil`.
+- Observability:
+  - Added metrics/error capture for `/api/payments/confirm` and updated PortOne payment routes.
 
-운영 필수 시크릿/환경변수
-- 앱 런타임:
-  - `STRIPE_SECRET_KEY`
-  - `STRIPE_WEBHOOK_SECRET`
-  - `STRIPE_PRICE_MONTHLY`
-  - `STRIPE_PRICE_YEARLY`
-  - `STRIPE_PORTAL_RETURN_URL`
+Required runtime env vars:
+- `PORTONE_API_SECRET`
+- `PORTONE_WEBHOOK_SECRET`
+- `PORTONE_STORE_ID`
+- `PORTONE_CHANNEL_KEY`
+- `PORTONE_PRICE_MONTHLY_KRW` (default recommended: `2900`)
+- `PORTONE_PRICE_YEARLY_KRW` (default recommended: `29000`)
+- `CRON_SECRET`
+
+## 운영 적용 체크리스트 (you-do)
+
+아래 순서대로 진행하면 됩니다.
+
+1. Railway Variables 설정
+  - `PORTONE_API_SECRET`
+  - `PORTONE_WEBHOOK_SECRET`
+  - `PORTONE_STORE_ID`
+  - `PORTONE_CHANNEL_KEY`
+  - `PORTONE_PRICE_MONTHLY_KRW`
+  - `PORTONE_PRICE_YEARLY_KRW`
   - `CRON_SECRET`
-- GitHub Actions (`cron-jobs.yml`):
-  - `APP_BASE_URL` (예: `https://www.oingapp.com`)
-  - `CRON_SECRET` (앱과 동일 값)
+  - `NEXT_PUBLIC_APP_URL=https://www.oingapp.com`
 
+2. PortOne 콘솔 설정
+  - 결제/빌링 채널 연결 확인
+  - 웹훅 URL 등록: `https://www.oingapp.com/api/payments/webhook`
+  - 웹훅 시크릿 발급 후 `PORTONE_WEBHOOK_SECRET`에 반영
+
+3. GitHub Secrets 설정 (크론 워크플로용)
+  - `APP_BASE_URL=https://www.oingapp.com`
+  - `CRON_SECRET` (Railway와 동일 값)
+
+4. 배포 후 기능 점검
+  - `/pricing`에서 월간/연간 결제 시도
+  - 결제 성공 후 `/pricing?payment=success` 이동 확인
+  - 사용자 `plan=PRO`, `proUntil` 반영 확인
+  - `/api/admin/metrics`에서 결제 라우트 지표 확인
+
+5. 갱신/해지 점검
+  - PRO 상태에서 "구독 갱신 해지" 실행
+  - `/pricing?payment=cancel` 이동 확인
+  - 예약 결제 revoke 및 `stripeSubscriptionStatus=canceled` 반영 확인
+
+6. 크론 점검
+  - GitHub Actions `Scheduled Internal Cron Jobs` 수동 실행
+  - `/api/internal/cron/plan-expire`, `/api/internal/cron/wordbook-rank` 200 확인
+
+
+## Operator Checklist (ASCII)
+
+1. Set Railway Variables
+- `PORTONE_API_SECRET`
+- `PORTONE_WEBHOOK_SECRET`
+- `PORTONE_STORE_ID`
+- `PORTONE_CHANNEL_KEY`
+- `PORTONE_PRICE_MONTHLY_KRW`
+- `PORTONE_PRICE_YEARLY_KRW`
+- `CRON_SECRET`
+- `NEXT_PUBLIC_APP_URL=https://www.oingapp.com`
+
+2. Configure PortOne console
+- Verify billing/payment channel connection
+- Register webhook URL: `https://www.oingapp.com/api/payments/webhook`
+- Issue webhook secret and set `PORTONE_WEBHOOK_SECRET`
+
+3. Set GitHub Secrets (for cron workflow)
+- `APP_BASE_URL=https://www.oingapp.com`
+- `CRON_SECRET` (same value as Railway)
+
+4. Validate payment flow
+- Start monthly/yearly checkout on `/pricing`
+- Confirm redirect to `/pricing?payment=success`
+- Confirm user plan fields updated: `plan=PRO`, `proUntil`
+- Confirm metrics are recorded on `/api/admin/metrics`
+
+5. Validate cancellation flow
+- While PRO, click the cancellation button on `/pricing`
+- Confirm redirect to `/pricing?payment=cancel`
+- Confirm `stripeSubscriptionStatus=canceled` in DB
+
+6. Validate cron jobs
+- Run GitHub Action `Scheduled Internal Cron Jobs` manually once
+- Confirm both endpoints return 200:
+- `/api/internal/cron/plan-expire`
+- `/api/internal/cron/wordbook-rank`

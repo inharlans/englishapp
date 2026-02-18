@@ -11,7 +11,7 @@ export default async function PricingPage(props: { searchParams: Promise<{ payme
 
   const downloadWordsUsed = user ? await getUserDownloadedWordCount(user.id) : null;
   const paymentEnabled = Boolean(
-    process.env.STRIPE_SECRET_KEY && process.env.STRIPE_PRICE_MONTHLY && process.env.STRIPE_PRICE_YEARLY
+    process.env.PORTONE_API_SECRET && process.env.PORTONE_STORE_ID && process.env.PORTONE_CHANNEL_KEY
   );
 
   return (
@@ -109,7 +109,7 @@ export default async function PricingPage(props: { searchParams: Promise<{ payme
           </ul>
           <PricingActions plan={user?.plan ?? null} paymentEnabled={paymentEnabled} />
           <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700">
-            결제 및 구독 상태는 Stripe 웹훅으로 자동 반영됩니다. 문제가 있으면 관리자에게 문의해주세요.
+            결제 및 구독 상태는 PortOne 웹훅으로 자동 반영됩니다. 문제가 있으면 관리자에게 문의해주세요.
           </div>
         </div>
       </div>

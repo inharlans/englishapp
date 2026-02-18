@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { getUserFromRequestCookies } from "@/lib/authServer";
 import { captureAppError, recordApiMetricFromStart } from "@/lib/observability";
-import { getPriceId, getStripe, normalizeCycle } from "@/lib/payments";
-import { prisma } from "@/lib/prisma";
+import { BillingCycle, getPortOneConfig, normalizeCycle } from "@/lib/payments";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
 import { parseJsonWithSchema } from "@/lib/validation";
 import { z } from "zod";
@@ -11,6 +10,10 @@ import { z } from "zod";
 const checkoutSchema = z.object({
   cycle: z.enum(["monthly", "yearly"])
 });
+
+function buildIssueId(userId: number, cycle: BillingCycle): string {
+  return `issue_${userId}_${cycle}_${Date.now()}_${Math.floor(Math.random() * 1_000_000)}`;
+}
 
 export async function POST(req: NextRequest) {
   const startedAt = Date.now();
@@ -38,8 +41,8 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const stripe = getStripe();
-    if (!stripe) {
+    const config = getPortOneConfig();
+    if (!config) {
       const res = NextResponse.json({ error: "결제 설정이 아직 완료되지 않았습니다." }, { status: 503 });
       await recordApiMetricFromStart({
         route: "/api/payments/checkout",
@@ -76,55 +79,31 @@ export async function POST(req: NextRequest) {
       return res;
     }
 
-    const priceId = getPriceId(cycle);
-    if (!priceId) {
-      const res = NextResponse.json({ error: "선택한 요금제 가격 설정이 누락되었습니다." }, { status: 503 });
-      await recordApiMetricFromStart({
-        route: "/api/payments/checkout",
-        method: "POST",
-        status: 503,
-        startedAt,
-        userId: user.id
-      });
-      return res;
-    }
+    const issueId = buildIssueId(user.id, cycle);
 
-    const successUrl = `${req.nextUrl.origin}/pricing?payment=success`;
-    const cancelUrl = `${req.nextUrl.origin}/pricing?payment=cancel`;
-
-    let customerId = null as string | null;
-    const dbUser = await prisma.user.findUnique({
-      where: { id: user.id },
-      select: { stripeCustomerId: true, email: true }
-    });
-    if (dbUser?.stripeCustomerId) {
-      customerId = dbUser.stripeCustomerId;
-    } else {
-      const customer = await stripe.customers.create({
-        email: dbUser?.email ?? user.email,
-        metadata: { userId: String(user.id) }
-      });
-      customerId = customer.id;
-      await prisma.user.update({
-        where: { id: user.id },
-        data: { stripeCustomerId: customer.id }
-      });
-    }
-
-    const session = await stripe.checkout.sessions.create({
-      mode: "subscription",
-      customer: customerId,
-      payment_method_types: ["card"],
-      line_items: [{ price: priceId, quantity: 1 }],
-      success_url: successUrl,
-      cancel_url: cancelUrl,
-      metadata: {
-        userId: String(user.id),
+    const res = NextResponse.json(
+      {
+        request: {
+          storeId: config.storeId,
+          channelKey: config.channelKey,
+          billingKeyMethod: "CARD",
+          issueId,
+          issueName: cycle === "monthly" ? "Oing PRO Monthly Billing Key" : "Oing PRO Yearly Billing Key",
+          redirectUrl: `${req.nextUrl.origin}/pricing`,
+          customer: {
+            customerId: String(user.id),
+            email: user.email,
+            fullName: user.email
+          },
+          customData: {
+            userId: user.id,
+            cycle
+          }
+        },
         cycle
-      }
-    });
-
-    const res = NextResponse.json({ url: session.url }, { status: 200 });
+      },
+      { status: 200 }
+    );
     await recordApiMetricFromStart({
       route: "/api/payments/checkout",
       method: "POST",
@@ -149,6 +128,6 @@ export async function POST(req: NextRequest) {
       startedAt,
       userId: user.id
     });
-    return NextResponse.json({ error: "결제 세션 생성에 실패했습니다." }, { status: 500 });
+    return NextResponse.json({ error: "결제 요청 생성에 실패했습니다." }, { status: 500 });
   }
 }

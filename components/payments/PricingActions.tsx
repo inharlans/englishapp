@@ -3,6 +3,25 @@
 import { useState } from "react";
 
 import { apiFetch } from "@/lib/clientApi";
+import PortOne from "@portone/browser-sdk/v2";
+
+type CheckoutRequest = {
+  storeId: string;
+  channelKey: string;
+  billingKeyMethod: "CARD";
+  issueId: string;
+  issueName: string;
+  redirectUrl: string;
+  customer?: {
+    customerId?: string;
+    email?: string;
+    fullName?: string;
+  };
+  customData?: {
+    userId: number;
+    cycle: "monthly" | "yearly";
+  };
+};
 
 export function PricingActions(props: { plan: "FREE" | "PRO" | null; paymentEnabled: boolean }) {
   const [loading, setLoading] = useState<"monthly" | "yearly" | "portal" | null>(null);
@@ -12,16 +31,40 @@ export function PricingActions(props: { plan: "FREE" | "PRO" | null; paymentEnab
     setLoading(cycle);
     setError("");
     try {
-      const res = await apiFetch("/api/payments/checkout", {
+      const checkoutRes = await apiFetch("/api/payments/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ cycle })
       });
-      const json = (await res.json()) as { url?: string; error?: string };
-      if (!res.ok || !json.url) throw new Error(json.error ?? "결제 페이지 이동에 실패했습니다.");
-      window.location.assign(json.url);
+      const checkoutJson = (await checkoutRes.json()) as { request?: CheckoutRequest; error?: string };
+      if (!checkoutRes.ok || !checkoutJson.request) {
+        throw new Error(checkoutJson.error ?? "결제 요청 생성에 실패했습니다.");
+      }
+
+      const issueResult = await PortOne.requestIssueBillingKey(checkoutJson.request);
+      if (!issueResult) {
+        throw new Error("빌링키 발급 결과를 확인할 수 없습니다. 잠시 후 다시 시도해 주세요.");
+      }
+      if (issueResult.code || issueResult.message) {
+        throw new Error(issueResult.message ?? issueResult.code ?? "빌링키 발급에 실패했습니다.");
+      }
+
+      const confirmRes = await apiFetch("/api/payments/confirm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          billingKey: issueResult.billingKey,
+          cycle
+        })
+      });
+      const confirmJson = (await confirmRes.json()) as { ok?: boolean; error?: string };
+      if (!confirmRes.ok || !confirmJson.ok) {
+        throw new Error(confirmJson.error ?? "결제 검증에 실패했습니다.");
+      }
+
+      window.location.assign("/pricing?payment=success");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "결제 페이지 이동에 실패했습니다.");
+      setError(e instanceof Error ? e.message : "결제 처리에 실패했습니다.");
     } finally {
       setLoading(null);
     }
@@ -33,21 +76,17 @@ export function PricingActions(props: { plan: "FREE" | "PRO" | null; paymentEnab
     try {
       const res = await apiFetch("/api/payments/portal", { method: "POST" });
       const json = (await res.json()) as { url?: string; error?: string };
-      if (!res.ok || !json.url) throw new Error(json.error ?? "구독 관리 페이지 이동에 실패했습니다.");
+      if (!res.ok || !json.url) throw new Error(json.error ?? "구독 관리 처리에 실패했습니다.");
       window.location.assign(json.url);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "구독 관리 페이지 이동에 실패했습니다.");
+      setError(e instanceof Error ? e.message : "구독 관리 처리에 실패했습니다.");
     } finally {
       setLoading(null);
     }
   };
 
   if (!props.paymentEnabled) {
-    return (
-      <p className="mt-3 text-xs text-slate-500">
-        결제 키가 설정되지 않아 실제 결제는 비활성화 상태입니다.
-      </p>
-    );
+    return <p className="mt-3 text-xs text-slate-500">결제 키가 설정되지 않아 실제 결제는 비활성화 상태입니다.</p>;
   }
 
   return (
@@ -59,7 +98,7 @@ export function PricingActions(props: { plan: "FREE" | "PRO" | null; paymentEnab
           onClick={() => void goPortal()}
           disabled={loading !== null}
         >
-          {loading === "portal" ? "이동 중..." : "구독 관리"}
+          {loading === "portal" ? "처리 중..." : "구독 갱신 해지"}
         </button>
       ) : (
         <div className="grid gap-2 sm:grid-cols-2">
@@ -69,7 +108,7 @@ export function PricingActions(props: { plan: "FREE" | "PRO" | null; paymentEnab
             onClick={() => void goCheckout("monthly")}
             disabled={loading !== null}
           >
-            {loading === "monthly" ? "이동 중..." : "월간 구독 시작"}
+            {loading === "monthly" ? "처리 중..." : "월간 구독 시작"}
           </button>
           <button
             type="button"
@@ -77,7 +116,7 @@ export function PricingActions(props: { plan: "FREE" | "PRO" | null; paymentEnab
             onClick={() => void goCheckout("yearly")}
             disabled={loading !== null}
           >
-            {loading === "yearly" ? "이동 중..." : "연간 구독 시작"}
+            {loading === "yearly" ? "처리 중..." : "연간 구독 시작"}
           </button>
         </div>
       )}

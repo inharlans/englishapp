@@ -1,43 +1,88 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { captureAppError, recordApiMetricFromStart } from "@/lib/observability";
-import { addDays, BillingCycle, getCycleDays, getStripe, normalizeCycle } from "@/lib/payments";
+import { addDays, BillingCycle, getCycleDays, getPlanAmountKrw, getPortOneConfig, getPortOnePaymentClient, normalizeCycle } from "@/lib/payments";
 import { prisma } from "@/lib/prisma";
-import Stripe from "stripe";
+import { Webhook } from "@portone/server-sdk";
 
-function inferCycleFromPriceId(priceId: string | null | undefined): BillingCycle | null {
-  if (!priceId) return null;
-  const monthly = process.env.STRIPE_PRICE_MONTHLY?.trim();
-  const yearly = process.env.STRIPE_PRICE_YEARLY?.trim();
-  if (monthly && priceId === monthly) return "monthly";
-  if (yearly && priceId === yearly) return "yearly";
-  return null;
+type CustomData = {
+  userId?: number;
+  cycle?: string;
+  source?: string;
+};
+
+function safeParseCustomData(raw: string | undefined): CustomData {
+  if (!raw) return {};
+  try {
+    return JSON.parse(raw) as CustomData;
+  } catch {
+    return {};
+  }
 }
 
-async function markPro(userId: number, cycle: BillingCycle | null, subId?: string | null, status?: string | null) {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { proUntil: true }
-  });
-  const base = user?.proUntil && user.proUntil.getTime() > Date.now() ? user.proUntil : new Date();
-  const nextProUntil = cycle ? addDays(base, getCycleDays(cycle)) : addDays(base, 30);
-  await prisma.user.update({
-    where: { id: userId },
-    data: {
-      plan: "PRO",
-      proUntil: nextProUntil,
-      ...(subId ? { stripeSubscriptionId: subId } : {}),
-      ...(status ? { stripeSubscriptionStatus: status } : {})
+function buildSchedulePaymentId(userId: number, cycle: BillingCycle): string {
+  return `renew_${userId}_${cycle}_${Date.now()}_${Math.floor(Math.random() * 1_000_000)}`;
+}
+
+async function scheduleNextBilling(input: {
+  userId: number;
+  userEmail: string;
+  billingKey: string;
+  cycle: BillingCycle;
+  baseDate: Date;
+}) {
+  const paymentClient = getPortOnePaymentClient();
+  const config = getPortOneConfig();
+  if (!paymentClient || !config) return { scheduleId: null as string | null };
+
+  const nextPayAt = addDays(input.baseDate, getCycleDays(input.cycle));
+  const amount = getPlanAmountKrw(input.cycle);
+  const paymentId = buildSchedulePaymentId(input.userId, input.cycle);
+
+  const schedule = await paymentClient.paymentSchedule.createPaymentSchedule({
+    paymentId,
+    timeToPay: nextPayAt.toISOString(),
+    payment: {
+      storeId: config.storeId,
+      billingKey: input.billingKey,
+      channelKey: config.channelKey,
+      orderName: input.cycle === "monthly" ? "Oing PRO Monthly Renewal" : "Oing PRO Yearly Renewal",
+      customer: { id: String(input.userId), email: input.userEmail },
+      customData: JSON.stringify({ userId: input.userId, cycle: input.cycle, source: "schedule" }),
+      amount: { total: amount },
+      currency: "KRW"
     }
   });
+  return { scheduleId: schedule.schedule.id };
+}
+
+async function resolveUserId(paymentId: string, billingKey: string | undefined, customData: CustomData) {
+  if (Number.isFinite(customData.userId) && (customData.userId ?? 0) > 0) {
+    return Math.floor(customData.userId as number);
+  }
+  if (billingKey) {
+    const u = await prisma.user.findFirst({
+      where: { stripeCustomerId: billingKey },
+      select: { id: true }
+    });
+    if (u) return u.id;
+  }
+  const byEvent = await prisma.paymentEvent.findFirst({
+    where: {
+      provider: "portone",
+      providerEventId: `portone-confirm:${paymentId}`
+    },
+    select: { userId: true }
+  });
+  return byEvent?.userId ?? null;
 }
 
 export async function POST(req: NextRequest) {
   const startedAt = Date.now();
-  const stripe = getStripe();
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET?.trim() ?? "";
-  if (!stripe || !webhookSecret) {
-    const res = NextResponse.json({ error: "Stripe webhook not configured." }, { status: 503 });
+  const config = getPortOneConfig();
+  const paymentClient = getPortOnePaymentClient();
+  if (!config || !paymentClient) {
+    const res = NextResponse.json({ error: "PortOne webhook not configured." }, { status: 503 });
     await recordApiMetricFromStart({
       route: "/api/payments/webhook",
       method: "POST",
@@ -47,9 +92,14 @@ export async function POST(req: NextRequest) {
     return res;
   }
 
-  const signature = req.headers.get("stripe-signature");
-  if (!signature) {
-    const res = NextResponse.json({ error: "Missing stripe signature." }, { status: 400 });
+  const payload = await req.text();
+  const headers = {
+    "webhook-id": req.headers.get("webhook-id") ?? "",
+    "webhook-signature": req.headers.get("webhook-signature") ?? "",
+    "webhook-timestamp": req.headers.get("webhook-timestamp") ?? ""
+  };
+  if (!headers["webhook-id"] || !headers["webhook-signature"] || !headers["webhook-timestamp"]) {
+    const res = NextResponse.json({ error: "Missing webhook headers." }, { status: 400 });
     await recordApiMetricFromStart({
       route: "/api/payments/webhook",
       method: "POST",
@@ -59,22 +109,16 @@ export async function POST(req: NextRequest) {
     return res;
   }
 
-  const body = await req.text();
-  let event: Stripe.Event;
+  let webhook: Awaited<ReturnType<typeof Webhook.verify>>;
   try {
-    event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+    webhook = await Webhook.verify(config.webhookSecret, payload, headers);
   } catch (error) {
     await captureAppError({
       route: "/api/payments/webhook",
-      message: "stripe_webhook_invalid_signature",
-      context: {
-        err: error instanceof Error ? error.message : String(error)
-      }
+      message: "portone_webhook_verify_failed",
+      context: { err: error instanceof Error ? error.message : String(error) }
     });
-    const res = NextResponse.json(
-      { error: `Invalid webhook signature: ${error instanceof Error ? error.message : "unknown"}` },
-      { status: 400 }
-    );
+    const res = NextResponse.json({ error: "Invalid webhook signature." }, { status: 400 });
     await recordApiMetricFromStart({
       route: "/api/payments/webhook",
       method: "POST",
@@ -84,11 +128,12 @@ export async function POST(req: NextRequest) {
     return res;
   }
 
-  const existing = await prisma.paymentEvent.findUnique({
-    where: { providerEventId: event.id },
+  const providerEventId = `portone-webhook:${headers["webhook-id"]}`;
+  const duplicate = await prisma.paymentEvent.findUnique({
+    where: { providerEventId },
     select: { id: true }
   });
-  if (existing) {
+  if (duplicate) {
     const res = NextResponse.json({ ok: true, duplicate: true }, { status: 200 });
     await recordApiMetricFromStart({
       route: "/api/payments/webhook",
@@ -102,136 +147,86 @@ export async function POST(req: NextRequest) {
   let userId: number | null = null;
   let amount: number | null = null;
   let currency: string | null = null;
-  let status = "received";
+  let status = "ignored";
 
   try {
-    if (event.type === "checkout.session.completed") {
-      const session = event.data.object as Stripe.Checkout.Session;
-      const metadataCycle = normalizeCycle(session.metadata?.cycle);
-      const metadataUserId = Number(session.metadata?.userId);
-      const customerId = typeof session.customer === "string" ? session.customer : null;
-      const subscriptionId = typeof session.subscription === "string" ? session.subscription : null;
-      amount = session.amount_total ?? null;
-      currency = session.currency ?? null;
+    if (webhook.type === "Transaction.Paid" || webhook.type === "Transaction.Failed" || webhook.type === "Transaction.Cancelled") {
+      const paymentId = webhook.data.paymentId;
+      const payment = await paymentClient.getPayment({
+        paymentId,
+        storeId: config.storeId
+      });
+      if (!("amount" in payment) || !("currency" in payment) || !("customData" in payment)) {
+        throw new Error("Unrecognized payment payload.");
+      }
 
-      if (Number.isFinite(metadataUserId) && metadataUserId > 0) {
-        userId = Math.floor(metadataUserId);
-      } else if (customerId) {
-        const u = await prisma.user.findUnique({
-          where: { stripeCustomerId: customerId },
-          select: { id: true }
+      amount = payment.amount.total ?? null;
+      currency = typeof payment.currency === "string" ? payment.currency : null;
+      const customData = safeParseCustomData(payment.customData);
+      const cycle = normalizeCycle(customData.cycle);
+      userId = await resolveUserId(paymentId, payment.billingKey, customData);
+
+      if (webhook.type === "Transaction.Paid" && payment.status === "PAID" && userId && cycle && payment.billingKey) {
+        const user = await prisma.user.findUnique({
+          where: { id: userId },
+          select: { id: true, email: true, proUntil: true, stripeSubscriptionStatus: true }
         });
-        userId = u?.id ?? null;
-      }
+        if (user) {
+          const now = new Date();
+          const baseDate = user.proUntil && user.proUntil.getTime() > now.getTime() ? user.proUntil : now;
+          const nextProUntil = addDays(baseDate, getCycleDays(cycle));
 
-      if (userId) {
-        await markPro(userId, metadataCycle, subscriptionId, "active");
-      }
-      status = "processed";
-    } else if (event.type === "invoice.payment_succeeded") {
-      const invoice = event.data.object as Stripe.Invoice;
-      const customerId = typeof invoice.customer === "string" ? invoice.customer : null;
-      const subscriptionId = typeof invoice.subscription === "string" ? invoice.subscription : null;
-      const linePriceId = invoice.lines.data[0]?.price?.id ?? null;
-      const cycle = inferCycleFromPriceId(linePriceId);
-      amount = invoice.amount_paid ?? null;
-      currency = invoice.currency ?? null;
+          let nextScheduleId: string | null = null;
+          if (user.stripeSubscriptionStatus !== "canceled") {
+            try {
+              const scheduled = await scheduleNextBilling({
+                userId: user.id,
+                userEmail: user.email,
+                billingKey: payment.billingKey,
+                cycle,
+                baseDate: nextProUntil
+              });
+              nextScheduleId = scheduled.scheduleId;
+            } catch (error) {
+              await captureAppError({
+                route: "/api/payments/webhook",
+                message: "portone_schedule_renewal_failed",
+                stack: error instanceof Error ? error.stack : undefined,
+                context: { err: error instanceof Error ? error.message : String(error), paymentId },
+                userId: user.id
+              });
+            }
+          }
 
-      const u = await prisma.user.findFirst({
-        where: {
-          OR: [
-            ...(customerId ? [{ stripeCustomerId: customerId }] : []),
-            ...(subscriptionId ? [{ stripeSubscriptionId: subscriptionId }] : [])
-          ]
-        },
-        select: { id: true }
-      });
-      userId = u?.id ?? null;
-      if (userId) {
-        await markPro(userId, cycle, subscriptionId, "active");
-      }
-      status = "processed";
-    } else if (event.type === "customer.subscription.updated") {
-      const sub = event.data.object as Stripe.Subscription;
-      const customerId = typeof sub.customer === "string" ? sub.customer : null;
-      const subscriptionId = sub.id;
-      const linePriceId = sub.items.data[0]?.price?.id ?? null;
-      const cycle = inferCycleFromPriceId(linePriceId);
-      const u = await prisma.user.findFirst({
-        where: {
-          OR: [
-            ...(customerId ? [{ stripeCustomerId: customerId }] : []),
-            { stripeSubscriptionId: subscriptionId }
-          ]
-        },
-        select: { id: true }
-      });
-      userId = u?.id ?? null;
-      if (userId) {
-        if (sub.status === "active" || sub.status === "trialing") {
-          const periodEnd = sub.current_period_end
-            ? new Date(sub.current_period_end * 1000)
-            : cycle
-              ? addDays(new Date(), getCycleDays(cycle))
-              : addDays(new Date(), 30);
           await prisma.user.update({
-            where: { id: userId },
+            where: { id: user.id },
             data: {
               plan: "PRO",
-              proUntil: periodEnd,
-              stripeSubscriptionId: subscriptionId,
-              stripeSubscriptionStatus: sub.status
+              proUntil: nextProUntil,
+              stripeCustomerId: payment.billingKey,
+              stripeSubscriptionStatus: user.stripeSubscriptionStatus === "canceled" ? "canceled" : "active",
+              ...(nextScheduleId ? { stripeSubscriptionId: nextScheduleId } : {})
             }
           });
-        } else {
-          await prisma.user.update({
-            where: { id: userId },
-            data: {
-              stripeSubscriptionId: subscriptionId,
-              stripeSubscriptionStatus: sub.status
-            }
-          });
+          status = "processed";
         }
+      } else if (webhook.type === "Transaction.Failed") {
+        status = "failed";
+      } else if (webhook.type === "Transaction.Cancelled") {
+        status = "cancelled";
       }
-      status = "processed";
-    } else if (event.type === "customer.subscription.deleted") {
-      const sub = event.data.object as Stripe.Subscription;
-      const customerId = typeof sub.customer === "string" ? sub.customer : null;
-      const u = await prisma.user.findFirst({
-        where: {
-          OR: [
-            ...(customerId ? [{ stripeCustomerId: customerId }] : []),
-            { stripeSubscriptionId: sub.id }
-          ]
-        },
-        select: { id: true }
-      });
-      userId = u?.id ?? null;
-      if (userId) {
-        await prisma.user.update({
-          where: { id: userId },
-          data: {
-            plan: "FREE",
-            proUntil: new Date(),
-            stripeSubscriptionStatus: "canceled"
-          }
-        });
-      }
-      status = "processed";
-    } else {
-      status = "ignored";
     }
 
     await prisma.paymentEvent.create({
       data: {
         userId,
-        provider: "stripe",
-        providerEventId: event.id,
-        eventType: event.type,
+        provider: "portone",
+        providerEventId,
+        eventType: String(webhook.type),
         status,
         amount,
         currency,
-        rawJson: event as unknown as object
+        rawJson: webhook as unknown as object
       }
     });
 
@@ -247,33 +242,29 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     await captureAppError({
       route: "/api/payments/webhook",
-      message: "stripe_webhook_processing_failed",
+      message: "portone_webhook_processing_failed",
       stack: error instanceof Error ? error.stack : undefined,
-      context: {
-        eventId: event.id,
-        eventType: event.type,
-        err: error instanceof Error ? error.message : String(error)
-      },
+      context: { err: error instanceof Error ? error.message : String(error), eventId: providerEventId },
       userId
     });
     try {
       await prisma.paymentEvent.create({
         data: {
           userId,
-          provider: "stripe",
-          providerEventId: event.id,
-          eventType: event.type,
+          provider: "portone",
+          providerEventId,
+          eventType: "unknown",
           status: "error",
           amount,
           currency,
           rawJson: {
-            event,
+            payload,
             error: error instanceof Error ? error.message : String(error)
           } as object
         }
       });
     } catch {
-      // Best-effort only: primary error is already captured.
+      // Best effort only.
     }
     await recordApiMetricFromStart({
       route: "/api/payments/webhook",
