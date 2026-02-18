@@ -1,7 +1,7 @@
 ﻿param(
   [ValidateSet("smoke", "ui", "all")]
   [string]$Suite = "all",
-  [string]$Host = "127.0.0.1",
+  [string]$BindHost = "127.0.0.1",
   [int]$Port = 3000,
   [int]$WaitSeconds = 120
 )
@@ -28,11 +28,11 @@ function Wait-Server {
   return $false
 }
 
-$devArgs = @("run", "dev", "--", "--hostname", $Host, "--port", "$Port")
+$devArgs = @("run", "dev", "--", "--hostname", $BindHost, "--port", "$Port")
 $devProcess = Start-Process -FilePath npm -ArgumentList $devArgs -PassThru -WindowStyle Hidden
 
 try {
-  $baseUrl = "http://$Host`:$Port"
+  $baseUrl = "http://$BindHost`:$Port"
   $ready = Wait-Server -Url "$baseUrl/login" -MaxSeconds $WaitSeconds
   if (-not $ready) {
     throw "Dev server was not ready within $WaitSeconds seconds."
