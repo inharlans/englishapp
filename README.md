@@ -819,3 +819,5 @@ Additional observations and guardrails:
   초기 컴파일 지연으로 인한 준비 대기 타임아웃(2분) 가능성을 줄였습니다.
 - `/api/auth/bootstrap`의 advisory lock 쿼리를 `pg_advisory_xact_lock(946824611::bigint)`로 명시해
   환경별 함수 해석 차이로 인한 500 가능성을 줄였습니다.
+- `Scheduled Internal Cron Jobs`의 secret 검증 로그를 개선해,
+  `APP_BASE_URL` 또는 `CRON_SECRET` 누락 시 원인을 즉시 확인할 수 있게 했습니다.

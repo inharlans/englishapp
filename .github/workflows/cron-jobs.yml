@@ -11,8 +11,19 @@ jobs:
     steps:
       - name: Validate secrets
         run: |
-          test -n "${{ secrets.APP_BASE_URL }}"
-          test -n "${{ secrets.CRON_SECRET }}"
+          missing=0
+          if [ -z "${{ secrets.APP_BASE_URL }}" ]; then
+            echo "Missing required secret: APP_BASE_URL"
+            missing=1
+          fi
+          if [ -z "${{ secrets.CRON_SECRET }}" ]; then
+            echo "Missing required secret: CRON_SECRET"
+            missing=1
+          fi
+          if [ "$missing" -ne 0 ]; then
+            echo "Configure repository secrets in: Settings > Secrets and variables > Actions"
+            exit 1
+          fi
       - name: Run plan-expire cron
         run: |
           curl --fail --show-error --silent \
