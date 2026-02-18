@@ -835,3 +835,6 @@ Required runtime env vars:
   - Added transactional advisory lock in bootstrap to avoid concurrent first-admin creation race.
 - Tests:
   - Added `lib/userPlan.test.ts` and `lib/paymentsEntitlement.test.ts`.
+  - Added payment route tests:
+    - `app/api/payments/confirm/route.test.ts`
+    - `app/api/payments/webhook/route.test.ts`
