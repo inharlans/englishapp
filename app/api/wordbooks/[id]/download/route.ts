@@ -6,18 +6,13 @@ import { recordApiMetric } from "@/lib/observability";
 import { prisma } from "@/lib/prisma";
 import { checkRateLimit, getClientIpFromHeaders } from "@/lib/rateLimit";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
+import { isActiveProPlan } from "@/lib/userPlan";
 import { refreshWordbookRankScore } from "@/lib/wordbookRanking";
 
 function parseId(raw: string): number | null {
   const n = Number(raw);
   if (!Number.isFinite(n) || n <= 0) return null;
   return Math.floor(n);
-}
-
-function isPro(user: { plan: "FREE" | "PRO"; proUntil: Date | null }): boolean {
-  if (user.plan !== "PRO") return false;
-  if (!user.proUntil) return true;
-  return user.proUntil.getTime() >= Date.now();
 }
 
 export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
@@ -97,7 +92,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     const itemCount = await tx.wordbookItem.count({ where: { wordbookId: id } });
 
     // Plan enforcement: FREE => cumulative downloaded words limit.
-    if (!isPro(user)) {
+    if (!isActiveProPlan({ plan: user.plan, proUntil: user.proUntil })) {
       const usedRows = await tx.wordbookDownload.findMany({
         where: { userId: user.id },
         select: { wordbookId: true, snapshotItemCount: true }

@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { getEffectivePlan } from "@/lib/userPlan";
 
 export function isPrivateWordbookLockedForFree(input: {
   plan: "FREE" | "PRO";
@@ -20,14 +21,16 @@ export async function canAccessWordbookForStudy(input: {
   if (!wordbook) return false;
   if (wordbook.hiddenByAdmin) return wordbook.ownerId === input.userId;
   if (wordbook.ownerId === input.userId) {
-    const plan =
-      input.userPlan ??
-      (
-        await prisma.user.findUnique({
-          where: { id: input.userId },
-          select: { plan: true }
-        })
-      )?.plan ?? "FREE";
+    const plan = input.userPlan
+      ? getEffectivePlan({ plan: input.userPlan, proUntil: null })
+      : getEffectivePlan(
+          (
+            await prisma.user.findUnique({
+              where: { id: input.userId },
+              select: { plan: true, proUntil: true }
+            })
+          ) ?? { plan: "FREE", proUntil: null }
+        );
     return !isPrivateWordbookLockedForFree({
       plan,
       isOwner: true,

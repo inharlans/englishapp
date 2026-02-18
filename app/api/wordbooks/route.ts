@@ -4,6 +4,7 @@ import { getUserFromRequestCookies } from "@/lib/authServer";
 import { prisma } from "@/lib/prisma";
 import { computeWordbookRankScore } from "@/lib/wordbookRanking";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
+import { getEffectivePlan } from "@/lib/userPlan";
 import { parseJsonWithSchema } from "@/lib/validation";
 import { z } from "zod";
 
@@ -60,7 +61,8 @@ export async function POST(req: NextRequest) {
   const description = parsedBody.data.description ? parsedBody.data.description.trim() : null;
 
   // Plan enforcement: FREE users can create only 1 wordbook lifetime.
-  if (user.plan === "FREE") {
+  const effectivePlan = getEffectivePlan({ plan: user.plan, proUntil: user.proUntil });
+  if (effectivePlan === "FREE") {
     const createdCount = await prisma.wordbook.count({ where: { ownerId: user.id } });
     if (createdCount >= 1) {
       return NextResponse.json(
@@ -81,7 +83,7 @@ export async function POST(req: NextRequest) {
       fromLang,
       toLang,
       // Free plan uploads are forced public.
-      isPublic: user.plan === "FREE"
+      isPublic: effectivePlan === "FREE"
     },
     select: {
       id: true,

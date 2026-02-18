@@ -6,6 +6,7 @@ import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
 import { parseJsonWithSchema } from "@/lib/validation";
 import { isPrivateWordbookLockedForFree } from "@/lib/wordbookAccess";
 import { bumpWordbookVersion } from "@/lib/wordbookVersion";
+import { getEffectivePlan } from "@/lib/userPlan";
 import { z } from "zod";
 
 const patchWordbookSchema = z
@@ -127,7 +128,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   }
   if (
     isPrivateWordbookLockedForFree({
-      plan: user.plan,
+      plan: getEffectivePlan({ plan: user.plan, proUntil: user.proUntil }),
       isOwner: true,
       isPublic: existing.isPublic
     })

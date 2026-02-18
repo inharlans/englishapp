@@ -38,21 +38,28 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Forbidden." }, { status: 403 });
   }
 
-  const existingCount = await prisma.user.count();
-  if (existingCount > 0) {
-    return NextResponse.json({ error: "Bootstrap already completed." }, { status: 409 });
-  }
-
   const parsed = await parseJsonWithSchema(req, bootstrapSchema);
   if (!parsed.ok) return parsed.response;
   const email = parsed.data.email.trim().toLowerCase();
   const password = parsed.data.password;
 
   const passwordHash = await hashPassword(password);
-  const user = await prisma.user.create({
-    data: { email, passwordHash, isAdmin: true, plan: "PRO", proUntil: null },
-    select: { id: true, email: true }
+  const user = await prisma.$transaction(async (tx) => {
+    // Prevent concurrent bootstrap races on PostgreSQL.
+    await tx.$queryRaw`SELECT pg_advisory_xact_lock(946824611)`;
+    const existingCount = await tx.user.count();
+    if (existingCount > 0) {
+      return null;
+    }
+
+    return tx.user.create({
+      data: { email, passwordHash, isAdmin: true, plan: "PRO", proUntil: null },
+      select: { id: true, email: true }
+    });
   });
+  if (!user) {
+    return NextResponse.json({ error: "Bootstrap already completed." }, { status: 409 });
+  }
 
   return NextResponse.json({ ok: true, user });
 }

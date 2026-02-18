@@ -4,12 +4,7 @@ import { getUserFromRequestCookies } from "@/lib/authServer";
 import { getCsrfCookieName, issueCsrfToken } from "@/lib/csrf";
 import { captureAppError, recordApiMetricFromStart } from "@/lib/observability";
 import { FREE_DOWNLOAD_WORD_LIMIT, getUserDownloadedWordCount } from "@/lib/planLimits";
-
-function isPro(user: { plan: "FREE" | "PRO"; proUntil: Date | null }): boolean {
-  if (user.plan !== "PRO") return false;
-  if (!user.proUntil) return true;
-  return user.proUntil.getTime() >= Date.now();
-}
+import { isActiveProPlan } from "@/lib/userPlan";
 
 export async function GET(req: NextRequest) {
   const startedAt = Date.now();
@@ -28,7 +23,7 @@ export async function GET(req: NextRequest) {
 
     const downloadWordsUsed = await getUserDownloadedWordCount(user.id);
 
-    const pro = isPro(user);
+    const pro = isActiveProPlan({ plan: user.plan, proUntil: user.proUntil });
 
     const res = NextResponse.json(
       {

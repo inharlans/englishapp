@@ -82,7 +82,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
-  const allowed = await canAccessWordbookForStudy({ userId: user.id, wordbookId, userPlan: user.plan });
+  const allowed = await canAccessWordbookForStudy({ userId: user.id, wordbookId });
   if (!allowed) {
     return NextResponse.json({ error: "Forbidden." }, { status: 403 });
   }

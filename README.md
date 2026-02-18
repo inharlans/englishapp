@@ -822,3 +822,16 @@ Required runtime env vars:
 - ?? 2? ????? 200 ?? ??
 - `/api/internal/cron/plan-expire`
 - `/api/internal/cron/wordbook-rank`
+
+## Recent Update (2026-02-18)
+
+- Payment entitlement hardening:
+  - Added idempotent entitlement apply guard keyed by `paymentId` to prevent double PRO extension when both `confirm` and `webhook` process the same payment.
+  - Normalized next billing schedule time to `nextProUntil` (removed unintended extra-cycle delay).
+- Plan enforcement consistency without external scheduler:
+  - Introduced effective-plan evaluation (`plan + proUntil`) and applied it across wordbook create/publish/edit/import/download/study access paths.
+  - Expired PRO users are now treated as FREE immediately by API checks even if cron is delayed or absent.
+- Bootstrap safety:
+  - Added transactional advisory lock in bootstrap to avoid concurrent first-admin creation race.
+- Tests:
+  - Added `lib/userPlan.test.ts` and `lib/paymentsEntitlement.test.ts`.

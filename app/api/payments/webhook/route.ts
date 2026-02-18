@@ -1,7 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { captureAppError, recordApiMetricFromStart } from "@/lib/observability";
-import { addDays, BillingCycle, getCycleDays, getPlanAmountKrw, getPortOneConfig, getPortOnePaymentClient, normalizeCycle } from "@/lib/payments";
+import {
+  BillingCycle,
+  getPlanAmountKrw,
+  getPortOneConfig,
+  getPortOnePaymentClient,
+  normalizeCycle
+} from "@/lib/payments";
+import {
+  applyPaidEntitlementOnce,
+  computeNextProUntil,
+  computeNextScheduleAt
+} from "@/lib/paymentsEntitlement";
 import { prisma } from "@/lib/prisma";
 import { Webhook } from "@portone/server-sdk";
 
@@ -29,13 +40,13 @@ async function scheduleNextBilling(input: {
   userEmail: string;
   billingKey: string;
   cycle: BillingCycle;
-  baseDate: Date;
+  nextProUntil: Date;
 }) {
   const paymentClient = getPortOnePaymentClient();
   const config = getPortOneConfig();
   if (!paymentClient || !config) return { scheduleId: null as string | null };
 
-  const nextPayAt = addDays(input.baseDate, getCycleDays(input.cycle));
+  const nextPayAt = computeNextScheduleAt(input.nextProUntil);
   const amount = getPlanAmountKrw(input.cycle);
   const paymentId = buildSchedulePaymentId(input.userId, input.cycle);
 
@@ -164,6 +175,7 @@ export async function POST(req: NextRequest) {
       currency = typeof payment.currency === "string" ? payment.currency : null;
       const customData = safeParseCustomData(payment.customData);
       const cycle = normalizeCycle(customData.cycle);
+      const source = customData.source === "schedule" ? "schedule" : "initial";
       userId = await resolveUserId(paymentId, payment.billingKey, customData);
 
       if (webhook.type === "Transaction.Paid" && payment.status === "PAID" && userId && cycle && payment.billingKey) {
@@ -172,43 +184,52 @@ export async function POST(req: NextRequest) {
           select: { id: true, email: true, proUntil: true, stripeSubscriptionStatus: true }
         });
         if (user) {
-          const now = new Date();
-          const baseDate = user.proUntil && user.proUntil.getTime() > now.getTime() ? user.proUntil : now;
-          const nextProUntil = addDays(baseDate, getCycleDays(cycle));
-
-          let nextScheduleId: string | null = null;
-          if (user.stripeSubscriptionStatus !== "canceled") {
-            try {
-              const scheduled = await scheduleNextBilling({
-                userId: user.id,
-                userEmail: user.email,
-                billingKey: payment.billingKey,
-                cycle,
-                baseDate: nextProUntil
-              });
-              nextScheduleId = scheduled.scheduleId;
-            } catch (error) {
-              await captureAppError({
-                route: "/api/payments/webhook",
-                message: "portone_schedule_renewal_failed",
-                stack: error instanceof Error ? error.stack : undefined,
-                context: { err: error instanceof Error ? error.message : String(error), paymentId },
-                userId: user.id
-              });
-            }
-          }
-
-          await prisma.user.update({
-            where: { id: user.id },
-            data: {
-              plan: "PRO",
-              proUntil: nextProUntil,
-              stripeCustomerId: payment.billingKey,
-              stripeSubscriptionStatus: user.stripeSubscriptionStatus === "canceled" ? "canceled" : "active",
-              ...(nextScheduleId ? { stripeSubscriptionId: nextScheduleId } : {})
-            }
+          const nextProUntil = computeNextProUntil({
+            now: new Date(),
+            currentProUntil: user.proUntil,
+            cycle
           });
-          status = "processed";
+
+          const entitlement = await prisma.$transaction((tx) =>
+            applyPaidEntitlementOnce(tx, {
+              userId: user.id,
+              paymentId,
+              billingKey: payment.billingKey!,
+              nextProUntil,
+              subscriptionStatus: user.stripeSubscriptionStatus === "canceled" ? "canceled" : "active",
+              source: "webhook"
+            })
+          );
+          if (entitlement.applied) {
+            if (user.stripeSubscriptionStatus !== "canceled") {
+              try {
+                const scheduled = await scheduleNextBilling({
+                  userId: user.id,
+                  userEmail: user.email,
+                  billingKey: payment.billingKey,
+                  cycle,
+                  nextProUntil
+                });
+                if (scheduled.scheduleId) {
+                  await prisma.user.update({
+                    where: { id: user.id },
+                    data: { stripeSubscriptionId: scheduled.scheduleId }
+                  });
+                }
+              } catch (error) {
+                await captureAppError({
+                  route: "/api/payments/webhook",
+                  message: "portone_schedule_renewal_failed",
+                  stack: error instanceof Error ? error.stack : undefined,
+                  context: { err: error instanceof Error ? error.message : String(error), paymentId },
+                  userId: user.id
+                });
+              }
+            }
+            status = source === "schedule" ? "processed_renewal" : "processed_fallback";
+          } else {
+            status = source === "schedule" ? "duplicate_renewal" : "already_processed";
+          }
         }
       } else if (webhook.type === "Transaction.Failed") {
         status = "failed";

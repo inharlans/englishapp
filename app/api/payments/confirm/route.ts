@@ -2,7 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { getUserFromRequestCookies } from "@/lib/authServer";
 import { captureAppError, recordApiMetricFromStart } from "@/lib/observability";
-import { addDays, BillingCycle, getCycleDays, getPlanAmountKrw, getPortOneConfig, getPortOnePaymentClient, normalizeCycle } from "@/lib/payments";
+import {
+  BillingCycle,
+  getPlanAmountKrw,
+  getPortOneConfig,
+  getPortOnePaymentClient,
+  normalizeCycle
+} from "@/lib/payments";
+import {
+  applyPaidEntitlementOnce,
+  computeNextProUntil,
+  computeNextScheduleAt
+} from "@/lib/paymentsEntitlement";
 import { prisma } from "@/lib/prisma";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
 import { parseJsonWithSchema } from "@/lib/validation";
@@ -26,13 +37,13 @@ async function scheduleNextBilling(input: {
   userEmail: string;
   billingKey: string;
   cycle: BillingCycle;
-  baseDate: Date;
+  nextProUntil: Date;
 }) {
   const paymentClient = getPortOnePaymentClient();
   const config = getPortOneConfig();
   if (!paymentClient || !config) return { scheduleId: null as string | null };
 
-  const nextPayAt = addDays(input.baseDate, getCycleDays(input.cycle));
+  const nextPayAt = computeNextScheduleAt(input.nextProUntil);
   const amount = getPlanAmountKrw(input.cycle);
   const paymentId = buildSchedulePaymentId(input.userId, input.cycle);
 
@@ -162,40 +173,19 @@ export async function POST(req: NextRequest) {
     }
 
     const billingKey = payment.billingKey || parsed.data.billingKey;
-    const now = new Date();
-    const baseDate = user.proUntil && user.proUntil.getTime() > now.getTime() ? user.proUntil : now;
-    const nextProUntil = addDays(baseDate, getCycleDays(cycle));
+    const nextProUntil = computeNextProUntil({
+      now: new Date(),
+      currentProUntil: user.proUntil,
+      cycle
+    });
 
-    let nextScheduleId: string | null = null;
-    try {
-      const scheduled = await scheduleNextBilling({
+    const entitlement = await prisma.$transaction(async (tx) => {
+      const result = await applyPaidEntitlementOnce(tx, {
         userId: user.id,
-        userEmail: user.email,
+        paymentId,
         billingKey,
-        cycle,
-        baseDate: nextProUntil
-      });
-      nextScheduleId = scheduled.scheduleId;
-    } catch (error) {
-      await captureAppError({
-        route: "/api/payments/confirm",
-        message: "portone_next_schedule_failed",
-        stack: error instanceof Error ? error.stack : undefined,
-        context: { err: error instanceof Error ? error.message : String(error), paymentId },
-        userId: user.id
-      });
-    }
-
-    await prisma.$transaction(async (tx) => {
-      await tx.user.update({
-        where: { id: user.id },
-        data: {
-          plan: "PRO",
-          proUntil: nextProUntil,
-          stripeCustomerId: billingKey,
-          stripeSubscriptionId: nextScheduleId,
-          stripeSubscriptionStatus: "active"
-        }
+        nextProUntil,
+        source: "confirm"
       });
 
       await tx.paymentEvent.create({
@@ -211,13 +201,40 @@ export async function POST(req: NextRequest) {
             cycle,
             paymentId,
             billingKey,
-            scheduleId: nextScheduleId
+            scheduleId: null
           }
         }
       });
+      return result;
     });
 
-    const res = NextResponse.json({ ok: true }, { status: 200 });
+    if (entitlement.applied) {
+      try {
+        const scheduled = await scheduleNextBilling({
+          userId: user.id,
+          userEmail: user.email,
+          billingKey,
+          cycle,
+          nextProUntil
+        });
+        if (scheduled.scheduleId) {
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { stripeSubscriptionId: scheduled.scheduleId }
+          });
+        }
+      } catch (error) {
+        await captureAppError({
+          route: "/api/payments/confirm",
+          message: "portone_next_schedule_failed",
+          stack: error instanceof Error ? error.stack : undefined,
+          context: { err: error instanceof Error ? error.message : String(error), paymentId },
+          userId: user.id
+        });
+      }
+    }
+
+    const res = NextResponse.json({ ok: true, applied: entitlement.applied }, { status: 200 });
     await recordApiMetricFromStart({
       route: "/api/payments/confirm",
       method: "POST",

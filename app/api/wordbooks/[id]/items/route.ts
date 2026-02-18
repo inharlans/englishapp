@@ -6,6 +6,7 @@ import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
 import { parseJsonWithSchema } from "@/lib/validation";
 import { isPrivateWordbookLockedForFree } from "@/lib/wordbookAccess";
 import { bumpWordbookVersion } from "@/lib/wordbookVersion";
+import { getEffectivePlan } from "@/lib/userPlan";
 import { z } from "zod";
 
 function parseId(raw: string): number | null {
@@ -53,7 +54,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   }
   if (
     isPrivateWordbookLockedForFree({
-      plan: user.plan,
+      plan: getEffectivePlan({ plan: user.plan, proUntil: user.proUntil }),
       isOwner: true,
       isPublic: wordbook.isPublic
     })

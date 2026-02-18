@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getUserFromRequestCookies } from "@/lib/authServer";
 import { prisma } from "@/lib/prisma";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
+import { getEffectivePlan } from "@/lib/userPlan";
 import { parseJsonWithSchema } from "@/lib/validation";
 import { z } from "zod";
 
@@ -35,7 +36,8 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   if (!parsedBody.ok) return parsedBody.response;
   const body = parsedBody.data;
 
-  if (user.plan === "FREE" && body.isPublic === false) {
+  const effectivePlan = getEffectivePlan({ plan: user.plan, proUntil: user.proUntil });
+  if (effectivePlan === "FREE" && body.isPublic === false) {
     return NextResponse.json(
       { error: "Free plan wordbooks must be public." },
       { status: 403 }

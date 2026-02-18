@@ -35,7 +35,7 @@ export default async function WordbookListCorrectPage(props: { params: Promise<{
     );
   }
 
-  const allowed = await canAccessWordbookForStudy({ userId: user.id, wordbookId: id, userPlan: user.plan });
+  const allowed = await canAccessWordbookForStudy({ userId: user.id, wordbookId: id });
   if (!allowed) {
     return (
       <section className="space-y-4">
