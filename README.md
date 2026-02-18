@@ -783,10 +783,11 @@ Required runtime env vars:
   - GitHub Actions `Scheduled Internal Cron Jobs` 수동 실행
   - `/api/internal/cron/plan-expire`, `/api/internal/cron/wordbook-rank` 200 확인
 
+## ?? ?? ?????
 
-## Operator Checklist (ASCII)
+?? ???? ???? ?? ??? ??? ? ????.
 
-1. Set Railway Variables
+1. Railway Variables ??
 - `PORTONE_API_SECRET`
 - `PORTONE_WEBHOOK_SECRET`
 - `PORTONE_STORE_ID`
@@ -796,28 +797,28 @@ Required runtime env vars:
 - `CRON_SECRET`
 - `NEXT_PUBLIC_APP_URL=https://www.oingapp.com`
 
-2. Configure PortOne console
-- Verify billing/payment channel connection
-- Register webhook URL: `https://www.oingapp.com/api/payments/webhook`
-- Issue webhook secret and set `PORTONE_WEBHOOK_SECRET`
+2. PortOne ?? ??
+- ??/?? ?? ?? ?? ??
+- ?? URL ??: `https://www.oingapp.com/api/payments/webhook`
+- ?? ??? ?? ? `PORTONE_WEBHOOK_SECRET`? ??
 
-3. Set GitHub Secrets (for cron workflow)
+3. GitHub Secrets ?? (?? ?????)
 - `APP_BASE_URL=https://www.oingapp.com`
-- `CRON_SECRET` (same value as Railway)
+- `CRON_SECRET` (Railway? ?? ?)
 
-4. Validate payment flow
-- Start monthly/yearly checkout on `/pricing`
-- Confirm redirect to `/pricing?payment=success`
-- Confirm user plan fields updated: `plan=PRO`, `proUntil`
-- Confirm metrics are recorded on `/api/admin/metrics`
+4. ?? ?? ??
+- `/pricing`?? ??/?? ?? ??
+- ?? ? `/pricing?payment=success` ?? ??
+- ??? ?? ? ?? ??: `plan=PRO`, `proUntil`
+- `/api/admin/metrics`?? ?? ??? ?? ?? ??
 
-5. Validate cancellation flow
-- While PRO, click the cancellation button on `/pricing`
-- Confirm redirect to `/pricing?payment=cancel`
-- Confirm `stripeSubscriptionStatus=canceled` in DB
+5. ?? ?? ??
+- PRO ???? `/pricing`? `?? ?? ??` ??
+- `/pricing?payment=cancel` ?? ??
+- DB?? `stripeSubscriptionStatus=canceled` ?? ??
 
-6. Validate cron jobs
-- Run GitHub Action `Scheduled Internal Cron Jobs` manually once
-- Confirm both endpoints return 200:
+6. ?? ??
+- GitHub Action `Scheduled Internal Cron Jobs` ?? 1? ??
+- ?? 2? ????? 200 ?? ??
 - `/api/internal/cron/plan-expire`
 - `/api/internal/cron/wordbook-rank`
