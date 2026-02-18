@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
   const passwordHash = await hashPassword(password);
   const user = await prisma.$transaction(async (tx) => {
     // Prevent concurrent bootstrap races on PostgreSQL.
-    await tx.$queryRaw`SELECT pg_advisory_xact_lock(946824611)`;
+    await tx.$executeRawUnsafe("SELECT pg_advisory_xact_lock(946824611::bigint)");
     const existingCount = await tx.user.count();
     if (existingCount > 0) {
       return null;

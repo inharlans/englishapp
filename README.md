@@ -817,3 +817,5 @@ Additional observations and guardrails:
   로컬/CI 테스트에서 Prisma 미초기화로 인한 `lib/rateLimit.test.ts` 실패를 방지했습니다.
 - CI의 E2E 서버 기동 방식을 `next dev`에서 `next start`로 변경해,
   초기 컴파일 지연으로 인한 준비 대기 타임아웃(2분) 가능성을 줄였습니다.
+- `/api/auth/bootstrap`의 advisory lock 쿼리를 `pg_advisory_xact_lock(946824611::bigint)`로 명시해
+  환경별 함수 해석 차이로 인한 500 가능성을 줄였습니다.
