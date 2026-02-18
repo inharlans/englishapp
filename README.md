@@ -779,6 +779,11 @@ Additional observations and guardrails:
 - `/pricing?payment=cancel` 이동 확인
 - DB에 `stripeSubscriptionStatus=canceled` 반영 확인
 
+## PortOne 작업 인수인계
+
+- 최신 작업 상태/미완료 항목/다음 실행 순서:
+  - `docs/HANDOFF_PORTONE_2026-02-19.md`
+
 6. 크론 확인
 - GitHub Actions `Scheduled Internal Cron Jobs` 수동 실행
 - 아래 두 API가 200 응답인지 확인
