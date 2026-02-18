@@ -815,3 +815,5 @@ Additional observations and guardrails:
 
 - `lib/rateLimit.ts`에서 Prisma 클라이언트 초기화를 지연 로딩으로 변경해,
   로컬/CI 테스트에서 Prisma 미초기화로 인한 `lib/rateLimit.test.ts` 실패를 방지했습니다.
+- CI의 E2E 서버 기동 방식을 `next dev`에서 `next start`로 변경해,
+  초기 컴파일 지연으로 인한 준비 대기 타임아웃(2분) 가능성을 줄였습니다.

@@ -41,7 +41,7 @@ jobs:
       - run: npm run typecheck
       - run: npm run build
       - run: npm run test
-      - run: npm run dev -- --hostname 127.0.0.1 --port 3000 > /tmp/next-dev.log 2>&1 &
+      - run: npm run start -- --hostname 127.0.0.1 --port 3000 > /tmp/next-start.log 2>&1 &
       - run: |
           for i in {1..60}; do
             if curl -fsS http://127.0.0.1:3000/login > /dev/null; then
@@ -50,6 +50,6 @@ jobs:
             sleep 2
           done
           echo "Server failed to start"
-          cat /tmp/next-dev.log
+          cat /tmp/next-start.log
           exit 1
       - run: npm run test:e2e
