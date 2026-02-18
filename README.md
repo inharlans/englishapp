@@ -4,7 +4,7 @@ Next.js(App Router) + Prisma + PostgreSQL 기반 단어 학습 웹앱.
 
 - 고정 단어 리스트(`words.tsv`) 기반 “English 1500” 학습(암기/퀴즈/오답 복습)
 - 유저 개인 단어장(생성/편집)
-- 공개 단어장 마켓(다운로드/평점/정렬)
+- 공개 단어장 마켓(다운로드/평점/정렬, 100단어 이상만 노출)
 - 오프라인 저장(IndexedDB) + 최소 Service Worker 캐싱
 - FREE/PRO 플랜 정책을 **서버에서 강제**
 
@@ -74,7 +74,7 @@ English 1500(고정 단어 리스트)
 - `PATCH /api/wordbooks/[id]/items/[itemId]` 아이템 수정(소유자만)
 - `DELETE /api/wordbooks/[id]/items/[itemId]` 아이템 삭제(소유자만)
 - `POST /api/wordbooks/[id]/publish` 공개/비공개 토글(PRO만, FREE는 비공개 금지)
-- `GET /api/wordbooks/market` 마켓 목록(검색/정렬/페이지네이션)
+- `GET /api/wordbooks/market` 마켓 목록(검색/정렬/페이지네이션, 100단어 이상 공개 단어장만 노출)
 - `POST /api/wordbooks/[id]/download` 단어장 다운로드(유저당 1회 기록 + `downloadCount` 증가, 플랜 제한 강제)
 - `POST /api/wordbooks/[id]/rate` 1~5점 평점(소유자 또는 다운로드한 유저만 가능, 1인 1회 upsert + 평균/개수 집계)
   - `review`(댓글) 필드 함께 저장 가능

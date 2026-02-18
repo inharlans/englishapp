@@ -8,6 +8,7 @@ import { EmptyStateCard } from "@/components/ui/EmptyStateCard";
 import { getUserFromRequestCookies } from "@/lib/authServer";
 import { FREE_DOWNLOAD_WORD_LIMIT, getUserDownloadedWordCount } from "@/lib/planLimits";
 import { prisma } from "@/lib/prisma";
+import { MARKET_MIN_ITEM_COUNT } from "@/lib/wordbookPolicy";
 
 type SortMode = "top" | "new" | "downloads";
 
@@ -57,27 +58,39 @@ export default async function MarketPage(props: {
         ? [{ downloadCount: "desc" as const }, { ratingAvg: "desc" as const }]
         : [{ rankScore: "desc" as const }, { createdAt: "desc" as const }];
 
-  const [total, wordbooks, myDownloads, myDownloadedWordCount] = await Promise.all([
-    prisma.wordbook.count({ where }),
-    prisma.wordbook.findMany({
-      where,
-      orderBy,
-      skip: page * take,
-      take,
-      select: {
-        id: true,
-        title: true,
-        description: true,
-        fromLang: true,
-        toLang: true,
-        downloadCount: true,
-        ratingAvg: true,
-        ratingCount: true,
-        createdAt: true,
-        owner: { select: { id: true, email: true } },
-        _count: { select: { items: true } }
-      }
-    }),
+  const candidates = await prisma.wordbook.findMany({
+    where,
+    orderBy,
+    select: {
+      id: true,
+      _count: { select: { items: true } }
+    }
+  });
+  const eligibleIds = candidates
+    .filter((wb) => wb._count.items >= MARKET_MIN_ITEM_COUNT)
+    .map((wb) => wb.id);
+  const total = eligibleIds.length;
+  const pageIds = eligibleIds.slice(page * take, page * take + take);
+
+  const [wordbooksUnordered, myDownloads, myDownloadedWordCount] = await Promise.all([
+    pageIds.length > 0
+      ? prisma.wordbook.findMany({
+          where: { id: { in: pageIds } },
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            fromLang: true,
+            toLang: true,
+            downloadCount: true,
+            ratingAvg: true,
+            ratingCount: true,
+            createdAt: true,
+            owner: { select: { id: true, email: true } },
+            _count: { select: { items: true } }
+          }
+        })
+      : Promise.resolve([]),
     user
       ? prisma.wordbookDownload.findMany({
           where: { userId: user.id },
@@ -86,6 +99,10 @@ export default async function MarketPage(props: {
       : Promise.resolve([]),
     user ? getUserDownloadedWordCount(user.id) : Promise.resolve(0)
   ]);
+  const byId = new Map(wordbooksUnordered.map((wb) => [wb.id, wb] as const));
+  const wordbooks = pageIds
+    .map((id) => byId.get(id))
+    .filter((wb): wb is NonNullable<typeof wb> => wb !== undefined);
 
   const downloadedIds = new Set(myDownloads.map((d) => d.wordbookId));
   const maxPage = Math.max(Math.ceil(total / take) - 1, 0);
@@ -101,6 +118,7 @@ export default async function MarketPage(props: {
           <p className="ui-kicker">단어장</p>
           <h1 className="ui-h2 mt-2">마켓</h1>
           <p className="ui-body mt-2">공개 단어장을 둘러보세요. 다운로드본은 읽기 전용입니다.</p>
+          <p className="mt-1 text-xs text-slate-500">{MARKET_MIN_ITEM_COUNT}단어 이상 단어장만 마켓에 노출됩니다.</p>
           {user ? (
             <p className="mt-1 text-xs text-slate-500">
               요금제: <span className="font-semibold">{user.plan}</span>

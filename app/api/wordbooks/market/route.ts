@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { getUserFromRequestCookies } from "@/lib/authServer";
 import { prisma } from "@/lib/prisma";
+import { MARKET_MIN_ITEM_COUNT } from "@/lib/wordbookPolicy";
 
 type SortMode = "top" | "new" | "downloads";
 
@@ -49,30 +50,45 @@ export async function GET(req: NextRequest) {
         ? [{ downloadCount: "desc" as const }, { ratingAvg: "desc" as const }]
         : [{ rankScore: "desc" as const }, { createdAt: "desc" as const }];
 
-  const [total, wordbooks] = await Promise.all([
-    prisma.wordbook.count({ where }),
-    prisma.wordbook.findMany({
-      where,
-      orderBy: orderByForDb,
-      skip: page * take,
-      take,
-      select: {
-        id: true,
-        title: true,
-        description: true,
-        fromLang: true,
-        toLang: true,
-        isPublic: true,
-        downloadCount: true,
-        ratingAvg: true,
-        ratingCount: true,
-        createdAt: true,
-        updatedAt: true,
-        owner: { select: { id: true, email: true } },
-        _count: { select: { items: true } }
-      }
-    })
-  ]);
+  const candidates = await prisma.wordbook.findMany({
+    where,
+    orderBy: orderByForDb,
+    select: {
+      id: true,
+      _count: { select: { items: true } }
+    }
+  });
+  const eligibleIds = candidates
+    .filter((wb) => wb._count.items >= MARKET_MIN_ITEM_COUNT)
+    .map((wb) => wb.id);
+  const total = eligibleIds.length;
+  const pageIds = eligibleIds.slice(page * take, page * take + take);
+
+  const wordbooksUnordered =
+    pageIds.length > 0
+      ? await prisma.wordbook.findMany({
+          where: { id: { in: pageIds } },
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            fromLang: true,
+            toLang: true,
+            isPublic: true,
+            downloadCount: true,
+            ratingAvg: true,
+            ratingCount: true,
+            createdAt: true,
+            updatedAt: true,
+            owner: { select: { id: true, email: true } },
+            _count: { select: { items: true } }
+          }
+        })
+      : [];
+  const byId = new Map(wordbooksUnordered.map((wb) => [wb.id, wb] as const));
+  const wordbooks = pageIds
+    .map((id) => byId.get(id))
+    .filter((wb): wb is NonNullable<typeof wb> => wb !== undefined);
 
   return NextResponse.json({ total, page, take, sort, q, wordbooks }, { status: 200 });
 }

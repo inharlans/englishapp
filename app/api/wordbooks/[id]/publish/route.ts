@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
 import { getEffectivePlan } from "@/lib/userPlan";
 import { parseJsonWithSchema } from "@/lib/validation";
+import { MARKET_MIN_ITEM_COUNT } from "@/lib/wordbookPolicy";
 import { z } from "zod";
 
 const publishSchema = z.object({
@@ -53,6 +54,16 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   }
   if (existing.ownerId !== user.id) {
     return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+  }
+
+  if (body.isPublic) {
+    const itemCount = await prisma.wordbookItem.count({ where: { wordbookId: id } });
+    if (itemCount < MARKET_MIN_ITEM_COUNT) {
+      return NextResponse.json(
+        { error: `마켓 공개는 ${MARKET_MIN_ITEM_COUNT}단어 이상부터 가능합니다.` },
+        { status: 400 }
+      );
+    }
   }
 
   const wordbook = await prisma.wordbook.update({
