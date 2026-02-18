@@ -2,8 +2,6 @@ import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import { Prisma } from "@prisma/client";
 
-import { prisma } from "@/lib/prisma";
-
 export type RateLimitResult =
   | { ok: true }
   | { ok: false; retryAfterSeconds: number };
@@ -73,6 +71,7 @@ async function checkRateLimitPostgres(input: {
   limit: number;
   windowMs: number;
 }): Promise<RateLimitResult> {
+  const { prisma } = await import("@/lib/prisma");
   const seconds = Math.max(Math.round(input.windowMs / 1000), 1);
 
   const rows = await prisma.$queryRaw<

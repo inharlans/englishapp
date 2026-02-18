@@ -18,7 +18,7 @@ Downloaded via `scripts/crawl-ngsl-family.mjs` into `data/crawled/ngsl-family/`:
 - NDL 1.1 (`NDL_1.1_stats.csv`) (New Dolch List / children's high-frequency)
 - MOEL 1.0 (`Oral+English+Medical+Corpus.xlsx`) (Medical Oral English List)
 
-Each list’s page on the NGSL Project site includes a Creative Commons license statement.
+Each list page on the NGSL Project site includes a Creative Commons license statement.
 
 ## Kaikki / Wiktionary (Korean translations)
 
@@ -28,5 +28,4 @@ Korean translations are fetched from Kaikki.org JSONL endpoints and cached under
 ## Notes
 
 - The generated outputs are written to `data/wordbooks-ko/` and are validated to ensure
-  every row has `en` and `ko` and that `ko` uses the `(명)(동)...` style.
-
+  every row has `en` and `ko` and that `ko` follows the expected `(명)...` style.

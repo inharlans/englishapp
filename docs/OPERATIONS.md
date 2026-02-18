@@ -5,13 +5,13 @@
 환경 변수:
 - `DATABASE_URL`
 
-전체 백업:
+커스텀 포맷 백업:
 
 ```bash
 pg_dump "$DATABASE_URL" --format=custom --file=backup.dump
 ```
 
-스키마 + 데이터 SQL 백업:
+SQL 백업:
 
 ```bash
 pg_dump "$DATABASE_URL" --format=plain --file=backup.sql
@@ -19,7 +19,7 @@ pg_dump "$DATABASE_URL" --format=plain --file=backup.sql
 
 ## 2) DB 복구
 
-커스텀 백업 복구:
+커스텀 포맷 복구:
 
 ```bash
 pg_restore --clean --if-exists --no-owner --dbname "$DATABASE_URL" backup.dump
@@ -39,11 +39,11 @@ npm run prisma:deploy
 
 ## 4) 마이그레이션 롤백 원칙
 
-- Prisma는 자동 down migration이 기본 제공되지 않습니다.
-- 장애 시에는 역방향 SQL 마이그레이션을 새로 만들어 복구합니다.
+- Prisma는 자동 down migration을 기본 제공하지 않습니다.
+- 롤백이 필요하면 별도의 SQL 마이그레이션으로 복구합니다.
 - 데이터 손실 가능성이 있으면 반드시 `pg_dump`를 먼저 수행합니다.
 
-## 5) 내부 크론 호출
+## 5) 내부 크론 수동 호출
 
 - 엔드포인트:
   - `POST /api/internal/cron/wordbook-rank`
@@ -76,15 +76,15 @@ curl -X POST "https://<your-domain>/api/internal/cron/plan-expire" \
 
 ## 7) 스케줄러 연결 (GitHub Actions)
 
-레포에 `.github/workflows/cron-jobs.yml`가 포함되어 있으며 30분마다 내부 크론 API를 호출합니다.
+레포지토리의 `.github/workflows/cron-jobs.yml`이 30분마다 내부 크론 API를 호출합니다.
 
 필수 GitHub repository secrets:
 
 - `APP_BASE_URL` 예: `https://www.oingapp.com`
 - `CRON_SECRET` 앱의 `CRON_SECRET`과 동일 값
 
-수동 점검:
+점검 순서:
 
-1. GitHub Actions에서 `Scheduled Internal Cron Jobs` 실행
-2. 워크플로 성공 로그 확인
+1. GitHub Actions에서 `Scheduled Internal Cron Jobs` 수동 실행
+2. 워크플로 로그에서 성공 여부 확인
 3. `/api/admin/metrics`에서 `/api/internal/cron/*` 지표 증가 확인

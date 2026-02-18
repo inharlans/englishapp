@@ -721,73 +721,34 @@ Additional observations and guardrails:
   - logged-in: `Logout` only
   - logged-out: `Login` only
 - Fixed mojibake text on `/wordbooks/[id]` version section:
+  - version labels/status text are now rendered with valid UTF-8 Korean copy.
 
-## 2026-02-18 PortOne migration (Stripe -> PortOne)
+## 2026-02-18 PortOne 마이그레이션 (Stripe -> PortOne)
 
-- Payment provider switched from Stripe to PortOne V2.
-- Billing flow:
-  - `POST /api/payments/checkout` creates PortOne billing+first-payment request payload.
-  - Browser executes PortOne SDK (`requestIssueBillingKey`).
-  - `POST /api/payments/confirm` verifies payment server-side and upgrades plan.
-  - `POST /api/payments/webhook` verifies PortOne webhook signature and processes renewals.
-- Subscription management:
-  - `POST /api/payments/portal` now means "cancel auto-renewal" (revoke scheduled renewals).
-  - Existing PRO period remains usable until `proUntil`.
-- Observability:
-  - Added metrics/error capture for `/api/payments/confirm` and updated PortOne payment routes.
+- 결제 제공자를 Stripe에서 PortOne V2로 전환했습니다.
+- 결제 흐름:
+  - `POST /api/payments/checkout`: PortOne billing + 첫 결제 요청 payload 생성
+  - 브라우저: PortOne SDK `requestIssueBillingKey` 실행
+  - `POST /api/payments/confirm`: 서버에서 결제 검증 후 PRO 승격
+  - `POST /api/payments/webhook`: PortOne 웹훅 서명 검증 및 갱신 처리
+- 구독 관리:
+  - `POST /api/payments/portal`은 "자동 갱신 해지" 의미로 동작
+  - 기존 PRO 기간은 `proUntil`까지 유지
+- 관측성:
+  - `/api/payments/confirm` 및 PortOne 결제 라우트에 메트릭/에러 수집 추가
 
-Required runtime env vars:
+필수 런타임 환경 변수:
 - `PORTONE_API_SECRET`
 - `PORTONE_WEBHOOK_SECRET`
 - `PORTONE_STORE_ID`
 - `PORTONE_CHANNEL_KEY`
-- `PORTONE_PRICE_MONTHLY_KRW` (default recommended: `2900`)
-- `PORTONE_PRICE_YEARLY_KRW` (default recommended: `29000`)
+- `PORTONE_PRICE_MONTHLY_KRW` (권장 기본값: `2900`)
+- `PORTONE_PRICE_YEARLY_KRW` (권장 기본값: `29000`)
 - `CRON_SECRET`
 
-## 운영 적용 체크리스트 (you-do)
-
-아래 순서대로 진행하면 됩니다.
+## 운영 적용 체크리스트
 
 1. Railway Variables 설정
-  - `PORTONE_API_SECRET`
-  - `PORTONE_WEBHOOK_SECRET`
-  - `PORTONE_STORE_ID`
-  - `PORTONE_CHANNEL_KEY`
-  - `PORTONE_PRICE_MONTHLY_KRW`
-  - `PORTONE_PRICE_YEARLY_KRW`
-  - `CRON_SECRET`
-  - `NEXT_PUBLIC_APP_URL=https://www.oingapp.com`
-
-2. PortOne 콘솔 설정
-  - 결제/빌링 채널 연결 확인
-  - 웹훅 URL 등록: `https://www.oingapp.com/api/payments/webhook`
-  - 웹훅 시크릿 발급 후 `PORTONE_WEBHOOK_SECRET`에 반영
-
-3. GitHub Secrets 설정 (크론 워크플로용)
-  - `APP_BASE_URL=https://www.oingapp.com`
-  - `CRON_SECRET` (Railway와 동일 값)
-
-4. 배포 후 기능 점검
-  - `/pricing`에서 월간/연간 결제 시도
-  - 결제 성공 후 `/pricing?payment=success` 이동 확인
-  - 사용자 `plan=PRO`, `proUntil` 반영 확인
-  - `/api/admin/metrics`에서 결제 라우트 지표 확인
-
-5. 갱신/해지 점검
-  - PRO 상태에서 "구독 갱신 해지" 실행
-  - `/pricing?payment=cancel` 이동 확인
-  - 예약 결제 revoke 및 `stripeSubscriptionStatus=canceled` 반영 확인
-
-6. 크론 점검
-  - GitHub Actions `Scheduled Internal Cron Jobs` 수동 실행
-  - `/api/internal/cron/plan-expire`, `/api/internal/cron/wordbook-rank` 200 확인
-
-## ?? ?? ?????
-
-?? ???? ???? ?? ??? ??? ? ????.
-
-1. Railway Variables ??
 - `PORTONE_API_SECRET`
 - `PORTONE_WEBHOOK_SECRET`
 - `PORTONE_STORE_ID`
@@ -796,58 +757,61 @@ Required runtime env vars:
 - `PORTONE_PRICE_YEARLY_KRW`
 - `CRON_SECRET`
 - `NEXT_PUBLIC_APP_URL=https://www.oingapp.com`
+- `PREVIEW_ACCESS_TOKEN` (선택: 프리뷰 접근 허용용)
 
-2. PortOne ?? ??
-- ??/?? ?? ?? ?? ??
-- ?? URL ??: `https://www.oingapp.com/api/payments/webhook`
-- ?? ??? ?? ? `PORTONE_WEBHOOK_SECRET`? ??
+2. PortOne 콘솔 설정
+- 결제/빌링 채널 연결 확인
+- 웹훅 URL 등록: `https://www.oingapp.com/api/payments/webhook`
+- 웹훅 시크릿 발급 후 `PORTONE_WEBHOOK_SECRET`에 반영
 
-3. GitHub Secrets ?? (?? ?????)
+3. GitHub Secrets 설정 (크론 워크플로)
 - `APP_BASE_URL=https://www.oingapp.com`
-- `CRON_SECRET` (Railway? ?? ?)
+- `CRON_SECRET` (Railway와 동일 값)
 
-4. ?? ?? ??
-- `/pricing`?? ??/?? ?? ??
-- ?? ? `/pricing?payment=success` ?? ??
-- ??? ?? ? ?? ??: `plan=PRO`, `proUntil`
-- `/api/admin/metrics`?? ?? ??? ?? ?? ??
+4. 배포 후 기능 확인
+- `/pricing`에서 월간/연간 결제 시도
+- 결제 성공 시 `/pricing?payment=success` 이동 확인
+- 사용자 `plan=PRO`, `proUntil` 반영 확인
+- `/api/admin/metrics`에서 결제 라우트 지표 확인
 
-5. ?? ?? ??
-- PRO ???? `/pricing`? `?? ?? ??` ??
-- `/pricing?payment=cancel` ?? ??
-- DB?? `stripeSubscriptionStatus=canceled` ?? ??
+5. 갱신/해지 확인
+- PRO 상태에서 "구독 갱신 해지" 실행
+- `/pricing?payment=cancel` 이동 확인
+- DB에 `stripeSubscriptionStatus=canceled` 반영 확인
 
-6. ?? ??
-- GitHub Action `Scheduled Internal Cron Jobs` ?? 1? ??
-- ?? 2? ????? 200 ?? ??
+6. 크론 확인
+- GitHub Actions `Scheduled Internal Cron Jobs` 수동 실행
+- 아래 두 API가 200 응답인지 확인
 - `/api/internal/cron/plan-expire`
 - `/api/internal/cron/wordbook-rank`
 
-## 최근 업데이트 (2026-02-18)
+## 2026-02-18 최신 업데이트
 
 - 결제 권한 반영 강화:
-  - `paymentId` 기준 멱등 가드를 추가해 `confirm`과 `webhook`이 같은 결제를 처리해도 PRO 기간이 중복 연장되지 않도록 수정했습니다.
-  - 다음 정기결제 예약 시점을 `nextProUntil` 기준으로 정규화해 한 주기 지연 가능성을 제거했습니다.
-- 외부 스케줄러 없이도 요금제 판정 일관화:
-  - `plan + proUntil` 기반의 유효 요금제 판정을 도입하고, 단어장 생성/공개/수정/가져오기/다운로드/학습 접근 경로에 적용했습니다.
-  - cron 지연/미실행 상황에서도 만료된 PRO 사용자는 API에서 즉시 FREE로 처리됩니다.
-- bootstrap 안정성:
-  - 최초 관리자 생성 시 동시 요청 경쟁 상태를 막기 위해 트랜잭션 advisory lock을 추가했습니다.
+  - `paymentId` 기준 멱등 처리로 `confirm`/`webhook` 중복 처리 시 PRO 기간 중복 연장을 방지했습니다.
+  - 정기결제 예약 시점 계산을 `nextProUntil` 기준으로 보정해 주기 드리프트 가능성을 줄였습니다.
+- 크론 지연 대비 요금제 방어:
+  - `plan + proUntil` 기반 유효 요금제 계산을 도입해 크론 지연 상황에서도 API에서 즉시 만료를 반영합니다.
+- bootstrap 안정성 개선:
+  - 최초 관리자 생성 동시 요청 경합 방지를 위해 트랜잭션 advisory lock을 추가했습니다.
 - 테스트:
-  - `lib/userPlan.test.ts`, `lib/paymentsEntitlement.test.ts`를 추가했습니다.
-  - 결제 라우트 테스트를 추가했습니다.
-    - `app/api/payments/confirm/route.test.ts`
-    - `app/api/payments/webhook/route.test.ts`
+  - `lib/userPlan.test.ts`, `lib/paymentsEntitlement.test.ts` 추가
+  - `app/api/payments/confirm/route.test.ts`, `app/api/payments/webhook/route.test.ts` 추가
 
 ## OAuth 브랜드 인증 대응 (2026-02-18)
 
-- 정책 페이지를 미들웨어 공개 경로로 열었습니다.
+- 공개 경로에 정책 페이지를 추가했습니다.
   - `/privacy`
   - `/terms`
-- 홈페이지(`/`)에 법적 문서 링크를 명시적으로 노출했습니다.
+- 홈페이지(`/`)에 정책 링크를 명시했습니다.
   - Privacy Policy
   - Terms of Service
-- 정책 페이지 본문을 UTF-8 안전 HTML 텍스트로 교체했습니다.
+- 정책 페이지 본문을 UTF-8 정상 텍스트로 정리했습니다.
   - `app/privacy/page.tsx`
   - `app/terms/page.tsx`
 - OAuth 동의화면 이름 불일치 위험을 줄이기 위해 홈페이지/메타 브랜드 표기를 `englishapp`으로 통일했습니다.
+
+## 2026-02-18 테스트 안정화
+
+- `lib/rateLimit.ts`에서 Prisma 클라이언트 초기화를 지연 로딩으로 변경해,
+  로컬/CI 테스트에서 Prisma 미초기화로 인한 `lib/rateLimit.test.ts` 실패를 방지했습니다.

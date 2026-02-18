@@ -35,3 +35,9 @@ For implementation tasks that change behavior or code:
   - `npm run build`
 - If using PowerShell to write files, use explicit UTF-8 output (no BOM) and avoid implicit default encodings.
 - If a file shows mojibake or build errors like `stream did not contain valid UTF-8`, immediately re-save that file as UTF-8 and re-run `npm run build`.
+
+## Language Policy (Docs + UI Copy)
+
+- Because both users and admins are Korean, all user-visible application text must be written in Korean.
+- `README.md` must be written in Korean.
+- Other `.md` files may be written in English when appropriate.
