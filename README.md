@@ -154,31 +154,49 @@ PortOne 결제 연동:
 - `PORTONE_PRICE_MONTHLY_KRW`
 - `PORTONE_PRICE_YEARLY_KRW`
 
-## 결제 실행 직전 체크 (사업자 번호 확보 후)
+## 결제 인수인계 상태 (2026-02-19 기준)
 
-현재 코드 기준으로 결제 플로우는 구현되어 있으며, 사업자 번호 및 PG 채널 정보만 확정되면 실서비스 직전 단계로 바로 전환 가능합니다.
+기준 문서: `docs/HANDOFF_PORTONE_2026-02-19.md`
 
-1. PortOne 콘솔에서 사업자 정보(사업자 번호 포함) 반영 및 채널 활성화
-2. PG 테스트/운영 키를 발급받아 아래 환경 변수 최종 입력
-   - `PORTONE_API_SECRET`
-   - `PORTONE_WEBHOOK_SECRET`
-   - `PORTONE_STORE_ID`
-   - `PORTONE_CHANNEL_KEY`
-   - `PORTONE_PRICE_MONTHLY_KRW`
-   - `PORTONE_PRICE_YEARLY_KRW`
-3. 웹훅 URL 등록
-   - `https://<서비스도메인>/api/payments/webhook`
-4. 결제 동작 점검
-   - `/pricing`에서 월간/연간 결제 진입
-   - 성공: `/pricing?payment=success`
-   - 취소: `/pricing?payment=cancel`
-5. 서버 반영 확인
-   - 결제 후 사용자 `plan=PRO`, `proUntil` 반영
-   - 관리자 지표(`/api/admin/metrics`)에서 결제/오류 이벤트 확인
+### 오늘 완료된 항목
+- PortOne 콘솔 가입/로그인 완료
+- `PORTONE_STORE_ID` 확인 완료
+- `PORTONE_API_SECRET` 발급 및 Railway 반영 완료
+- 웹훅 설정 완료
+  - URL: `https://www.oingapp.com/api/payments/webhook`
+  - `PORTONE_WEBHOOK_SECRET` 발급 및 Railway 반영 완료
+- Railway 반영 완료
+  - `PORTONE_API_SECRET`
+  - `PORTONE_WEBHOOK_SECRET`
+  - `PORTONE_STORE_ID`
+  - `PORTONE_PRICE_MONTHLY_KRW=2900`
+  - `PORTONE_PRICE_YEARLY_KRW=29000`
+  - `CRON_SECRET` (기존 유지)
+- GitHub Actions 시크릿 확인 완료
+  - `APP_BASE_URL`
+  - `CRON_SECRET`
+- `Scheduled Internal Cron Jobs` 수동 실행 성공 확인
 
-주의:
-- `CRON_SECRET`이 없으면 내부 크론 워크플로우 일부가 실패할 수 있으므로 운영 환경에서는 반드시 설정하세요.
-- 운영 전 마지막으로 `npm run build`와 실제 PG 테스트 결제를 1회 이상 수행하세요.
+### 현재 블로커 (미완료 1건)
+- `PORTONE_CHANNEL_KEY` 미설정
+  - 사유: PortOne 채널 생성 시 PG 테스트 자격증명(MID/secret/client key 등)이 필요
+  - 자격증명 없이는 채널 생성 불가 → `CHANNEL_KEY` 발급 불가
+
+### 사업자 번호 확보 후 즉시 실행 순서
+1. 대상 PG(예: 토스페이먼츠, KG이니시스) 테스트 자격증명 확보
+2. PortOne에서 테스트 채널 생성 후 `CHANNEL_KEY` 발급
+3. Railway에 `PORTONE_CHANNEL_KEY` 추가 후 배포
+4. 앱 결제 플로우 검증
+   - `/pricing` 월간/연간 결제 진입
+   - 성공 리다이렉트: `/pricing?payment=success`
+   - 사용자 `plan=PRO`, `proUntil` 반영 확인
+5. 취소 플로우 검증
+   - 구독 관리에서 해지
+   - `/pricing?payment=cancel` 확인
+   - DB `stripeSubscriptionStatus=canceled` 확인
+
+보안 주의:
+- 실제 시크릿 값은 문서에 기록하지 말고 Railway/GitHub Secrets에서만 관리합니다.
 
 ## 배포 메모
 
