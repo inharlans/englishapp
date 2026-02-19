@@ -154,6 +154,32 @@ PortOne 결제 연동:
 - `PORTONE_PRICE_MONTHLY_KRW`
 - `PORTONE_PRICE_YEARLY_KRW`
 
+## 결제 실행 직전 체크 (사업자 번호 확보 후)
+
+현재 코드 기준으로 결제 플로우는 구현되어 있으며, 사업자 번호 및 PG 채널 정보만 확정되면 실서비스 직전 단계로 바로 전환 가능합니다.
+
+1. PortOne 콘솔에서 사업자 정보(사업자 번호 포함) 반영 및 채널 활성화
+2. PG 테스트/운영 키를 발급받아 아래 환경 변수 최종 입력
+   - `PORTONE_API_SECRET`
+   - `PORTONE_WEBHOOK_SECRET`
+   - `PORTONE_STORE_ID`
+   - `PORTONE_CHANNEL_KEY`
+   - `PORTONE_PRICE_MONTHLY_KRW`
+   - `PORTONE_PRICE_YEARLY_KRW`
+3. 웹훅 URL 등록
+   - `https://<서비스도메인>/api/payments/webhook`
+4. 결제 동작 점검
+   - `/pricing`에서 월간/연간 결제 진입
+   - 성공: `/pricing?payment=success`
+   - 취소: `/pricing?payment=cancel`
+5. 서버 반영 확인
+   - 결제 후 사용자 `plan=PRO`, `proUntil` 반영
+   - 관리자 지표(`/api/admin/metrics`)에서 결제/오류 이벤트 확인
+
+주의:
+- `CRON_SECRET`이 없으면 내부 크론 워크플로우 일부가 실패할 수 있으므로 운영 환경에서는 반드시 설정하세요.
+- 운영 전 마지막으로 `npm run build`와 실제 PG 테스트 결제를 1회 이상 수행하세요.
+
 ## 배포 메모
 
 Railway 기준:
