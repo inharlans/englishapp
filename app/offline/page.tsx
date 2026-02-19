@@ -7,6 +7,7 @@ import { deleteOfflineWordbook, listOfflineWordbooks, type OfflineWordbook } fro
 
 export default function OfflineLibraryPage() {
   const [items, setItems] = useState<OfflineWordbook[]>([]);
+  const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -26,6 +27,15 @@ export default function OfflineLibraryPage() {
   useEffect(() => {
     void reload();
   }, []);
+
+  const filteredItems = items.filter((wb) => {
+    const q = query.trim().toLowerCase();
+    if (!q) return true;
+    return (
+      wb.title.toLowerCase().includes(q) ||
+      (wb.ownerEmail ?? "").toLowerCase().includes(q)
+    );
+  });
 
   const onDelete = async (id: number) => {
     const ok = window.confirm("이 오프라인 사본을 삭제하시겠습니까?");
@@ -63,6 +73,21 @@ export default function OfflineLibraryPage() {
         </div>
       </header>
 
+      <div className="ui-card p-4">
+        <label className="block">
+          <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">검색</span>
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="제목 또는 제작자 이메일"
+            className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+          />
+        </label>
+        <p className="mt-2 text-xs text-slate-500">
+          총 {items.length}개 중 {filteredItems.length}개 표시
+        </p>
+      </div>
+
       {loading ? <p className="text-sm text-slate-600">불러오는 중...</p> : null}
       {error ? (
         <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
@@ -70,15 +95,21 @@ export default function OfflineLibraryPage() {
         </p>
       ) : null}
 
-      {items.length === 0 && !loading ? (
+      {filteredItems.length === 0 && !loading ? (
         <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-600">
-          아직 저장된 항목이 없습니다. 다운로드한 단어장에서{" "}
-          <span className="font-semibold">오프라인 저장</span>을 눌러주세요.
+          {items.length === 0 ? (
+            <>
+              아직 저장된 항목이 없습니다. 다운로드한 단어장에서{" "}
+              <span className="font-semibold">오프라인 저장</span>을 눌러주세요.
+            </>
+          ) : (
+            <>검색 결과가 없습니다. 검색어를 변경해 주세요.</>
+          )}
         </div>
       ) : null}
 
       <div className="grid gap-3 md:grid-cols-2">
-        {items.map((wb) => (
+        {filteredItems.map((wb) => (
           <div key={wb.id} className="rounded-2xl border border-slate-200 bg-white p-4">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
