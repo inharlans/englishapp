@@ -278,6 +278,21 @@ Railway 기준:
 - 단어장 설명 텍스트의 깨진 문자열 판정 강화(`(?? ??? ?? ???)` 유형 포함)
 - 운영 스크립트 추가: `npm run wordbooks:cleanup-broken-descriptions`
 
+### 2026-02-19 서비스 반복 점검 루프(5회)
+- 방식: `실제 동선 점검 -> 제안 5건 문서화 -> 즉시 코드 반영 -> 커밋/푸시`
+- 회차 문서:
+  - `docs/service-audit-2026-02-19-loop5/ITERATION_1.md`
+  - `docs/service-audit-2026-02-19-loop5/ITERATION_2.md`
+  - `docs/service-audit-2026-02-19-loop5/ITERATION_3.md`
+  - `docs/service-audit-2026-02-19-loop5/ITERATION_4.md`
+  - `docs/service-audit-2026-02-19-loop5/ITERATION_5.md`
+- 반영 요약:
+  - 오프라인 검색/카운트/빈 상태 분기
+  - 오프라인 정렬(최신/오래된/단어 수) + 검색 초기화
+  - 마켓 제작자 이메일 검색 + 단어 수 구간 필터
+  - 마켓 카드 `차단/신고` 동선 통합
+  - 홈 로그인 사용자 빠른 이동(학습/마켓/오프라인) 강화
+
 ## 문서
 
 - 운영/점검/인수인계 문서: `docs/`

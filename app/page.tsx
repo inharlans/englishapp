@@ -51,9 +51,17 @@ export default async function HomePage() {
                 </Link>
               </>
             ) : (
-              <Link href="/wordbooks" className="ui-btn-primary px-5 py-2.5 text-sm">
-                내 단어장 열기
-              </Link>
+              <>
+                <Link href="/wordbooks" className="ui-btn-primary px-5 py-2.5 text-sm">
+                  내 단어장 열기
+                </Link>
+                <Link href="/wordbooks/market" className="ui-btn-secondary px-5 py-2.5 text-sm">
+                  마켓 다시 보기
+                </Link>
+                <Link href="/offline" className="ui-btn-secondary px-5 py-2.5 text-sm">
+                  오프라인 라이브러리
+                </Link>
+              </>
             )}
           </div>
 
@@ -79,7 +87,18 @@ export default async function HomePage() {
           <section className="rounded-3xl border border-white/60 bg-white/90 p-6 shadow-[0_24px_55px_-30px_rgba(15,23,42,0.75)] backdrop-blur">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">다시 오신 것을 환영합니다</p>
             <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-900">학습 계속하기</h2>
-            <p className="mt-2 text-sm text-slate-600">로그인되어 있습니다. 상단 메뉴 또는 왼쪽 버튼으로 학습을 이어가세요.</p>
+            <p className="mt-2 text-sm text-slate-600">오늘은 아래 바로가기로 학습 재개, 마켓 탐색, 오프라인 복습까지 바로 이동할 수 있습니다.</p>
+            <div className="mt-4 grid gap-2 sm:grid-cols-3">
+              <Link href="/wordbooks" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-center text-sm font-semibold text-slate-800 hover:bg-slate-50">
+                학습 재개
+              </Link>
+              <Link href="/wordbooks/market" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-center text-sm font-semibold text-slate-800 hover:bg-slate-50">
+                마켓 탐색
+              </Link>
+              <Link href="/offline" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-center text-sm font-semibold text-slate-800 hover:bg-slate-50">
+                오프라인 복습
+              </Link>
+            </div>
           </section>
         )}
       </div>
