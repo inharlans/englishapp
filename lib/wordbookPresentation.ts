@@ -1,9 +1,11 @@
-﻿export function splitWordbookDescription(raw: string | null | undefined): {
+import { isBrokenUserText } from "@/lib/textQuality";
+
+export function splitWordbookDescription(raw: string | null | undefined): {
   displayDescription: string | null;
   internalSource: string | null;
 } {
   const text = (raw ?? "").trim();
-  if (!text) return { displayDescription: null, internalSource: null };
+  if (!text || isBrokenUserText(text)) return { displayDescription: null, internalSource: null };
 
   const lines = text
     .split(/\r?\n/)
@@ -25,7 +27,9 @@
       internalLines.push(line);
       continue;
     }
-    displayLines.push(line);
+    if (!isBrokenUserText(line)) {
+      displayLines.push(line);
+    }
   }
 
   return {

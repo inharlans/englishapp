@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 
 import { getUserFromRequestCookies } from "@/lib/authServer";
 import { prisma } from "@/lib/prisma";
+import { maskEmailAddress } from "@/lib/textQuality";
 import { AdminUsersClient } from "./usersClient";
 
 export default async function AdminPage() {
@@ -9,7 +10,7 @@ export default async function AdminPage() {
   if (!user || !user.isAdmin) {
     return (
       <section className="space-y-4">
-        <h1 className="text-2xl font-black tracking-tight text-slate-900">찾을 수 없습니다</h1>
+        <h1 className="text-2xl font-black tracking-tight text-slate-900">{"\uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4"}</h1>
       </section>
     );
   }
@@ -23,6 +24,7 @@ export default async function AdminPage() {
     <AdminUsersClient
       initialUsers={users.map((u) => ({
         ...u,
+        email: maskEmailAddress(u.email),
         proUntil: u.proUntil ? u.proUntil.toISOString() : null,
         createdAt: u.createdAt.toISOString()
       }))}

@@ -1,10 +1,16 @@
 const BROKEN_ONLY_RE = /^[?\uFFFD\s]+$/;
+const PUNCT_ONLY_RE = /^[\s()[\]{}<>"'`~!@#$%^&*_=+|\\/:;.,-]+$/;
 
 export function isBrokenUserText(value: string | null | undefined): boolean {
   const normalized = (value ?? "").trim();
   if (!normalized) return false;
   if (BROKEN_ONLY_RE.test(normalized)) return true;
   if (normalized.includes("\uFFFD")) return true;
+  const stripped = normalized.replace(/[\s()[\]{}<>"'`~!@#$%^&*_=+|\\/:;.,-]/g, "");
+  if (!stripped) return false;
+  if (/^[?\uFFFD]+$/.test(stripped)) return true;
+  const hasMeaningfulChars = /[A-Za-z0-9\u3131-\u318E\uAC00-\uD7A3]/.test(normalized);
+  if (!hasMeaningfulChars && /[?\uFFFD]/.test(normalized) && !PUNCT_ONLY_RE.test(normalized)) return true;
   return false;
 }
 

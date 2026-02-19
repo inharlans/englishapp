@@ -101,9 +101,9 @@ export async function GET(req: NextRequest) {
         coreP95LatencyMs: coreP95,
         coreP95LatencyTargetMs: 500,
         violations: [
-          ...(apiSuccessRate < 99.5 ? ["핵심 API 성공률 99.5% 미만"] : []),
-          ...(cronSuccessRate < 99 ? ["크론 성공률 99% 미만"] : []),
-          ...(coreP95 > 500 ? ["핵심 경로 P95 500ms 초과"] : [])
+          ...(apiSuccessRate < 99.5 ? ["오늘 API 성공률이 99.5% 미만"] : []),
+          ...(cronSuccessRate < 99 ? ["오늘 크론 성공률이 99% 미만"] : []),
+          ...(coreP95 > 500 ? ["핵심 경로 P95가 500ms 초과"] : [])
         ]
       },
       recentErrors: recentErrors.map((e) => ({

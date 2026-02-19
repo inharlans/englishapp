@@ -20,6 +20,7 @@
     "prisma:migrate": "prisma migrate dev --name init",
     "prisma:deploy": "prisma migrate deploy",
     "prisma:seed": "node prisma/seed.js",
+    "wordbooks:cleanup-broken-descriptions": "node scripts/cleanup-broken-descriptions.mjs",
     "wordbooks:recompute-rank": "node scripts/recompute-wordbook-rank.mjs",
     "start:railway": "prisma generate && prisma migrate deploy && next start -p ${PORT:-3000}",
     "start:railway:seed": "prisma generate && prisma migrate deploy && node prisma/seed.js && next start -p ${PORT:-3000}"

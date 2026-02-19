@@ -99,25 +99,24 @@ export function AdminUsersClient({ initialUsers }: { initialUsers: UserRow[] }) 
 
       const reportRes = await apiFetch("/api/admin/reports");
       const reportJson = (await reportRes.json()) as { reports?: ReportRow[]; error?: string };
-      if (reportRes.ok) {
-        setReports((reportJson.reports ?? []).map((r) => ({
-          ...r,
-          createdAt: new Date(r.createdAt).toISOString(),
-          reviewedAt: r.reviewedAt ? new Date(r.reviewedAt).toISOString() : null
-        })));
-      }
+      if (!reportRes.ok) throw new Error(reportJson.error ?? "신고 목록을 불러오지 못했습니다.");
+      setReports((reportJson.reports ?? []).map((r) => ({
+        ...r,
+        createdAt: new Date(r.createdAt).toISOString(),
+        reviewedAt: r.reviewedAt ? new Date(r.reviewedAt).toISOString() : null
+      })));
 
       const metricRes = await apiFetch("/api/admin/metrics");
       const metricJson = (await metricRes.json()) as {
         routeStats?: RouteMetricRow[];
         recentErrors?: ErrorMetricRow[];
+        error?: string;
         slo?: SloSummary;
       };
-      if (metricRes.ok) {
-        setRouteMetrics(metricJson.routeStats ?? []);
-        setRecentErrors(metricJson.recentErrors ?? []);
-        setSlo(metricJson.slo ?? null);
-      }
+      if (!metricRes.ok) throw new Error(metricJson.error ?? "관측성 지표를 불러오지 못했습니다.");
+      setRouteMetrics(metricJson.routeStats ?? []);
+      setRecentErrors(metricJson.recentErrors ?? []);
+      setSlo(metricJson.slo ?? null);
     } catch (e) {
       setError(e instanceof Error ? e.message : "불러오기에 실패했습니다.");
     } finally {

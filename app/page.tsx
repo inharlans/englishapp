@@ -59,10 +59,10 @@ export default async function HomePage() {
 
           <div className="flex flex-wrap gap-4 text-xs text-slate-500">
             <Link href="/privacy" className="underline underline-offset-4 hover:text-slate-700">
-              Privacy Policy
+              개인정보처리방침
             </Link>
             <Link href="/terms" className="underline underline-offset-4 hover:text-slate-700">
-              Terms of Service
+              서비스 이용약관
             </Link>
           </div>
         </div>
