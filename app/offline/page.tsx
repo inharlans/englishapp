@@ -8,6 +8,7 @@ import { deleteOfflineWordbook, listOfflineWordbooks, type OfflineWordbook } fro
 export default function OfflineLibraryPage() {
   const [items, setItems] = useState<OfflineWordbook[]>([]);
   const [query, setQuery] = useState("");
+  const [sortMode, setSortMode] = useState<"saved-desc" | "saved-asc" | "words-desc">("saved-desc");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -28,14 +29,17 @@ export default function OfflineLibraryPage() {
     void reload();
   }, []);
 
-  const filteredItems = items.filter((wb) => {
-    const q = query.trim().toLowerCase();
-    if (!q) return true;
-    return (
-      wb.title.toLowerCase().includes(q) ||
-      (wb.ownerEmail ?? "").toLowerCase().includes(q)
-    );
-  });
+  const filteredItems = items
+    .filter((wb) => {
+      const q = query.trim().toLowerCase();
+      if (!q) return true;
+      return wb.title.toLowerCase().includes(q) || (wb.ownerEmail ?? "").toLowerCase().includes(q);
+    })
+    .sort((a, b) => {
+      if (sortMode === "saved-asc") return a.savedAt.localeCompare(b.savedAt);
+      if (sortMode === "words-desc") return b.items.length - a.items.length;
+      return b.savedAt.localeCompare(a.savedAt);
+    });
 
   const onDelete = async (id: number) => {
     const ok = window.confirm("이 오프라인 사본을 삭제하시겠습니까?");
@@ -74,15 +78,38 @@ export default function OfflineLibraryPage() {
       </header>
 
       <div className="ui-card p-4">
-        <label className="block">
-          <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">검색</span>
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="제목 또는 제작자 이메일"
-            className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-          />
-        </label>
+        <div className="grid gap-3 md:grid-cols-12 md:items-end">
+          <label className="block md:col-span-7">
+            <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">검색</span>
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="제목 또는 제작자 이메일"
+              className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+          </label>
+          <label className="block md:col-span-3">
+            <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">정렬</span>
+            <select
+              value={sortMode}
+              onChange={(e) => setSortMode(e.target.value as "saved-desc" | "saved-asc" | "words-desc")}
+              className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            >
+              <option value="saved-desc">저장일 최신순</option>
+              <option value="saved-asc">저장일 오래된순</option>
+              <option value="words-desc">단어 수 많은순</option>
+            </select>
+          </label>
+          <div className="md:col-span-2">
+            <button
+              type="button"
+              onClick={() => setQuery("")}
+              className="ui-btn-secondary w-full px-4 py-2 text-sm"
+            >
+              검색 초기화
+            </button>
+          </div>
+        </div>
         <p className="mt-2 text-xs text-slate-500">
           총 {items.length}개 중 {filteredItems.length}개 표시
         </p>
