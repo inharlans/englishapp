@@ -118,6 +118,12 @@ export default async function MarketPage(props: {
     .filter((wb): wb is NonNullable<typeof wb> => wb !== undefined);
 
   const downloadedIds = new Set(myDownloads.map((d) => d.wordbookId));
+  const beginnerPicks =
+    page === 0
+      ? wordbooks
+          .filter((wb) => wb._count.items >= 100 && wb._count.items <= 400)
+          .slice(0, 3)
+      : [];
   const maxPage = Math.max(Math.ceil(total / take) - 1, 0);
   const prevPage = Math.max(page - 1, 0);
   const nextPage = Math.min(page + 1, maxPage);
@@ -224,6 +230,23 @@ export default async function MarketPage(props: {
         </div>
       </div>
 
+      {beginnerPicks.length > 0 ? (
+        <div className="ui-card p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">초보 추천</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {beginnerPicks.map((wb) => (
+              <Link
+                key={`pick-${wb.id}`}
+                href={{ pathname: `/wordbooks/${wb.id}` }}
+                className="rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-800 hover:bg-blue-100"
+              >
+                {wb.title}
+              </Link>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
       {wordbooks.length === 0 ? (
         <EmptyStateCard
           title="검색 결과가 없습니다"
@@ -250,11 +273,10 @@ export default async function MarketPage(props: {
                       ) : null}
                     </div>
                     <p className="mt-1 text-xs text-slate-500">제작자 {maskEmailAddress(wb.owner.email)}</p>
-                    {wb.description ? (
-                      <p className="mt-2 line-clamp-2 text-sm text-slate-600">
-                        {splitWordbookDescription(wb.description).displayDescription ?? "설명이 없습니다."}
-                      </p>
-                    ) : null}
+                    <p className="mt-2 line-clamp-2 text-sm text-slate-600">
+                      {splitWordbookDescription(wb.description).displayDescription ??
+                        `${wb._count.items}개 단어 · ${wb.fromLang}에서 ${wb.toLang}로 학습하는 기본 단어장입니다.`}
+                    </p>
                     <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-slate-600">
                       <span>{wb._count.items}개 단어</span>
                       <span>{wb.downloadCount}회 다운로드</span>
@@ -268,7 +290,11 @@ export default async function MarketPage(props: {
                       {deriveWordbookBadges({
                         itemCount: wb._count.items,
                         ratingAvg: wb.ratingAvg,
-                        ratingCount: wb.ratingCount
+                        ratingCount: wb.ratingCount,
+                        downloadCount: wb.downloadCount,
+                        createdAt: wb.createdAt,
+                        hasDescription: !!splitWordbookDescription(wb.description).displayDescription,
+                        isRecommended: sort === "top" && page === 0
                       }).map((badge) => (
                         <span
                           key={badge}
@@ -356,4 +382,5 @@ export default async function MarketPage(props: {
     </section>
   );
 }
+
 

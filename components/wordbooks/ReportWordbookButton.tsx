@@ -58,6 +58,10 @@ export function ReportWordbookButton({ wordbookId }: Props) {
         {open ? "신고 취소" : "신고"}
       </button>
 
+      <p className="text-[11px] text-slate-500">
+        신고는 관리자 검토 후 처리됩니다. 제작자 차단은 별도 기능입니다.
+      </p>
+
       {open ? (
         <form
           id={`report-form-${wordbookId}`}

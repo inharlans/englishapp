@@ -7,7 +7,7 @@ const MIN_PART_SIZE = 1;
 const MAX_PART_SIZE = 200;
 
 function clampPartSize(n: number): number {
-  if (!Number.isFinite(n)) return DEFAULT_PART_SIZE;
+  if (!Number.isFinite(n) || n <= 0) return DEFAULT_PART_SIZE;
   return Math.min(MAX_PART_SIZE, Math.max(MIN_PART_SIZE, Math.floor(n)));
 }
 

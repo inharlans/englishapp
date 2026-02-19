@@ -60,6 +60,11 @@ async function main() {
     const wbId = market.data.wordbooks[0].id;
     const detail = await fetchJson(`${BASE_URL}/api/wordbooks/${wbId}`, { headers: authHeaders });
     assert(detail.res.ok, `wordbook detail failed: ${detail.res.status}`);
+
+    if (process.env.NEXT_PUBLIC_ENABLE_WORDBOOK_CARDS !== "0") {
+      const cardsPage = await fetch(`${BASE_URL}/wordbooks/${wbId}/cards`, { headers: { cookie } });
+      assert(cardsPage.status !== 404, `cards page route missing: ${cardsPage.status}`);
+    }
   }
 
   const words = await fetchJson(`${BASE_URL}/api/words?mode=memorize&batch=1&page=0&week=1`, {

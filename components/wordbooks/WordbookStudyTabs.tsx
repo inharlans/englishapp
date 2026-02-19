@@ -1,9 +1,12 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 
+const cardsEnabled = process.env.NEXT_PUBLIC_ENABLE_WORDBOOK_CARDS !== "0";
+
 const tabs = [
   { key: "memorize", label: "암기", href: (id: number) => `/wordbooks/${id}/memorize` },
+  ...(cardsEnabled ? [{ key: "cards", label: "카드", href: (id: number) => `/wordbooks/${id}/cards` }] : []),
   { key: "quiz-meaning", label: "의미 퀴즈", href: (id: number) => `/wordbooks/${id}/quiz-meaning` },
   { key: "quiz-word", label: "단어 퀴즈", href: (id: number) => `/wordbooks/${id}/quiz-word` },
   { key: "list-correct", label: "정답 목록", href: (id: number) => `/wordbooks/${id}/list-correct` },

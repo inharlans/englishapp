@@ -1,4 +1,4 @@
-import type { MeaningViewMode } from "@/components/wordbooks/useMeaningViewMode";
+﻿import type { MeaningViewMode } from "@/components/wordbooks/useMeaningViewMode";
 import { sanitizeUserText } from "@/lib/textQuality";
 
 type MeaningEntry = {
@@ -7,88 +7,122 @@ type MeaningEntry = {
 };
 
 const POS_LABELS: Record<string, string> = {
-  "명": "명사",
-  "동": "동사",
-  "형": "형용사",
-  "부": "부사",
-  "대": "대명사",
-  "전": "전치사",
-  "접": "접속사",
-  "감": "감탄사",
-  "명사": "명사",
-  "동사": "동사",
-  "형용사": "형용사",
-  "부사": "부사",
-  "대명사": "대명사",
-  "전치사": "전치사",
-  "접속사": "접속사",
-  "감탄사": "감탄사"
+  명: "명사",
+  동: "동사",
+  형: "형용사",
+  부: "부사",
+  대: "대명사",
+  전: "전치사",
+  접: "접속사",
+  감: "감탄사",
+  조: "조동사",
+  관: "관형사",
+  수: "수사",
+  명사: "명사",
+  동사: "동사",
+  형용사: "형용사",
+  부사: "부사",
+  대명사: "대명사",
+  전치사: "전치사",
+  접속사: "접속사",
+  감탄사: "감탄사",
+  조동사: "조동사",
+  관형사: "관형사",
+  관사: "관형사",
+  수사: "수사",
+  noun: "명사",
+  verb: "동사",
+  adjective: "형용사",
+  adverb: "부사",
+  pronoun: "대명사",
+  preposition: "전치사",
+  conjunction: "접속사",
+  interjection: "감탄사",
+  auxiliary: "조동사",
+  article: "관형사",
+  numeral: "수사"
 };
 
-function isPosTag(tag: string): boolean {
-  return Object.prototype.hasOwnProperty.call(POS_LABELS, tag.trim());
+function normalizeTag(raw: string): string | null {
+  const key = raw.trim().toLowerCase();
+  return POS_LABELS[key] ?? null;
 }
 
-function normalizeTag(tag: string): string {
-  const t = tag.replace(/[()]/g, "").trim();
-  return POS_LABELS[t] ?? t;
-}
-
-function splitPrimary(value: string): string[] {
+function normalizeMeaning(value: string): string {
   return value
-    .split(/[;|/\n]/g)
-    .map((part) => part.trim())
-    .filter(Boolean);
+    .replace(/\(\s*명사\s*\)/g, "(명)")
+    .replace(/\(\s*동사\s*\)/g, "(동)")
+    .replace(/\(\s*형용사\s*\)/g, "(형)")
+    .replace(/\(\s*부사\s*\)/g, "(부)")
+    .replace(/\(\s*대명사\s*\)/g, "(대)")
+    .replace(/\(\s*전치사\s*\)/g, "(전)")
+    .replace(/\(\s*접속사\s*\)/g, "(접)")
+    .replace(/\(\s*감탄사\s*\)/g, "(감)")
+    .replace(/\(\s*조동사\s*\)/g, "(조)")
+    .replace(/\(\s*관사\s*\)/g, "(관)")
+    .replace(/\(\s*수사\s*\)/g, "(수)")
+    .replace(/(^|[\s,])명사(?=[^\s,])/g, "$1(명)")
+    .replace(/(^|[\s,])동사(?=[^\s,])/g, "$1(동)")
+    .replace(/(^|[\s,])형용사(?=[^\s,])/g, "$1(형)")
+    .replace(/(^|[\s,])부사(?=[^\s,])/g, "$1(부)")
+    .replace(/(^|[\s,])대명사(?=[^\s,])/g, "$1(대)")
+    .replace(/(^|[\s,])전치사(?=[^\s,])/g, "$1(전)")
+    .replace(/(^|[\s,])접속사(?=[^\s,])/g, "$1(접)")
+    .replace(/(^|[\s,])감탄사(?=[^\s,])/g, "$1(감)")
+    .replace(/(^|[\s,])조동사(?=[^\s,])/g, "$1(조)")
+    .replace(/(^|[\s,])관형사(?=[^\s,])/g, "$1(관)")
+    .replace(/(^|[\s,])관사(?=[^\s,])/g, "$1(관)")
+    .replace(/(^|[\s,])수사(?=[^\s,])/g, "$1(수)")
+    .replace(/\)\(/g, ") ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
-function splitSecondary(text: string): string[] {
+function splitByDelimiters(text: string): string[] {
   return text
-    .split(/[,]/g)
-    .map((part) => part.replace(/^(?:[\u2022•]\s*|-\s+)/, "").trim())
+    .split(/[;,/|\n]/g)
+    .map((part) =>
+      part
+        .replace(/^[-•·\s]+/g, "")
+        .replace(/^\.\.\./, "")
+        .trim()
+    )
     .filter(Boolean);
-}
-
-function pushEntry(entries: MeaningEntry[], tag: string | null, raw: string) {
-  const parts = splitSecondary(raw);
-  for (const part of parts) {
-    entries.push({ tag, text: part });
-  }
 }
 
 function parseMeaningEntries(value: string): MeaningEntry[] {
-  const chunks = splitPrimary(value);
-  if (chunks.length === 0) return [];
-
-  const entries: MeaningEntry[] = [];
+  const normalized = normalizeMeaning(value);
+  const out: MeaningEntry[] = [];
+  const regex = /\(([^)]+)\)|([^()]+)/g;
   let currentTag: string | null = null;
+  let match: RegExpExecArray | null;
 
-  for (const chunk of chunks) {
-    const regex = /\(([^)]+)\)/g;
-    let segmentStart = 0;
-    let match: RegExpExecArray | null;
-
-    while ((match = regex.exec(chunk)) !== null) {
-      const candidate = match[1].trim();
-      if (!isPosTag(candidate)) {
-        continue;
+  while ((match = regex.exec(normalized)) !== null) {
+    if (match[1]) {
+      const tagLabel = normalizeTag(match[1]);
+      if (tagLabel) {
+        currentTag = tagLabel;
       }
-
-      const before = chunk.slice(segmentStart, match.index).trim();
-      if (before) {
-        pushEntry(entries, currentTag, before);
-      }
-
-      currentTag = candidate;
-      segmentStart = match.index + match[0].length;
+      continue;
     }
 
-    const rest = chunk.slice(segmentStart).trim();
-    if (rest) {
-      pushEntry(entries, currentTag, rest);
+    if (!match[2]) continue;
+    const parts = splitByDelimiters(match[2]);
+    for (const part of parts) {
+      out.push({ tag: currentTag, text: part });
     }
   }
 
-  return entries;
+  // Deduplicate while preserving order.
+  const seen = new Set<string>();
+  const deduped: MeaningEntry[] = [];
+  for (const entry of out) {
+    const key = `${entry.tag ?? "none"}:${entry.text.toLowerCase()}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    deduped.push(entry);
+  }
+  return deduped;
 }
 
 function groupByTag(entries: MeaningEntry[]) {
@@ -96,15 +130,13 @@ function groupByTag(entries: MeaningEntry[]) {
   const byKey = new Map<string, { key: string; label: string; items: string[] }>();
 
   for (const entry of entries) {
-    const key = entry.tag ?? "__none__";
-    const label = entry.tag ? normalizeTag(entry.tag) : "기타";
-
+    const key = entry.tag ?? "none";
+    const label = entry.tag ?? "기타";
     if (!byKey.has(key)) {
       const group = { key, label, items: [] as string[] };
       byKey.set(key, group);
       groups.push(group);
     }
-
     byKey.get(key)!.items.push(entry.text);
   }
 
@@ -129,16 +161,15 @@ export function MeaningView({
 
   if (mode === "detailed") {
     const groups = groupByTag(entries);
-
-    if (groups.length === 1 && groups[0].key === "__none__") {
-      return <span className={className}>{groups[0].items.join(", ")}</span>;
-    }
-
     return (
       <span className={`flex flex-col gap-1 ${className}`}>
         {groups.map((group) => (
           <span key={group.key} className="text-sm text-slate-700">
-            <span className="mr-2 text-xs font-semibold text-blue-800">{group.label}</span>
+            {group.key !== "none" ? (
+              <span className="mr-2 rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700">
+                {group.label}
+              </span>
+            ) : null}
             {group.items.join(", ")}
           </span>
         ))}
@@ -160,7 +191,7 @@ export function MeaningView({
           {entry.tag ? (
             <>
               <span className="mr-1 rounded-full border border-slate-200 bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600">
-                {normalizeTag(entry.tag)}
+                {entry.tag}
               </span>
               {entry.text}
             </>
@@ -172,4 +203,3 @@ export function MeaningView({
     </span>
   );
 }
-

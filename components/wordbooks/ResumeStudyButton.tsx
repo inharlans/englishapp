@@ -4,9 +4,10 @@ import Link from "next/link";
 import type { Route } from "next";
 import { useEffect, useState } from "react";
 
-type TabKey = "memorize" | "quiz-meaning" | "quiz-word" | "list-correct" | "list-wrong" | "list-half";
+type TabKey = "memorize" | "cards" | "quiz-meaning" | "quiz-word" | "list-correct" | "list-wrong" | "list-half";
 
 const KEY_PREFIX = "wordbook_last_tab_";
+const cardsEnabled = process.env.NEXT_PUBLIC_ENABLE_WORDBOOK_CARDS !== "0";
 
 function toHref(wordbookId: number, tab: TabKey): Route {
   return `/wordbooks/${wordbookId}/${tab}` as Route;
@@ -20,6 +21,7 @@ export function ResumeStudyButton({ wordbookId }: { wordbookId: number }) {
     const raw = window.localStorage.getItem(`${KEY_PREFIX}${wordbookId}`);
     if (
       raw === "memorize" ||
+      (raw === "cards" && cardsEnabled) ||
       raw === "quiz-meaning" ||
       raw === "quiz-word" ||
       raw === "list-correct" ||

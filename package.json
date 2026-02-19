@@ -21,6 +21,9 @@
     "prisma:deploy": "prisma migrate deploy",
     "prisma:seed": "node prisma/seed.js",
     "wordbooks:cleanup-broken-descriptions": "node scripts/cleanup-broken-descriptions.mjs",
+    "wordbooks:report-meaning-quality": "node scripts/report-meaning-quality.mjs",
+    "wordbooks:cleanse-meaning-quality": "node scripts/cleanse-meaning-quality.mjs",
+    "wordbooks:cleanse-meaning-quality:apply": "node scripts/cleanse-meaning-quality.mjs --apply",
     "wordbooks:recompute-rank": "node scripts/recompute-wordbook-rank.mjs",
     "start:railway": "prisma generate && prisma migrate deploy && next start -p ${PORT:-3000}",
     "start:railway:seed": "prisma generate && prisma migrate deploy && node prisma/seed.js && next start -p ${PORT:-3000}"

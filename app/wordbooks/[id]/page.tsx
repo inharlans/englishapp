@@ -31,9 +31,27 @@ function parseId(raw: string): number | null {
   return Math.floor(n);
 }
 
-export default async function WordbookDetailPage(props: { params: Promise<{ id: string }> }) {
+function parseNonNegativeInt(raw: string | undefined, fallback: number): number {
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n < 0) return fallback;
+  return Math.floor(n);
+}
+
+function parseTake(raw: string | undefined, fallback: number): number {
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n <= 0) return fallback;
+  return Math.min(200, Math.max(20, Math.floor(n)));
+}
+
+export default async function WordbookDetailPage(props: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ page?: string; take?: string }>;
+}) {
   const { id: idRaw } = await props.params;
+  const searchParams = await props.searchParams;
   const id = parseId(idRaw);
+  const page = parseNonNegativeInt(searchParams.page, 0);
+  const take = parseTake(searchParams.take, 80);
   if (!id) {
     return (
       <section className="space-y-4">
@@ -68,18 +86,7 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
       createdAt: true,
       updatedAt: true,
       owner: { select: { email: true } },
-      items: {
-        orderBy: [{ position: "asc" }, { id: "asc" }],
-        select: {
-          id: true,
-          term: true,
-          meaning: true,
-          pronunciation: true,
-          example: true,
-          exampleMeaning: true,
-          position: true
-        }
-      }
+      _count: { select: { items: true } }
     }
   });
 
@@ -96,6 +103,25 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
       </section>
     );
   }
+
+  const totalItemCount = wordbook._count.items;
+  const pageCount = Math.max(1, Math.ceil(totalItemCount / take));
+  const currentPage = Math.min(page, pageCount - 1);
+  const pagedItems = await prisma.wordbookItem.findMany({
+    where: { wordbookId: id },
+    orderBy: [{ position: "asc" }, { id: "asc" }],
+    skip: currentPage * take,
+    take,
+    select: {
+      id: true,
+      term: true,
+      meaning: true,
+      pronunciation: true,
+      example: true,
+      exampleMeaning: true,
+      position: true
+    }
+  });
 
   const isOwner = user ? wordbook.ownerId === user.id : false;
   if ((!wordbook.isPublic || wordbook.hiddenByAdmin) && !isOwner) {
@@ -138,7 +164,7 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
     user?.plan === "FREE" &&
     !downloadedAt &&
     !isOwner &&
-    downloadedWordCount + wordbook.items.length > FREE_DOWNLOAD_WORD_LIMIT;
+    downloadedWordCount + totalItemCount > FREE_DOWNLOAD_WORD_LIMIT;
   const isPrivateLocked =
     !!user &&
     isPrivateWordbookLockedForFree({
@@ -170,7 +196,7 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
             {wordbook.title}
           </h1>
           <p className="mt-2 text-sm text-slate-600">
-            제작자 {maskEmailAddress(wordbook.owner.email)} | 단어 {wordbook.items.length}개 | 다운로드 {wordbook.downloadCount}회
+            제작자 {maskEmailAddress(wordbook.owner.email)} | 단어 {totalItemCount}개 | 다운로드 {wordbook.downloadCount}회
             {downloadedAt ? ` | 다운로드일 ${downloadedAt.toISOString().slice(0, 10)}` : ""} |{" "}
             {wordbook.isPublic ? "공개" : "비공개"}
           </p>
@@ -192,7 +218,7 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
           wordbook.isPublic &&
           !downloadedAt &&
           user?.plan === "FREE" &&
-          downloadedWordCount + wordbook.items.length > FREE_DOWNLOAD_WORD_LIMIT ? (
+          downloadedWordCount + totalItemCount > FREE_DOWNLOAD_WORD_LIMIT ? (
             <Link
               href={{ pathname: "/pricing" }}
               className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-900 hover:bg-blue-100"
@@ -337,7 +363,7 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
               </p>
               {snapshotItemCount !== null && syncedAt ? (
                 <p className="mt-1 text-xs text-slate-500">
-                  단어 수 변화: {snapshotItemCount}에서 {wordbook.items.length} / 최근 동기화{" "}
+                  단어 수 변화: {snapshotItemCount}에서 {totalItemCount} / 최근 동기화{" "}
                   {syncedAt.toISOString().slice(0, 10)}
                 </p>
               ) : null}
@@ -352,21 +378,58 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
       ) : null}
 
       <section className="space-y-3">
-        <h2 className="text-sm font-black uppercase tracking-[0.2em] text-slate-700">단어 목록</h2>
-        {wordbook.items.length === 0 ? (
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-sm font-black uppercase tracking-[0.2em] text-slate-700">단어 목록</h2>
+          <div className="flex items-center gap-2 text-xs text-slate-600">
+            <span>
+              {currentPage + 1}/{pageCount} 페이지
+            </span>
+            <span>·</span>
+            <span>페이지당 {take}개</span>
+          </div>
+        </div>
+        {totalItemCount === 0 ? (
           <p className="text-sm text-slate-600">등록된 단어가 없습니다.</p>
         ) : (
-          <div className="grid gap-2">
-            {wordbook.items.map((item) => (
-              <WordbookItemRow
-                key={item.id}
-                wordbookId={id}
-                item={item}
-                editable={isOwner && !isPrivateLocked}
-                speakLang={speakLang}
-              />
-            ))}
-          </div>
+          <>
+            <div className="grid gap-2">
+              {pagedItems.map((item) => (
+                <WordbookItemRow
+                  key={item.id}
+                  wordbookId={id}
+                  item={item}
+                  editable={isOwner && !isPrivateLocked}
+                  speakLang={speakLang}
+                />
+              ))}
+            </div>
+            <div className="flex items-center justify-between pt-2">
+              <Link
+                href={{
+                  pathname: `/wordbooks/${id}`,
+                  query: { page: String(Math.max(currentPage - 1, 0)), take: String(take) }
+                }}
+                className={[
+                  "ui-btn-secondary px-3 py-1.5 text-xs",
+                  currentPage <= 0 ? "pointer-events-none opacity-50" : ""
+                ].join(" ")}
+              >
+                이전
+              </Link>
+              <Link
+                href={{
+                  pathname: `/wordbooks/${id}`,
+                  query: { page: String(Math.min(currentPage + 1, pageCount - 1)), take: String(take) }
+                }}
+                className={[
+                  "ui-btn-secondary px-3 py-1.5 text-xs",
+                  currentPage >= pageCount - 1 ? "pointer-events-none opacity-50" : ""
+                ].join(" ")}
+              >
+                다음
+              </Link>
+            </div>
+          </>
         )}
       </section>
     </section>

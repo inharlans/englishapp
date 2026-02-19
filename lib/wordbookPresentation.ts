@@ -1,4 +1,4 @@
-import { isBrokenUserText } from "@/lib/textQuality";
+﻿import { isBrokenUserText } from "@/lib/textQuality";
 
 export function splitWordbookDescription(raw: string | null | undefined): {
   displayDescription: string | null;
@@ -42,14 +42,33 @@ export function deriveWordbookBadges(input: {
   itemCount: number;
   ratingAvg: number;
   ratingCount: number;
+  downloadCount?: number;
+  createdAt?: Date;
+  hasDescription?: boolean;
+  isRecommended?: boolean;
 }): string[] {
   const badges: string[] = [];
+
+  if (input.isRecommended) badges.push("추천");
+
+  if (typeof input.createdAt !== "undefined") {
+    const ageDays = Math.max(0, (Date.now() - input.createdAt.getTime()) / (1000 * 60 * 60 * 24));
+    if (ageDays <= 14) badges.push("신규");
+  }
+
+  if ((input.downloadCount ?? 0) >= 10) {
+    badges.push("많이 다운로드");
+  }
+
+  if (input.hasDescription) {
+    badges.push("설명 있음");
+  }
 
   if (input.itemCount >= 500) badges.push("고급");
   else if (input.itemCount >= 250) badges.push("중급");
   else badges.push("입문");
 
-  if (input.ratingCount >= 5 && input.ratingAvg >= 4.5) badges.push("추천");
+  if (input.ratingCount >= 5 && input.ratingAvg >= 4.5) badges.push("평점 우수");
   else if (input.ratingCount >= 10) badges.push("검증됨");
 
   return badges;
