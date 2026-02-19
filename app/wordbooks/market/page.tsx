@@ -13,20 +13,34 @@ import { maskEmailAddress } from "@/lib/textQuality";
 import { deriveWordbookBadges, splitWordbookDescription } from "@/lib/wordbookPresentation";
 
 type SortMode = "top" | "new" | "downloads";
+type SizeMode = "all" | "100-300" | "301-700" | "701+";
 
 function parseSort(raw: string | undefined): SortMode {
   if (raw === "new" || raw === "downloads" || raw === "top") return raw;
   return "top";
 }
 
+function parseSize(raw: string | undefined): SizeMode {
+  if (raw === "100-300" || raw === "301-700" || raw === "701+" || raw === "all") return raw;
+  return "all";
+}
+
+function matchesSize(itemCount: number, size: SizeMode): boolean {
+  if (size === "100-300") return itemCount >= 100 && itemCount <= 300;
+  if (size === "301-700") return itemCount >= 301 && itemCount <= 700;
+  if (size === "701+") return itemCount >= 701;
+  return true;
+}
+
 export default async function MarketPage(props: {
-  searchParams: Promise<{ q?: string; sort?: string; page?: string }>;
+  searchParams: Promise<{ q?: string; sort?: string; size?: string; page?: string }>;
 }) {
   const user = await getUserFromRequestCookies(await cookies());
 
   const sp = await props.searchParams;
   const q = (sp.q ?? "").trim();
   const sort = parseSort(sp.sort);
+  const size = parseSize(sp.size);
   const page = Math.max(Number(sp.page ?? "0") || 0, 0);
   const take = 30;
 
@@ -47,7 +61,8 @@ export default async function MarketPage(props: {
       ? {
           OR: [
             { title: { contains: q, mode: "insensitive" as const } },
-            { description: { contains: q, mode: "insensitive" as const } }
+            { description: { contains: q, mode: "insensitive" as const } },
+            { owner: { email: { contains: q, mode: "insensitive" as const } } }
           ]
         }
       : {})
@@ -74,6 +89,7 @@ export default async function MarketPage(props: {
   const eligibleIds = candidates
     .filter(
       (wb) =>
+        matchesSize(wb._count.items, size) &&
         !shouldHideWordbookFromMarket({
           title: wb.title,
           description: wb.description,
@@ -196,7 +212,20 @@ export default async function MarketPage(props: {
               <option value="downloads">다운로드순</option>
             </select>
           </label>
-          <div className="md:col-span-2">
+          <label className="block md:col-span-2">
+            <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">규모</span>
+            <select
+              name="size"
+              defaultValue={size}
+              className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            >
+              <option value="all">전체</option>
+              <option value="100-300">100~300단어</option>
+              <option value="301-700">301~700단어</option>
+              <option value="701+">701단어 이상</option>
+            </select>
+          </label>
+          <div className="md:col-span-12 lg:col-span-12">
             <button type="submit" className="ui-btn-primary w-full px-4 py-2 text-sm">
               적용
             </button>
@@ -210,7 +239,7 @@ export default async function MarketPage(props: {
         </p>
         <div className="flex items-center gap-2">
           <Link
-            href={{ pathname: "/wordbooks/market", query: { q, sort, page: String(prevPage) } }}
+            href={{ pathname: "/wordbooks/market", query: { q, sort, size, page: String(prevPage) } }}
             className={[
               "ui-btn-secondary px-3 py-1.5 text-sm",
               prevDisabled ? "pointer-events-none opacity-50" : ""
@@ -219,7 +248,7 @@ export default async function MarketPage(props: {
             이전
           </Link>
           <Link
-            href={{ pathname: "/wordbooks/market", query: { q, sort, page: String(nextPage) } }}
+            href={{ pathname: "/wordbooks/market", query: { q, sort, size, page: String(nextPage) } }}
             className={[
               "ui-btn-secondary px-3 py-1.5 text-sm",
               nextDisabled ? "pointer-events-none opacity-50" : ""
@@ -251,7 +280,7 @@ export default async function MarketPage(props: {
         <EmptyStateCard
           title="검색 결과가 없습니다"
           description="검색어를 줄이거나 정렬 기준을 바꿔서 다시 찾아보세요."
-          primary={{ label: "필터 초기화", href: "/wordbooks/market?sort=top&page=0" }}
+          primary={{ label: "필터 초기화", href: "/wordbooks/market?sort=top&size=all&page=0" }}
           secondary={{ label: "내 단어장", href: "/wordbooks" }}
         />
       ) : (
@@ -356,7 +385,7 @@ export default async function MarketPage(props: {
         <div className="mx-auto w-full max-w-5xl px-6">
           <div className="pointer-events-auto ui-card flex items-center justify-between gap-2 p-2">
             <Link
-              href={{ pathname: "/wordbooks/market", query: { q, sort, page: String(prevPage) } }}
+              href={{ pathname: "/wordbooks/market", query: { q, sort, size, page: String(prevPage) } }}
               className={[
                 "ui-btn-secondary px-4 py-2 text-sm",
                 prevDisabled ? "pointer-events-none opacity-50" : ""
@@ -368,7 +397,7 @@ export default async function MarketPage(props: {
               {page + 1}/{maxPage + 1}
             </p>
             <Link
-              href={{ pathname: "/wordbooks/market", query: { q, sort, page: String(nextPage) } }}
+              href={{ pathname: "/wordbooks/market", query: { q, sort, size, page: String(nextPage) } }}
               className={[
                 "ui-btn-secondary px-4 py-2 text-sm",
                 nextDisabled ? "pointer-events-none opacity-50" : ""
