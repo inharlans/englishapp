@@ -15,7 +15,7 @@ function parseId(raw: string): number | null {
 }
 
 const moderateReportSchema = z.object({
-  action: z.enum(["resolve", "dismiss", "hide"]),
+  action: z.enum(["review", "resolve", "dismiss", "hide"]),
   note: z.string().trim().max(1000).optional()
 });
 
@@ -41,6 +41,20 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     select: { id: true, wordbookId: true, status: true }
   });
   if (!report) return NextResponse.json({ error: "Not found." }, { status: 404 });
+
+  if (action === "review") {
+    await prisma.wordbookReport.update({
+      where: { id },
+      data: {
+        reviewAction: "reviewing",
+        reviewerIpHash,
+        reviewedById: user.id,
+        reviewedAt: new Date(),
+        moderatorNote: note
+      }
+    });
+    return NextResponse.json({ ok: true }, { status: 200 });
+  }
 
   if (action === "hide") {
     const nextStatus = "RESOLVED";

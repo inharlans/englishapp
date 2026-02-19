@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 
 import { getUserFromRequestCookies } from "@/lib/authServer";
 import { prisma } from "@/lib/prisma";
@@ -177,4 +177,3 @@ export async function DELETE(
   });
   return NextResponse.json({ ok: true }, { status: 200 });
 }
-

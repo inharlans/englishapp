@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import Link from "next/link";
@@ -48,7 +48,7 @@ export function PricingActions(props: {
 
       const issueResult = await PortOne.requestIssueBillingKey(checkoutJson.request);
       if (!issueResult) {
-        throw new Error("빌링키 발급 결과를 확인할 수 없습니다. 잠시 후 다시 시도해주세요.");
+        throw new Error("빌링키 발급 결과를 확인할 수 없습니다. 잠시 후 다시 시도해 주세요.");
       }
       if (issueResult.code || issueResult.message) {
         throw new Error(issueResult.message ?? issueResult.code ?? "빌링키 발급에 실패했습니다.");
@@ -81,10 +81,10 @@ export function PricingActions(props: {
     try {
       const res = await apiFetch("/api/payments/portal", { method: "POST" });
       const json = (await res.json()) as { url?: string; error?: string };
-      if (!res.ok || !json.url) throw new Error(json.error ?? "구독 관리 처리에 실패했습니다.");
+      if (!res.ok || !json.url) throw new Error(json.error ?? "구독 관리 이동에 실패했습니다.");
       window.location.assign(json.url);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "구독 관리 처리에 실패했습니다.");
+      setError(e instanceof Error ? e.message : "구독 관리 이동에 실패했습니다.");
     } finally {
       setLoading(null);
     }
@@ -100,7 +100,7 @@ export function PricingActions(props: {
         <Link href={{ pathname: "/login", query: { next: "/pricing" } }} className="ui-btn-primary block w-full px-4 py-2.5 text-center text-sm">
           로그인 후 결제하기
         </Link>
-        <p className="text-xs text-slate-500">실제 결제는 로그인 후에만 진행됩니다.</p>
+        <p className="text-xs text-slate-500">실제 결제는 로그인 이후에 진행됩니다.</p>
       </div>
     );
   }
@@ -114,7 +114,7 @@ export function PricingActions(props: {
           onClick={() => void goPortal()}
           disabled={loading !== null}
         >
-          {loading === "portal" ? "처리 중..." : "구독 갱신 해지"}
+          {loading === "portal" ? "처리 중..." : "구독 갱신/해지"}
         </button>
       ) : (
         <div className="grid gap-2 sm:grid-cols-2">
@@ -144,4 +144,3 @@ export function PricingActions(props: {
     </div>
   );
 }
-

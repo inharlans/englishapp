@@ -10,6 +10,7 @@ import { FREE_DOWNLOAD_WORD_LIMIT, getUserDownloadedWordCount } from "@/lib/plan
 import { prisma } from "@/lib/prisma";
 import { MARKET_MIN_ITEM_COUNT, shouldHideWordbookFromMarket } from "@/lib/wordbookPolicy";
 import { maskEmailAddress } from "@/lib/textQuality";
+import { deriveWordbookBadges, splitWordbookDescription } from "@/lib/wordbookPresentation";
 
 type SortMode = "top" | "new" | "downloads";
 
@@ -250,7 +251,9 @@ export default async function MarketPage(props: {
                     </div>
                     <p className="mt-1 text-xs text-slate-500">제작자 {maskEmailAddress(wb.owner.email)}</p>
                     {wb.description ? (
-                      <p className="mt-2 line-clamp-2 text-sm text-slate-600">{wb.description}</p>
+                      <p className="mt-2 line-clamp-2 text-sm text-slate-600">
+                        {splitWordbookDescription(wb.description).displayDescription ?? "설명이 없습니다."}
+                      </p>
                     ) : null}
                     <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-slate-600">
                       <span>{wb._count.items}개 단어</span>
@@ -260,6 +263,20 @@ export default async function MarketPage(props: {
                         {" -> "}
                         {wb.toLang}
                       </span>
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      {deriveWordbookBadges({
+                        itemCount: wb._count.items,
+                        ratingAvg: wb.ratingAvg,
+                        ratingCount: wb.ratingCount
+                      }).map((badge) => (
+                        <span
+                          key={badge}
+                          className="rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-800"
+                        >
+                          {badge}
+                        </span>
+                      ))}
                     </div>
                     <div className="mt-2">
                       <MarketRatingReviews wordbookId={wb.id} ratingAvg={wb.ratingAvg} ratingCount={wb.ratingCount} />

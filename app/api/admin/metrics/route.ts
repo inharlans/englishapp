@@ -71,10 +71,41 @@ export async function GET(req: NextRequest) {
 
   routeStats.sort((a, b) => b.total - a.total);
 
+  const totalRequests = rawMetrics.length;
+  const successRequests = rawMetrics.filter((m) => m.status < 500).length;
+  const apiSuccessRate = totalRequests > 0 ? (successRequests / totalRequests) * 100 : 100;
+
+  const cronMetrics = rawMetrics.filter((m) => m.route.startsWith("/api/internal/cron/"));
+  const cronTotal = cronMetrics.length;
+  const cronSuccess = cronMetrics.filter((m) => m.status < 500).length;
+  const cronSuccessRate = cronTotal > 0 ? (cronSuccess / cronTotal) * 100 : 100;
+
+  const coreRoutes = ["/api/auth/login", "/api/wordbooks/market", "/api/wordbooks"];
+  const coreLatencies = rawMetrics
+    .filter((m) => coreRoutes.some((route) => m.route.startsWith(route)))
+    .map((m) => m.latencyMs)
+    .sort((a, b) => a - b);
+  const coreP95 = coreLatencies.length
+    ? coreLatencies[Math.min(coreLatencies.length - 1, Math.floor(coreLatencies.length * 0.95))]
+    : 0;
+
   return NextResponse.json(
     {
       since: since.toISOString(),
       routeStats,
+      slo: {
+        apiSuccessRate,
+        apiSuccessTarget: 99.5,
+        cronSuccessRate,
+        cronSuccessTarget: 99,
+        coreP95LatencyMs: coreP95,
+        coreP95LatencyTargetMs: 500,
+        violations: [
+          ...(apiSuccessRate < 99.5 ? ["핵심 API 성공률 99.5% 미만"] : []),
+          ...(cronSuccessRate < 99 ? ["크론 성공률 99% 미만"] : []),
+          ...(coreP95 > 500 ? ["핵심 경로 P95 500ms 초과"] : [])
+        ]
+      },
       recentErrors: recentErrors.map((e) => ({
         ...e,
         createdAt: e.createdAt.toISOString()

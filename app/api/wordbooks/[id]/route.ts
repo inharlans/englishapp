@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 
 import { getUserFromRequestCookies } from "@/lib/authServer";
 import { prisma } from "@/lib/prisma";
@@ -7,6 +7,7 @@ import { parseJsonWithSchema } from "@/lib/validation";
 import { isPrivateWordbookLockedForFree } from "@/lib/wordbookAccess";
 import { bumpWordbookVersion } from "@/lib/wordbookVersion";
 import { getEffectivePlan } from "@/lib/userPlan";
+import { isBrokenUserText } from "@/lib/textQuality";
 import { z } from "zod";
 
 const patchWordbookSchema = z
@@ -143,15 +144,16 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   if (!parsedBody.ok) return parsedBody.response;
   const body = parsedBody.data;
 
-  const data: { title?: string; description?: string | null; fromLang?: string; toLang?: string } =
-    {};
+  const data: { title?: string; description?: string | null; fromLang?: string; toLang?: string } = {};
 
   if (typeof body.title === "string") {
-    const t = body.title.trim();
-    data.title = t;
+    data.title = body.title.trim();
   }
   if ("description" in body) {
     data.description = body.description ? String(body.description).trim() : null;
+    if (data.description && isBrokenUserText(data.description)) {
+      return NextResponse.json({ error: "설명 텍스트가 올바르지 않습니다." }, { status: 400 });
+    }
   }
   if (typeof body.fromLang === "string") {
     data.fromLang = body.fromLang.trim() || "en";

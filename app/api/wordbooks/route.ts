@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 
 import { getUserFromRequestCookies } from "@/lib/authServer";
 import { prisma } from "@/lib/prisma";
@@ -6,6 +6,7 @@ import { computeWordbookRankScore } from "@/lib/wordbookRanking";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
 import { getEffectivePlan } from "@/lib/userPlan";
 import { parseJsonWithSchema } from "@/lib/validation";
+import { isBrokenUserText } from "@/lib/textQuality";
 import { z } from "zod";
 
 const createWordbookSchema = z.object({
@@ -60,15 +61,16 @@ export async function POST(req: NextRequest) {
   const toLang = (parsedBody.data.toLang ?? "ko").trim() || "ko";
   const description = parsedBody.data.description ? parsedBody.data.description.trim() : null;
 
-  // Plan enforcement: FREE users can create only 1 wordbook lifetime.
+  if (description && isBrokenUserText(description)) {
+    return NextResponse.json({ error: "설명 텍스트가 올바르지 않습니다." }, { status: 400 });
+  }
+
   const effectivePlan = getEffectivePlan({ plan: user.plan, proUntil: user.proUntil });
   if (effectivePlan === "FREE") {
     const createdCount = await prisma.wordbook.count({ where: { ownerId: user.id } });
     if (createdCount >= 1) {
       return NextResponse.json(
-        {
-          error: "무료 요금제는 단어장 1개만 생성할 수 있습니다. PRO로 업그레이드해주세요."
-        },
+        { error: "무료 요금제는 단어장 1개만 생성할 수 있습니다. PRO로 업그레이드해 주세요." },
         { status: 403 }
       );
     }
@@ -81,7 +83,6 @@ export async function POST(req: NextRequest) {
       description,
       fromLang,
       toLang,
-      // Free plan uploads are forced public.
       isPublic: effectivePlan === "FREE"
     },
     select: {

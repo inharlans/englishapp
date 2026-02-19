@@ -4,6 +4,7 @@ import { getUserFromRequestCookies } from "@/lib/authServer";
 import { prisma } from "@/lib/prisma";
 import { checkRateLimit, getClientIpFromHeaders } from "@/lib/rateLimit";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
+import { isBrokenUserText } from "@/lib/textQuality";
 import { parseJsonWithSchema } from "@/lib/validation";
 import { refreshWordbookRankScore } from "@/lib/wordbookRanking";
 import { z } from "zod";
@@ -51,6 +52,9 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   if (!parsedBody.ok) return parsedBody.response;
   const rating = parsedBody.data.rating;
   const review = parsedBody.data.review ? parsedBody.data.review.trim() : null;
+  if (review && isBrokenUserText(review)) {
+    return NextResponse.json({ error: "리뷰 텍스트가 올바르지 않습니다." }, { status: 400 });
+  }
 
   const result = await prisma.$transaction(async (tx) => {
     const wordbook = await tx.wordbook.findUnique({

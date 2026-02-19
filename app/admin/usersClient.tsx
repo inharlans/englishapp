@@ -26,6 +26,7 @@ type ReportRow = {
   reviewedAt: string | null;
   moderatorNote: string | null;
   reviewAction: string | null;
+  qualityScore: number;
   previousStatus: "OPEN" | "RESOLVED" | "DISMISSED" | null;
   nextStatus: "OPEN" | "RESOLVED" | "DISMISSED" | null;
   reviewerIpHash: string | null;
@@ -57,11 +58,22 @@ type ErrorMetricRow = {
   createdAt: string;
 };
 
+type SloSummary = {
+  apiSuccessRate: number;
+  apiSuccessTarget: number;
+  cronSuccessRate: number;
+  cronSuccessTarget: number;
+  coreP95LatencyMs: number;
+  coreP95LatencyTargetMs: number;
+  violations: string[];
+};
+
 export function AdminUsersClient({ initialUsers }: { initialUsers: UserRow[] }) {
   const [users, setUsers] = useState<UserRow[]>(initialUsers);
   const [reports, setReports] = useState<ReportRow[]>([]);
   const [routeMetrics, setRouteMetrics] = useState<RouteMetricRow[]>([]);
   const [recentErrors, setRecentErrors] = useState<ErrorMetricRow[]>([]);
+  const [slo, setSlo] = useState<SloSummary | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [recomputing, setRecomputing] = useState(false);
   const [error, setError] = useState("");
@@ -99,10 +111,12 @@ export function AdminUsersClient({ initialUsers }: { initialUsers: UserRow[] }) 
       const metricJson = (await metricRes.json()) as {
         routeStats?: RouteMetricRow[];
         recentErrors?: ErrorMetricRow[];
+        slo?: SloSummary;
       };
       if (metricRes.ok) {
         setRouteMetrics(metricJson.routeStats ?? []);
         setRecentErrors(metricJson.recentErrors ?? []);
+        setSlo(metricJson.slo ?? null);
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "불러오기에 실패했습니다.");
@@ -209,6 +223,7 @@ export function AdminUsersClient({ initialUsers }: { initialUsers: UserRow[] }) 
               ) : null}
               <p className="mt-1 text-xs text-slate-500">
                 신고자 신뢰도: {r.reporterTrustScore}
+                {` / 품질 점수 ${r.qualityScore}`}
                 {r.reviewAction ? ` / 조치 ${r.reviewAction}` : ""}
                 {r.previousStatus && r.nextStatus ? ` / ${r.previousStatus} -> ${r.nextStatus}` : ""}
               </p>
@@ -217,6 +232,22 @@ export function AdminUsersClient({ initialUsers }: { initialUsers: UserRow[] }) 
               ) : null}
               {r.status === "OPEN" ? (
                 <div className="mt-3 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    data-testid="admin-report-reviewing"
+                    onClick={async () => {
+                      const note = window.prompt("검토 메모 (선택):", "") ?? "";
+                      await apiFetch(`/api/admin/reports/${r.id}`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ action: "review", note })
+                      });
+                      await reload();
+                    }}
+                    className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold hover:bg-slate-50"
+                  >
+                    검토 중
+                  </button>
                   <button
                     type="button"
                     data-testid="admin-report-resolve"
@@ -273,6 +304,31 @@ export function AdminUsersClient({ initialUsers }: { initialUsers: UserRow[] }) 
 
       <section className="space-y-3">
         <h2 className="text-sm font-black uppercase tracking-[0.2em] text-slate-700">관측성 (최근 24시간)</h2>
+        {slo ? (
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm">
+            <p className="font-semibold text-slate-900">SLO 요약</p>
+            <div className="mt-2 flex flex-wrap gap-2 text-xs">
+              <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1">
+                API 성공률 {slo.apiSuccessRate.toFixed(2)}% / 목표 {slo.apiSuccessTarget}%
+              </span>
+              <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1">
+                크론 성공률 {slo.cronSuccessRate.toFixed(2)}% / 목표 {slo.cronSuccessTarget}%
+              </span>
+              <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1">
+                핵심 P95 {slo.coreP95LatencyMs}ms / 목표 {slo.coreP95LatencyTargetMs}ms
+              </span>
+            </div>
+            {slo.violations.length > 0 ? (
+              <ul className="mt-3 list-disc space-y-1 pl-5 text-xs text-blue-700">
+                {slo.violations.map((v) => (
+                  <li key={v}>{v}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-3 text-xs text-slate-600">현재 SLO 위반 항목이 없습니다.</p>
+            )}
+          </div>
+        ) : null}
         <div className="overflow-auto rounded-2xl border border-slate-200 bg-white">
           <table className="min-w-full text-sm">
             <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">

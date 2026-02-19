@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 
 import { getUserFromRequestCookies } from "@/lib/authServer";
 import { prisma } from "@/lib/prisma";
@@ -40,7 +40,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   const effectivePlan = getEffectivePlan({ plan: user.plan, proUntil: user.proUntil });
   if (effectivePlan === "FREE" && body.isPublic === false) {
     return NextResponse.json(
-      { error: "무료 요금제 단어장은 공개 상태여야 합니다." },
+      { error: "무료 요금제에서는 단어장을 공개 상태로만 유지할 수 있습니다." },
       { status: 403 }
     );
   }

@@ -12,6 +12,8 @@ import { LearningDashboardHeader } from "@/components/wordbooks/LearningDashboar
 import { FREE_DOWNLOAD_WORD_LIMIT, getUserDownloadedWordCount } from "@/lib/planLimits";
 import { aggregateVersionLogs } from "@/lib/wordbookVersion";
 import { EmptyStateCard } from "@/components/ui/EmptyStateCard";
+import { splitWordbookDescription } from "@/lib/wordbookPresentation";
+import { maskEmailAddress } from "@/lib/textQuality";
 
 export default async function WordbooksPage() {
   const reqCookies = await cookies();
@@ -246,8 +248,10 @@ export default async function WordbooksPage() {
                         {wb.isPublic ? "공개" : "비공개"}
                       </span>
                     </div>
-                    {wb.description ? (
-                      <p className="mt-1 line-clamp-2 text-sm text-slate-600">{wb.description}</p>
+                    {splitWordbookDescription(wb.description).displayDescription ? (
+                      <p className="mt-1 line-clamp-2 text-sm text-slate-600">
+                        {splitWordbookDescription(wb.description).displayDescription}
+                      </p>
                     ) : null}
                     <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-slate-600">
                       <span>{wb._count.items}개 단어</span>
@@ -295,12 +299,12 @@ export default async function WordbooksPage() {
                       </span>
                     </div>
                     <p className="mt-1 text-xs text-slate-500">
-                      제작자 {d.wordbook.owner.email} - 다운로드일{" "}
+                      제작자 {maskEmailAddress(d.wordbook.owner.email)} - 다운로드일{" "}
                       {d.createdAt.toISOString().slice(0, 10)}
                     </p>
-                    {d.wordbook.description ? (
+                    {splitWordbookDescription(d.wordbook.description).displayDescription ? (
                       <p className="mt-2 line-clamp-2 text-sm text-slate-600">
-                        {d.wordbook.description}
+                        {splitWordbookDescription(d.wordbook.description).displayDescription}
                       </p>
                     ) : null}
                     <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-slate-600">

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { getUserFromRequestCookies } from "@/lib/authServer";
 import { prisma } from "@/lib/prisma";
+import { maskEmailAddress } from "@/lib/textQuality";
 
 export async function GET(req: NextRequest) {
   const user = await getUserFromRequestCookies(req.cookies);
@@ -38,5 +39,31 @@ export async function GET(req: NextRequest) {
     }
   });
 
-  return NextResponse.json({ reports }, { status: 200 });
+  return NextResponse.json(
+    {
+      reports: reports.map((r) => {
+        const qualityScore = Math.max(
+          0,
+          Math.min(
+            100,
+            100 -
+              (r.wordbook.hiddenByAdmin ? 35 : 0) -
+              (r.status === "OPEN" ? 20 : 0) -
+              (r.reporterTrustScore < 0 ? 10 : 0)
+          )
+        );
+        return {
+          ...r,
+          qualityScore,
+          reporter: { ...r.reporter, email: maskEmailAddress(r.reporter.email) },
+          reviewedBy: r.reviewedBy ? { ...r.reviewedBy, email: maskEmailAddress(r.reviewedBy.email) } : null,
+          wordbook: {
+            ...r.wordbook,
+            owner: { ...r.wordbook.owner, email: maskEmailAddress(r.wordbook.owner.email) }
+          }
+        };
+      })
+    },
+    { status: 200 }
+  );
 }

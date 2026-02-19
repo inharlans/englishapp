@@ -127,6 +127,14 @@ export function StudyClient({ id }: { id: number }) {
                 <p className="mt-2 text-xl font-bold text-slate-900">
                   {sanitizeUserText(current.meaning, "의미 데이터 점검 중입니다")}
                 </p>
+                <div className="mt-3">
+                  <Link
+                    href={{ pathname: `/wordbooks/${id}` }}
+                    className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-800 hover:bg-blue-100"
+                  >
+                    온라인 원본에서 동기화하기
+                  </Link>
+                </div>
               </div>
             ) : (
               <button

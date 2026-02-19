@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getUserFromRequestCookies } from "@/lib/authServer";
 import { prisma } from "@/lib/prisma";
 import { shouldHideWordbookFromMarket } from "@/lib/wordbookPolicy";
+import { splitWordbookDescription } from "@/lib/wordbookPresentation";
 
 type SortMode = "top" | "new" | "downloads";
 
@@ -101,5 +102,18 @@ export async function GET(req: NextRequest) {
     .map((id) => byId.get(id))
     .filter((wb): wb is NonNullable<typeof wb> => wb !== undefined);
 
-  return NextResponse.json({ total, page, take, sort, q, wordbooks }, { status: 200 });
+  return NextResponse.json(
+    {
+      total,
+      page,
+      take,
+      sort,
+      q,
+      wordbooks: wordbooks.map((wb) => {
+        const desc = splitWordbookDescription(wb.description);
+        return { ...wb, displayDescription: desc.displayDescription, internalSource: desc.internalSource };
+      })
+    },
+    { status: 200 }
+  );
 }

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 
 import { getUserFromRequestCookies } from "@/lib/authServer";
 import { prisma } from "@/lib/prisma";
@@ -82,7 +82,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     .filter((it) => !isBrokenUserText(it.meaning) && !isBrokenUserText(it.exampleMeaning));
 
   if (cleaned.length === 0) {
-    return NextResponse.json({ error: "유효한 항목이 없습니다. 의미/예문 뜻 텍스트를 확인해주세요." }, { status: 400 });
+    return NextResponse.json({ error: "유효한 항목이 없습니다. 의미/예문 뜻 텍스트를 확인해 주세요." }, { status: 400 });
   }
 
   const created = await prisma.$transaction(async (tx) => {
@@ -121,4 +121,3 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
 
   return NextResponse.json({ items: created }, { status: 201 });
 }
-

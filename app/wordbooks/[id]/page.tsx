@@ -23,6 +23,7 @@ import { StarRating } from "@/components/wordbooks/StarRating";
 import { PendingWordbookItemsRetryBanner } from "@/components/wordbooks/PendingWordbookItemsRetryBanner";
 import { isPrivateWordbookLockedForFree } from "@/lib/wordbookAccess";
 import { maskEmailAddress } from "@/lib/textQuality";
+import { splitWordbookDescription } from "@/lib/wordbookPresentation";
 
 function parseId(raw: string): number | null {
   const n = Number(raw);
@@ -131,6 +132,7 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
   const syncedAt = downloadRow?.syncedAt ?? null;
   const myRating = ratingRow?.rating ?? null;
   const myReview = ratingRow?.review ?? null;
+  const { displayDescription } = splitWordbookDescription(wordbook.description);
   const speakLang = wordbook.fromLang.toLowerCase().startsWith("en") ? "en-US" : undefined;
   const freeLimitReached =
     user?.plan === "FREE" &&
@@ -172,8 +174,8 @@ export default async function WordbookDetailPage(props: { params: Promise<{ id: 
             {downloadedAt ? ` | 다운로드일 ${downloadedAt.toISOString().slice(0, 10)}` : ""} |{" "}
             {wordbook.isPublic ? "공개" : "비공개"}
           </p>
-          {wordbook.description ? (
-            <p className="mt-2 max-w-3xl text-sm text-slate-700">{wordbook.description}</p>
+          {displayDescription ? (
+            <p className="mt-2 max-w-3xl text-sm text-slate-700">{displayDescription}</p>
           ) : null}
         </div>
         <div className="ml-auto flex flex-wrap items-center gap-2">

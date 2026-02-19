@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { logJson } from "@/lib/logger";
+import { maskSensitiveText, maskSensitiveUnknown } from "@/lib/textQuality";
 
 export async function recordApiMetric(input: {
   route: string;
@@ -37,10 +38,13 @@ export async function captureAppError(input: {
   userId?: number | null;
 }) {
   const level = input.level ?? "error";
-  logJson(level, input.message, {
+  const maskedMessage = maskSensitiveText(input.message);
+  const maskedContext = input.context ? (maskSensitiveUnknown(input.context) as Record<string, unknown>) : undefined;
+  const maskedStack = input.stack ? maskSensitiveText(input.stack) : undefined;
+  logJson(level, maskedMessage, {
     route: input.route,
     userId: input.userId ?? null,
-    ...(input.context ?? {})
+    ...(maskedContext ?? {})
   });
 
   try {
@@ -48,9 +52,9 @@ export async function captureAppError(input: {
       data: {
         level,
         route: input.route ?? null,
-        message: input.message,
-        stack: input.stack ?? null,
-        context: input.context ? (input.context as object) : undefined,
+        message: maskedMessage,
+        stack: maskedStack ?? null,
+        context: maskedContext ? (maskedContext as object) : undefined,
         userId: input.userId ?? null
       }
     });
