@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 
 import { DownloadButton } from "@/components/wordbooks/DownloadButton";
 import { BlockOwnerButton } from "@/components/wordbooks/BlockOwnerButton";
+import { ReportWordbookButton } from "@/components/wordbooks/ReportWordbookButton";
 import { MarketRatingReviews } from "@/components/wordbooks/MarketRatingReviews";
 import { EmptyStateCard } from "@/components/ui/EmptyStateCard";
 import { getUserFromRequestCookies } from "@/lib/authServer";
@@ -369,8 +370,9 @@ export default async function MarketPage(props: {
                       </Link>
                     ) : null}
                     {user && wb.owner.id !== user.id ? (
-                      <div className="mt-2">
+                      <div className="mt-2 space-y-2">
                         <BlockOwnerButton wordbookId={wb.id} />
+                        <ReportWordbookButton wordbookId={wb.id} />
                       </div>
                     ) : null}
                   </div>
