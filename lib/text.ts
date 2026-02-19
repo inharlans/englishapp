@@ -23,6 +23,30 @@ export function normalizeKo(value: string): string {
   return collapseSpaces(value);
 }
 
+function stripLeadingPosTag(value: string): string {
+  return value
+    .replace(/^(?:\([^)]{1,8}\)\s*)+/u, "")
+    .trim();
+}
+
+export function getMeaningCandidates(value: string): string[] {
+  const candidates = new Set<string>();
+  const chunks = [value, ...value.split(/[,:;\/|]+/g)];
+
+  for (const chunk of chunks) {
+    const normalized = normalizeKo(chunk);
+    if (!normalized) continue;
+    candidates.add(normalized);
+
+    const withoutTag = normalizeKo(stripLeadingPosTag(normalized));
+    if (withoutTag) {
+      candidates.add(withoutTag);
+    }
+  }
+
+  return [...candidates];
+}
+
 function parseWithDelimiter(rawText: string, delimiter: "\t" | ","): ParseSuccess | null {
   const lines = rawText
     .split(/\r?\n/)
@@ -78,4 +102,3 @@ export function parseWords(rawText: string): ParseSuccess {
 
   throw new Error("헤더에서 en/ko 컬럼을 찾지 못했습니다.");
 }
-

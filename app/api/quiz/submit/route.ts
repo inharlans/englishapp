@@ -11,7 +11,7 @@ import {
   upsertQuizProgress
 } from "@/lib/quizProgress";
 import { computeNextReviewAt } from "@/lib/scheduling";
-import { normalizeEn, normalizeKo } from "@/lib/text";
+import { getMeaningCandidates, normalizeEn } from "@/lib/text";
 import type { QuizType } from "@/lib/types";
 import { parseJsonWithSchema, zPositiveInt } from "@/lib/validation";
 import { z } from "zod";
@@ -22,24 +22,6 @@ const submitBodySchema = z.object({
   userAnswer: z.string().max(1000).default(""),
   scope: z.enum(["half"]).optional()
 });
-
-function getMeaningCandidates(value: string): string[] {
-  const normalizedWhole = normalizeKo(value);
-  const candidates = new Set<string>();
-
-  if (normalizedWhole) {
-    candidates.add(normalizedWhole);
-  }
-
-  for (const part of value.split(/[,:;\/|]+/g)) {
-    const normalizedPart = normalizeKo(part);
-    if (normalizedPart) {
-      candidates.add(normalizedPart);
-    }
-  }
-
-  return [...candidates];
-}
 
 export async function POST(req: NextRequest) {
   const badReq = assertTrustedMutationRequest(req);

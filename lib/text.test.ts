@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { normalizeEn, normalizeKo, parseWords } from "@/lib/text";
+import { getMeaningCandidates, normalizeEn, normalizeKo, parseWords } from "@/lib/text";
 
 describe("normalizeEn", () => {
   it("lowercases and collapses spaces/dashes/underscores", () => {
@@ -38,3 +38,17 @@ describe("parseWords", () => {
   });
 });
 
+describe("getMeaningCandidates", () => {
+  it("accepts answers without leading POS tags", () => {
+    const candidates = getMeaningCandidates("(접)때문에, 왜냐하면");
+    expect(candidates).toContain("(접)때문에");
+    expect(candidates).toContain("때문에");
+    expect(candidates).toContain("왜냐하면");
+  });
+
+  it("supports multiple leading tags", () => {
+    const candidates = getMeaningCandidates("(부)(문)그때");
+    expect(candidates).toContain("(부)(문)그때");
+    expect(candidates).toContain("그때");
+  });
+});

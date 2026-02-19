@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { getUserFromRequestCookies } from "@/lib/authServer";
-import { normalizeEn, normalizeKo } from "@/lib/text";
+import { getMeaningCandidates, normalizeEn } from "@/lib/text";
 import { prisma } from "@/lib/prisma";
 import { checkRateLimit, getClientIpFromHeaders } from "@/lib/rateLimit";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
@@ -15,21 +15,6 @@ function parseId(raw: string): number | null {
   const n = Number(raw);
   if (!Number.isFinite(n) || n <= 0) return null;
   return Math.floor(n);
-}
-
-function getMeaningCandidates(value: string): string[] {
-  const normalizedWhole = normalizeKo(value);
-  const candidates = new Set<string>();
-  if (normalizedWhole) {
-    candidates.add(normalizedWhole);
-  }
-  for (const part of value.split(/[,:;\/|]+/g)) {
-    const normalizedPart = normalizeKo(part);
-    if (normalizedPart) {
-      candidates.add(normalizedPart);
-    }
-  }
-  return [...candidates];
 }
 
 const submitSchema = z.object({
