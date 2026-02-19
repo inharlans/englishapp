@@ -835,3 +835,9 @@ Additional observations and guardrails:
   - `npm run typecheck` 통과
   - `npm test` 통과
   - `npm run test:e2e`는 로컬 서버 미기동 상태에서 `fetch failed`로 실패 (환경 이슈)
+
+## 2026-02-19 마켓 필터 긴급 수정
+
+- 마켓이 0개로 보이던 이슈를 수정했습니다.
+- 원인: 소유자 이메일(`@local`, `admin@example.com`)과 설명의 import 메타 문자열까지 필터링해 공개 단어장이 과도하게 숨겨짐.
+- 조치: 마켓 필터를 `제목 기반 테스트 키워드 + 최소 단어 수` 중심으로 단순화해 정상 콘텐츠 노출을 복구했습니다.
