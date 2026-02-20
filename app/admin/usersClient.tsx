@@ -68,12 +68,19 @@ type SloSummary = {
   violations: string[];
 };
 
+type QuizQualitySummary = {
+  wrongAnswers: number;
+  disputableWrongCount: number;
+  disputableWrongRate: number;
+};
+
 export function AdminUsersClient({ initialUsers }: { initialUsers: UserRow[] }) {
   const [users, setUsers] = useState<UserRow[]>(initialUsers);
   const [reports, setReports] = useState<ReportRow[]>([]);
   const [routeMetrics, setRouteMetrics] = useState<RouteMetricRow[]>([]);
   const [recentErrors, setRecentErrors] = useState<ErrorMetricRow[]>([]);
   const [slo, setSlo] = useState<SloSummary | null>(null);
+  const [quizQuality, setQuizQuality] = useState<QuizQualitySummary | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [recomputing, setRecomputing] = useState(false);
   const [error, setError] = useState("");
@@ -112,11 +119,13 @@ export function AdminUsersClient({ initialUsers }: { initialUsers: UserRow[] }) 
         recentErrors?: ErrorMetricRow[];
         error?: string;
         slo?: SloSummary;
+        quizQuality?: QuizQualitySummary;
       };
       if (!metricRes.ok) throw new Error(metricJson.error ?? "관측성 지표를 불러오지 못했습니다.");
       setRouteMetrics(metricJson.routeStats ?? []);
       setRecentErrors(metricJson.recentErrors ?? []);
       setSlo(metricJson.slo ?? null);
+      setQuizQuality(metricJson.quizQuality ?? null);
     } catch (e) {
       setError(e instanceof Error ? e.message : "불러오기에 실패했습니다.");
     } finally {
@@ -316,6 +325,12 @@ export function AdminUsersClient({ initialUsers }: { initialUsers: UserRow[] }) 
               <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1">
                 핵심 P95 {slo.coreP95LatencyMs}ms / 목표 {slo.coreP95LatencyTargetMs}ms
               </span>
+              {quizQuality ? (
+                <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1">
+                  퀴즈 재검토 후보 {quizQuality.disputableWrongRate.toFixed(1)}% ({quizQuality.disputableWrongCount}/
+                  {quizQuality.wrongAnswers})
+                </span>
+              ) : null}
             </div>
             {slo.violations.length > 0 ? (
               <ul className="mt-3 list-disc space-y-1 pl-5 text-xs text-blue-700">

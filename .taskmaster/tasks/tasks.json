@@ -1,0 +1,157 @@
+{
+  "master": {
+    "tasks": [
+      {
+        "id": "1",
+        "title": "Gate PortOne payments and pricing redirects",
+        "description": "Ensure `/pricing` only enables payments when PortOne configuration (including `PORTONE_CHANNEL_KEY`) is present and surfaces success/cancel messaging.",
+        "details": "Use `getPortOneConfig()` from `lib/payments.ts` to determine `paymentEnabled` on `/pricing` and pass it to `components/payments/PricingActions.tsx`. Verify `searchParams.payment` handles `success` and `cancel` for user-visible banners. Pseudo-code: `const paymentEnabled = Boolean(getPortOneConfig()); if (sp.payment === 'success') showSuccess; if 'cancel' showCancel;`. Keep all copy in Korean.",
+        "testStrategy": "Manual check `/pricing?payment=success|cancel` with and without `PORTONE_CHANNEL_KEY`; verify buttons are disabled when config is missing.",
+        "priority": "medium",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-20T09:17:14.253Z"
+      },
+      {
+        "id": "2",
+        "title": "Implement PortOne checkout request API",
+        "description": "Create the billing-key issuance request payload for monthly/yearly checkout.",
+        "details": "In `app/api/payments/checkout/route.ts`, validate `cycle` via zod + `normalizeCycle`, require authenticated user, fetch PortOne config, and return `request` payload for `@portone/browser-sdk/v2` with `storeId`, `channelKey`, `billingKeyMethod: 'CARD'`, `issueId`, `redirectUrl: <origin>/pricing`, and `customData { userId, cycle }`. Record API metrics and capture errors with `recordApiMetricFromStart` and `captureAppError`. Pseudo-code: `if !config -> 503; issueId = buildIssueId(); return {request, cycle}`.",
+        "testStrategy": "Hit `POST /api/payments/checkout` with valid/invalid cycles; expect 200/400/503. Confirm request payload fields match PortOne docs.",
+        "priority": "medium",
+        "dependencies": [
+          "1"
+        ],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-20T09:17:44.692Z"
+      },
+      {
+        "id": "3",
+        "title": "Implement PortOne confirm/charge and entitlement update",
+        "description": "Charge the billing key, verify payment, and apply PRO entitlement + schedule renewal.",
+        "details": "In `app/api/payments/confirm/route.ts`, validate payload, call `paymentClient.payWithBillingKey`, fetch payment, verify `status === 'PAID'` and amount matches `getPlanAmountKrw(cycle)`, then run a transaction: `applyPaidEntitlementOnce`, record `paymentEvent`, update `user.proUntil`, and schedule next billing with `paymentSchedule`. Use `computeNextProUntil` and `computeNextScheduleAt`. Pseudo-code: `if !paid -> 409; if amount mismatch -> 400; if applied -> scheduleNextBilling()`.",
+        "testStrategy": "Simulate confirm with mocked PortOne client; verify 200 when paid, 409 on non-paid, 400 on amount mismatch, and DB entitlement changes.",
+        "priority": "medium",
+        "dependencies": [
+          "2"
+        ],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-20T09:17:44.699Z"
+      },
+      {
+        "id": "4",
+        "title": "Finalize webhook + portal flow for plan sync",
+        "description": "Handle asynchronous PortOne events and allow subscription management portal navigation.",
+        "details": "Verify `app/api/payments/webhook/route.ts` validates signatures with `PORTONE_WEBHOOK_SECRET`, de-duplicates events, resolves user by `paymentId`/`billingKey`, applies entitlements via `applyPaidEntitlementOnce`, and logs `paymentEvent`. In `app/api/payments/portal/route.ts`, return a portal URL for PRO users (or a clear error). Ensure failures are captured in observability. Pseudo-code: `if webhook invalid -> 401; if duplicate -> 200; else apply entitlement and update user plan`.",
+        "testStrategy": "Post a webhook payload with valid/invalid signature; confirm entitlements updated once and duplicates are ignored. Check portal route returns URL or 4xx for invalid state.",
+        "priority": "medium",
+        "dependencies": [
+          "3"
+        ],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-20T09:17:44.703Z"
+      },
+      {
+        "id": "5",
+        "title": "Persist wrong-answer requeue markers on submit",
+        "description": "Store wrong-answer requeue positions in study state on each quiz submission.",
+        "details": "In `app/api/wordbooks/[id]/quiz/submit/route.ts`, compute `questionCountAfter` per mode and update `wordbookStudyItemState` with `meaningWrongRequeueAt` or `wordWrongRequeueAt` when incorrect, clearing them on correct. Pseudo-code: `modeWrongRequeueAt = correct ? null : questionCountAfter + 10; upsert state with wrong requeue fields`.",
+        "testStrategy": "Unit/integration test submit: ensure wrong answer sets `*_WrongRequeueAt`, correct clears it, and streak/review fields update.",
+        "priority": "medium",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-20T09:18:05.880Z"
+      },
+      {
+        "id": "6",
+        "title": "Serve requeue items from quiz API and session queue",
+        "description": "Prioritize wrong-queue items in quiz selection and client session flow.",
+        "details": "In `app/api/wordbooks/[id]/quiz/route.ts`, add a selector for `wrongReady` items where `*_WrongRequeueAt <= currentQuestionCount` and prefer them before new/due items. In `app/wordbooks/[id]/quiz/quizClient.tsx`, maintain a `retryQueue` for immediate session re-asks and show a message when pulling from the queue. Pseudo-code: `if retryQueue.length > 0 -> pop; else fetch /quiz` and API side: `wrongReady = wrongRequeueAt <= questionCountAfter`.",
+        "testStrategy": "Simulate wrong answer then fetch next question; verify requeue items appear and client indicates requeued item.",
+        "priority": "medium",
+        "dependencies": [
+          "5"
+        ],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-20T09:18:05.885Z"
+      },
+      {
+        "id": "7",
+        "title": "Compute grading diagnosis and accepted answers for meaning quiz",
+        "description": "Return structured grading evidence for meaning answers and similarity scoring.",
+        "details": "In `app/api/wordbooks/[id]/quiz/submit/route.ts`, derive `acceptedMeaningAnswers` using `getMeaningCandidates`, compute `gradingDiagnosis` with `normalizeLoose`, `scoreSimilarity` (token overlap + Levenshtein), and set `potentiallyDisputable` when score is in the dispute range. For word mode, set normalized input and closest accepted to the term. Pseudo-code: `for each inputCandidate/acceptedCandidate -> max score; return {normalizedInput, closestAccepted, similarityScore, potentiallyDisputable, reason}`.",
+        "testStrategy": "Add/extend tests in `lib/text.test.ts` or submit-route tests to verify similarity scoring and dispute thresholds; assert response contains `acceptedMeaningAnswers` and `gradingDiagnosis`.",
+        "priority": "medium",
+        "dependencies": [
+          "5"
+        ],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-20T09:18:05.887Z"
+      },
+      {
+        "id": "8",
+        "title": "Render grading evidence and retry actions in quiz UI",
+        "description": "Surface accepted answers, grading evidence, and re-try options on incorrect answers.",
+        "details": "Update `app/wordbooks/[id]/quiz/quizClient.tsx` to show `허용 답안 예`, `채점 근거` (normalized input/closest accepted/similarity), and `재검토 후보` reason when `potentiallyDisputable`. Ensure `다시 풀기` action reuses the same item. Keep text in Korean and only show evidence when `!feedback.isCorrect`.",
+        "testStrategy": "Manual UI check: submit a wrong meaning answer and verify accepted answers, grading evidence, and retry button display.",
+        "priority": "medium",
+        "dependencies": [
+          "7"
+        ],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-20T09:18:05.890Z"
+      },
+      {
+        "id": "9",
+        "title": "Capture grading diagnostics and expose quizQuality metrics",
+        "description": "Log grading diagnostics for wrong answers and compute 24h quiz quality metrics.",
+        "details": "In `app/api/wordbooks/[id]/quiz/submit/route.ts`, call `captureAppError` on wrong answers with `message: 'quiz_grading_diagnostic'` and context `{ mode, wordbookId, itemId, potentiallyDisputable, similarityScore }`. In `app/api/admin/metrics/route.ts`, compute `quizQuality` from recent diagnostic events: `wrongAnswers`, `disputableWrongCount`, `disputableWrongRate`. Update admin UI (`app/admin/usersClient.tsx`) to show the 24h disputable wrong ratio within the observability section.",
+        "testStrategy": "Trigger a wrong answer and verify `appErrorEvent` creation, `/api/admin/metrics` returns `quizQuality`, and admin UI renders the ratio.",
+        "priority": "medium",
+        "dependencies": [
+          "7"
+        ],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-20T09:18:05.892Z"
+      },
+      {
+        "id": "10",
+        "title": "Validation and acceptance checks",
+        "description": "Run required checks and confirm acceptance criteria.",
+        "details": "Run `npm run typecheck`, `npm run test -- lib/text.test.ts`, and `npm run build`. Verify `/api/admin/metrics` includes `quizQuality` and quiz UI displays grading evidence on wrong answers. Confirm `/pricing` success/cancel messages and PortOne flow with `PORTONE_CHANNEL_KEY` configured.",
+        "testStrategy": "Execute the acceptance commands and perform targeted manual verification for pricing, quiz feedback, and admin metrics.",
+        "priority": "medium",
+        "dependencies": [
+          "1",
+          "2",
+          "3",
+          "4",
+          "6",
+          "8",
+          "9"
+        ],
+        "status": "blocked",
+        "subtasks": [],
+        "updatedAt": "2026-02-20T09:18:47.669Z"
+      }
+    ],
+    "metadata": {
+      "version": "1.0.0",
+      "lastModified": "2026-02-20T09:18:47.670Z",
+      "taskCount": 10,
+      "completedCount": 9,
+      "tags": [
+        "master"
+      ]
+    }
+  }
+}

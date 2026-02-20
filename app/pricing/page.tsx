@@ -4,15 +4,14 @@ import { cookies } from "next/headers";
 import { PricingActions } from "@/components/payments/PricingActions";
 import { getUserFromRequestCookies } from "@/lib/authServer";
 import { FREE_DOWNLOAD_WORD_LIMIT, getUserDownloadedWordCount } from "@/lib/planLimits";
+import { getPortOneConfig } from "@/lib/payments";
 
 export default async function PricingPage(props: { searchParams: Promise<{ payment?: string }> }) {
   const sp = await props.searchParams;
   const user = await getUserFromRequestCookies(await cookies());
 
   const downloadWordsUsed = user ? await getUserDownloadedWordCount(user.id) : null;
-  const paymentEnabled = Boolean(
-    process.env.PORTONE_API_SECRET && process.env.PORTONE_STORE_ID && process.env.PORTONE_CHANNEL_KEY
-  );
+  const paymentEnabled = Boolean(getPortOneConfig());
 
   return (
     <section className="space-y-6">
