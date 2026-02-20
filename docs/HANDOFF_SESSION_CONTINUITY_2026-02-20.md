@@ -155,3 +155,18 @@ docs/HANDOFF_SESSION_CONTINUITY_2026-02-20.md 기준으로 이어서 진행해.
   - 결제(PortOne) 실마무리: 로컬 `.env` 기준 `PORTONE_*` 값 미설정으로 실결제 검증 불가
   - Task Master `parse-prd`: 현재 MCP 경유 `codex-cli` object generation 오류로 실패
     - 에러: `Codex CLI API error during object generation: Codex CLI exited with code 1`
+
+## 8) 2026-02-20 운영 반영 추가 확인 (Railway + 운영 URL)
+
+- 완료
+  - PortOne 테스트 채널 생성 및 `CHANNEL_KEY` 확보
+  - Railway `englishapp` 서비스 변수에 `PORTONE_CHANNEL_KEY` 반영
+  - 활성 배포 `Restart` 완료 후 운영 `/pricing` 재검증
+  - 운영 페이지의 비활성화 경고 문구 제거 확인
+    - 기존 문구: `결제 키가 설정되지 않아 실제 결제는 비활성화 상태입니다.`
+    - 확인 결과: 미노출
+
+- 확인 메모
+  - `/api/payments/portal`은 구독 결제수단이 연결되지 않은 계정에서 `400`과 함께
+    `연결된 구독 결제 수단이 없습니다.` 응답을 반환함
+  - 이는 채널키 미설정 문제와 별개이며, 계정별 결제수단 연결 여부에 따른 동작임
