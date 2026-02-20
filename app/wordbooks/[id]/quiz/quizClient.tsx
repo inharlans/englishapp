@@ -41,6 +41,7 @@ type LoadPayload = {
 type SubmitPayload = {
   correct?: boolean;
   correctAnswer?: { term: string; meaning: string };
+  acceptedMeaningAnswers?: string[];
   error?: string;
 };
 
@@ -52,6 +53,7 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
   const [feedback, setFeedback] = useState<{
     isCorrect: boolean;
     correctAnswer?: { term: string; meaning: string };
+    acceptedMeaningAnswers?: string[];
   } | null>(null);
   const [loading, setLoading] = useState(false);
   const [attempts, setAttempts] = useState(0);
@@ -116,13 +118,20 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
       else setWrongs((v) => v + 1);
       setFeedback({
         isCorrect: Boolean(json.correct),
-        correctAnswer: json.correctAnswer
+        correctAnswer: json.correctAnswer,
+        acceptedMeaningAnswers: json.acceptedMeaningAnswers
       });
     } catch (e) {
       setMessage(e instanceof Error ? e.message : "제출에 실패했습니다.");
     } finally {
       setLoading(false);
     }
+  };
+
+  const retryCurrentItem = () => {
+    setFeedback(null);
+    setAnswer("");
+    setMessage("");
   };
 
   const activeTab = mode === "MEANING" ? "quiz-meaning" : "quiz-word";
@@ -204,6 +213,23 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
           </span>
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
+          <label className="sr-only" htmlFor="wordbook-quiz-part-select">
+            파트 선택
+          </label>
+          <select
+            id="wordbook-quiz-part-select"
+            value={partIndex}
+            onChange={(e) => setPartIndex(Number(e.target.value))}
+            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm sm:hidden"
+          >
+            {partButtons.map((n) => (
+              <option key={`part-select-${n}`} value={n}>
+                {n}파트
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="mt-3 hidden flex-wrap gap-2 sm:flex">
           {partButtons.map((n) => (
             <button
               key={n}
@@ -291,13 +317,29 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
                     {sanitizeUserText(feedback.correctAnswer.meaning, "의미 데이터 점검 중입니다")}
                   </p>
                 ) : null}
-                <button
-                  type="button"
-                  onClick={() => void loadNext()}
-                  className="ui-btn-primary mt-2 px-3 py-1.5 text-xs"
-                >
-                  다음
-                </button>
+                {!feedback.isCorrect && mode === "MEANING" && feedback.acceptedMeaningAnswers?.length ? (
+                  <p className="mt-1 text-xs font-medium text-red-700">
+                    허용 답안 예: {feedback.acceptedMeaningAnswers.slice(0, 4).join(", ")}
+                  </p>
+                ) : null}
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {!feedback.isCorrect ? (
+                    <button
+                      type="button"
+                      onClick={retryCurrentItem}
+                      className="ui-btn-primary px-3 py-1.5 text-xs"
+                    >
+                      다시 풀기
+                    </button>
+                  ) : null}
+                  <button
+                    type="button"
+                    onClick={() => void loadNext()}
+                    className="ui-btn-primary px-3 py-1.5 text-xs"
+                  >
+                    다음
+                  </button>
+                </div>
               </div>
             ) : null}
           </>

@@ -177,7 +177,9 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   return NextResponse.json(
     {
       correct,
-      correctAnswer: { term: item.term, meaning: item.meaning }
+      correctAnswer: { term: item.term, meaning: item.meaning },
+      acceptedMeaningAnswers:
+        mode === "MEANING" ? getMeaningCandidates(item.meaning).slice(0, 8) : undefined
     },
     { status: 200 }
   );

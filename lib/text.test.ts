@@ -40,15 +40,16 @@ describe("parseWords", () => {
 
 describe("getMeaningCandidates", () => {
   it("accepts answers without leading POS tags", () => {
-    const candidates = getMeaningCandidates("(접)때문에, 왜냐하면");
-    expect(candidates).toContain("(접)때문에");
-    expect(candidates).toContain("때문에");
-    expect(candidates).toContain("왜냐하면");
+    const candidates = getMeaningCandidates("(전) ...에서");
+    expect(candidates).toContain("(전) ...에서");
+    expect(candidates).toContain("...에서");
+    expect(candidates).toContain("에서");
   });
 
   it("supports multiple leading tags", () => {
-    const candidates = getMeaningCandidates("(부)(문)그때");
-    expect(candidates).toContain("(부)(문)그때");
+    const candidates = getMeaningCandidates("(부)(명) 그때");
+    expect(candidates).toContain("(부)(명) 그때");
     expect(candidates).toContain("그때");
   });
 });
+

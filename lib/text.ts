@@ -23,6 +23,15 @@ export function normalizeKo(value: string): string {
   return collapseSpaces(value);
 }
 
+function stripMeaningAffixes(value: string): string {
+  return collapseSpaces(
+    value
+      .replace(/^[\s"'`~.,·•…\-_/\\:;!?()[\]{}<>]+/gu, "")
+      .replace(/[\s"'`~.,·•…\-_/\\:;!?()[\]{}<>]+$/gu, "")
+      .replace(/^[.·•…~\-_/\\:;!?]+/gu, "")
+  );
+}
+
 function stripLeadingPosTag(value: string): string {
   return value
     .replace(/^(?:\([^)]{1,8}\)\s*)+/u, "")
@@ -41,6 +50,16 @@ export function getMeaningCandidates(value: string): string[] {
     const withoutTag = normalizeKo(stripLeadingPosTag(normalized));
     if (withoutTag) {
       candidates.add(withoutTag);
+    }
+
+    const stripped = stripMeaningAffixes(normalized);
+    if (stripped) {
+      candidates.add(stripped);
+    }
+
+    const strippedWithoutTag = stripMeaningAffixes(withoutTag);
+    if (strippedWithoutTag) {
+      candidates.add(strippedWithoutTag);
     }
   }
 

@@ -2,197 +2,139 @@
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
-
 const APPLY = process.argv.includes("--apply");
 
-const POS_MAP = new Map([
-  ["명", "명"],
-  ["명사", "명"],
-  ["noun", "명"],
-  ["동", "동"],
-  ["동사", "동"],
-  ["verb", "동"],
-  ["형", "형"],
-  ["형용사", "형"],
-  ["adj", "형"],
-  ["adjective", "형"],
-  ["부", "부"],
-  ["부사", "부"],
-  ["adv", "부"],
-  ["adverb", "부"],
-  ["대", "대"],
-  ["대명사", "대"],
-  ["pron", "대"],
-  ["pronoun", "대"],
-  ["전", "전"],
-  ["전치사", "전"],
-  ["prep", "전"],
-  ["preposition", "전"],
-  ["접", "접"],
-  ["접속사", "접"],
-  ["conj", "접"],
-  ["conjunction", "접"],
-  ["감", "감"],
-  ["감탄사", "감"],
-  ["interj", "감"],
-  ["interjection", "감"],
-  ["조", "조"],
-  ["조동사", "조"],
-  ["aux", "조"],
-  ["auxiliary", "조"],
-  ["관", "관"],
-  ["관사", "관"],
-  ["article", "관"],
-  ["det", "관"],
-  ["determiner", "관"],
-  ["수", "수"],
-  ["수사", "수"],
-  ["num", "수"],
-  ["numeral", "수"]
-]);
+const POS_FULL = ["명사", "동사", "형용사", "부사", "대명사", "전치사", "접속사", "감탄사", "조동사", "관사", "수사"];
 
-const SLANG_RE = /(ㄹㅇ|레알|겁나|ㅈㄴ|존나)/gi;
+const POS_ALIAS = new Map(
+  [
+    ["noun", "명사"],
+    ["verb", "동사"],
+    ["adjective", "형용사"],
+    ["adj", "형용사"],
+    ["adverb", "부사"],
+    ["adv", "부사"],
+    ["pronoun", "대명사"],
+    ["pron", "대명사"],
+    ["preposition", "전치사"],
+    ["prep", "전치사"],
+    ["conjunction", "접속사"],
+    ["conj", "접속사"],
+    ["interjection", "감탄사"],
+    ["interj", "감탄사"],
+    ["auxiliary", "조동사"],
+    ["aux", "조동사"],
+    ["article", "관사"],
+    ["determiner", "관사"],
+    ["det", "관사"],
+    ["numeral", "수사"],
+    ["num", "수사"]
+  ].map(([k, v]) => [k.toLowerCase(), v])
+);
 
-const PRONOUNS = new Set("i,you,he,she,it,we,they,me,him,her,us,them,my,mine,your,yours,his,hers,our,ours,their,theirs,who,whom,whose,which,what,this,that,these,those,someone,somebody,anyone,anybody,everyone,everybody,nobody,none".split(","));
-const PREPOSITIONS = new Set("in,on,at,to,for,from,with,by,about,into,over,under,between,through,during,before,after,of,off,as,than,against,without,within,across,behind,beyond,around,near".split(","));
-const CONJUNCTIONS = new Set("and,or,but,because,if,though,although,while,when,where,since,unless,however,therefore,so,yet,nor".split(","));
-const INTERJECTIONS = new Set("yes,no,oh,ah,wow,hey,hello,bye,yep,huh,uh,um,hmm".split(","));
-const DETERMINERS = new Set("a,an,the,this,that,these,those,some,any,many,much,few,little,several,another,other,every,each,either,neither,both,enough,more,most,least,no".split(","));
-const AUXILIARIES = new Set("can,could,may,might,must,shall,should,will,would,ought".split(","));
-const BE_VERBS = new Set("be,am,is,are,was,were,been,being,do,does,did,done,doing,have,has,had".split(","));
-const NUMERALS = new Set("zero,one,two,three,four,five,six,seven,eight,nine,ten,first,second,third".split(","));
+const POS_PREFIX_RE = new RegExp(`^(${POS_FULL.join("|")})(?=[가-힣A-Za-z])`);
+const POS_TOKEN_RE = new RegExp(`\\b(${POS_FULL.join("|")})\\b`, "g");
 
 function normalizeSpaces(value) {
   return String(value ?? "").replace(/\s+/g, " ").trim();
 }
 
-function normalizeTag(raw) {
-  const key = String(raw ?? "").toLowerCase().replace(/\s+/g, "");
-  return POS_MAP.get(key) ?? null;
+function normalizePosLabel(raw) {
+  const key = String(raw ?? "")
+    .replace(/[()]/g, "")
+    .trim()
+    .toLowerCase();
+  if (!key) return null;
+  if (POS_ALIAS.has(key)) return POS_ALIAS.get(key);
+  const direct = POS_FULL.find((p) => p === key);
+  return direct ?? null;
 }
 
-function inferPos(term) {
-  const t = String(term ?? "").trim().toLowerCase();
-  if (!t) return null;
-  if (PRONOUNS.has(t)) return "대";
-  if (PREPOSITIONS.has(t)) return "전";
-  if (CONJUNCTIONS.has(t)) return "접";
-  if (INTERJECTIONS.has(t)) return "감";
-  if (DETERMINERS.has(t)) return "관";
-  if (AUXILIARIES.has(t)) return "조";
-  if (BE_VERBS.has(t)) return "동";
-  if (NUMERALS.has(t)) return "수";
-  if (t.endsWith("ly")) return "부";
-  if (/(tion|ment|ness|ity|ship|age|er|or)$/.test(t)) return "명";
-  if (/(ous|ful|able|ible|al|ive|less|ic|ish)$/.test(t)) return "형";
-  if (/(ed|en|fy|ize|ise)$/.test(t)) return "동";
-  return null;
+function normalizeInlinePos(raw) {
+  return raw.replace(/\(([^)]+)\)/g, (full, inner) => {
+    const normalized = normalizePosLabel(inner);
+    return normalized ? `(${normalized})` : full;
+  });
 }
 
-function dedupeCommaParts(value) {
-  const parts = value
+function splitAndDedupe(raw) {
+  const parts = raw
     .split(",")
-    .map((v) => normalizeSpaces(v))
-    .filter((v) => v && !/^[~!@#$%^&*_=+|\\/:;.\-?]+$/.test(v));
-  const out = [];
+    .map((p) => normalizeSpaces(p))
+    .filter(Boolean);
   const seen = new Set();
-  for (const p of parts) {
-    const k = p.toLowerCase();
-    if (seen.has(k)) continue;
-    seen.add(k);
-    out.push(p);
+  const out = [];
+  for (const part of parts) {
+    const key = part.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(part);
   }
   return out.join(", ");
 }
 
-function cleanMeaning(term, rawMeaning) {
-  const before = String(rawMeaning ?? "");
+function cleanupMeaning(term, meaning) {
+  const before = String(meaning ?? "");
   let next = normalizeSpaces(before);
+  if (!next) return next;
 
-  // Normalize plain POS words only when they appear as standalone section markers.
-  next = next.replace(
-    /^(\s*)(명사|동사|형용사|부사|대명사|전치사|접속사|감탄사|조동사|관사|수사)(\s*)/u,
-    (_m, p1, p2) => `${p1}(${normalizeTag(p2) ?? p2})`
-  );
-  next = next.replace(
-    /([,;|/]\s*)(명사|동사|형용사|부사|대명사|전치사|접속사|감탄사|조동사|관사|수사)(\s*)/gu,
-    (_m, p1, p2) => `${p1}(${normalizeTag(p2) ?? p2})`
-  );
+  next = normalizeInlinePos(next);
 
-  // Normalize existing tags like (noun), (명사), ...
-  next = next.replace(/\(([^)]+)\)/g, (full, inner) => {
-    const tag = normalizeTag(inner);
-    return tag ? `(${tag})` : full;
-  });
+  // Convert plain POS at token boundaries to parenthesized form.
+  next = next.replace(POS_TOKEN_RE, (m) => `(${m})`);
+  next = next.replace(/\(\(([^)]+)\)\)/g, "($1)");
 
-  // Remove obvious slang/noise.
-  next = next.replace(SLANG_RE, "");
-  next = next.replace(/\s*,\s*/g, ", ");
-  next = next.replace(/\?{2,}/g, "?");
-  next = normalizeSpaces(next);
+  // Fix glued form: e.g. "전치사에서" -> "(전치사) 에서"
+  next = next.replace(POS_PREFIX_RE, (_m, pos) => `(${pos}) `);
 
-  next = next.replace(/(?<=\S)\(\?\)(?=\S)/gu, ", ");
-
-  const existingTags = Array.from(next.matchAll(/\(([명동형부대전접감조관수])\)/g)).map((m) => m[1]);
-  const fallbackTag = existingTags[0] ?? inferPos(term);
-  if (fallbackTag) {
-    next = next.replace(/\(\?\)/g, `(${fallbackTag})`);
-    if (existingTags.length === 0 && !/^\([명동형부대전접감조관수]\)/.test(next)) {
-      next = `(${fallbackTag})` + next;
-    }
+  // If no explicit POS exists but entry starts with known POS text, normalize it.
+  if (!/\((?:명사|동사|형용사|부사|대명사|전치사|접속사|감탄사|조동사|관사|수사)\)/.test(next)) {
+    next = next.replace(POS_PREFIX_RE, (_m, pos) => `(${pos}) `);
   }
 
-  next = dedupeCommaParts(next);
-  next = next.replace(/\s*\((\?)\)\s*/g, "");
+  next = next
+    .replace(/\s*,\s*/g, ", ")
+    .replace(/\s*\/\s*/g, "/")
+    .replace(/[?]{2,}/g, "?");
+  next = splitAndDedupe(next);
   next = normalizeSpaces(next);
 
-  return next || before;
-}
+  // Avoid meaningless output.
+  if (/^[,./()~\-_\s]+$/.test(next)) return before;
 
-async function collectRows() {
-  const items = await prisma.wordbookItem.findMany({
-    select: { id: true, term: true, meaning: true }
-  });
-  return { items };
+  // Guardrail: if we accidentally erased too much, keep original.
+  if (next.length < Math.min(2, before.length)) return before;
+
+  return next;
 }
 
 async function main() {
-  const { items } = await collectRows();
+  const items = await prisma.wordbookItem.findMany({
+    select: { id: true, term: true, meaning: true }
+  });
 
-  const itemUpdates = [];
-  let unresolvedQuestionMarks = 0;
-
+  const updates = [];
   for (const row of items) {
-    const cleaned = cleanMeaning(row.term, row.meaning);
-    if (cleaned.includes("(?)")) unresolvedQuestionMarks += 1;
+    const cleaned = cleanupMeaning(row.term, row.meaning);
     if (cleaned !== row.meaning) {
-      itemUpdates.push({ id: row.id, before: row.meaning, after: cleaned });
+      updates.push({ id: row.id, before: row.meaning, after: cleaned });
     }
   }
 
   console.log(`[cleanse] dryRun=${APPLY ? "false" : "true"}`);
-  console.log(`[cleanse] wordbookItems changed=${itemUpdates.length}/${items.length}`);
-  console.log(`[cleanse] unresolved '(?)' after clean=${unresolvedQuestionMarks}`);
-
-  const sample = itemUpdates.slice(0, 20).map((r) => ({
-    id: r.id,
-    before: r.before,
-    after: r.after
-  }));
-  if (sample.length) {
-    console.log("[cleanse] sample changes (wordbook items):");
-    console.log(JSON.stringify(sample, null, 2));
-  }
+  console.log(`[cleanse] changed=${updates.length}/${items.length}`);
+  console.log("[cleanse] sample:");
+  console.log(JSON.stringify(updates.slice(0, 20), null, 2));
 
   if (!APPLY) return;
 
-  for (const u of itemUpdates) {
+  for (const row of updates) {
     await prisma.wordbookItem.update({
-      where: { id: u.id },
-      data: { meaning: u.after }
+      where: { id: row.id },
+      data: { meaning: row.after }
     });
   }
-  console.log(`[cleanse] applied wordbookItem updates=${itemUpdates.length}`);
+  console.log(`[cleanse] applied=${updates.length}`);
 }
 
 main()
@@ -203,3 +145,4 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
+
