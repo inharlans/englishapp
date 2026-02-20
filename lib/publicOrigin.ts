@@ -15,6 +15,18 @@ function isLocalHost(hostOrOrigin: string): boolean {
 }
 
 export function getPublicOrigin(req: NextRequest): string {
+  const requestOrigin = getForwardedHeaderValue(req.headers.get("origin"));
+  if (requestOrigin) {
+    try {
+      const origin = stripTrailingSlash(new URL(requestOrigin).origin);
+      if (!isLocalHost(origin)) {
+        return origin;
+      }
+    } catch {
+      // Ignore invalid origin header and continue.
+    }
+  }
+
   const forwardedHost = getForwardedHeaderValue(req.headers.get("x-forwarded-host"));
   const forwardedProto = getForwardedHeaderValue(req.headers.get("x-forwarded-proto")) || "https";
   const forwardedOrigin = forwardedHost ? `${forwardedProto}://${forwardedHost}` : "";
