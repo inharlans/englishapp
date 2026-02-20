@@ -136,3 +136,22 @@ docs/HANDOFF_SESSION_CONTINUITY_2026-02-20.md 기준으로 이어서 진행해.
 우선 결제(PortOne CHANNEL_KEY) 마무리부터 하고, 끝나면 퀴즈 P1 개선(오답 재출제 큐, 채점 진단 이벤트) 순서로 진행해.
 각 단계 끝날 때 테스트/검증 결과와 남은 TODO를 갱신해.
 ```
+
+## 7) 2026-02-20 추가 반영 (새 세션 실행 결과)
+
+- 완료
+  - 퀴즈 P1 개선 3건 반영
+    - 세션 내 오답 재출제 큐 자동화
+    - 오답 채점 근거(입력 정규화/최근접 허용 답안/유사도) 노출
+    - 오답 채점 진단 이벤트 기록 및 관리자 지표(`quizQuality`) 추가
+  - 검증 통과
+    - `npm run typecheck`
+    - `npm run test -- lib/text.test.ts`
+    - `npm run build`
+  - Task Master PRD 파일 추가
+    - `.taskmaster/docs/prd-2026-02-20.md`
+
+- 미완료/블로커
+  - 결제(PortOne) 실마무리: 로컬 `.env` 기준 `PORTONE_*` 값 미설정으로 실결제 검증 불가
+  - Task Master `parse-prd`: 현재 MCP 경유 `codex-cli` object generation 오류로 실패
+    - 에러: `Codex CLI API error during object generation: Codex CLI exited with code 1`

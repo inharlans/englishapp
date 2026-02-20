@@ -42,6 +42,14 @@ type SubmitPayload = {
   correct?: boolean;
   correctAnswer?: { term: string; meaning: string };
   acceptedMeaningAnswers?: string[];
+  gradingDiagnosis?: {
+    input: string;
+    normalizedInput: string;
+    closestAccepted: string;
+    similarityScore: number;
+    potentiallyDisputable: boolean;
+    reason: string;
+  };
   error?: string;
 };
 
@@ -54,7 +62,16 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
     isCorrect: boolean;
     correctAnswer?: { term: string; meaning: string };
     acceptedMeaningAnswers?: string[];
+    gradingDiagnosis?: {
+      input: string;
+      normalizedInput: string;
+      closestAccepted: string;
+      similarityScore: number;
+      potentiallyDisputable: boolean;
+      reason: string;
+    };
   } | null>(null);
+  const [retryQueue, setRetryQueue] = useState<QuizItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [attempts, setAttempts] = useState(0);
   const [corrects, setCorrects] = useState(0);
@@ -66,6 +83,16 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
   const { partSize, setPartSize, partIndex, setPartIndex, partCount } = useWordbookParting(wordbookId, totalItems);
 
   const loadNext = useCallback(async () => {
+    if (retryQueue.length > 0) {
+      const [next, ...rest] = retryQueue;
+      setRetryQueue(rest);
+      setItem(next);
+      setLoading(false);
+      setMessage("세션 오답 큐에서 재출제했습니다.");
+      setAnswer("");
+      setFeedback(null);
+      return;
+    }
     setLoading(true);
     setMessage("");
     setAnswer("");
@@ -90,7 +117,7 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
     } finally {
       setLoading(false);
     }
-  }, [mode, partIndex, partSize, wordbookId]);
+  }, [mode, partIndex, partSize, retryQueue, wordbookId]);
 
   useEffect(() => {
     void loadNext();
@@ -119,8 +146,15 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
       setFeedback({
         isCorrect: Boolean(json.correct),
         correctAnswer: json.correctAnswer,
-        acceptedMeaningAnswers: json.acceptedMeaningAnswers
+        acceptedMeaningAnswers: json.acceptedMeaningAnswers,
+        gradingDiagnosis: json.gradingDiagnosis
       });
+      if (!json.correct && item) {
+        setRetryQueue((prev) => {
+          if (prev.some((queued) => queued.id === item.id) || prev.length >= 20) return prev;
+          return [...prev, item];
+        });
+      }
     } catch (e) {
       setMessage(e instanceof Error ? e.message : "제출에 실패했습니다.");
     } finally {
@@ -322,6 +356,18 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
                     허용 답안 예: {feedback.acceptedMeaningAnswers.slice(0, 4).join(", ")}
                   </p>
                 ) : null}
+                {!feedback.isCorrect && feedback.gradingDiagnosis ? (
+                  <p className="mt-1 text-xs font-medium text-red-700">
+                    채점 근거: 입력 정규화 `{feedback.gradingDiagnosis.normalizedInput || "-"}`
+                    {" / "}가장 가까운 허용 답안 `{feedback.gradingDiagnosis.closestAccepted || "-"}`
+                    {" / "}유사도 {(feedback.gradingDiagnosis.similarityScore * 100).toFixed(1)}%
+                  </p>
+                ) : null}
+                {!feedback.isCorrect && feedback.gradingDiagnosis?.potentiallyDisputable ? (
+                  <p className="mt-1 text-xs font-semibold text-amber-700">
+                    재검토 후보: {feedback.gradingDiagnosis.reason}
+                  </p>
+                ) : null}
                 <div className="mt-2 flex flex-wrap gap-2">
                   {!feedback.isCorrect ? (
                     <button
@@ -337,7 +383,7 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
                     onClick={() => void loadNext()}
                     className="ui-btn-primary px-3 py-1.5 text-xs"
                   >
-                    다음
+                    다음 {retryQueue.length > 0 ? `(오답 큐 ${retryQueue.length})` : ""}
                   </button>
                 </div>
               </div>

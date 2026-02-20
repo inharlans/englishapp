@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { getUserFromRequestCookies } from "@/lib/authServer";
 import { getMeaningCandidates, normalizeEn } from "@/lib/text";
+import { captureAppError } from "@/lib/observability";
 import { prisma } from "@/lib/prisma";
 import { checkRateLimit, getClientIpFromHeaders } from "@/lib/rateLimit";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
@@ -22,6 +23,97 @@ const submitSchema = z.object({
   mode: z.enum(["MEANING", "WORD"]).optional(),
   answer: z.string().trim().min(1).max(1000)
 });
+
+type GradingDiagnosis = {
+  input: string;
+  normalizedInput: string;
+  closestAccepted: string;
+  similarityScore: number;
+  potentiallyDisputable: boolean;
+  reason: string;
+};
+
+function normalizeLoose(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function levenshtein(a: string, b: string): number {
+  if (a === b) return 0;
+  if (!a) return b.length;
+  if (!b) return a.length;
+  const rows = a.length + 1;
+  const cols = b.length + 1;
+  const dp: number[] = Array.from({ length: rows * cols }, () => 0);
+  const at = (r: number, c: number) => r * cols + c;
+  for (let r = 0; r < rows; r += 1) dp[at(r, 0)] = r;
+  for (let c = 0; c < cols; c += 1) dp[at(0, c)] = c;
+  for (let r = 1; r < rows; r += 1) {
+    for (let c = 1; c < cols; c += 1) {
+      const cost = a[r - 1] === b[c - 1] ? 0 : 1;
+      dp[at(r, c)] = Math.min(dp[at(r - 1, c)] + 1, dp[at(r, c - 1)] + 1, dp[at(r - 1, c - 1)] + cost);
+    }
+  }
+  return dp[at(rows - 1, cols - 1)];
+}
+
+function scoreSimilarity(input: string, accepted: string): number {
+  const inputNorm = normalizeLoose(input);
+  const acceptedNorm = normalizeLoose(accepted);
+  if (!inputNorm || !acceptedNorm) return 0;
+  if (inputNorm === acceptedNorm) return 1;
+  const inputTokens = new Set(inputNorm.split(" "));
+  const acceptedTokens = new Set(acceptedNorm.split(" "));
+  let overlap = 0;
+  for (const t of inputTokens) {
+    if (acceptedTokens.has(t)) overlap += 1;
+  }
+  const union = new Set([...inputTokens, ...acceptedTokens]).size;
+  const tokenScore = union > 0 ? overlap / union : 0;
+  const maxLen = Math.max(inputNorm.length, acceptedNorm.length);
+  const charScore = maxLen > 0 ? 1 - levenshtein(inputNorm, acceptedNorm) / maxLen : 0;
+  return Math.max(0, Math.min(1, tokenScore * 0.55 + charScore * 0.45));
+}
+
+function buildMeaningDiagnosis(input: string, acceptedMeaning: string): GradingDiagnosis {
+  const inputCandidates = getMeaningCandidates(input);
+  const acceptedCandidates = getMeaningCandidates(acceptedMeaning);
+
+  let bestInput = normalizeLoose(input);
+  let bestAccepted = acceptedCandidates[0] ?? "";
+  let bestScore = 0;
+
+  for (const inputCandidate of inputCandidates) {
+    for (const acceptedCandidate of acceptedCandidates) {
+      const score = scoreSimilarity(inputCandidate, acceptedCandidate);
+      if (score > bestScore) {
+        bestScore = score;
+        bestInput = normalizeLoose(inputCandidate);
+        bestAccepted = acceptedCandidate;
+      }
+    }
+  }
+
+  const potentiallyDisputable = bestScore >= 0.78 && bestScore < 1;
+  const reason =
+    bestScore < 0.4
+      ? "허용 답안과 유사성이 낮아 오답으로 판정되었습니다."
+      : potentiallyDisputable
+      ? "허용 답안과 유사도가 높아 재검토 여지가 있습니다."
+      : "허용 답안과 부분적으로 유사하지만 기준 미달입니다.";
+
+  return {
+    input,
+    normalizedInput: bestInput,
+    closestAccepted: bestAccepted,
+    similarityScore: Number(bestScore.toFixed(3)),
+    potentiallyDisputable,
+    reason
+  };
+}
 
 async function syncWordbookStudyState(userId: number, wordbookId: number) {
   const states = await prisma.wordbookStudyItemState.findMany({
@@ -86,10 +178,22 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     return NextResponse.json({ error: "Item not found." }, { status: 404 });
   }
 
+  const acceptedMeaningAnswers = mode === "MEANING" ? getMeaningCandidates(item.meaning) : [];
   const correct =
     mode === "WORD"
       ? normalizeEn(answer) === normalizeEn(item.term)
-      : getMeaningCandidates(answer).some((c) => getMeaningCandidates(item.meaning).includes(c));
+      : getMeaningCandidates(answer).some((c) => acceptedMeaningAnswers.includes(c));
+  const gradingDiagnosis =
+    mode === "MEANING"
+      ? buildMeaningDiagnosis(answer, item.meaning)
+      : {
+          input: answer,
+          normalizedInput: normalizeEn(answer),
+          closestAccepted: item.term,
+          similarityScore: Number(scoreSimilarity(answer, item.term).toFixed(3)),
+          potentiallyDisputable: false,
+          reason: "단어 모드는 정규화된 완전 일치 기준으로 채점합니다."
+        };
 
   const existing = await prisma.wordbookStudyItemState.findUnique({
     where: { userId_wordbookId_itemId: { userId: user.id, wordbookId, itemId: item.id } },
@@ -174,12 +278,28 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   invalidateStudyPartStatsCacheForWordbook(user.id, wordbookId);
   await syncWordbookStudyState(user.id, wordbookId);
 
+  if (!correct) {
+    await captureAppError({
+      level: "warn",
+      route: "/api/wordbooks/[id]/quiz/submit",
+      message: "quiz_grading_diagnostic",
+      userId: user.id,
+      context: {
+        mode,
+        wordbookId,
+        itemId: item.id,
+        potentiallyDisputable: gradingDiagnosis.potentiallyDisputable,
+        similarityScore: gradingDiagnosis.similarityScore
+      }
+    });
+  }
+
   return NextResponse.json(
     {
       correct,
       correctAnswer: { term: item.term, meaning: item.meaning },
-      acceptedMeaningAnswers:
-        mode === "MEANING" ? getMeaningCandidates(item.meaning).slice(0, 8) : undefined
+      acceptedMeaningAnswers: mode === "MEANING" ? acceptedMeaningAnswers.slice(0, 8) : undefined,
+      gradingDiagnosis
     },
     { status: 200 }
   );

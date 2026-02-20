@@ -23,10 +23,15 @@ export async function GET(req: NextRequest) {
         level: true,
         route: true,
         message: true,
+        context: true,
         createdAt: true
       }
     })
   ]);
+
+  const quizDiagnostics = recentErrors.filter(
+    (e) => e.route === "/api/wordbooks/[id]/quiz/submit" && e.message === "quiz_grading_diagnostic"
+  );
 
   const byRoute = new Map<
     string,
@@ -89,10 +94,29 @@ export async function GET(req: NextRequest) {
     ? coreLatencies[Math.min(coreLatencies.length - 1, Math.floor(coreLatencies.length * 0.95))]
     : 0;
 
+  const disputableWrongCount = quizDiagnostics.filter(
+    (e) =>
+      Boolean(
+        (e.context as
+          | {
+              potentiallyDisputable?: boolean;
+            }
+          | null
+          | undefined)?.potentiallyDisputable
+      )
+  ).length;
+  const quizWrongCount = quizDiagnostics.length;
+  const disputableWrongRate = quizWrongCount > 0 ? (disputableWrongCount / quizWrongCount) * 100 : 0;
+
   return NextResponse.json(
     {
       since: since.toISOString(),
       routeStats,
+      quizQuality: {
+        wrongAnswers: quizWrongCount,
+        disputableWrongCount,
+        disputableWrongRate
+      },
       slo: {
         apiSuccessRate,
         apiSuccessTarget: 99.5,
@@ -101,9 +125,10 @@ export async function GET(req: NextRequest) {
         coreP95LatencyMs: coreP95,
         coreP95LatencyTargetMs: 500,
         violations: [
-          ...(apiSuccessRate < 99.5 ? ["오늘 API 성공률이 99.5% 미만"] : []),
-          ...(cronSuccessRate < 99 ? ["오늘 크론 성공률이 99% 미만"] : []),
-          ...(coreP95 > 500 ? ["핵심 경로 P95가 500ms 초과"] : [])
+          ...(apiSuccessRate < 99.5 ? ["24시간 API 성공률이 99.5% 미만"] : []),
+          ...(cronSuccessRate < 99 ? ["24시간 크론 성공률이 99% 미만"] : []),
+          ...(coreP95 > 500 ? ["핵심 경로 P95가 500ms 초과"] : []),
+          ...(disputableWrongRate > 15 ? ["퀴즈 오답 중 재검토 후보 비율이 15% 초과"] : [])
         ]
       },
       recentErrors: recentErrors.map((e) => ({
