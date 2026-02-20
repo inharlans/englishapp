@@ -165,6 +165,8 @@ docs/HANDOFF_SESSION_CONTINUITY_2026-02-20.md 기준으로 이어서 진행해.
   - 운영 페이지의 비활성화 경고 문구 제거 확인
     - 기존 문구: `결제 키가 설정되지 않아 실제 결제는 비활성화 상태입니다.`
     - 확인 결과: 미노출
+  - `/api/admin/metrics` 응답의 `quizQuality` 필드 확인
+  - Task Master 태스크 파일 기준 `#10 Validation and acceptance checks` 상태를 `done`으로 갱신
 
 - 확인 메모
   - `/api/payments/portal`은 구독 결제수단이 연결되지 않은 계정에서 `400`과 함께
