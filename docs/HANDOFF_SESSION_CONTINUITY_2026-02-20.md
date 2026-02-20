@@ -23,6 +23,10 @@
 - 원격 반영 완료
   - 브랜치: `main`
   - 커밋: `ea36d06` (`퀴즈 채점 정규화 및 피드백/모바일 동선 개선`)
+- Task Master 설정 완료
+  - Codex MCP: `task-master-ai` 등록 완료 (`TASK_MASTER_TOOLS=core`)
+  - 프로젝트 초기화: `.taskmaster/config.json` 생성
+  - 모델 구성: `main/research/fallback` 모두 `codex-cli` 기반으로 설정
 
 ## 2) 아직 해야 할 작업 (미완료)
 
@@ -132,4 +136,3 @@ docs/HANDOFF_SESSION_CONTINUITY_2026-02-20.md 기준으로 이어서 진행해.
 우선 결제(PortOne CHANNEL_KEY) 마무리부터 하고, 끝나면 퀴즈 P1 개선(오답 재출제 큐, 채점 진단 이벤트) 순서로 진행해.
 각 단계 끝날 때 테스트/검증 결과와 남은 TODO를 갱신해.
 ```
-
