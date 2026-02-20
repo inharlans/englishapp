@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getUserFromRequestCookies } from "@/lib/authServer";
 import { captureAppError, recordApiMetricFromStart } from "@/lib/observability";
 import { BillingCycle, getPortOneConfig, normalizeCycle } from "@/lib/payments";
+import { getPublicOrigin } from "@/lib/publicOrigin";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
 import { parseJsonWithSchema } from "@/lib/validation";
 import { z } from "zod";
@@ -80,6 +81,7 @@ export async function POST(req: NextRequest) {
     }
 
     const issueId = buildIssueId(user.id, cycle);
+    const publicOrigin = getPublicOrigin(req);
 
     const res = NextResponse.json(
       {
@@ -89,7 +91,7 @@ export async function POST(req: NextRequest) {
           billingKeyMethod: "CARD",
           issueId,
           issueName: cycle === "monthly" ? "Oing PRO Monthly Billing Key" : "Oing PRO Yearly Billing Key",
-          redirectUrl: `${req.nextUrl.origin}/pricing`,
+          redirectUrl: `${publicOrigin}/pricing`,
           customer: {
             customerId: String(user.id),
             email: user.email,

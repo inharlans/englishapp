@@ -9,19 +9,30 @@ function getForwardedHeaderValue(value: string | null): string {
   return value.split(",")[0]?.trim() ?? "";
 }
 
+function isLocalHost(hostOrOrigin: string): boolean {
+  const v = hostOrOrigin.toLowerCase();
+  return v.includes("localhost") || v.includes("127.0.0.1");
+}
+
 export function getPublicOrigin(req: NextRequest): string {
+  const forwardedHost = getForwardedHeaderValue(req.headers.get("x-forwarded-host"));
+  const forwardedProto = getForwardedHeaderValue(req.headers.get("x-forwarded-proto")) || "https";
+  const forwardedOrigin = forwardedHost ? `${forwardedProto}://${forwardedHost}` : "";
+
   const configured = (process.env.NEXT_PUBLIC_APP_URL ?? "").trim();
   if (configured) {
     try {
-      return stripTrailingSlash(new URL(configured).origin);
+      const configuredOrigin = stripTrailingSlash(new URL(configured).origin);
+      if (isLocalHost(configuredOrigin) && forwardedOrigin && !isLocalHost(forwardedOrigin)) {
+        return forwardedOrigin;
+      }
+      return configuredOrigin;
     } catch {
       // Ignore invalid env value and continue with header-based fallback.
     }
   }
 
-  const forwardedHost = getForwardedHeaderValue(req.headers.get("x-forwarded-host"));
   if (forwardedHost) {
-    const forwardedProto = getForwardedHeaderValue(req.headers.get("x-forwarded-proto")) || "https";
     return `${forwardedProto}://${forwardedHost}`;
   }
 

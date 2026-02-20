@@ -4,6 +4,7 @@ import { getUserFromRequestCookies } from "@/lib/authServer";
 import { captureAppError, recordApiMetricFromStart } from "@/lib/observability";
 import { getPortOneConfig, getPortOnePaymentClient } from "@/lib/payments";
 import { prisma } from "@/lib/prisma";
+import { getPublicOrigin } from "@/lib/publicOrigin";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
 
 export async function POST(req: NextRequest) {
@@ -88,7 +89,7 @@ export async function POST(req: NextRequest) {
       }
     });
 
-    const url = `${req.nextUrl.origin}/pricing?payment=cancel`;
+    const url = `${getPublicOrigin(req)}/pricing?payment=cancel`;
     const res = NextResponse.json({ url }, { status: 200 });
     await recordApiMetricFromStart({
       route: "/api/payments/portal",
