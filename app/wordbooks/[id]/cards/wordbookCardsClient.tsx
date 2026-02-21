@@ -115,9 +115,12 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
     void orderSeed;
     return shuffle(partItems);
   }, [partItems, orderSeed]);
+  const hasPartItems = shuffledItems.length > 0;
   const partStart = (partIndex - 1) * partSize + 1;
   const partEnd = Math.min(partIndex * partSize, items.length);
-  const overallProgressPercent = items.length > 0 ? Math.round((((partIndex - 1) * partSize + (idx + 1)) / items.length) * 100) : 0;
+  const overallCardNumber = hasPartItems ? (partIndex - 1) * partSize + (idx + 1) : 0;
+  const overallProgressPercent =
+    items.length > 0 && hasPartItems ? Math.round((overallCardNumber / items.length) * 100) : 0;
   const visiblePartButtons = useMemo(() => {
     if (partCount <= 9) return Array.from({ length: partCount }, (_, i) => ({ kind: "part" as const, value: i + 1 }));
     const set = new Set<number>([1, partCount]);
@@ -142,7 +145,7 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
   useEffect(() => {
     setIdx(0);
     setShowMeaning(false);
-    setInfo("");
+    setInfo(`${partIndex}파트로 이동했습니다.`);
   }, [partIndex, partSize]);
 
   useEffect(() => {
@@ -185,6 +188,16 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
         setPartIndex(Math.min(partCount, partIndex + 1));
         return;
       }
+      if (event.key === "Enter" && !loading && shuffledItems.length > 0) {
+        event.preventDefault();
+        setShowMeaning((v) => !v);
+        return;
+      }
+      if (event.key === "Escape" && showMeaning) {
+        event.preventDefault();
+        setShowMeaning(false);
+        return;
+      }
       if (loading || shuffledItems.length === 0) return;
 
       if (event.key === "ArrowLeft") {
@@ -212,7 +225,7 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [loading, partCount, partIndex, setPartIndex, shuffledItems.length]);
+  }, [loading, partCount, partIndex, setPartIndex, showMeaning, shuffledItems.length]);
 
   useEffect(() => {
     setIdx((value) => Math.min(value, Math.max(shuffledItems.length - 1, 0)));
@@ -241,7 +254,12 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
             파트 {partIndex}/{partCount} · 파트 단어 {loading ? "-" : shuffledItems.length}개 ·{" "}
             {loading ? "-" : `${idx + 1}/${Math.max(shuffledItems.length, 1)}`}
           </p>
-          <p className="mt-1 text-xs text-slate-500">단축키: ←/→ 카드 이동 · Space 뜻 보기/숨기기 · R 섞기 · `[`/`]` 파트 이동 · Home/End 처음/끝 카드 · PageUp/PageDown 파트 이동</p>
+          <p className="mt-1 text-xs text-slate-500">
+            단축키: ←/→ 카드 이동 · Space/Enter 뜻 보기 · Esc 뜻 숨기기 · R 섞기 · `[`/`]` 파트 이동 · Home/End 처음/끝 카드 · PageUp/PageDown 파트 이동
+          </p>
+          <p className="mt-1 text-xs text-slate-500" role="status" aria-live="polite">
+            전체 기준 {loading ? "-" : `${overallCardNumber}/${items.length}`}
+          </p>
         </div>
         <WordbookStudyTabs wordbookId={wordbookId} active="cards" showBack={false} />
       </header>
@@ -261,7 +279,7 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
             className="w-20 rounded border border-slate-300 bg-white px-2 py-1 text-sm"
           />
           <span className="text-slate-500">전체 {items.length}개 / {partCount}개 파트</span>
-          <span className="text-slate-500">· 현재 범위 {items.length === 0 ? "-" : `${partStart}~${partEnd}`}</span>
+          <span className="text-slate-500">· 현재 범위 {items.length === 0 || !hasPartItems ? "-" : `${partStart}~${partEnd}`}</span>
         </div>
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <label className="sr-only" htmlFor="cards-part-select">
@@ -281,6 +299,15 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
           </select>
           <button
             type="button"
+            onClick={() => setPartIndex(1)}
+            disabled={partIndex <= 1}
+            className="ui-btn-secondary px-3 py-1 text-xs disabled:opacity-50"
+            aria-label="첫 파트로 이동"
+          >
+            처음
+          </button>
+          <button
+            type="button"
             onClick={() => setPartIndex(Math.max(1, partIndex - 1))}
             disabled={partIndex <= 1}
             className="ui-btn-secondary px-3 py-1 text-xs disabled:opacity-50"
@@ -296,6 +323,15 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
             aria-label={`${Math.min(partCount, partIndex + 1)}파트로 이동`}
           >
             다음 파트
+          </button>
+          <button
+            type="button"
+            onClick={() => setPartIndex(partCount)}
+            disabled={partIndex >= partCount}
+            className="ui-btn-secondary px-3 py-1 text-xs disabled:opacity-50"
+            aria-label="마지막 파트로 이동"
+          >
+            마지막
           </button>
           <form
             className="flex w-full items-center gap-2 sm:w-auto"
@@ -458,6 +494,18 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
           <div className="mt-6 flex items-center justify-between gap-2">
             <button
               type="button"
+              onClick={() => {
+                setIdx(0);
+                setShowMeaning(false);
+              }}
+              disabled={idx <= 0}
+              aria-label="첫 카드로 이동"
+              className="ui-btn-secondary px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              처음
+            </button>
+            <button
+              type="button"
               onClick={prev}
               disabled={idx <= 0}
               aria-label={`이전 카드 (${Math.max(idx, 0)}/${shuffledItems.length})`}
@@ -476,6 +524,18 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
               className="ui-btn-primary px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-60"
             >
               다음
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setIdx(Math.max(shuffledItems.length - 1, 0));
+                setShowMeaning(false);
+              }}
+              disabled={idx >= shuffledItems.length - 1}
+              aria-label="마지막 카드로 이동"
+              className="ui-btn-secondary px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              마지막
             </button>
           </div>
         </div>
