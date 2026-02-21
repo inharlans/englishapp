@@ -430,6 +430,13 @@ Railway 기준:
 - 필터 요약 표시 추가, 필터 초기화 링크 조건부 노출, 검색 입력 제약(`maxLength`) 보강
 - 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_57.md`
 
+### 2026-02-22 Iteration 58
+- MCP로 `/wordbooks/55/quiz-word` 실제 풀이 5사이클 점검 후 퀴즈 상태 관리 개선
+- 파트 전환 시 오답 큐/피드백/파트 상태 리셋 일관화(파트 간 상태 오염 방지)
+- 진행률을 고유 풀이 기준으로 보정하고 단축키(`Enter`, `R`, `Esc`) 보강
+- WORD 모드 표시 텍스트 정제 및 피드백 가독성 개선
+- 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_58.md`
+
 
 
 

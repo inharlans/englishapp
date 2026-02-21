@@ -83,6 +83,7 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
   const [corrects, setCorrects] = useState(0);
   const [wrongs, setWrongs] = useState(0);
   const [partAttempts, setPartAttempts] = useState(0);
+  const [partSolvedIds, setPartSolvedIds] = useState<number[]>([]);
   const [totalItems, setTotalItems] = useState(0);
   const [partItemCount, setPartItemCount] = useState(0);
   const [partJump, setPartJump] = useState("1");
@@ -105,6 +106,19 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
     const raw = window.localStorage.getItem(autoNextKey);
     if (raw === "1") setAutoNextOnCorrect(true);
   }, [autoNextKey]);
+
+  const resetPartScopedState = useCallback(
+    (nextPart: number) => {
+      setPartIndex(nextPart);
+      setPartAttempts(0);
+      setPartSolvedIds([]);
+      setFeedback(null);
+      setMessage("");
+      retryQueueRef.current = [];
+      setRetryQueue([]);
+    },
+    [setPartIndex]
+  );
 
   const loadNext = useCallback(async () => {
     const queued = retryQueueRef.current;
@@ -203,10 +217,21 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
         event.preventDefault();
         void loadNext();
       }
+      if (event.key.toLowerCase() === "r" && feedback && !feedback.isCorrect) {
+        event.preventDefault();
+        setFeedback(null);
+        setAnswer("");
+        setMessage("");
+        answerInputRef.current?.focus();
+      }
       if (event.key.toLowerCase() === "s" && !feedback && !loading) {
         event.preventDefault();
         void loadNext();
         setMessage("문제를 건너뛰었습니다.");
+      }
+      if (event.key === "Escape" && !feedback && answer.trim()) {
+        event.preventDefault();
+        setAnswer("");
       }
       if (event.key === "[" && !loading) {
         event.preventDefault();
@@ -214,10 +239,7 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
           setMessage("첫 파트입니다.");
           return;
         }
-        setPartIndex(Math.max(1, partIndex - 1));
-        setPartAttempts(0);
-        setFeedback(null);
-        setMessage("");
+        resetPartScopedState(Math.max(1, partIndex - 1));
       }
       if (event.key === "]" && !loading) {
         event.preventDefault();
@@ -225,10 +247,7 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
           setMessage("마지막 파트입니다.");
           return;
         }
-        setPartIndex(Math.min(partCount, partIndex + 1));
-        setPartAttempts(0);
-        setFeedback(null);
-        setMessage("");
+        resetPartScopedState(Math.min(partCount, partIndex + 1));
       }
       if (event.key === "Home" && !loading) {
         event.preventDefault();
@@ -236,10 +255,7 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
           setMessage("첫 파트입니다.");
           return;
         }
-        setPartIndex(1);
-        setPartAttempts(0);
-        setFeedback(null);
-        setMessage("");
+        resetPartScopedState(1);
       }
       if (event.key === "End" && !loading) {
         event.preventDefault();
@@ -247,16 +263,17 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
           setMessage("마지막 파트입니다.");
           return;
         }
-        setPartIndex(partCount);
-        setPartAttempts(0);
-        setFeedback(null);
-        setMessage("");
+        resetPartScopedState(partCount);
+      }
+      if (event.key === "Enter" && feedback) {
+        event.preventDefault();
+        void loadNext();
       }
     };
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [feedback, loadNext, loading, partCount, partIndex, setPartIndex]);
+  }, [answer, feedback, loadNext, loading, partCount, partIndex, resetPartScopedState]);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -277,6 +294,10 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
       if (!res.ok) throw new Error(json.error ?? "제출에 실패했습니다.");
       setAttempts((v) => v + 1);
       setPartAttempts((v) => v + 1);
+      setPartSolvedIds((prev) => {
+        if (!item || prev.includes(item.id)) return prev;
+        return [...prev, item.id];
+      });
       if (json.correct) setCorrects((v) => v + 1);
       else setWrongs((v) => v + 1);
       setFeedback({
@@ -350,8 +371,9 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
     return result;
   }, [partButtons, partCount, partIndex]);
   const accuracy = attempts > 0 ? Math.round((corrects / attempts) * 100) : 0;
-  const currentPartProgress = partItemCount > 0 ? Math.min(100, Math.round((partAttempts / partItemCount) * 100)) : 0;
-  const remainingInPart = Math.max(partItemCount - partAttempts, 0);
+  const solvedInPart = partSolvedIds.length;
+  const currentPartProgress = partItemCount > 0 ? Math.min(100, Math.round((solvedInPart / partItemCount) * 100)) : 0;
+  const remainingInPart = Math.max(partItemCount - solvedInPart, 0);
   const remainingParts = Math.max(partCount - partIndex, 0);
   const acceptedMeaningPreview = useMemo(() => {
     if (!feedback || feedback.isCorrect || mode !== "MEANING") return [];
@@ -416,9 +438,8 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
             onChange={(e) => {
               const next = parseBoundedInt(e.target.value, partSize, 1, 200);
               setPartSize(next);
-              setPartIndex(1);
               setPartJump("1");
-              setPartAttempts(0);
+              resetPartScopedState(1);
             }}
             className="w-20 rounded border border-slate-300 bg-white px-2 py-1 text-sm"
           />
@@ -430,7 +451,7 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
           </span>
           <span className="text-slate-500">· 남은 파트 {remainingParts}개</span>
           <span className="text-slate-500">· 현재 파트 남은 문제 {remainingInPart}개</span>
-          <span className="text-slate-500">· 단축키: `/` 입력 포커스 · `S` 건너뛰기 · `N` 다음 · `[`/`]` 파트 이동 · `Home`/`End` 처음/끝</span>
+          <span className="text-slate-500">· 단축키: `/` 입력 포커스 · `S` 건너뛰기 · `N`/`Enter` 다음 · `R` 오답 재시도 · `Esc` 입력 비우기 · `[`/`]` 파트 이동 · `Home`/`End` 처음/끝</span>
           <button
             type="button"
             onClick={() => {
@@ -456,10 +477,7 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
             id="wordbook-quiz-part-select"
             value={partIndex}
             onChange={(e) => {
-              setPartIndex(Number(e.target.value));
-              setPartAttempts(0);
-              setFeedback(null);
-              setMessage("");
+              resetPartScopedState(Number(e.target.value));
             }}
             className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm sm:hidden"
           >
@@ -476,10 +494,7 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
                 setMessage("첫 파트입니다.");
                 return;
               }
-              setPartIndex(1);
-              setPartAttempts(0);
-              setFeedback(null);
-              setMessage("");
+              resetPartScopedState(1);
             }}
             disabled={loading || partIndex <= 1}
             className="ui-btn-secondary w-full px-3 py-2 text-sm sm:w-auto disabled:opacity-50"
@@ -493,10 +508,7 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
                 setMessage("첫 파트입니다.");
                 return;
               }
-              setPartIndex(Math.max(1, partIndex - 1));
-              setPartAttempts(0);
-              setFeedback(null);
-              setMessage("");
+              resetPartScopedState(Math.max(1, partIndex - 1));
             }}
             disabled={loading || partIndex <= 1}
             className="ui-btn-secondary w-full px-3 py-2 text-sm sm:w-auto disabled:opacity-50"
@@ -511,10 +523,7 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
                 setMessage("마지막 파트입니다.");
                 return;
               }
-              setPartIndex(Math.min(partCount, partIndex + 1));
-              setPartAttempts(0);
-              setFeedback(null);
-              setMessage("");
+              resetPartScopedState(Math.min(partCount, partIndex + 1));
             }}
             disabled={loading || partIndex >= partCount}
             className="ui-btn-secondary w-full px-3 py-2 text-sm sm:w-auto disabled:opacity-50"
@@ -529,10 +538,7 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
                 setMessage("마지막 파트입니다.");
                 return;
               }
-              setPartIndex(partCount);
-              setPartAttempts(0);
-              setFeedback(null);
-              setMessage("");
+              resetPartScopedState(partCount);
             }}
             disabled={loading || partIndex >= partCount}
             className="ui-btn-secondary w-full px-3 py-2 text-sm sm:w-auto disabled:opacity-50"
@@ -545,10 +551,7 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
               event.preventDefault();
               const next = parseBoundedInt(partJump, partIndex, 1, partCount);
               setPartJump(String(next));
-              setPartIndex(next);
-              setPartAttempts(0);
-              setFeedback(null);
-              setMessage("");
+              resetPartScopedState(next);
             }}
           >
             <label htmlFor="quiz-part-jump" className="sr-only">
@@ -583,10 +586,7 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
                 type="button"
                 onClick={() => {
                   if (loading) return;
-                  setPartIndex(entry.value);
-                  setPartAttempts(0);
-                  setFeedback(null);
-                  setMessage("");
+                  resetPartScopedState(entry.value);
                 }}
                 className={[
                   "rounded-lg border px-3 py-1 text-xs font-semibold",
@@ -638,12 +638,12 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
               <div className="h-full bg-blue-500 transition-all" style={{ width: `${currentPartProgress}%` }} />
             </div>
             <div className="mt-2 text-3xl font-black tracking-tight text-slate-900">
-              {mode === "MEANING" ? item.term : <MeaningView value={item.meaning} mode={meaningMode} />}
+              {mode === "MEANING" ? item.term : <MeaningView value={sanitizeUserText(item.meaning, "의미 데이터 점검 중입니다")} mode={meaningMode} />}
             </div>
             {item.example ? (
               <p className="mt-2 text-sm text-slate-500">
-                예문: {item.example}
-                {item.exampleMeaning ? ` - ${item.exampleMeaning}` : ""}
+                예문: {sanitizeUserText(item.example, "예문 데이터 점검 중입니다")}
+                {item.exampleMeaning ? ` - ${sanitizeUserText(item.exampleMeaning, "예문 해석 데이터 점검 중입니다")}` : ""}
               </p>
             ) : null}
             <form onSubmit={onSubmit} className="mt-4 flex flex-wrap gap-2">
@@ -688,13 +688,14 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
               ) : null}
             </form>
             <p className="mt-1 text-xs text-slate-500">
-              {mode === "MEANING" ? "영단어를 보고 뜻을 입력합니다." : "뜻을 보고 영단어를 입력합니다."}
+              {mode === "MEANING" ? "영단어를 보고 뜻을 입력합니다." : "뜻을 보고 영단어를 입력합니다. 대소문자와 앞뒤 공백은 채점 시 정규화됩니다."}
             </p>
             <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-500" role="status" aria-live="polite">
               <span>시도 {attempts}</span>
               <span>· 정답 {corrects}</span>
               <span>· 오답 {wrongs}</span>
-              <span>· 현재 파트 풀이 {partAttempts}/{partItemCount}</span>
+              <span>· 현재 파트 고유 풀이 {solvedInPart}/{partItemCount}</span>
+              <span>· 현재 파트 시도 {partAttempts}</span>
               <span>· 오답 큐 {retryQueue.length}</span>
             </div>
             {feedback ? (
@@ -709,8 +710,10 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
                 <p>{feedback.isCorrect ? "정답" : "오답"}</p>
                 {!feedback.isCorrect && feedback.correctAnswer ? (
                   <p className="mt-1 text-xs font-medium text-red-700">
-                    정답: {feedback.correctAnswer.term} /{" "}
-                    {sanitizeUserText(feedback.correctAnswer.meaning, "의미 데이터 점검 중입니다")}
+                    정답: {feedback.correctAnswer.term}
+                    {mode === "MEANING"
+                      ? ` / ${sanitizeUserText(feedback.correctAnswer.meaning, "의미 데이터 점검 중입니다")}`
+                      : ""}
                   </p>
                 ) : null}
                 {!feedback.isCorrect && acceptedMeaningPreview.length ? (
