@@ -415,7 +415,12 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
   const acceptedMeaningPreview = useMemo(() => {
     if (!feedback || feedback.isCorrect || mode !== "MEANING") return [];
     const list = feedback.acceptedMeaningAnswers ?? [];
-    return Array.from(new Set(list.map((entry) => sanitizeUserText(entry, "").trim()).filter(Boolean))).slice(0, 4);
+    const normalized = list
+      .flatMap((entry) => sanitizeUserText(entry, "").split(","))
+      .map((entry) => entry.trim())
+      .map((entry) => entry.replace(/^[^0-9A-Za-z가-힣]+/, "").replace(/[^0-9A-Za-z가-힣]+$/, "").trim())
+      .filter(Boolean);
+    return Array.from(new Set(normalized)).slice(0, 8);
   }, [feedback, mode]);
 
   return (

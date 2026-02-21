@@ -543,3 +543,8 @@ Railway 기준:
 - 데이터 로딩 완료 후 실제 파트 이동에서만 `N파트로 이동했습니다.` 상태 메시지 노출
 - 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_77.md`
 
+### 2026-02-22 Iteration 78
+- `/wordbooks/[id]/quiz-meaning` 오답 피드백의 `허용 답안 예` 중복/장문 노출 보정
+- 허용 답안을 토큰 단위로 정규화·중복 제거해 짧고 읽기 쉬운 예시만 노출
+- 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_78.md`
+
