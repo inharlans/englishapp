@@ -43,7 +43,9 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
   const [showMeaning, setShowMeaning] = useState(false);
   const [orderSeed, setOrderSeed] = useState(0);
   const [partJump, setPartJump] = useState("1");
+  const [reloadTick, setReloadTick] = useState(0);
   const mountedRef = useRef(true);
+  const requestSeqRef = useRef(0);
   const { partSize, setPartSize, partIndex, setPartIndex, partCount } = useWordbookParting(wordbookId, items.length);
 
   useEffect(() => {
@@ -55,6 +57,8 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
 
   useEffect(() => {
     const loadAll = async () => {
+      const requestSeq = requestSeqRef.current + 1;
+      requestSeqRef.current = requestSeq;
       setLoading(true);
       setError("");
       setInfo("");
@@ -71,19 +75,19 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
         const take = first.paging?.take ?? 200;
         const pageCount = Math.max(1, Math.ceil(total / Math.max(take, 1)));
         const merged = [...(first.items ?? [])];
-
-        for (let page = 1; page < pageCount; page += 1) {
-          const res = await apiFetch(`/api/wordbooks/${wordbookId}/study?view=memorize&page=${page}&take=${take}`, {
-            cache: "no-store"
-          });
-          const json = (await res.json()) as StudyPayload;
-          if (!res.ok) {
-            throw new Error(json.error ?? "카드 데이터를 불러오지 못했습니다.");
+        if (pageCount > 1) {
+          const pagePromises = Array.from({ length: pageCount - 1 }, (_, idx) =>
+            apiFetch(`/api/wordbooks/${wordbookId}/study?view=memorize&page=${idx + 1}&take=${take}`, { cache: "no-store" })
+          );
+          const pageResponses = await Promise.all(pagePromises);
+          const pagePayloads = await Promise.all(pageResponses.map(async (res) => ({ ok: res.ok, json: (await res.json()) as StudyPayload })));
+          for (const payload of pagePayloads) {
+            if (!payload.ok) throw new Error(payload.json.error ?? "카드 데이터를 불러오지 못했습니다.");
+            if (payload.json.items?.length) merged.push(...payload.json.items);
           }
-          if (json.items?.length) merged.push(...json.items);
         }
 
-        if (!mountedRef.current) return;
+        if (!mountedRef.current || requestSeqRef.current !== requestSeq) return;
         setTitle(first.wordbook.title);
         setSpeakLang(first.wordbook.fromLang?.toLowerCase().startsWith("en") ? "en-US" : undefined);
         setItems(merged);
@@ -91,16 +95,16 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
         setShowMeaning(false);
         setInfo(`카드 ${merged.length}개를 불러왔습니다.`);
       } catch (e) {
-        if (!mountedRef.current) return;
+        if (!mountedRef.current || requestSeqRef.current !== requestSeq) return;
         setItems([]);
         setError(e instanceof Error ? e.message : "카드 데이터를 불러오지 못했습니다.");
       } finally {
-        if (mountedRef.current) setLoading(false);
+        if (mountedRef.current && requestSeqRef.current === requestSeq) setLoading(false);
       }
     };
 
     void loadAll();
-  }, [wordbookId]);
+  }, [reloadTick, wordbookId]);
 
   const partItems = useMemo(() => {
     const start = (partIndex - 1) * partSize;
@@ -237,7 +241,7 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
             파트 {partIndex}/{partCount} · 파트 단어 {loading ? "-" : shuffledItems.length}개 ·{" "}
             {loading ? "-" : `${idx + 1}/${Math.max(shuffledItems.length, 1)}`}
           </p>
-          <p className="mt-1 text-xs text-slate-500">단축키: ←/→ 카드 이동 · Space 뜻 보기/숨기기 · R 섞기 · `[`/`]` 파트 이동 · Home/End 처음/끝 카드</p>
+          <p className="mt-1 text-xs text-slate-500">단축키: ←/→ 카드 이동 · Space 뜻 보기/숨기기 · R 섞기 · `[`/`]` 파트 이동 · Home/End 처음/끝 카드 · PageUp/PageDown 파트 이동</p>
         </div>
         <WordbookStudyTabs wordbookId={wordbookId} active="cards" showBack={false} />
       </header>
@@ -260,11 +264,27 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
           <span className="text-slate-500">· 현재 범위 {items.length === 0 ? "-" : `${partStart}~${partEnd}`}</span>
         </div>
         <div className="mt-3 flex flex-wrap items-center gap-2">
+          <label className="sr-only" htmlFor="cards-part-select">
+            파트 선택
+          </label>
+          <select
+            id="cards-part-select"
+            value={partIndex}
+            onChange={(event) => setPartIndex(Number(event.target.value))}
+            className="w-full rounded border border-slate-300 bg-white px-2 py-1 text-sm sm:hidden"
+          >
+            {Array.from({ length: partCount }, (_, i) => i + 1).map((n) => (
+              <option key={`cards-part-${n}`} value={n}>
+                {n}파트
+              </option>
+            ))}
+          </select>
           <button
             type="button"
             onClick={() => setPartIndex(Math.max(1, partIndex - 1))}
             disabled={partIndex <= 1}
             className="ui-btn-secondary px-3 py-1 text-xs disabled:opacity-50"
+            aria-label={`${Math.max(1, partIndex - 1)}파트로 이동`}
           >
             이전 파트
           </button>
@@ -273,6 +293,7 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
             onClick={() => setPartIndex(Math.min(partCount, partIndex + 1))}
             disabled={partIndex >= partCount}
             className="ui-btn-secondary px-3 py-1 text-xs disabled:opacity-50"
+            aria-label={`${Math.min(partCount, partIndex + 1)}파트로 이동`}
           >
             다음 파트
           </button>
@@ -296,6 +317,14 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
               max={partCount}
               value={partJump}
               onChange={(event) => setPartJump(event.target.value)}
+              onBlur={() => {
+                const raw = Number(partJump);
+                if (!Number.isFinite(raw)) {
+                  setPartJump(String(partIndex));
+                  return;
+                }
+                setPartJump(String(Math.min(Math.max(Math.floor(raw), 1), partCount)));
+              }}
               className="w-full rounded border border-slate-300 bg-white px-2 py-1 text-sm sm:w-24"
             />
             <button type="submit" className="ui-btn-secondary px-3 py-1 text-xs">
@@ -332,14 +361,28 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
           <span>파트 진행률</span>
           <span>{progressPercent}%</span>
         </div>
-        <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100" aria-label={`카드 진행률 ${progressPercent}%`}>
+        <div
+          className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100"
+          role="progressbar"
+          aria-label={`카드 진행률 ${progressPercent}%`}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={progressPercent}
+        >
           <div className="h-full rounded-full bg-gradient-to-r from-blue-500 to-blue-600" style={{ width: `${progressPercent}%` }} />
         </div>
         <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
           <span>전체 진행률</span>
           <span>{overallProgressPercent}%</span>
         </div>
-        <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100" aria-label={`전체 카드 진행률 ${overallProgressPercent}%`}>
+        <div
+          className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100"
+          role="progressbar"
+          aria-label={`전체 카드 진행률 ${overallProgressPercent}%`}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={overallProgressPercent}
+        >
           <div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-600" style={{ width: `${overallProgressPercent}%` }} />
         </div>
       </div>
@@ -355,6 +398,21 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
           primary={{ label: "단어장 상세로 이동", href: `/wordbooks/${wordbookId}?partSize=${partSize}&partIndex=${partIndex}` }}
           secondary={{ label: "암기 화면으로 이동", href: `/wordbooks/${wordbookId}/memorize?partSize=${partSize}&partIndex=${partIndex}` }}
         />
+      ) : null}
+      {error ? (
+        <div>
+          <button
+            type="button"
+            onClick={() => {
+              setInfo("");
+              setError("");
+              setReloadTick((value) => value + 1);
+            }}
+            className="ui-btn-secondary px-3 py-1 text-xs"
+          >
+            다시 시도
+          </button>
+        </div>
       ) : null}
 
       {current ? (
