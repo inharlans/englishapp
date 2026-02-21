@@ -523,3 +523,8 @@ Railway 기준:
 - 각 탭에 `aria-controls`/`tabIndex`, 각 패널에 `role=tabpanel`/`aria-labelledby` 연결 추가
 - 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_73.md`
 
+### 2026-02-22 Iteration 74
+- `/wordbooks` 다운로드 카드의 버전 상태 문구 가독성 보정
+- 버전 정보 뒤에 명시적 `상태` 라벨/구분자를 추가해 `최신`/`업데이트 가능` 배지 해석 명확화
+- 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_74.md`
+

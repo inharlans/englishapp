@@ -378,6 +378,8 @@ export default async function WordbooksPage() {
                     <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700" role="status" aria-live="polite">
                       <p>
                         내 버전 v{d.downloadedVersion} / 최신 v{d.wordbook.contentVersion}
+                        <span className="mx-1">/</span>
+                        <span>상태</span>
                         {d.wordbook.contentVersion > d.downloadedVersion ? (
                           <span className="ml-2 rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 font-semibold text-blue-800">
                             업데이트 가능
