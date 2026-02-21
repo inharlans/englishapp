@@ -209,9 +209,11 @@ export default function OfflineLibraryPage() {
           {error}
         </p>
       ) : null}
-      <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800" role="status" aria-live="polite">
-        {info || "\u00A0"}
-      </p>
+      {info ? (
+        <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800" role="status" aria-live="polite">
+          {info}
+        </p>
+      ) : null}
 
       {filteredItems.length === 0 && !loading ? (
         <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-600" role="status" aria-live="polite">

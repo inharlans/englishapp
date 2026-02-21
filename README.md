@@ -603,3 +603,8 @@ Railway 기준:
 - 잘못된 ID 진입 시 로그인 유도 대신 즉시 무효 단어장 안내를 노출해 동선 혼란을 방지
 - 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_89.md`
 
+### 2026-02-22 Iteration 90
+- `/offline`에서 성공 메시지(`info`)가 없을 때 빈 초록 상태 박스가 남는 문제 수정
+- 성공 안내는 실제 메시지가 있을 때만 렌더링하도록 정리해 피드백 우선순위를 명확화
+- 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_90.md`
+
