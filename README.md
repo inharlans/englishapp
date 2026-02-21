@@ -474,6 +474,11 @@ Railway 기준:
 - 프론트 입력 제한과 서버 검증 상한을 일치시켜 정합성/성능 리스크 완화
 - 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_65.md`
 
+### 2026-02-22 Iteration 66
+- 퀴즈 제출 API(WORD 모드) `gradingDiagnosis.reason`의 깨진 인코딩 문구 정리
+- 의미/단어 모드 진단 문구를 모두 정상 한글로 통일
+- 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_66.md`
+
 
 
 

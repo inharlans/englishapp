@@ -176,7 +176,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
           closestAccepted: item.term,
           similarityScore: Number(scoreSimilarity(answer, item.term).toFixed(3)),
           potentiallyDisputable: false,
-          reason: "?⑥뼱 紐⑤뱶???뺢퇋?붾맂 ?꾩쟾 ?쇱튂 湲곗??쇰줈 梨꾩젏?⑸땲??"
+          reason: "단어 모드는 정규화된 완전 일치 기준으로 채점합니다."
         };
 
   const existing = await prisma.wordbookStudyItemState.findUnique({
