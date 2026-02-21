@@ -110,15 +110,20 @@ export function WordbookListClient({
 
   const partStatsMap = useMemo(() => new Map(partStats.map((s) => [s.partIndex, s])), [partStats]);
   const displayPartCount = Math.max(1, pagingPartCount, partCount);
-  const parts = Array.from({ length: displayPartCount }, (_, idx) => {
-    const n = idx + 1;
-    const stat = partStatsMap.get(n);
-    return {
-      partIndex: n,
-      totalInPart: stat?.totalInPart ?? 0,
-      matchedCount: stat?.matchedCount ?? 0
-    };
-  });
+  const parts = useMemo(
+    () =>
+      Array.from({ length: displayPartCount }, (_, idx) => {
+        const n = idx + 1;
+        const stat = partStatsMap.get(n);
+        return {
+          partIndex: n,
+          totalInPart: stat?.totalInPart ?? 0,
+          matchedCount: stat?.matchedCount ?? 0
+        };
+      }),
+    [displayPartCount, partStatsMap]
+  );
+  const partByIndex = useMemo(() => new Map(parts.map((p) => [p.partIndex, p])), [parts]);
   const activePartStat = partStatsMap.get(partIndex) ?? { totalInPart: 0, matchedCount: 0 };
   const activePartRate =
     activePartStat.totalInPart > 0 ? Math.round((activePartStat.matchedCount / activePartStat.totalInPart) * 100) : 0;
@@ -142,11 +147,11 @@ export function WordbookListClient({
       const current = sorted[i];
       const prev = sorted[i - 1];
       if (prev && current - prev > 1) result.push({ kind: "ellipsis", id: `ellipsis-${prev}-${current}` });
-      const found = parts.find((p) => p.partIndex === current);
+      const found = partByIndex.get(current);
       if (found) result.push({ kind: "part", part: found });
     }
     return result;
-  }, [displayPartCount, partIndex, parts]);
+  }, [displayPartCount, partByIndex, partIndex, parts]);
 
   useEffect(() => {
     setPartJump(String(partIndex));

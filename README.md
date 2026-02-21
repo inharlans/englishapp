@@ -663,3 +663,8 @@ Railway 기준:
 - 검색어 소문자 변환을 필터 루프 밖으로 이동해 불필요한 반복 연산 제거
 - 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_101.md`
 
+### 2026-02-22 Iteration 102
+- `WordbookListClient` 파트 네비게이션 계산 최적화: `parts` 메모이즈 + 인덱스 맵(`partByIndex`) 도입
+- `visibleParts` 생성 시 반복 선형 탐색(`find`)을 O(1) 조회로 전환
+- 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_102.md`
+
