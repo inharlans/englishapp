@@ -365,6 +365,17 @@ export default async function WordbookDetailPage(props: {
             <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700">
               <p className="font-semibold text-slate-900">
                 내 버전 v{downloadedVersion} / 최신 v{wordbook.contentVersion}
+                <span className="mx-1">/</span>
+                <span>상태</span>
+                {wordbook.contentVersion > downloadedVersion ? (
+                  <span className="ml-2 rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-800">
+                    업데이트 가능
+                  </span>
+                ) : (
+                  <span className="ml-2 rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-800">
+                    최신
+                  </span>
+                )}
               </p>
               <p className="mt-1 text-xs text-slate-600">
                 변경 요약: +{versionSummary.addedCount} / ~{versionSummary.updatedCount} / -

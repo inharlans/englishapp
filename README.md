@@ -553,3 +553,8 @@ Railway 기준:
 - 데이터 미수신 상태의 `0/0 (0%)` 오인 리스크 완화
 - 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_79.md`
 
+### 2026-02-22 Iteration 80
+- `/wordbooks/[id]` 상세 페이지 버전 문구에 상태 라벨/배지 추가
+- 목록 페이지와 동일하게 `최신`/`업데이트 가능` 해석을 즉시 인지할 수 있도록 보강
+- 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_80.md`
+
