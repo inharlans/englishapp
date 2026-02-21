@@ -193,7 +193,7 @@ export function MeaningView({
               <span className="mr-1 rounded-full border border-slate-200 bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600">
                 {entry.tag}
               </span>
-              {entry.text}
+              <span>{entry.text}</span>
             </>
           ) : (
             entry.text

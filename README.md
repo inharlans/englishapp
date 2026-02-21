@@ -498,3 +498,8 @@ Railway 기준:
 - 채점 완료 상태에서의 불필요한 입력 누적을 차단해 다음 문제 이동 UX 혼선 완화
 - 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_68.md`
 
+### 2026-02-22 Iteration 69
+- `/wordbooks/[id]/memorize` 실측에서 확인된 의미 칩 가독성 이슈 수정
+- 컴팩트 의미 칩에서 품사 배지와 의미 텍스트가 붙어 보이던 문제를 분리 렌더링으로 보정
+- 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_69.md`
+
