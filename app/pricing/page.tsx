@@ -14,6 +14,8 @@ export default async function PricingPage(props: { searchParams: Promise<{ payme
 
   const downloadWordsUsed = user ? await getUserDownloadedWordCount(user.id) : null;
   const paymentEnabled = Boolean(getPortOneConfig());
+  const supportEmail = business.supportEmail || "준비 중";
+  const supportPhone = business.supportPhone || "준비 중";
 
   return (
     <section className="space-y-6">
@@ -81,20 +83,20 @@ export default async function PricingPage(props: { searchParams: Promise<{ payme
           <li>해지정책: 구독 해지 시 다음 결제일부터 자동 청구 중단</li>
           <li>환불정책: 전자상거래법 및 결제사 정책에 따라 처리(고객센터 접수 후 검토)</li>
           <li>
-            고객센터: {business.supportEmail || "-"} / {business.supportPhone || "-"}
+            고객센터: {supportEmail} / {supportPhone}
             {business.supportHours ? ` (${business.supportHours})` : ""}
           </li>
         </ul>
       </section>
 
       {sp.payment === "success" ? (
-        <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
+        <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900" role="status" aria-live="polite">
           결제가 완료되었습니다. 결제 상태는 자동으로 반영됩니다.
         </div>
       ) : null}
 
       {sp.payment === "cancel" ? (
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700">
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700" role="status" aria-live="polite">
           결제가 취소되었습니다. 아래 버튼으로 다시 시도할 수 있습니다.
         </div>
       ) : null}
@@ -146,14 +148,14 @@ export default async function PricingPage(props: { searchParams: Promise<{ payme
         </ul>
       </div>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700">
-        <p className="font-semibold text-slate-900">자주 묻는 질문</p>
-        <div className="mt-3 space-y-2">
-          <p><span className="font-semibold">Q.</span> 무료에서도 가격표를 볼 수 있나요?</p>
-          <p className="text-slate-600"><span className="font-semibold">A.</span> 네, 로그인 없이 가격/혜택/약관을 확인할 수 있습니다.</p>
-          <p><span className="font-semibold">Q.</span> 결제 실패 후 다시 시도할 수 있나요?</p>
-          <p className="text-slate-600"><span className="font-semibold">A.</span> 가능합니다. 같은 페이지에서 다시 결제를 진행하면 됩니다.</p>
-        </div>
+      <section className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700" aria-labelledby="pricing-faq-title">
+        <p id="pricing-faq-title" className="font-semibold text-slate-900">자주 묻는 질문</p>
+        <dl className="mt-3 space-y-2">
+          <dt><span className="font-semibold">Q.</span> 무료에서도 가격표를 볼 수 있나요?</dt>
+          <dd className="text-slate-600"><span className="font-semibold">A.</span> 네, 로그인 없이 가격/혜택/약관을 확인할 수 있습니다.</dd>
+          <dt><span className="font-semibold">Q.</span> 결제 실패 후 다시 시도할 수 있나요?</dt>
+          <dd className="text-slate-600"><span className="font-semibold">A.</span> 가능합니다. 같은 페이지에서 다시 결제를 진행하면 됩니다.</dd>
+        </dl>
       </section>
     </section>
   );
