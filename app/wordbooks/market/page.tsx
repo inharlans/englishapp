@@ -148,6 +148,8 @@ export default async function MarketPage(props: {
   const prevDisabled = page <= 0;
   const nextDisabled = page >= maxPage;
   const hasActiveFilters = q.length > 0 || sort !== "top" || size !== "all";
+  const sortLabel = sort === "new" ? "최신순" : sort === "downloads" ? "다운로드순" : "인기순";
+  const sizeLabel = size === "100-300" ? "100~300단어" : size === "301-700" ? "301~700단어" : size === "701+" ? "701단어 이상" : "전체";
   const pagerQuery = { q, sort, size };
   const nextMarketPath = `/wordbooks/market?${new URLSearchParams({ q, sort, size, page: String(page) }).toString()}`;
   const marketLoginHref = { pathname: "/login", query: { next: nextMarketPath } };
@@ -257,7 +259,7 @@ export default async function MarketPage(props: {
           </div>
         </div>
         <p className="mt-2 text-xs text-slate-500" aria-live="polite">
-          검색어: {q ? `"${q}"` : "없음"} · 정렬: {sort} · 규모: {size}
+          검색어: {q ? `"${q}"` : "없음"} · 정렬: {sortLabel} · 규모: {sizeLabel}
         </p>
       </form>
 

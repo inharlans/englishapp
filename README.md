@@ -568,3 +568,8 @@ Railway 기준:
 - 사용자 화면에는 마스킹 이메일만 노출해 정보 최소화 원칙 준수
 - 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_82.md`
 
+### 2026-02-22 Iteration 83
+- `/wordbooks/market` 필터 요약에서 내부 코드값(`top`, `all`) 노출 제거
+- 정렬/규모 상태를 사용자 라벨(`인기순`, `전체` 등)로 표시하도록 개선
+- 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_83.md`
+
