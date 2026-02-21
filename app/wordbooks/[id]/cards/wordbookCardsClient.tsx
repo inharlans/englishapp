@@ -241,12 +241,13 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
   useEffect(() => {
     setIdx(0);
     setShowMeaning(false);
+    if (loading || items.length === 0) return;
     if (skipInitialPartInfoRef.current) {
       skipInitialPartInfoRef.current = false;
       return;
     }
     setInfo(`${partIndex}파트로 이동했습니다.`);
-  }, [partIndex, partSize]);
+  }, [items.length, loading, partIndex, partSize]);
 
   useEffect(() => {
     if (!info) return;

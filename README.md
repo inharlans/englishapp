@@ -538,3 +538,8 @@ Railway 기준:
 - 데이터 미수신 상태의 `0개/1개 파트` 오인 리스크 완화
 - 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_76.md`
 
+### 2026-02-22 Iteration 77
+- `/wordbooks/[id]/cards` 초기 진입 시 잘못 노출되던 파트 이동 안내 문구 조건 보정
+- 데이터 로딩 완료 후 실제 파트 이동에서만 `N파트로 이동했습니다.` 상태 메시지 노출
+- 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_77.md`
+
