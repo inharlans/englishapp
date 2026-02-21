@@ -43,6 +43,15 @@ function parseTake(raw: string | undefined, fallback: number): number {
   return Math.min(200, Math.max(20, Math.floor(n)));
 }
 
+function formatDateKst(date: Date): string {
+  return new Intl.DateTimeFormat("ko-KR", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).format(date);
+}
+
 export default async function WordbookDetailPage(props: {
   params: Promise<{ id: string }>;
   searchParams: Promise<{ page?: string; take?: string }>;
@@ -197,14 +206,14 @@ export default async function WordbookDetailPage(props: {
           </h1>
           <p className="mt-2 text-sm text-slate-600">
             제작자 {maskEmailAddress(wordbook.owner.email)} | 단어 {totalItemCount}개 | 다운로드 {wordbook.downloadCount}회
-            {downloadedAt ? ` | 다운로드일 ${downloadedAt.toISOString().slice(0, 10)}` : ""} |{" "}
+            {downloadedAt ? ` | 다운로드일 ${formatDateKst(downloadedAt)}` : ""} |{" "}
             {wordbook.isPublic ? "공개" : "비공개"}
           </p>
           {displayDescription ? (
             <p className="mt-2 max-w-3xl text-sm text-slate-700">{displayDescription}</p>
           ) : null}
         </div>
-        <div className="ml-auto flex flex-wrap items-center gap-2">
+        <div className="ml-auto flex flex-wrap items-center gap-2" role="group" aria-label="단어장 주요 동작">
           <Link
             href={{ pathname: "/wordbooks/market" }}
             className="ui-btn-secondary px-4 py-2 text-sm"
@@ -364,7 +373,7 @@ export default async function WordbookDetailPage(props: {
               {snapshotItemCount !== null && syncedAt ? (
                 <p className="mt-1 text-xs text-slate-500">
                   단어 수 변화: {snapshotItemCount}에서 {totalItemCount} / 최근 동기화{" "}
-                  {syncedAt.toISOString().slice(0, 10)}
+                  {formatDateKst(syncedAt)}
                 </p>
               ) : null}
               {wordbook.contentVersion > downloadedVersion ? (
@@ -389,45 +398,61 @@ export default async function WordbookDetailPage(props: {
           </div>
         </div>
         {totalItemCount === 0 ? (
-          <p className="text-sm text-slate-600">등록된 단어가 없습니다.</p>
+          <div className="space-y-2 rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-600">
+            <p>등록된 단어가 없습니다.</p>
+            {isOwner && !isPrivateLocked ? (
+              <p>
+                아래 <span className="font-semibold">단어 추가</span> 영역에서 항목을 입력해 시작할 수 있습니다.
+              </p>
+            ) : null}
+          </div>
         ) : (
           <>
-            <div className="grid gap-2">
+            <div className="grid gap-2" role="list" aria-label="단어 항목 목록">
               {pagedItems.map((item) => (
-                <WordbookItemRow
-                  key={item.id}
-                  wordbookId={id}
-                  item={item}
-                  editable={isOwner && !isPrivateLocked}
-                  speakLang={speakLang}
-                />
+                <div key={item.id} role="listitem">
+                  <WordbookItemRow
+                    wordbookId={id}
+                    item={item}
+                    editable={isOwner && !isPrivateLocked}
+                    speakLang={speakLang}
+                  />
+                </div>
               ))}
             </div>
             <div className="flex items-center justify-between pt-2">
-              <Link
-                href={{
-                  pathname: `/wordbooks/${id}`,
-                  query: { page: String(Math.max(currentPage - 1, 0)), take: String(take) }
-                }}
-                className={[
-                  "ui-btn-secondary px-3 py-1.5 text-xs",
-                  currentPage <= 0 ? "pointer-events-none opacity-50" : ""
-                ].join(" ")}
-              >
-                이전
-              </Link>
-              <Link
-                href={{
-                  pathname: `/wordbooks/${id}`,
-                  query: { page: String(Math.min(currentPage + 1, pageCount - 1)), take: String(take) }
-                }}
-                className={[
-                  "ui-btn-secondary px-3 py-1.5 text-xs",
-                  currentPage >= pageCount - 1 ? "pointer-events-none opacity-50" : ""
-                ].join(" ")}
-              >
-                다음
-              </Link>
+              {currentPage <= 0 ? (
+                <span className="ui-btn-secondary cursor-not-allowed px-3 py-1.5 text-xs opacity-50" aria-disabled="true">
+                  이전
+                </span>
+              ) : (
+                <Link
+                  href={{
+                    pathname: `/wordbooks/${id}`,
+                    query: { page: String(Math.max(currentPage - 1, 0)), take: String(take) }
+                  }}
+                  className="ui-btn-secondary px-3 py-1.5 text-xs"
+                  aria-label={`${Math.max(currentPage, 1)}페이지로 이동`}
+                >
+                  이전
+                </Link>
+              )}
+              {currentPage >= pageCount - 1 ? (
+                <span className="ui-btn-secondary cursor-not-allowed px-3 py-1.5 text-xs opacity-50" aria-disabled="true">
+                  다음
+                </span>
+              ) : (
+                <Link
+                  href={{
+                    pathname: `/wordbooks/${id}`,
+                    query: { page: String(Math.min(currentPage + 1, pageCount - 1)), take: String(take) }
+                  }}
+                  className="ui-btn-secondary px-3 py-1.5 text-xs"
+                  aria-label={`${Math.min(currentPage + 2, pageCount)}페이지로 이동`}
+                >
+                  다음
+                </Link>
+              )}
             </div>
           </>
         )}

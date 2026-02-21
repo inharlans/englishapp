@@ -147,6 +147,7 @@ export default async function MarketPage(props: {
   const prevDisabled = page <= 0;
   const nextDisabled = page >= maxPage;
   const pagerQuery = { q, sort, size };
+  const marketLoginHref = { pathname: "/login", query: { next: `/wordbooks/market?q=${encodeURIComponent(q)}&sort=${sort}&size=${size}&page=${page}` } };
 
   return (
     <section className="space-y-6 pb-24">
@@ -184,7 +185,7 @@ export default async function MarketPage(props: {
               내 단어장
             </Link>
           ) : (
-            <Link href={{ pathname: "/login", query: { next: "/wordbooks" } }} className="ui-btn-secondary px-4 py-2 text-sm">
+            <Link href={marketLoginHref} className="ui-btn-secondary px-4 py-2 text-sm">
               로그인
             </Link>
           )}
@@ -236,6 +237,12 @@ export default async function MarketPage(props: {
             <button type="submit" className="ui-btn-primary w-full px-4 py-2 text-sm">
               적용
             </button>
+            <Link
+              href={{ pathname: "/wordbooks/market", query: { sort: "top", size: "all", page: "0" } }}
+              className="mt-2 inline-flex text-xs font-semibold text-blue-700 hover:underline"
+            >
+              필터 초기화
+            </Link>
           </div>
         </div>
       </form>
@@ -296,7 +303,7 @@ export default async function MarketPage(props: {
           title="검색 결과가 없습니다"
           description="검색어를 줄이거나 정렬 기준을 바꿔서 다시 찾아보세요."
           primary={{ label: "필터 초기화", href: "/wordbooks/market?sort=top&size=all&page=0" }}
-          secondary={{ label: user ? "내 단어장" : "로그인", href: user ? "/wordbooks" : "/login?next=/wordbooks" }}
+          secondary={{ label: user ? "내 단어장" : "로그인", href: user ? "/wordbooks" : `/login?next=/wordbooks/market?q=${encodeURIComponent(q)}&sort=${sort}&size=${size}&page=${page}` }}
         />
       ) : (
         <>
@@ -381,7 +388,7 @@ export default async function MarketPage(props: {
                     ) : null}
                     {!isDownloaded && !user ? (
                       <Link
-                        href={{ pathname: "/login", query: { next: `/wordbooks/${wb.id}` } }}
+                        href={marketLoginHref}
                         className="ui-btn-secondary rounded-xl px-3 py-2 text-xs"
                       >
                         로그인 후 다운로드
@@ -414,7 +421,7 @@ export default async function MarketPage(props: {
               <Link
                 href={{ pathname: "/wordbooks/market", query: { ...pagerQuery, page: String(prevPage) } }}
                 className="ui-btn-secondary px-4 py-2 text-sm"
-                aria-label="이전 페이지"
+                aria-label={`${prevPage + 1}페이지로 이동`}
               >
                 이전
               </Link>
@@ -430,7 +437,7 @@ export default async function MarketPage(props: {
               <Link
                 href={{ pathname: "/wordbooks/market", query: { ...pagerQuery, page: String(nextPage) } }}
                 className="ui-btn-secondary px-4 py-2 text-sm"
-                aria-label="다음 페이지"
+                aria-label={`${nextPage + 1}페이지로 이동`}
               >
                 다음
               </Link>
