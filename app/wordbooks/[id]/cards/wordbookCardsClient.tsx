@@ -44,16 +44,26 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
   const [orderSeed, setOrderSeed] = useState(0);
   const [partJump, setPartJump] = useState("1");
   const [reloadTick, setReloadTick] = useState(0);
+  const [resumeEnabled, setResumeEnabled] = useState(true);
   const mountedRef = useRef(true);
   const requestSeqRef = useRef(0);
+  const restoredKeyRef = useRef("");
   const { partSize, setPartSize, partIndex, setPartIndex, partCount } = useWordbookParting(wordbookId, items.length);
+  const progressStorageKey = `wordbook_cards_progress_${wordbookId}_${partSize}_${partIndex}`;
+  const resumePrefKey = `wordbook_cards_resume_enabled_${wordbookId}`;
 
   useEffect(() => {
     mountedRef.current = true;
+    try {
+      const raw = window.localStorage.getItem(resumePrefKey);
+      if (raw === "0") setResumeEnabled(false);
+    } catch {
+      setResumeEnabled(true);
+    }
     return () => {
       mountedRef.current = false;
     };
-  }, []);
+  }, [resumePrefKey]);
 
   useEffect(() => {
     const loadAll = async () => {
@@ -141,13 +151,44 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
 
   useEffect(() => {
     setPartJump(String(partIndex));
-  }, [partIndex]);
+    restoredKeyRef.current = "";
+  }, [partIndex, partSize]);
 
   useEffect(() => {
     setIdx(0);
     setShowMeaning(false);
     setInfo(`${partIndex}파트로 이동했습니다.`);
   }, [partIndex, partSize]);
+
+  useEffect(() => {
+    if (!resumeEnabled || loading || shuffledItems.length === 0) return;
+    if (restoredKeyRef.current === progressStorageKey) return;
+    restoredKeyRef.current = progressStorageKey;
+    try {
+      const raw = window.localStorage.getItem(progressStorageKey);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as { idx?: number; showMeaning?: boolean };
+      const nextIdx =
+        Number.isFinite(parsed.idx) && typeof parsed.idx === "number"
+          ? Math.min(Math.max(Math.floor(parsed.idx), 0), Math.max(shuffledItems.length - 1, 0))
+          : 0;
+      setIdx(nextIdx);
+      setShowMeaning(Boolean(parsed.showMeaning));
+      setInfo(`${partIndex}파트 이어보기 위치로 복원했습니다.`);
+    } catch {
+      setIdx(0);
+      setShowMeaning(false);
+    }
+  }, [loading, partIndex, progressStorageKey, resumeEnabled, shuffledItems.length]);
+
+  useEffect(() => {
+    if (!resumeEnabled || !hasPartItems) return;
+    try {
+      window.localStorage.setItem(progressStorageKey, JSON.stringify({ idx, showMeaning, updatedAt: Date.now() }));
+    } catch {
+      // ignore localStorage errors
+    }
+  }, [hasPartItems, idx, progressStorageKey, resumeEnabled, showMeaning]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -291,6 +332,40 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
           />
           <span className="text-slate-500">전체 {items.length}개 / {partCount}개 파트</span>
           <span className="text-slate-500">· 현재 범위 {items.length === 0 || !hasPartItems ? "-" : `${partStart}~${partEnd}`}</span>
+          <button
+            type="button"
+            onClick={() => {
+              setResumeEnabled((value) => {
+                const next = !value;
+                try {
+                  window.localStorage.setItem(resumePrefKey, next ? "1" : "0");
+                } catch {
+                  // ignore localStorage errors
+                }
+                return next;
+              });
+            }}
+            aria-pressed={resumeEnabled}
+            className="ui-btn-secondary px-3 py-1 text-xs"
+          >
+            이어보기 {resumeEnabled ? "켜짐" : "꺼짐"}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              try {
+                window.localStorage.removeItem(progressStorageKey);
+              } catch {
+                // ignore localStorage errors
+              }
+              setIdx(0);
+              setShowMeaning(false);
+              setInfo("현재 파트 이어보기 위치를 초기화했습니다.");
+            }}
+            className="ui-btn-secondary px-3 py-1 text-xs"
+          >
+            이어보기 초기화
+          </button>
         </div>
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <label className="sr-only" htmlFor="cards-part-select">
