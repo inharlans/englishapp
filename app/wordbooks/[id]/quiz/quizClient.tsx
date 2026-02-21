@@ -76,6 +76,7 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
   const [attempts, setAttempts] = useState(0);
   const [corrects, setCorrects] = useState(0);
   const [wrongs, setWrongs] = useState(0);
+  const [partAttempts, setPartAttempts] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
   const [partItemCount, setPartItemCount] = useState(0);
   const answerInputRef = useRef<HTMLInputElement>(null);
@@ -130,6 +131,33 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
     }
   }, [feedback, item, loading]);
 
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      const isTyping =
+        !!target &&
+        (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.getAttribute("contenteditable") === "true");
+      if (isTyping) return;
+
+      if (event.key === "/") {
+        event.preventDefault();
+        answerInputRef.current?.focus();
+      }
+      if (event.key.toLowerCase() === "n" && feedback) {
+        event.preventDefault();
+        void loadNext();
+      }
+      if (event.key.toLowerCase() === "s" && !feedback) {
+        event.preventDefault();
+        void loadNext();
+        setMessage("문제를 건너뛰었습니다.");
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [feedback, loadNext]);
+
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (feedback) {
@@ -148,6 +176,7 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
       const json = (await res.json()) as SubmitPayload;
       if (!res.ok) throw new Error(json.error ?? "제출에 실패했습니다.");
       setAttempts((v) => v + 1);
+      setPartAttempts((v) => v + 1);
       if (json.correct) setCorrects((v) => v + 1);
       else setWrongs((v) => v + 1);
       setFeedback({
@@ -194,7 +223,7 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
 
   const partButtons = useMemo(() => Array.from({ length: partCount }, (_, idx) => idx + 1), [partCount]);
   const accuracy = attempts > 0 ? Math.round((corrects / attempts) * 100) : 0;
-  const currentPartProgress = partItemCount > 0 ? Math.min(100, Math.round(((corrects + wrongs) / partItemCount) * 100)) : 0;
+  const currentPartProgress = partItemCount > 0 ? Math.min(100, Math.round((partAttempts / partItemCount) * 100)) : 0;
 
   return (
     <section className="space-y-4">
@@ -249,15 +278,19 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
             min={1}
             max={200}
             value={partSize}
-            onChange={(e) => setPartSize(Number(e.target.value))}
+            onChange={(e) => {
+              setPartSize(Number(e.target.value));
+              setPartAttempts(0);
+            }}
             className="w-20 rounded border border-slate-300 bg-white px-2 py-1 text-sm"
           />
           <span className="text-slate-500">
             총 {totalItems}개 / {partCount}개 파트
           </span>
           <span className="text-slate-500">
-            · 정답률 {accuracy}% ({corrects}/{Math.max(attempts, 1)})
+            · 정답률 {accuracy}% ({corrects}/{attempts})
           </span>
+          <span className="text-slate-500">· 단축키: `/` 입력 포커스 · `S` 건너뛰기 · `N` 다음</span>
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
           <label className="sr-only" htmlFor="wordbook-quiz-part-select">
@@ -268,6 +301,7 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
             value={partIndex}
             onChange={(e) => {
               setPartIndex(Number(e.target.value));
+              setPartAttempts(0);
               setFeedback(null);
               setMessage("");
             }}
@@ -279,6 +313,32 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
               </option>
             ))}
           </select>
+          <button
+            type="button"
+            onClick={() => {
+              setPartIndex(Math.max(1, partIndex - 1));
+              setPartAttempts(0);
+              setFeedback(null);
+              setMessage("");
+            }}
+            disabled={partIndex <= 1}
+            className="ui-btn-secondary w-full px-3 py-2 text-sm sm:w-auto disabled:opacity-50"
+          >
+            이전 파트
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setPartIndex(Math.min(partCount, partIndex + 1));
+              setPartAttempts(0);
+              setFeedback(null);
+              setMessage("");
+            }}
+            disabled={partIndex >= partCount}
+            className="ui-btn-secondary w-full px-3 py-2 text-sm sm:w-auto disabled:opacity-50"
+          >
+            다음 파트
+          </button>
         </div>
         <div className="mt-3 hidden flex-wrap gap-2 sm:flex">
           {partButtons.map((n) => (
@@ -287,6 +347,7 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
               type="button"
               onClick={() => {
                 setPartIndex(n);
+                setPartAttempts(0);
                 setFeedback(null);
                 setMessage("");
               }}
@@ -349,6 +410,7 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
                 data-testid="wordbook-quiz-answer"
                 aria-label="정답"
                 placeholder={mode === "MEANING" ? "뜻 입력" : "단어 입력"}
+                maxLength={120}
                 className="min-w-[240px] flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               />
               <button
@@ -362,13 +424,22 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
               {!feedback ? (
                 <button
                   type="button"
-                  onClick={() => void loadNext()}
+                  onClick={() => {
+                    void loadNext();
+                    setMessage("문제를 건너뛰었습니다.");
+                  }}
                   className="ui-btn-secondary px-4 py-2 text-sm"
                 >
                   건너뛰기
                 </button>
               ) : null}
             </form>
+            <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-500" role="status" aria-live="polite">
+              <span>시도 {attempts}</span>
+              <span>· 정답 {corrects}</span>
+              <span>· 오답 {wrongs}</span>
+              <span>· 현재 파트 풀이 {partAttempts}/{partItemCount}</span>
+            </div>
             {feedback ? (
               <div
                 className={[
