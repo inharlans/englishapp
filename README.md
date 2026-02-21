@@ -643,3 +643,8 @@ Railway 기준:
 - 상태 메시지(`status`)가 있을 때만 상태 박스를 렌더링하도록 정리
 - 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_97.md`
 
+### 2026-02-22 Iteration 98
+- `/offline` 초기 진입 시 자동 로딩 성공 메시지 노출을 제거하고 무음 로딩으로 전환
+- 사용자 액션(새로고침 버튼/단축키)에서만 성공 메시지를 표시하도록 피드백 타이밍 보정
+- 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_98.md`
+

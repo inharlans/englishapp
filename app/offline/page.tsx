@@ -25,14 +25,16 @@ export default function OfflineLibraryPage() {
       day: "2-digit"
     }).format(new Date(iso));
 
-  const reload = async () => {
+  const reload = async ({ announce }: { announce: boolean }) => {
     setLoading(true);
     setError("");
     setInfo("");
     try {
       const list = await listOfflineWordbooks();
       setItems(list);
-      setInfo(`오프라인 라이브러리를 새로고침했습니다. 총 ${list.length}개 항목입니다.`);
+      if (announce) {
+        setInfo(`오프라인 라이브러리를 새로고침했습니다. 총 ${list.length}개 항목입니다.`);
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "오프라인 라이브러리를 불러오지 못했습니다.");
     } finally {
@@ -41,7 +43,7 @@ export default function OfflineLibraryPage() {
   };
 
   useEffect(() => {
-    void reload();
+    void reload({ announce: false });
   }, []);
 
   useEffect(() => {
@@ -65,7 +67,7 @@ export default function OfflineLibraryPage() {
       }
       if (event.key.toLowerCase() === "r") {
         event.preventDefault();
-        if (!busy) void reload();
+        if (!busy) void reload({ announce: true });
       }
     };
     window.addEventListener("keydown", onKeyDown);
@@ -103,7 +105,7 @@ export default function OfflineLibraryPage() {
     setInfo("");
     try {
       await deleteOfflineWordbook(id);
-      await reload();
+      await reload({ announce: false });
       setInfo(`"${title}" 오프라인 사본을 삭제했습니다.`);
     } catch (e) {
       setError(e instanceof Error ? e.message : "오프라인 사본 삭제에 실패했습니다.");
@@ -133,7 +135,7 @@ export default function OfflineLibraryPage() {
           </Link>
           <button
             type="button"
-            onClick={() => void reload()}
+            onClick={() => void reload({ announce: true })}
             disabled={busy}
             aria-busy={loading}
             className="ui-btn-secondary px-4 py-2 text-sm"
