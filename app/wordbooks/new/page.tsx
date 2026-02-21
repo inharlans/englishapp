@@ -175,6 +175,10 @@ export default function NewWordbookPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [status, setStatus] = useState("");
+  const importTabListId = "wordbook-import-tablist";
+  const pastePanelId = "wordbook-import-panel-paste";
+  const uploadPanelId = "wordbook-import-panel-upload";
+  const manualPanelId = "wordbook-import-panel-manual";
 
   const validations = useMemo<RowValidation[]>(() => {
     const termCounts = new Map<string, number>();
@@ -448,10 +452,14 @@ export default function NewWordbookPage() {
         </section>
 
         <section className="ui-card p-5">
-          <div className="inline-flex rounded-xl border border-slate-200 p-1 text-xs">
+          <div id={importTabListId} role="tablist" aria-label="단어장 입력 방식" className="inline-flex rounded-xl border border-slate-200 p-1 text-xs">
             <button
               type="button"
               onClick={() => setTab("paste")}
+              role="tab"
+              id="tab-paste"
+              aria-selected={tab === "paste"}
+              aria-controls={pastePanelId}
               className={tab === "paste" ? "rounded-lg ui-tab-active px-3 py-1.5 font-semibold" : "rounded-lg ui-tab-inactive px-3 py-1.5"}
             >
               붙여넣기
@@ -459,6 +467,10 @@ export default function NewWordbookPage() {
             <button
               type="button"
               onClick={() => setTab("upload")}
+              role="tab"
+              id="tab-upload"
+              aria-selected={tab === "upload"}
+              aria-controls={uploadPanelId}
               className={tab === "upload" ? "rounded-lg ui-tab-active px-3 py-1.5 font-semibold" : "rounded-lg ui-tab-inactive px-3 py-1.5"}
             >
               파일 업로드
@@ -466,6 +478,10 @@ export default function NewWordbookPage() {
             <button
               type="button"
               onClick={() => setTab("manual")}
+              role="tab"
+              id="tab-manual"
+              aria-selected={tab === "manual"}
+              aria-controls={manualPanelId}
               className={tab === "manual" ? "rounded-lg ui-tab-active px-3 py-1.5 font-semibold" : "rounded-lg ui-tab-inactive px-3 py-1.5"}
             >
               수동 입력
@@ -473,7 +489,7 @@ export default function NewWordbookPage() {
           </div>
 
           {tab === "paste" ? (
-            <div className="mt-3 space-y-3">
+            <div id={pastePanelId} role="tabpanel" aria-labelledby="tab-paste" className="mt-3 space-y-3">
               <label className="block">
                 <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">여기에 붙여넣기</span>
                 <textarea
@@ -486,10 +502,10 @@ export default function NewWordbookPage() {
               </label>
               <p className="text-xs text-slate-500">엑셀에서 복사하면 보통 탭(TSV)으로 붙여넣어집니다.</p>
               <div className="flex flex-wrap gap-2">
-                <button type="button" onClick={parsePaste} className="ui-btn-primary px-3 py-1.5 text-xs">
+                <button type="button" onClick={parsePaste} disabled={loading} className="ui-btn-primary px-3 py-1.5 text-xs disabled:opacity-60">
                   파싱해서 미리보기
                 </button>
-                <button type="button" onClick={resetPaste} className="ui-btn-secondary px-3 py-1.5 text-xs">
+                <button type="button" onClick={resetPaste} disabled={loading} className="ui-btn-secondary px-3 py-1.5 text-xs disabled:opacity-60">
                   초기화
                 </button>
               </div>
@@ -497,13 +513,14 @@ export default function NewWordbookPage() {
           ) : null}
 
           {tab === "upload" ? (
-            <div className="mt-3 space-y-3">
+            <div id={uploadPanelId} role="tabpanel" aria-labelledby="tab-upload" className="mt-3 space-y-3">
               <label className="block">
                 <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">파일 선택</span>
                 <input
                   type="file"
                   accept=".csv,.tsv,.txt,text/csv,text/plain"
                   className="mt-1 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
+                  disabled={loading}
                   onChange={(e) => void onUploadFile(e.target.files?.[0] ?? null)}
                 />
               </label>
@@ -512,7 +529,7 @@ export default function NewWordbookPage() {
           ) : null}
 
           {tab === "manual" ? (
-            <div className="mt-3 space-y-3">
+            <div id={manualPanelId} role="tabpanel" aria-labelledby="tab-manual" className="mt-3 space-y-3">
               <div className="flex flex-wrap gap-2">
                 <button type="button" onClick={() => addRows(1)} className="ui-btn-primary px-3 py-1.5 text-xs">
                   + row
@@ -522,7 +539,7 @@ export default function NewWordbookPage() {
                 </button>
               </div>
               <div className="overflow-x-auto rounded-xl border border-slate-200">
-                <table className="w-full min-w-[520px] text-sm">
+                <table className="w-full min-w-[520px] text-sm" aria-label="수동 입력 단어 표">
                   <thead className="bg-slate-50 text-left text-xs text-slate-600">
                     <tr>
                       <th className="px-3 py-2">position</th>
@@ -550,7 +567,7 @@ export default function NewWordbookPage() {
                           />
                         </td>
                         <td className="px-3 py-2">
-                          <button type="button" onClick={() => removeRow(row.id)} className="ui-btn-secondary px-2 py-1 text-xs">
+                          <button type="button" onClick={() => removeRow(row.id)} aria-label={`행 ${idx + 1} 삭제`} className="ui-btn-secondary px-2 py-1 text-xs">
                             삭제
                           </button>
                         </td>
@@ -587,7 +604,7 @@ export default function NewWordbookPage() {
             </div>
 
             <div className="mt-3 overflow-x-auto rounded-xl border border-slate-200">
-              <table className="w-full min-w-[620px] text-sm">
+              <table className="w-full min-w-[620px] text-sm" aria-label="검증 결과 단어 표">
                 <thead className="bg-slate-50 text-left text-xs text-slate-600">
                   <tr>
                     <th className="px-3 py-2">position</th>
@@ -633,7 +650,7 @@ export default function NewWordbookPage() {
                           )}
                         </td>
                         <td className="px-3 py-2">
-                          <button type="button" onClick={() => removeRow(row.id)} className="ui-btn-secondary px-2 py-1 text-xs">
+                          <button type="button" onClick={() => removeRow(row.id)} aria-label={`검증 행 ${v.position} 삭제`} className="ui-btn-secondary px-2 py-1 text-xs">
                             삭제
                           </button>
                         </td>
