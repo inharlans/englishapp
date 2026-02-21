@@ -81,6 +81,7 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
   const [partItemCount, setPartItemCount] = useState(0);
   const [partJump, setPartJump] = useState("1");
   const [autoNextOnCorrect, setAutoNextOnCorrect] = useState(false);
+  const skipInitialPartNoticeRef = useRef(true);
   const answerInputRef = useRef<HTMLInputElement>(null);
   const retryQueueRef = useRef<QuizItem[]>([]);
   const { mode: meaningMode, setMode: setMeaningMode } = useMeaningViewMode();
@@ -173,6 +174,11 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
 
   useEffect(() => {
     setPartJump(String(partIndex));
+    if (skipInitialPartNoticeRef.current) {
+      skipInitialPartNoticeRef.current = false;
+      return;
+    }
+    setMessage(`${partIndex}파트로 이동했습니다.`);
   }, [partIndex]);
 
   useEffect(() => {
@@ -220,6 +226,10 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
       }
       if (event.key === "Home" && !loading) {
         event.preventDefault();
+        if (partIndex <= 1) {
+          setMessage("첫 파트입니다.");
+          return;
+        }
         setPartIndex(1);
         setPartAttempts(0);
         setFeedback(null);
@@ -227,6 +237,10 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
       }
       if (event.key === "End" && !loading) {
         event.preventDefault();
+        if (partIndex >= partCount) {
+          setMessage("마지막 파트입니다.");
+          return;
+        }
         setPartIndex(partCount);
         setPartAttempts(0);
         setFeedback(null);
@@ -331,6 +345,8 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
   }, [partButtons, partCount, partIndex]);
   const accuracy = attempts > 0 ? Math.round((corrects / attempts) * 100) : 0;
   const currentPartProgress = partItemCount > 0 ? Math.min(100, Math.round((partAttempts / partItemCount) * 100)) : 0;
+  const remainingInPart = Math.max(partItemCount - partAttempts, 0);
+  const remainingParts = Math.max(partCount - partIndex, 0);
 
   return (
     <section className="space-y-4">
@@ -397,6 +413,8 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
           <span className="text-slate-500">
             · 정답률 {accuracy}% ({corrects}/{attempts})
           </span>
+          <span className="text-slate-500">· 남은 파트 {remainingParts}개</span>
+          <span className="text-slate-500">· 현재 파트 남은 문제 {remainingInPart}개</span>
           <span className="text-slate-500">· 단축키: `/` 입력 포커스 · `S` 건너뛰기 · `N` 다음 · `[`/`]` 파트 이동 · `Home`/`End` 처음/끝</span>
           <button
             type="button"
@@ -439,6 +457,10 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
           <button
             type="button"
             onClick={() => {
+              if (partIndex <= 1) {
+                setMessage("첫 파트입니다.");
+                return;
+              }
               setPartIndex(1);
               setPartAttempts(0);
               setFeedback(null);
@@ -452,6 +474,10 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
           <button
             type="button"
             onClick={() => {
+              if (partIndex <= 1) {
+                setMessage("첫 파트입니다.");
+                return;
+              }
               setPartIndex(Math.max(1, partIndex - 1));
               setPartAttempts(0);
               setFeedback(null);
@@ -466,6 +492,10 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
           <button
             type="button"
             onClick={() => {
+              if (partIndex >= partCount) {
+                setMessage("마지막 파트입니다.");
+                return;
+              }
               setPartIndex(Math.min(partCount, partIndex + 1));
               setPartAttempts(0);
               setFeedback(null);
@@ -480,6 +510,10 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
           <button
             type="button"
             onClick={() => {
+              if (partIndex >= partCount) {
+                setMessage("마지막 파트입니다.");
+                return;
+              }
               setPartIndex(partCount);
               setPartAttempts(0);
               setFeedback(null);
@@ -512,6 +546,14 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
               max={partCount}
               value={partJump}
               onChange={(event) => setPartJump(event.target.value)}
+              onBlur={() => {
+                const raw = Number(partJump);
+                if (!Number.isFinite(raw)) {
+                  setPartJump(String(partIndex));
+                  return;
+                }
+                setPartJump(String(Math.min(Math.max(Math.floor(raw), 1), partCount)));
+              }}
               className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm sm:w-24"
             />
             <button type="submit" className="ui-btn-secondary px-3 py-2 text-sm">
