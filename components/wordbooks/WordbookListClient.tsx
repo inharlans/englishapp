@@ -10,6 +10,7 @@ import { DensityModeToggle } from "@/components/ui/DensityModeToggle";
 import { densityCardClass, useDensityMode } from "@/components/ui/useDensityMode";
 import { EmptyStateCard } from "@/components/ui/EmptyStateCard";
 import { apiFetch } from "@/lib/clientApi";
+import { sanitizeUserText } from "@/lib/textQuality";
 
 type ListMode = "listCorrect" | "listWrong" | "listHalf";
 
@@ -43,6 +44,12 @@ function activeTab(mode: ListMode) {
   if (mode === "listCorrect") return "list-correct" as const;
   if (mode === "listWrong") return "list-wrong" as const;
   return "list-half" as const;
+}
+
+function parseBoundedInt(raw: string, fallback: number, min: number, max: number) {
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.min(max, Math.max(min, Math.floor(parsed)));
 }
 
 export function WordbookListClient({
@@ -190,7 +197,9 @@ export function WordbookListClient({
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">단어장 목록</p>
           <h1 className="mt-2 text-2xl font-black tracking-tight text-slate-900">{title}</h1>
-          {wordbookTitle ? <p className="mt-1 text-sm text-slate-600">{wordbookTitle}</p> : null}
+          {wordbookTitle ? (
+            <p className="mt-1 text-sm text-slate-600">{sanitizeUserText(wordbookTitle, "단어장")}</p>
+          ) : null}
           <p className="mt-1 text-xs text-slate-500">단축키: `[` 이전 파트 · `]` 다음 파트 · `Home`/`End` 처음/끝 파트</p>
         </div>
         <WordbookStudyTabs wordbookId={wordbookId} active={activeTab(mode)} />
@@ -235,7 +244,13 @@ export function WordbookListClient({
             min={1}
             max={200}
             value={partSize}
-            onChange={(e) => setPartSize(Number(e.target.value))}
+            onChange={(e) => {
+              const next = parseBoundedInt(e.target.value, partSize, 1, 200);
+              setPartSize(next);
+              setPartIndex(1);
+              setPartJump("1");
+              setInfo(`파트 크기를 ${next}로 변경했습니다.`);
+            }}
             className="w-20 rounded border border-slate-300 bg-white px-2 py-1 text-sm"
           />
           <span className="text-slate-500">
@@ -254,10 +269,11 @@ export function WordbookListClient({
             id="list-part-select"
             value={partIndex}
             onChange={(event) => {
-              setPartIndex(Number(event.target.value));
+              setPartIndex(parseBoundedInt(event.target.value, partIndex, 1, displayPartCount));
               setInfo("");
             }}
             className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm sm:hidden"
+            disabled={loading}
           >
             {parts.map((part) => (
               <option key={`part-select-${part.partIndex}`} value={part.partIndex}>
@@ -275,7 +291,7 @@ export function WordbookListClient({
               setPartIndex(1);
               setInfo("");
             }}
-            disabled={partIndex <= 1}
+            disabled={loading || partIndex <= 1}
             className="ui-btn-secondary px-3 py-1 text-xs disabled:opacity-50"
           >
             처음
@@ -290,7 +306,7 @@ export function WordbookListClient({
               setPartIndex(Math.max(1, partIndex - 1));
               setInfo("");
             }}
-            disabled={partIndex <= 1}
+            disabled={loading || partIndex <= 1}
             className="ui-btn-secondary px-3 py-1 text-xs disabled:opacity-50"
           >
             이전 파트
@@ -305,7 +321,7 @@ export function WordbookListClient({
               setPartIndex(Math.min(displayPartCount, partIndex + 1));
               setInfo("");
             }}
-            disabled={partIndex >= displayPartCount}
+            disabled={loading || partIndex >= displayPartCount}
             className="ui-btn-secondary px-3 py-1 text-xs disabled:opacity-50"
           >
             다음 파트
@@ -320,7 +336,7 @@ export function WordbookListClient({
               setPartIndex(displayPartCount);
               setInfo("");
             }}
-            disabled={partIndex >= displayPartCount}
+            disabled={loading || partIndex >= displayPartCount}
             className="ui-btn-secondary px-3 py-1 text-xs disabled:opacity-50"
           >
             마지막
@@ -329,8 +345,8 @@ export function WordbookListClient({
             className="flex w-full items-center gap-2 sm:w-auto"
             onSubmit={(event) => {
               event.preventDefault();
-              const raw = Number(partJump);
-              const next = Number.isFinite(raw) ? Math.min(Math.max(Math.floor(raw), 1), displayPartCount) : partIndex;
+              const next = parseBoundedInt(partJump, partIndex, 1, displayPartCount);
+              setPartJump(String(next));
               setPartIndex(next);
               setInfo("");
             }}
@@ -346,12 +362,7 @@ export function WordbookListClient({
               value={partJump}
               onChange={(event) => setPartJump(event.target.value)}
               onBlur={() => {
-                const raw = Number(partJump);
-                if (!Number.isFinite(raw)) {
-                  setPartJump(String(partIndex));
-                  return;
-                }
-                setPartJump(String(Math.min(Math.max(Math.floor(raw), 1), displayPartCount)));
+                setPartJump(String(parseBoundedInt(partJump, partIndex, 1, displayPartCount)));
               }}
               className="w-full rounded-lg border border-slate-300 bg-white px-3 py-1 text-sm sm:w-24"
             />
@@ -369,6 +380,7 @@ export function WordbookListClient({
                 key={entry.part.partIndex}
                 type="button"
                 onClick={() => {
+                  if (loading) return;
                   setPartIndex(entry.part.partIndex);
                   setInfo("");
                 }}
@@ -380,6 +392,7 @@ export function WordbookListClient({
                 ].join(" ")}
                 aria-label={`${entry.part.partIndex}파트 ${entry.part.matchedCount}/${entry.part.totalInPart}`}
                 aria-current={entry.part.partIndex === partIndex ? "page" : undefined}
+                disabled={loading}
               >
                 <span>{entry.part.partIndex}파트</span>
                 <span className={entry.part.partIndex === partIndex ? "ml-2 text-slate-200" : "ml-2 text-slate-500"}>
@@ -408,9 +421,9 @@ export function WordbookListClient({
           </button>
         </div>
       ) : null}
-      {info ? (
-        <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800" role="status" aria-live="polite">{info}</p>
-      ) : null}
+      <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800" role="status" aria-live="polite">
+        {info || "\u00A0"}
+      </p>
 
       <div className="relative min-h-[220px]">
         {loading ? (
@@ -433,12 +446,12 @@ export function WordbookListClient({
           <article key={item.id} className={`ui-card ui-fade-in ${densityCardClass(densityMode)}`}>
             <h2 className="text-lg font-bold text-slate-900">{item.term}</h2>
             <div className="mt-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
-              <MeaningView value={item.meaning} mode={meaningMode} className="text-sm" />
+              <MeaningView value={sanitizeUserText(item.meaning, "의미 데이터 점검 중입니다")} mode={meaningMode} className="text-sm" />
             </div>
             {item.example ? (
               <p className="mt-2 text-xs text-slate-500">
-                예문: {item.example}
-                {item.exampleMeaning ? ` - ${item.exampleMeaning}` : ""}
+                예문: {sanitizeUserText(item.example, "예문 데이터 점검 중입니다")}
+                {item.exampleMeaning ? ` - ${sanitizeUserText(item.exampleMeaning, "예문 해석 데이터 점검 중입니다")}` : ""}
               </p>
             ) : null}
             {item.itemState ? (

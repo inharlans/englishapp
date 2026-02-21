@@ -406,6 +406,12 @@ Railway 기준:
 - `/wordbooks/[id]/cards` 파트 입력값 방어(clamp) 및 로딩 중 파트 이동 제어 강화
 - 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_53.md`
 
+### 2026-02-22 Iteration 54
+- 공용 목록(`list-correct`, `list-wrong`, `list-half`) 파트 입력/점프 값 방어(clamp) 적용
+- 로딩 중 파트 이동 컨트롤(select/버튼/파트칩) 비활성화로 상태 충돌 방지
+- 목록 제목/의미/예문 텍스트 정제 가드 적용 및 상태 메시지 영역 안정화
+- 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_54.md`
+
 
 
 
