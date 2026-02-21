@@ -12,6 +12,21 @@ const DISMISS_KEY = "pwa_install_prompt_dismissed_until";
 const DISMISS_DAYS = 7;
 const STUDY_PATH_RE =
   /^\/wordbooks\/\d+\/(memorize|cards|quiz|quiz-meaning|quiz-word|list-correct|list-wrong|list-half)(\/|$)/;
+const SUPPRESSED_PATHS = new Set([
+  "/login",
+  "/logout",
+  "/pricing",
+  "/terms",
+  "/privacy",
+  "/admin"
+]);
+
+function isSuppressedPath(pathname: string | null): boolean {
+  if (!pathname) return false;
+  if (SUPPRESSED_PATHS.has(pathname)) return true;
+  if (pathname.startsWith("/admin/")) return true;
+  return false;
+}
 
 export function PwaInstallPrompt() {
   const pathname = usePathname();
@@ -40,7 +55,7 @@ export function PwaInstallPrompt() {
     return () => window.removeEventListener("beforeinstallprompt", onBeforeInstall);
   }, []);
 
-  if (pathname && STUDY_PATH_RE.test(pathname)) return null;
+  if (pathname && (STUDY_PATH_RE.test(pathname) || isSuppressedPath(pathname))) return null;
   if (!deferred || dismissed) return null;
 
   return (
