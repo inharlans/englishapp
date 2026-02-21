@@ -405,6 +405,8 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
   const currentPartProgress = partItemCount > 0 ? Math.min(100, Math.round((solvedInPart / partItemCount) * 100)) : 0;
   const remainingInPart = Math.max(partItemCount - solvedInPart, 0);
   const remainingInPartWithRetry = remainingInPart + retryQueue.length;
+  const remainingBreakdown =
+    retryQueue.length > 0 ? `${remainingInPart}(신규) + ${retryQueue.length}(재도전)` : `${remainingInPart}(신규)`;
   const remainingParts = Math.max(partCount - partIndex, 0);
   const totalItemsLabel = loading && totalItems === 0 ? "-" : String(totalItems);
   const partCountLabel = loading && totalItems === 0 ? "-" : String(partCount);
@@ -485,7 +487,9 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
             · 정답률 {accuracy}% ({corrects}/{attempts})
           </span>
           <span className="text-slate-500">· 남은 파트 {remainingPartsLabel}개</span>
-          <span className="text-slate-500">· 현재 파트 남은 문제(재도전 포함) {remainingInPartLabel}개</span>
+          <span className="text-slate-500">
+            · 현재 파트 남은 문제(재도전 포함) {remainingInPartLabel}개{loading && totalItems === 0 ? "" : ` · ${remainingBreakdown}`}
+          </span>
           <span className="text-slate-500">· 단축키: `/` 입력 포커스 · `S` 건너뛰기 · `N`/`Enter` 다음 · `R` 오답 재시도 · `Esc` 입력 비우기 · `[`/`]` 파트 이동 · `Home`/`End` 처음/끝</span>
           <button
             type="button"
@@ -731,7 +735,7 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
               <span>· 오답 {wrongs}</span>
               <span>· 현재 파트 고유 풀이 {solvedInPart}/{partItemCount}</span>
               <span>· 현재 파트 시도 {partAttempts}</span>
-              <span>· 오답 큐 {retryQueue.length} (남은 문제 {remainingInPartWithRetry})</span>
+              <span>· 오답 큐 {retryQueue.length} (신규 {remainingInPart} + 재도전 {retryQueue.length})</span>
             </div>
             {feedback ? (
               <div

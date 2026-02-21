@@ -479,6 +479,11 @@ Railway 기준:
 - 의미/단어 모드 진단 문구를 모두 정상 한글로 통일
 - 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_66.md`
 
+### 2026-02-22 Iteration 67
+- `quiz-word` 남은 문제 지표를 `신규 + 재도전`으로 분해 표시
+- 상단 요약/상태바 문구를 보강해 학습 진행 체감과 지표 해석 정확도 개선
+- 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_67.md`
+
 
 
 
