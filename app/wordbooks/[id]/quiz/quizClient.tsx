@@ -802,9 +802,11 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
         )}
       </div>
 
-      <p className="text-sm text-slate-700" role="status" aria-live="polite">
-        {message || "\u00A0"}
-      </p>
+      {message ? (
+        <p className="text-sm text-slate-700" role="status" aria-live="polite">
+          {message}
+        </p>
+      ) : null}
 
       {attempts >= 5 ? (
         <SessionRecapPanel

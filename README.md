@@ -633,3 +633,8 @@ Railway 기준:
 - 홈/마켓 등 비학습 페이지에서 숫자 키 입력으로 강제 라우팅되던 동선 이슈 수정
 - 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_95.md`
 
+### 2026-02-22 Iteration 96
+- `wordbooks/[id]` 퀴즈 화면의 빈 상태 메시지(`NBSP`) 상시 노출 패턴 제거
+- 실제 메시지(`message`)가 있을 때만 상태 문구를 렌더링하도록 정리
+- 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_96.md`
+
