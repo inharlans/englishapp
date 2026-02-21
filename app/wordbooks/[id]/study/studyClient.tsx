@@ -2,7 +2,7 @@
 
 import { apiFetch } from "@/lib/clientApi";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { MeaningView } from "@/components/MeaningView";
 import { SpeakButton } from "@/components/wordbooks/SpeakButton";
@@ -57,6 +57,8 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [info, setInfo] = useState("");
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const { mode, setMode } = useMeaningViewMode();
   const { mode: densityMode, setMode: setDensityMode } = useDensityMode();
 
@@ -106,6 +108,47 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
   }, [wordbookId]);
 
   useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      const isTyping =
+        !!target &&
+        (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.getAttribute("contenteditable") === "true");
+      if (isTyping) return;
+
+      if (event.key === "/") {
+        event.preventDefault();
+        searchInputRef.current?.focus();
+        setInfo("검색 입력창으로 이동했습니다.");
+      }
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        setInfo("");
+        setPageIndex((prev) => Math.max(prev - 1, 0));
+      }
+      if (event.key === "ArrowRight") {
+        event.preventDefault();
+        setInfo("");
+        setPageIndex((prev) => Math.min(prev + 1, totalPages - 1));
+      }
+      if (event.key.toLowerCase() === "h") {
+        event.preventDefault();
+        setHideCorrect((prev) => {
+          const next = !prev;
+          if (typeof window !== "undefined") {
+            window.localStorage.setItem(`wordbook_memorize_hide_correct_${wordbookId}`, next ? "1" : "0");
+          }
+          setPageIndex(0);
+          setInfo(next ? "맞춘 단어 숨김을 켰습니다." : "맞춘 단어 숨김을 껐습니다.");
+          return next;
+        });
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [totalPages, wordbookId]);
+
+  useEffect(() => {
     void load();
   }, [load]);
 
@@ -122,6 +165,7 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
     totalItems <= 0 ? 0 : Math.round((studyState.correctCount / Math.max(totalItems, 1)) * 100);
 
   const movePage = (delta: number) => {
+    setInfo("");
     setPageIndex((prev) => {
       const next = prev + delta;
       if (next < 0) return 0;
@@ -134,6 +178,7 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
     const n = Number(pageInput);
     if (!Number.isFinite(n)) return;
     const next = Math.min(Math.max(Math.floor(n), 1), totalPages);
+    setInfo("");
     setPageIndex(next - 1);
   };
 
@@ -144,16 +189,19 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
         window.localStorage.setItem(`wordbook_memorize_hide_correct_${wordbookId}`, next ? "1" : "0");
       }
       setPageIndex(0);
+      setInfo(next ? "맞춘 단어 숨김을 켰습니다." : "맞춘 단어 숨김을 껐습니다.");
       return next;
     });
   };
 
   const onQueryChange = (value: string) => {
     setQuery(value);
+    setInfo("");
     setPageIndex(0);
   };
 
   const changePageSize = (next: number) => {
+    setInfo("");
     setPageSize(Math.min(50, Math.max(1, next)));
     setPageIndex(0);
   };
@@ -167,6 +215,7 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
           <p className="mt-2 text-sm text-slate-600">
             체크 {studyState.studiedCount} / 정답 {studyState.correctCount} / 오답 {studyState.wrongCount}
           </p>
+          <p className="mt-1 text-xs text-slate-500">단축키: `/` 검색 · `←/→` 페이지 이동 · `H` 맞춘 단어 숨김 토글</p>
         </div>
         <WordbookStudyTabs wordbookId={wordbookId} active="memorize" showBack={false} />
       </header>
@@ -212,10 +261,14 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
             {error ? (
         <p
           className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700"
-          role="status"
-          aria-live="polite"
+          role="alert"
         >
           {error}
+        </p>
+      ) : null}
+      {info ? (
+        <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800" role="status" aria-live="polite">
+          {info}
         </p>
       ) : null}
 
@@ -253,7 +306,7 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
                 ) : null}
                 {item.itemState ? (
                   <p className="mt-1 text-xs text-slate-500">
-                    상태 {item.itemState.status} / 연속 정답 {item.itemState.streak}
+                    상태 {item.itemState.status === "CORRECT" ? "정답" : item.itemState.status === "WRONG" ? "오답" : "새 단어"} / 연속 정답 {item.itemState.streak}
                   </p>
                 ) : null}
               </div>
@@ -266,12 +319,30 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
       <div className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/80 backdrop-blur-md">
           <div className="mx-auto flex max-w-6xl items-center gap-2 overflow-x-auto px-3 py-2 text-xs">
             <input
+              ref={searchInputRef}
               type="search"
               value={query}
               onChange={(e) => onQueryChange(e.target.value)}
               placeholder="단어 검색"
+              aria-label="암기 단어 검색"
               className="min-w-[180px] flex-1 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 outline-none ring-blue-500 focus:ring-2"
             />
+            <button
+              type="button"
+              onClick={() => {
+                setQuery("");
+                setHideCorrect(false);
+                if (typeof window !== "undefined") {
+                  window.localStorage.setItem(`wordbook_memorize_hide_correct_${wordbookId}`, "0");
+                }
+                setPageIndex(0);
+                setInfo("검색/필터를 초기화했습니다.");
+                searchInputRef.current?.focus();
+              }}
+              className="ui-btn-secondary px-2.5 py-1"
+            >
+              초기화
+            </button>
             <span className="text-slate-500">개수</span>
             <button
               type="button"
@@ -315,6 +386,13 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
               max={totalPages}
               value={pageInput}
               onChange={(e) => setPageInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  applyPageInput();
+                }
+              }}
+              aria-label="이동할 페이지 번호"
               className="w-16 rounded-lg border border-slate-300 bg-white px-2 py-1 text-center text-sm text-slate-900 outline-none ring-blue-500 focus:ring-2"
             />
             <button
@@ -329,6 +407,7 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
               type="button"
               onClick={toggleHideCorrect}
               disabled={loading}
+              aria-pressed={hideCorrect}
               className={[
                 "rounded-lg border px-3 py-1 font-semibold",
                 hideCorrect
