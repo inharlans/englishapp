@@ -321,7 +321,7 @@ export default async function WordbookDetailPage(props: {
       ) : null}
 
       {(isOwner || downloadedAt) && !isPrivateLocked && (
-        <WordbookStudyTabs wordbookId={id} active="memorize" />
+        <WordbookStudyTabs wordbookId={id} active="memorize" showBack={false} />
       )}
 
       {isOwner && !isPrivateLocked ? (

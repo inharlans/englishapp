@@ -573,3 +573,8 @@ Railway 기준:
 - 정렬/규모 상태를 사용자 라벨(`인기순`, `전체` 등)로 표시하도록 개선
 - 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_83.md`
 
+### 2026-02-22 Iteration 84
+- `/wordbooks/[id]` 상세에서 학습 탭의 자기참조 `뒤로` 링크 제거
+- 상세 페이지는 `showBack={false}`로 설정해 무의미한 액션 노출 방지
+- 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_84.md`
+
