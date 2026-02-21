@@ -61,6 +61,7 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
   const mountedRef = useRef(true);
   const requestSeqRef = useRef(0);
   const restoredKeyRef = useRef("");
+  const skipInitialPartInfoRef = useRef(true);
   const { partSize, setPartSize, partIndex, setPartIndex, partCount } = useWordbookParting(wordbookId, items.length);
   const progressStorageKey = `wordbook_cards_progress_${wordbookId}_${partSize}_${partIndex}`;
   const resumePrefKey = `wordbook_cards_resume_enabled_${wordbookId}`;
@@ -169,6 +170,14 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
     return result;
   }, [partCount, partIndex]);
 
+  const moveToPrevPart = useCallback(() => {
+    if (partIndex <= 1) {
+      setInfo("첫 파트입니다.");
+      return;
+    }
+    setPartIndex(Math.max(1, partIndex - 1));
+  }, [partIndex, setPartIndex]);
+
   const moveToNextPart = useCallback(() => {
     if (partIndex >= partCount) {
       setInfo("마지막 파트입니다.");
@@ -220,8 +229,18 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
   useEffect(() => {
     setIdx(0);
     setShowMeaning(false);
+    if (skipInitialPartInfoRef.current) {
+      skipInitialPartInfoRef.current = false;
+      return;
+    }
     setInfo(`${partIndex}파트로 이동했습니다.`);
   }, [partIndex, partSize]);
+
+  useEffect(() => {
+    if (!info) return;
+    const timeout = window.setTimeout(() => setInfo(""), 4500);
+    return () => window.clearTimeout(timeout);
+  }, [info]);
 
   useEffect(() => {
     if (!resumeEnabled || loading || shuffledItems.length === 0) return;
@@ -272,12 +291,12 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
 
       if (event.key === "[") {
         event.preventDefault();
-        setPartIndex(Math.max(1, partIndex - 1));
+        moveToPrevPart();
         return;
       }
       if (event.key === "]") {
         event.preventDefault();
-        setPartIndex(Math.min(partCount, partIndex + 1));
+        moveToNextPart();
         return;
       }
       if (event.key === "Home") {
@@ -294,12 +313,12 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
       }
       if (event.key === "PageUp") {
         event.preventDefault();
-        setPartIndex(Math.max(1, partIndex - 1));
+        moveToPrevPart();
         return;
       }
       if (event.key === "PageDown") {
         event.preventDefault();
-        setPartIndex(Math.min(partCount, partIndex + 1));
+        moveToNextPart();
         return;
       }
       if (event.key.toLowerCase() === "n") {
@@ -309,7 +328,19 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
       }
       if (event.key.toLowerCase() === "p") {
         event.preventDefault();
-        setPartIndex(Math.max(1, partIndex - 1));
+        moveToPrevPart();
+        return;
+      }
+      if (event.key.toLowerCase() === "m" && !loading && shuffledItems.length > 0) {
+        event.preventDefault();
+        setShowMeaning((value) => !value);
+        return;
+      }
+      if (event.key === "0" && !loading && shuffledItems.length > 0) {
+        event.preventDefault();
+        setIdx(0);
+        setShowMeaning(false);
+        setInfo("현재 파트 첫 카드로 이동했습니다.");
         return;
       }
       if (event.key.toLowerCase() === "a") {
@@ -362,7 +393,7 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [autoAdvanceKey, loading, moveToNextPart, next, partCount, partIndex, setPartIndex, showMeaning, shuffledItems.length]);
+  }, [autoAdvanceKey, loading, moveToNextPart, moveToPrevPart, next, showMeaning, shuffledItems.length]);
 
   useEffect(() => {
     setIdx((value) => Math.min(value, Math.max(shuffledItems.length - 1, 0)));
@@ -382,7 +413,7 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
             {loading ? "-" : `${idx + 1}/${Math.max(shuffledItems.length, 1)}`}
           </p>
           <p className="mt-1 text-xs text-slate-500">
-            단축키: ←/→ 카드 이동 · Space/Enter 뜻 보기 · Esc 뜻 숨기기 · R 섞기 · `[`/`]`/`P`/`N` 파트 이동 · `A` 자동 파트 이동 토글 · Home/End 처음/끝 카드 · PageUp/PageDown 파트 이동
+            단축키: ←/→ 카드 이동 · Space/Enter/M 뜻 보기 · Esc 뜻 숨기기 · 0 처음 카드 · R 섞기 · `[`/`]`/`P`/`N` 파트 이동 · `A` 자동 파트 이동 토글 · Home/End 처음/끝 카드 · PageUp/PageDown 파트 이동
           </p>
           <p className="mt-1 text-xs text-slate-500" role="status" aria-live="polite">
             전체 기준 {loading ? "-" : `${overallCardNumber}/${items.length}`}
@@ -489,7 +520,7 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
           </button>
           <button
             type="button"
-            onClick={() => setPartIndex(Math.max(1, partIndex - 1))}
+            onClick={moveToPrevPart}
             disabled={partIndex <= 1}
             className="ui-btn-secondary px-3 py-1 text-xs disabled:opacity-50"
             aria-label={`${Math.max(1, partIndex - 1)}파트로 이동`}
