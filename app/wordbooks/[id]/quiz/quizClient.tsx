@@ -298,8 +298,18 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
         if (!item || prev.includes(item.id)) return prev;
         return [...prev, item.id];
       });
-      if (json.correct) setCorrects((v) => v + 1);
-      else setWrongs((v) => v + 1);
+      if (json.correct) {
+        setCorrects((v) => v + 1);
+        if (item) {
+          setRetryQueue((prev) => {
+            const next = prev.filter((queued) => queued.id !== item.id);
+            retryQueueRef.current = next;
+            return next;
+          });
+        }
+      } else {
+        setWrongs((v) => v + 1);
+      }
       setFeedback({
         isCorrect: Boolean(json.correct),
         correctAnswer: json.correctAnswer,

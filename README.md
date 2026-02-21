@@ -437,6 +437,12 @@ Railway 기준:
 - WORD 모드 표시 텍스트 정제 및 피드백 가독성 개선
 - 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_58.md`
 
+### 2026-02-22 Iteration 59
+- `/wordbooks/55/quiz-word` 실플레이에서 재현된 오답 큐 잔존 버그 수정
+- `다시 풀기` 후 정답 제출 시 해당 문제를 오답 큐/큐 ref에서 즉시 제거하도록 보강
+- 정답 처리 후 동일 문제가 재출제되는 리스크 제거
+- 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_59.md`
+
 
 
 
