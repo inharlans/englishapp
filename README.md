@@ -424,6 +424,12 @@ Railway 기준:
 - 수동 입력/검증 테이블 접근성 라벨 정리 및 상태 영역 상시 렌더링 적용
 - 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_56.md`
 
+### 2026-02-22 Iteration 57
+- `/wordbooks/market` 페이지 파라미터(`page`) 상한 클램프 적용으로 빈 페이지 진입 리스크 완화
+- 로그인 복귀(`next`) URL을 `URLSearchParams` 기반으로 안전 생성
+- 필터 요약 표시 추가, 필터 초기화 링크 조건부 노출, 검색 입력 제약(`maxLength`) 보강
+- 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_57.md`
+
 
 
 

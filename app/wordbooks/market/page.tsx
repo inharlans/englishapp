@@ -42,7 +42,7 @@ export default async function MarketPage(props: {
   const q = (sp.q ?? "").trim();
   const sort = parseSort(sp.sort);
   const size = parseSize(sp.size);
-  const page = Math.max(Number(sp.page ?? "0") || 0, 0);
+  const requestedPage = Math.max(Number(sp.page ?? "0") || 0, 0);
   const take = 30;
 
   const blockedOwnerIds = user
@@ -100,6 +100,8 @@ export default async function MarketPage(props: {
     )
     .map((wb) => wb.id);
   const total = eligibleIds.length;
+  const maxPage = Math.max(Math.ceil(total / take) - 1, 0);
+  const page = Math.min(requestedPage, maxPage);
   const pageIds = eligibleIds.slice(page * take, page * take + take);
 
   const [wordbooksUnordered, myDownloads, myDownloadedWordCount] = await Promise.all([
@@ -141,13 +143,15 @@ export default async function MarketPage(props: {
           .filter((wb) => wb._count.items >= 100 && wb._count.items <= 400)
           .slice(0, 3)
       : [];
-  const maxPage = Math.max(Math.ceil(total / take) - 1, 0);
   const prevPage = Math.max(page - 1, 0);
   const nextPage = Math.min(page + 1, maxPage);
   const prevDisabled = page <= 0;
   const nextDisabled = page >= maxPage;
+  const hasActiveFilters = q.length > 0 || sort !== "top" || size !== "all";
   const pagerQuery = { q, sort, size };
-  const marketLoginHref = { pathname: "/login", query: { next: `/wordbooks/market?q=${encodeURIComponent(q)}&sort=${sort}&size=${size}&page=${page}` } };
+  const nextMarketPath = `/wordbooks/market?${new URLSearchParams({ q, sort, size, page: String(page) }).toString()}`;
+  const marketLoginHref = { pathname: "/login", query: { next: nextMarketPath } };
+  const marketLoginHrefAsString = `/login?next=${encodeURIComponent(nextMarketPath)}`;
 
   return (
     <section className="space-y-6 pb-24">
@@ -202,6 +206,8 @@ export default async function MarketPage(props: {
               defaultValue={q}
               placeholder="제목, 설명, 제작자 이메일"
               aria-describedby="market-search-help"
+              autoComplete="off"
+              maxLength={120}
               className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
             <span id="market-search-help" className="mt-1 block text-[11px] text-slate-500">
@@ -234,17 +240,22 @@ export default async function MarketPage(props: {
             </select>
           </label>
           <div className="md:col-span-12 lg:col-span-12">
-            <button type="submit" className="ui-btn-primary w-full px-4 py-2 text-sm">
+            <button type="submit" className="ui-btn-primary w-full px-4 py-2 text-sm" aria-label="마켓 필터 적용">
               적용
             </button>
-            <Link
-              href={{ pathname: "/wordbooks/market", query: { sort: "top", size: "all", page: "0" } }}
-              className="mt-2 inline-flex text-xs font-semibold text-blue-700 hover:underline"
-            >
-              필터 초기화
-            </Link>
+            {hasActiveFilters ? (
+              <Link
+                href={{ pathname: "/wordbooks/market", query: { sort: "top", size: "all", page: "0" } }}
+                className="mt-2 inline-flex text-xs font-semibold text-blue-700 hover:underline"
+              >
+                필터 초기화
+              </Link>
+            ) : null}
           </div>
         </div>
+        <p className="mt-2 text-xs text-slate-500" aria-live="polite">
+          검색어: {q ? `"${q}"` : "없음"} · 정렬: {sort} · 규모: {size}
+        </p>
       </form>
 
       <div className="flex items-center justify-between text-sm text-slate-600">
@@ -303,7 +314,7 @@ export default async function MarketPage(props: {
           title="검색 결과가 없습니다"
           description="검색어를 줄이거나 정렬 기준을 바꿔서 다시 찾아보세요."
           primary={{ label: "필터 초기화", href: "/wordbooks/market?sort=top&size=all&page=0" }}
-          secondary={{ label: user ? "내 단어장" : "로그인", href: user ? "/wordbooks" : `/login?next=/wordbooks/market?q=${encodeURIComponent(q)}&sort=${sort}&size=${size}&page=${page}` }}
+          secondary={{ label: user ? "내 단어장" : "로그인", href: user ? "/wordbooks" : marketLoginHrefAsString }}
         />
       ) : (
         <>
