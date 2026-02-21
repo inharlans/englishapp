@@ -406,6 +406,10 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
   const remainingInPart = Math.max(partItemCount - solvedInPart, 0);
   const remainingInPartWithRetry = remainingInPart + retryQueue.length;
   const remainingParts = Math.max(partCount - partIndex, 0);
+  const totalItemsLabel = loading && totalItems === 0 ? "-" : String(totalItems);
+  const partCountLabel = loading && totalItems === 0 ? "-" : String(partCount);
+  const remainingPartsLabel = loading && totalItems === 0 ? "-" : String(remainingParts);
+  const remainingInPartLabel = loading && totalItems === 0 ? "-" : String(remainingInPartWithRetry);
   const acceptedMeaningPreview = useMemo(() => {
     if (!feedback || feedback.isCorrect || mode !== "MEANING") return [];
     const list = feedback.acceptedMeaningAnswers ?? [];
@@ -475,13 +479,13 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
             className="w-20 rounded border border-slate-300 bg-white px-2 py-1 text-sm"
           />
           <span className="text-slate-500">
-            총 {totalItems}개 / {partCount}개 파트
+            총 {totalItemsLabel}개 / {partCountLabel}개 파트
           </span>
           <span className="text-slate-500">
             · 정답률 {accuracy}% ({corrects}/{attempts})
           </span>
-          <span className="text-slate-500">· 남은 파트 {remainingParts}개</span>
-          <span className="text-slate-500">· 현재 파트 남은 문제(재도전 포함) {remainingInPartWithRetry}개</span>
+          <span className="text-slate-500">· 남은 파트 {remainingPartsLabel}개</span>
+          <span className="text-slate-500">· 현재 파트 남은 문제(재도전 포함) {remainingInPartLabel}개</span>
           <span className="text-slate-500">· 단축키: `/` 입력 포커스 · `S` 건너뛰기 · `N`/`Enter` 다음 · `R` 오답 재시도 · `Esc` 입력 비우기 · `[`/`]` 파트 이동 · `Home`/`End` 처음/끝</span>
           <button
             type="button"
