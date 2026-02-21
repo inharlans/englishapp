@@ -1,6 +1,8 @@
 ﻿"use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import type { Route } from "next";
 
 const cardsEnabled = process.env.NEXT_PUBLIC_ENABLE_WORDBOOK_CARDS !== "0";
 
@@ -25,6 +27,19 @@ export function WordbookStudyTabs({
   active: StudyTabKey;
   showBack?: boolean;
 }) {
+  const [queryString, setQueryString] = useState("");
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const qs = new URLSearchParams(window.location.search);
+    const next = new URLSearchParams();
+    const partSize = qs.get("partSize");
+    const partIndex = qs.get("partIndex");
+    if (partSize) next.set("partSize", partSize);
+    if (partIndex) next.set("partIndex", partIndex);
+    setQueryString(next.toString());
+  }, []);
+
   return (
     <nav aria-label="단어장 학습 탭" className="sticky top-2 z-20 ui-card p-2">
       <div className="flex flex-wrap gap-2">
@@ -33,7 +48,7 @@ export function WordbookStudyTabs({
           return (
             <Link
               key={tab.key}
-              href={{ pathname: tab.href(wordbookId) }}
+              href={(queryString ? `${tab.href(wordbookId)}?${queryString}` : tab.href(wordbookId)) as Route}
               data-testid={tab.key === "memorize" ? "wordbook-study-link" : tab.key === "quiz-meaning" ? "wordbook-quiz-link" : undefined}
               onClick={() => {
                 if (typeof window !== "undefined") {

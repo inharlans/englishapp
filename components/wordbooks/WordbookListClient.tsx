@@ -60,9 +60,10 @@ export function WordbookListClient({
   const [partStats, setPartStats] = useState<Array<{ partIndex: number; totalInPart: number; matchedCount: number }>>(
     []
   );
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
+  const [reloadTick, setReloadTick] = useState(0);
   const { mode: meaningMode, setMode: setMeaningMode } = useMeaningViewMode();
   const { mode: densityMode, setMode: setDensityMode } = useDensityMode();
   const { partSize, setPartSize, partIndex, setPartIndex, partCount } = useWordbookParting(wordbookId, totalItems);
@@ -95,7 +96,7 @@ export function WordbookListClient({
       }
     };
     void load();
-  }, [mode, partIndex, partSize, wordbookId]);
+  }, [mode, partIndex, partSize, reloadTick, wordbookId]);
 
   const partStatsMap = useMemo(() => new Map(partStats.map((s) => [s.partIndex, s])), [partStats]);
   const maxPartFromStats = partStats.reduce((max, s) => Math.max(max, s.partIndex), 0);
@@ -244,8 +245,21 @@ export function WordbookListClient({
         </div>
       </div>
 
-            {error ? (
-        <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700" role="alert">{error}</p>
+      {error ? (
+        <div className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700" role="alert">
+          <p>{error}</p>
+          <button
+            type="button"
+            onClick={() => {
+              setInfo("");
+              setError("");
+              setReloadTick((v) => v + 1);
+            }}
+            className="mt-2 ui-btn-secondary px-3 py-1 text-xs"
+          >
+            다시 시도
+          </button>
+        </div>
       ) : null}
       {info ? (
         <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800" role="status" aria-live="polite">{info}</p>

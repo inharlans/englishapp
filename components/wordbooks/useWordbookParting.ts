@@ -30,12 +30,19 @@ export function useWordbookParting(wordbookId: number, totalItems: number) {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+    const qs = new URLSearchParams(window.location.search);
+    const querySize = Number(qs.get("partSize") ?? "");
+    const queryIndex = Number(qs.get("partIndex") ?? "");
     const rawSize = Number(window.localStorage.getItem(sizeKey) ?? "");
     const rawIndex = Number(window.localStorage.getItem(indexKey) ?? "");
-    const nextSize = clampPartSize(rawSize);
-    const nextIndex = clampPartIndex(rawIndex, Math.max(1, Math.ceil(Math.max(totalItems, 0) / nextSize)));
+    const sizeSource = Number.isFinite(querySize) && querySize > 0 ? querySize : rawSize;
+    const indexSource = Number.isFinite(queryIndex) && queryIndex > 0 ? queryIndex : rawIndex;
+    const nextSize = clampPartSize(sizeSource);
+    const resolvedIndex = clampPartIndex(indexSource, Math.max(1, Math.ceil(Math.max(totalItems, 0) / nextSize)));
     setPartSizeState(nextSize);
-    setPartIndexState(nextIndex);
+    setPartIndexState(resolvedIndex);
+    window.localStorage.setItem(sizeKey, String(nextSize));
+    window.localStorage.setItem(indexKey, String(resolvedIndex));
   }, [indexKey, sizeKey, totalItems]);
 
   useEffect(() => {
@@ -49,6 +56,10 @@ export function useWordbookParting(wordbookId: number, totalItems: number) {
     setPartSizeState(next);
     if (typeof window !== "undefined") {
       window.localStorage.setItem(sizeKey, String(next));
+      const qs = new URLSearchParams(window.location.search);
+      qs.set("partSize", String(next));
+      qs.set("partIndex", String(clampPartIndex(partIndex, Math.max(1, Math.ceil(Math.max(totalItems, 0) / next)))));
+      window.history.replaceState(null, "", `${window.location.pathname}?${qs.toString()}`);
     }
   };
 
@@ -57,6 +68,10 @@ export function useWordbookParting(wordbookId: number, totalItems: number) {
     setPartIndexState(next);
     if (typeof window !== "undefined") {
       window.localStorage.setItem(indexKey, String(next));
+      const qs = new URLSearchParams(window.location.search);
+      qs.set("partSize", String(partSize));
+      qs.set("partIndex", String(next));
+      window.history.replaceState(null, "", `${window.location.pathname}?${qs.toString()}`);
     }
   };
 
