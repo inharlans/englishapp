@@ -9,6 +9,7 @@ export function UnblockOwnerButton({ ownerId, ownerEmail }: { ownerId: number; o
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [status, setStatus] = useState("");
 
   const onClick = async () => {
     const ok = window.confirm(`${ownerEmail} 차단을 해제할까요?`);
@@ -16,6 +17,7 @@ export function UnblockOwnerButton({ ownerId, ownerEmail }: { ownerId: number; o
 
     setLoading(true);
     setError("");
+    setStatus("");
     try {
       const res = await apiFetch("/api/blocked-owners", {
         method: "DELETE",
@@ -24,6 +26,7 @@ export function UnblockOwnerButton({ ownerId, ownerEmail }: { ownerId: number; o
       });
       const json = (await res.json()) as { error?: string };
       if (!res.ok) throw new Error(json.error ?? "차단 해제에 실패했습니다.");
+      setStatus("차단을 해제했습니다.");
       router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "차단 해제에 실패했습니다.");
@@ -38,11 +41,13 @@ export function UnblockOwnerButton({ ownerId, ownerEmail }: { ownerId: number; o
         type="button"
         onClick={() => void onClick()}
         disabled={loading}
+        aria-busy={loading}
         className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold hover:bg-slate-50 disabled:opacity-60"
       >
         {loading ? "해제 중..." : "차단 해제"}
       </button>
-      {error ? <p className="text-xs text-blue-700">{error}</p> : null}
+      {status ? <p className="text-xs text-slate-600" role="status" aria-live="polite">{status}</p> : null}
+      {error ? <p className="text-xs text-blue-700" role="alert">{error}</p> : null}
     </div>
   );
 }
