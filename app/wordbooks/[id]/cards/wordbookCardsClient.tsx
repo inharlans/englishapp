@@ -111,6 +111,25 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
     void orderSeed;
     return shuffle(partItems);
   }, [partItems, orderSeed]);
+  const partStart = (partIndex - 1) * partSize + 1;
+  const partEnd = Math.min(partIndex * partSize, items.length);
+  const overallProgressPercent = items.length > 0 ? Math.round((((partIndex - 1) * partSize + (idx + 1)) / items.length) * 100) : 0;
+  const visiblePartButtons = useMemo(() => {
+    if (partCount <= 9) return Array.from({ length: partCount }, (_, i) => ({ kind: "part" as const, value: i + 1 }));
+    const set = new Set<number>([1, partCount]);
+    for (let n = partIndex - 2; n <= partIndex + 2; n += 1) {
+      if (n >= 1 && n <= partCount) set.add(n);
+    }
+    const sorted = Array.from(set).sort((a, b) => a - b);
+    const result: Array<{ kind: "part"; value: number } | { kind: "ellipsis"; id: string }> = [];
+    for (let i = 0; i < sorted.length; i += 1) {
+      const current = sorted[i];
+      const prev = sorted[i - 1];
+      if (prev && current - prev > 1) result.push({ kind: "ellipsis", id: `ellipsis-${prev}-${current}` });
+      result.push({ kind: "part", value: current });
+    }
+    return result;
+  }, [partCount, partIndex]);
 
   useEffect(() => {
     setPartJump(String(partIndex));
@@ -124,12 +143,45 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (loading || shuffledItems.length === 0) return;
       const target = event.target as HTMLElement | null;
       const isTyping =
         !!target &&
         (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.getAttribute("contenteditable") === "true");
       if (isTyping) return;
+
+      if (event.key === "[") {
+        event.preventDefault();
+        setPartIndex(Math.max(1, partIndex - 1));
+        return;
+      }
+      if (event.key === "]") {
+        event.preventDefault();
+        setPartIndex(Math.min(partCount, partIndex + 1));
+        return;
+      }
+      if (event.key === "Home") {
+        event.preventDefault();
+        setIdx(0);
+        setShowMeaning(false);
+        return;
+      }
+      if (event.key === "End") {
+        event.preventDefault();
+        setIdx(Math.max(shuffledItems.length - 1, 0));
+        setShowMeaning(false);
+        return;
+      }
+      if (event.key === "PageUp") {
+        event.preventDefault();
+        setPartIndex(Math.max(1, partIndex - 1));
+        return;
+      }
+      if (event.key === "PageDown") {
+        event.preventDefault();
+        setPartIndex(Math.min(partCount, partIndex + 1));
+        return;
+      }
+      if (loading || shuffledItems.length === 0) return;
 
       if (event.key === "ArrowLeft") {
         event.preventDefault();
@@ -151,14 +203,6 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
         setIdx(0);
         setShowMeaning(false);
         setInfo("카드 순서를 다시 섞었습니다.");
-      }
-      if (event.key === "[") {
-        event.preventDefault();
-        setPartIndex(Math.max(1, partIndex - 1));
-      }
-      if (event.key === "]") {
-        event.preventDefault();
-        setPartIndex(Math.min(partCount, partIndex + 1));
       }
     };
 
@@ -193,7 +237,7 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
             파트 {partIndex}/{partCount} · 파트 단어 {loading ? "-" : shuffledItems.length}개 ·{" "}
             {loading ? "-" : `${idx + 1}/${Math.max(shuffledItems.length, 1)}`}
           </p>
-          <p className="mt-1 text-xs text-slate-500">단축키: ←/→ 카드 이동 · Space 뜻 보기/숨기기 · R 섞기 · `[`/`]` 파트 이동</p>
+          <p className="mt-1 text-xs text-slate-500">단축키: ←/→ 카드 이동 · Space 뜻 보기/숨기기 · R 섞기 · `[`/`]` 파트 이동 · Home/End 처음/끝 카드</p>
         </div>
         <WordbookStudyTabs wordbookId={wordbookId} active="cards" showBack={false} />
       </header>
@@ -213,6 +257,7 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
             className="w-20 rounded border border-slate-300 bg-white px-2 py-1 text-sm"
           />
           <span className="text-slate-500">전체 {items.length}개 / {partCount}개 파트</span>
+          <span className="text-slate-500">· 현재 범위 {items.length === 0 ? "-" : `${partStart}~${partEnd}`}</span>
         </div>
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <button
@@ -237,6 +282,7 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
               event.preventDefault();
               const raw = Number(partJump);
               const next = Number.isFinite(raw) ? Math.min(Math.max(Math.floor(raw), 1), partCount) : partIndex;
+              setPartJump(String(next));
               setPartIndex(next);
             }}
           >
@@ -257,15 +303,44 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
             </button>
           </form>
         </div>
+        <div className="mt-2 hidden flex-wrap gap-2 sm:flex">
+          {visiblePartButtons.map((entry) =>
+            entry.kind === "ellipsis" ? (
+              <span key={entry.id} className="px-2 py-1 text-xs font-semibold text-slate-400" aria-hidden="true">
+                ...
+              </span>
+            ) : (
+              <button
+                key={entry.value}
+                type="button"
+                onClick={() => setPartIndex(entry.value)}
+                className={[
+                  "rounded-lg border px-3 py-1 text-xs font-semibold",
+                  entry.value === partIndex ? "ui-tab-active" : "ui-tab-inactive"
+                ].join(" ")}
+                aria-label={`${entry.value}파트 ${entry.value === partIndex ? "선택됨" : "선택"}`}
+              >
+                {entry.value}파트
+              </button>
+            )
+          )}
+        </div>
       </div>
 
       <div className="ui-card p-4">
         <div className="flex items-center justify-between text-xs text-slate-500">
-          <span>진행률</span>
+          <span>파트 진행률</span>
           <span>{progressPercent}%</span>
         </div>
         <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100" aria-label={`카드 진행률 ${progressPercent}%`}>
           <div className="h-full rounded-full bg-gradient-to-r from-blue-500 to-blue-600" style={{ width: `${progressPercent}%` }} />
+        </div>
+        <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
+          <span>전체 진행률</span>
+          <span>{overallProgressPercent}%</span>
+        </div>
+        <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100" aria-label={`전체 카드 진행률 ${overallProgressPercent}%`}>
+          <div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-600" style={{ width: `${overallProgressPercent}%` }} />
         </div>
       </div>
 
@@ -277,7 +352,7 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
         <EmptyStateCard
           title="카드로 학습할 단어가 없습니다"
           description="현재 파트에 카드가 없습니다. 다른 파트를 선택하거나 파트 크기를 조정해보세요."
-          primary={{ label: "단어장 상세로 이동", href: `/wordbooks/${wordbookId}` }}
+          primary={{ label: "단어장 상세로 이동", href: `/wordbooks/${wordbookId}?partSize=${partSize}&partIndex=${partIndex}` }}
           secondary={{ label: "암기 화면으로 이동", href: `/wordbooks/${wordbookId}/memorize?partSize=${partSize}&partIndex=${partIndex}` }}
         />
       ) : null}
