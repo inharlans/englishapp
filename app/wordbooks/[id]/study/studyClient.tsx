@@ -59,11 +59,29 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const restoredPrefsRef = useRef(false);
   const { mode, setMode } = useMeaningViewMode();
   const { mode: densityMode, setMode: setDensityMode } = useDensityMode();
+  const pageSizeKey = `wordbook_memorize_page_size_${wordbookId}`;
+  const pageIndexKey = `wordbook_memorize_page_index_${wordbookId}`;
 
   const totalPages = Math.max(1, Math.ceil(totalFiltered / pageSize));
   const currentPage = Math.min(Math.max(pageIndex, 0), totalPages - 1);
+  const movePage = useCallback((delta: number) => {
+    setInfo("");
+    setPageIndex((prev) => {
+      const next = prev + delta;
+      if (next < 0) {
+        setInfo("첫 페이지입니다.");
+        return 0;
+      }
+      if (next > totalPages - 1) {
+        setInfo("마지막 페이지입니다.");
+        return totalPages - 1;
+      }
+      return next;
+    });
+  }, [totalPages]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -105,7 +123,20 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
     if (typeof window === "undefined") return;
     const raw = window.localStorage.getItem(`wordbook_memorize_hide_correct_${wordbookId}`);
     if (raw === "1") setHideCorrect(true);
-  }, [wordbookId]);
+    if (!restoredPrefsRef.current) {
+      restoredPrefsRef.current = true;
+      const rawSize = Number(window.localStorage.getItem(pageSizeKey) ?? "");
+      const rawIndex = Number(window.localStorage.getItem(pageIndexKey) ?? "");
+      if (Number.isFinite(rawSize) && rawSize >= 1) setPageSize(Math.min(50, Math.max(1, Math.floor(rawSize))));
+      if (Number.isFinite(rawIndex) && rawIndex >= 0) setPageIndex(Math.floor(rawIndex));
+    }
+  }, [pageIndexKey, pageSizeKey, wordbookId]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(pageSizeKey, String(pageSize));
+    window.localStorage.setItem(pageIndexKey, String(currentPage));
+  }, [currentPage, pageSize, pageIndexKey, pageSizeKey]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -122,13 +153,21 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
       }
       if (event.key === "ArrowLeft") {
         event.preventDefault();
-        setInfo("");
-        setPageIndex((prev) => Math.max(prev - 1, 0));
+        movePage(-1);
       }
       if (event.key === "ArrowRight") {
         event.preventDefault();
+        movePage(1);
+      }
+      if (event.key === "Home") {
+        event.preventDefault();
         setInfo("");
-        setPageIndex((prev) => Math.min(prev + 1, totalPages - 1));
+        setPageIndex(0);
+      }
+      if (event.key === "End") {
+        event.preventDefault();
+        setInfo("");
+        setPageIndex(totalPages - 1);
       }
       if (event.key.toLowerCase() === "h") {
         event.preventDefault();
@@ -146,7 +185,13 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [totalPages, wordbookId]);
+  }, [movePage, totalPages, wordbookId]);
+
+  useEffect(() => {
+    if (!info) return;
+    const timeout = window.setTimeout(() => setInfo(""), 3500);
+    return () => window.clearTimeout(timeout);
+  }, [info]);
 
   useEffect(() => {
     void load();
@@ -164,21 +209,13 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
   const progressPercent =
     totalItems <= 0 ? 0 : Math.round((studyState.correctCount / Math.max(totalItems, 1)) * 100);
 
-  const movePage = (delta: number) => {
-    setInfo("");
-    setPageIndex((prev) => {
-      const next = prev + delta;
-      if (next < 0) return 0;
-      if (next > totalPages - 1) return totalPages - 1;
-      return next;
-    });
-  };
-
   const applyPageInput = () => {
     const n = Number(pageInput);
     if (!Number.isFinite(n)) return;
     const next = Math.min(Math.max(Math.floor(n), 1), totalPages);
     setInfo("");
+    if (next === 1) setInfo("첫 페이지로 이동했습니다.");
+    if (next === totalPages) setInfo("마지막 페이지로 이동했습니다.");
     setPageIndex(next - 1);
   };
 
@@ -215,7 +252,8 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
           <p className="mt-2 text-sm text-slate-600">
             체크 {studyState.studiedCount} / 정답 {studyState.correctCount} / 오답 {studyState.wrongCount}
           </p>
-          <p className="mt-1 text-xs text-slate-500">단축키: `/` 검색 · `←/→` 페이지 이동 · `H` 맞춘 단어 숨김 토글</p>
+          <p className="mt-1 text-xs text-slate-500">단축키: `/` 검색 · `←/→` 페이지 이동 · `Home/End` 처음/끝 페이지 · `H` 맞춘 단어 숨김 토글</p>
+          <p className="mt-1 text-xs text-slate-500">현재 표시: {totalFiltered} / 전체 {totalItems}</p>
         </div>
         <WordbookStudyTabs wordbookId={wordbookId} active="memorize" showBack={false} />
       </header>
@@ -363,6 +401,17 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
             </button>
             <button
               type="button"
+              onClick={() => {
+                setInfo("");
+                setPageIndex(0);
+              }}
+              disabled={loading || currentPage <= 0}
+              className="ui-btn-secondary px-2.5 py-1 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              처음
+            </button>
+            <button
+              type="button"
               onClick={() => movePage(-1)}
               disabled={loading || currentPage <= 0}
               className="ui-btn-secondary px-2.5 py-1 disabled:cursor-not-allowed disabled:opacity-40"
@@ -379,6 +428,17 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
               className="ui-btn-secondary px-2.5 py-1 disabled:cursor-not-allowed disabled:opacity-40"
             >
               다음
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setInfo("");
+                setPageIndex(totalPages - 1);
+              }}
+              disabled={loading || currentPage >= totalPages - 1}
+              className="ui-btn-secondary px-2.5 py-1 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              마지막
             </button>
             <input
               type="number"
