@@ -593,3 +593,8 @@ Railway 기준:
 - 검색/정렬/규모/페이지 상태를 유지한 채 로그인 후 동일 화면 복귀 가능하도록 개선
 - 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_87.md`
 
+### 2026-02-22 Iteration 88
+- `/wordbooks/market`의 레거시 쿼리 `scope`를 `size`와 동일하게 하위 호환 처리
+- 기존 공유 링크(`?scope=...`) 진입 시에도 규모 필터가 의도대로 적용되도록 보정
+- 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_88.md`
+

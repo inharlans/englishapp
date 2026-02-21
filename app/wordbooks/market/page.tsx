@@ -34,14 +34,15 @@ function matchesSize(itemCount: number, size: SizeMode): boolean {
 }
 
 export default async function MarketPage(props: {
-  searchParams: Promise<{ q?: string; sort?: string; size?: string; page?: string }>;
+  searchParams: Promise<{ q?: string; sort?: string; size?: string; scope?: string; page?: string }>;
 }) {
   const user = await getUserFromRequestCookies(await cookies());
 
   const sp = await props.searchParams;
   const q = (sp.q ?? "").trim();
   const sort = parseSort(sp.sort);
-  const size = parseSize(sp.size);
+  // Backward compatibility: support legacy `scope` query alias used by older shared links.
+  const size = parseSize(sp.size ?? sp.scope);
   const requestedPage = Math.max(Number(sp.page ?? "0") || 0, 0);
   const take = 30;
 
