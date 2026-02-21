@@ -10,6 +10,7 @@ Englishapp은 영어 학습과 단어장 마켓을 제공하는 웹 애플리케
 
 ## 최근 업데이트 (2026-02-21)
 
+- MCP 실측에서 `/admin` 접근 시 기본 404만 노출되는 흐름을 확인해 전역 `not-found` 페이지를 추가했고, 홈/내 단어장/마켓/오프라인으로 바로 복귀할 수 있는 CTA와 주소·권한 점검 팁을 제공하도록 보강했습니다.
 - MCP 실측(`/login`, `/wordbooks/new`) 기반으로 로그인/단어장 생성 화면의 상태 피드백 접근성을 보강해 Suspense fallback과 상태 문구에 `aria-live`를 추가하고, 로그인/OAuth/생성 오류 문구를 `role=alert`, 제출 버튼 로딩을 `aria-busy`로 통일했습니다.
 - MCP 실측(`/pricing`, `/terms`, `/privacy`)에서 정책 페이지 소스 인코딩 깨짐을 확인해 약관/개인정보 문구를 정상 한글로 복구했고, 고객센터 fallback 표기를 `준비 중`으로 통일했으며, 요금제 결제 상태 메시지(`success/cancel`)의 `aria-live`와 FAQ 의미 구조(`dl/dt/dd`)를 보강했습니다.
 - MCP 실측(`/wordbooks/market`) 기반으로 마켓 상호작용 컴포넌트를 보강해 리뷰 토글 `aria-controls`/로딩 중복요청 방지/날짜 fallback/상태 메시지 role을 정리하고, 다운로드/차단/신고 버튼의 `aria-busy` 및 신고 상세 글자수 카운터를 추가해 상태 피드백 일관성을 높였습니다.
