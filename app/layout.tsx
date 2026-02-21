@@ -54,6 +54,7 @@ export default async function RootLayout({
   const user = await getUserFromRequestCookies(await cookies());
   const business = getBusinessInfo();
   const businessInfoReady = isBusinessInfoComplete(business);
+  const placeholder = "준비 중";
 
   return (
     <html lang="ko">
@@ -72,20 +73,21 @@ export default async function RootLayout({
           {children}
           <footer className="mt-10 rounded-2xl border border-slate-200 bg-white px-4 py-5 text-xs leading-6 text-slate-600">
             <p className="font-semibold text-slate-800">사업자 정보</p>
-            {!businessInfoReady ? (
+            {!businessInfoReady && process.env.NODE_ENV !== "production" ? (
               <p className="mt-1 text-blue-700">
                 심사용 필수 사업자 정보가 일부 비어 있습니다. 운영 배포 전 환경변수를 입력해 주세요.
               </p>
             ) : null}
             <p className="mt-2">
-              상호명: {business.legalName || "-"} | 대표자: {business.representative || "-"} | 사업자등록번호:{" "}
-              {business.businessRegistrationNumber || "-"}
+              상호명: {business.legalName || placeholder} | 대표자: {business.representative || placeholder} |
+              사업자등록번호: {business.businessRegistrationNumber || placeholder}
             </p>
             <p>
-              통신판매업 신고번호: {business.mailOrderRegistrationNumber || "-"} | 주소: {business.address || "-"}
+              통신판매업 신고번호: {business.mailOrderRegistrationNumber || placeholder} | 주소:{" "}
+              {business.address || placeholder}
             </p>
             <p>
-              고객센터: {business.supportPhone || "-"} / {business.supportEmail || "-"}
+              고객센터: {business.supportPhone || placeholder} / {business.supportEmail || placeholder}
               {business.supportHours ? ` (${business.supportHours})` : ""}
             </p>
           </footer>
