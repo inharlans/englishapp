@@ -15,6 +15,15 @@ import { EmptyStateCard } from "@/components/ui/EmptyStateCard";
 import { splitWordbookDescription } from "@/lib/wordbookPresentation";
 import { maskEmailAddress } from "@/lib/textQuality";
 
+function formatDateKst(date: Date): string {
+  return new Intl.DateTimeFormat("ko-KR", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).format(date);
+}
+
 export default async function WordbooksPage() {
   const reqCookies = await cookies();
   const user = await getUserFromRequestCookies(reqCookies);
@@ -210,7 +219,7 @@ export default async function WordbooksPage() {
             href={{ pathname: "/wordbooks/blocked" }}
             className="ui-btn-secondary px-4 py-2 text-sm"
           >
-            블랙리스트
+            차단 목록
           </Link>
         </div>
       </header>
@@ -300,7 +309,7 @@ export default async function WordbooksPage() {
                     </div>
                     <p className="mt-1 text-xs text-slate-500">
                       제작자 {maskEmailAddress(d.wordbook.owner.email)} - 다운로드일{" "}
-                      {d.createdAt.toISOString().slice(0, 10)}
+                      {formatDateKst(d.createdAt)}
                     </p>
                     {splitWordbookDescription(d.wordbook.description).displayDescription ? (
                       <p className="mt-2 line-clamp-2 text-sm text-slate-600">
@@ -336,7 +345,7 @@ export default async function WordbooksPage() {
                         -{summaryByWordbook.get(d.wordbook.id)?.deletedCount ?? 0}
                       </p>
                       <p className="mt-1 text-[11px] text-slate-500">
-                        단어 수 변화: {d.snapshotItemCount} → {d.wordbook._count.items} / 최근 동기화 {d.syncedAt.toISOString().slice(0, 10)}
+                        단어 수 변화: {d.snapshotItemCount} → {d.wordbook._count.items} / 최근 동기화 {formatDateKst(d.syncedAt)}
                       </p>
                       {d.wordbook.contentVersion > d.downloadedVersion ? (
                         <div className="mt-2">

@@ -197,9 +197,10 @@ export default async function MarketPage(props: {
             <input
               name="q"
               defaultValue={q}
-              placeholder="제목 또는 설명"
+              placeholder="제목, 설명, 제작자 이메일"
               className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
+            <span className="mt-1 block text-[11px] text-slate-500">제목/설명/제작자 이메일로 검색할 수 있습니다.</span>
           </label>
           <label className="block md:col-span-3">
             <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">정렬</span>
@@ -312,7 +313,7 @@ export default async function MarketPage(props: {
                       <span>{wb.downloadCount}회 다운로드</span>
                       <span>
                         {wb.fromLang}
-                        {" -> "}
+                        {" → "}
                         {wb.toLang}
                       </span>
                     </div>

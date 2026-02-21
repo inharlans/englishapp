@@ -13,24 +13,29 @@ const links: Array<{ href: string; label: string }> = [
 
 export function AppNav({ isLoggedIn }: { isLoggedIn: boolean }) {
   const pathname = usePathname();
+  const isActive = (href: string) => {
+    if (href === "/") return pathname === "/";
+    return pathname === href || pathname.startsWith(`${href}/`);
+  };
 
   return (
     <nav aria-label="주요 메뉴" className="ui-card-soft mb-6 p-4">
-      <div className="flex flex-wrap items-center gap-2" role="list">
+      <ul className="flex flex-wrap items-center gap-2">
         {links.map((link) => (
-          <Link
-            key={link.href}
-            href={{ pathname: link.href }}
-            role="listitem"
-            className={[
-              "px-3 py-2 text-sm",
-              pathname === link.href ? "ui-btn-primary" : "ui-btn-secondary"
-            ].join(" ")}
-          >
-            {link.label}
-          </Link>
+          <li key={link.href}>
+            <Link
+              href={{ pathname: link.href }}
+              aria-current={isActive(link.href) ? "page" : undefined}
+              className={[
+                "px-3 py-2 text-sm",
+                isActive(link.href) ? "ui-btn-primary" : "ui-btn-secondary"
+              ].join(" ")}
+            >
+              {link.label}
+            </Link>
+          </li>
         ))}
-        <div className="ml-auto flex items-center gap-2">
+        <li className="ml-auto flex items-center gap-2">
           {!isLoggedIn ? (
             <Link href="/login" className="ui-btn-secondary px-3 py-2 text-sm">
               로그인
@@ -41,8 +46,8 @@ export function AppNav({ isLoggedIn }: { isLoggedIn: boolean }) {
               로그아웃
             </Link>
           ) : null}
-        </div>
-      </div>
+        </li>
+      </ul>
     </nav>
   );
 }
