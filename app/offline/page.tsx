@@ -12,6 +12,7 @@ export default function OfflineLibraryPage() {
   const [sortMode, setSortMode] = useState<"saved-desc" | "saved-asc" | "words-desc">("saved-desc");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [info, setInfo] = useState("");
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -26,9 +27,11 @@ export default function OfflineLibraryPage() {
   const reload = async () => {
     setLoading(true);
     setError("");
+    setInfo("");
     try {
       const list = await listOfflineWordbooks();
       setItems(list);
+      setInfo(`오프라인 라이브러리를 새로고침했습니다. 총 ${list.length}개 항목입니다.`);
     } catch (e) {
       setError(e instanceof Error ? e.message : "오프라인 라이브러리를 불러오지 못했습니다.");
     } finally {
@@ -52,14 +55,16 @@ export default function OfflineLibraryPage() {
       return b.savedAt.localeCompare(a.savedAt);
     });
 
-  const onDelete = async (id: number) => {
-    const ok = window.confirm("이 오프라인 사본을 삭제하시겠습니까?");
+  const onDelete = async (id: number, title: string) => {
+    const ok = window.confirm(`"${title}" 오프라인 사본을 삭제하시겠습니까?`);
     if (!ok) return;
     setDeletingId(id);
     setError("");
+    setInfo("");
     try {
       await deleteOfflineWordbook(id);
       await reload();
+      setInfo(`"${title}" 오프라인 사본을 삭제했습니다.`);
     } catch (e) {
       setError(e instanceof Error ? e.message : "오프라인 사본 삭제에 실패했습니다.");
     } finally {
@@ -67,12 +72,15 @@ export default function OfflineLibraryPage() {
     }
   };
 
+  const hasActiveFilters = query.trim().length > 0 || sortMode !== "saved-desc";
+  const sortModeLabel = sortMode === "saved-asc" ? "저장일 오래된순" : sortMode === "words-desc" ? "단어 수 많은순" : "저장일 최신순";
+
   return (
-    <section className="space-y-6">
+    <section className="space-y-6" aria-labelledby="offline-library-title">
       <header className="flex flex-wrap items-end gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">오프라인</p>
-          <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-900">
+          <h1 id="offline-library-title" className="mt-2 text-3xl font-black tracking-tight text-slate-900">
             오프라인 라이브러리
           </h1>
           <p className="mt-2 text-sm text-slate-600">
@@ -80,10 +88,7 @@ export default function OfflineLibraryPage() {
           </p>
         </div>
         <div className="ml-auto flex flex-wrap gap-2">
-          <Link
-            href={{ pathname: "/wordbooks" }}
-            className="ui-btn-secondary px-4 py-2 text-sm"
-          >
+          <Link href={{ pathname: "/wordbooks" }} className="ui-btn-secondary px-4 py-2 text-sm">
             뒤로
           </Link>
           <button
@@ -107,6 +112,7 @@ export default function OfflineLibraryPage() {
               onChange={(e) => setQuery(e.target.value)}
               placeholder="제목 또는 제작자 이메일"
               ref={searchInputRef}
+              aria-label="오프라인 단어장 검색"
               aria-describedby="offline-search-help"
               className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
@@ -119,6 +125,7 @@ export default function OfflineLibraryPage() {
             <select
               value={sortMode}
               onChange={(e) => setSortMode(e.target.value as "saved-desc" | "saved-asc" | "words-desc")}
+              aria-label="오프라인 단어장 정렬"
               className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             >
               <option value="saved-desc">저장일 최신순</option>
@@ -142,7 +149,9 @@ export default function OfflineLibraryPage() {
         </div>
         {!loading ? (
           <p className="mt-2 text-xs text-slate-500" aria-live="polite" aria-atomic="true">
-            총 {items.length}개 중 {filteredItems.length}개 표시
+            총 {items.length}개 중 {filteredItems.length}개 표시 · 정렬: {sortModeLabel}
+            {query.trim() ? ` · 검색어: "${query.trim()}"` : ""}
+            {hasActiveFilters ? " · 필터 적용됨" : ""}
           </p>
         ) : null}
       </div>
@@ -157,15 +166,19 @@ export default function OfflineLibraryPage() {
           {error}
         </p>
       ) : null}
+      {info ? (
+        <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800" role="status" aria-live="polite">
+          {info}
+        </p>
+      ) : null}
 
       {filteredItems.length === 0 && !loading ? (
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-600">
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-600" role="status" aria-live="polite">
           {items.length === 0 ? (
             <>
-              아직 저장된 항목이 없습니다. 다운로드한 단어장에서{" "}
-              <span className="font-semibold">오프라인 저장</span>을 눌러주세요.
-              {" "}
-              <Link href="/wordbooks" className="font-semibold text-blue-700 hover:underline">내 단어장으로 이동</Link>
+              아직 저장된 항목이 없습니다. 다운로드한 단어장에서 <span className="font-semibold">오프라인 저장</span>을 눌러주세요. <Link href="/wordbooks" className="font-semibold text-blue-700 hover:underline">내 단어장으로 이동</Link>
+              {" · "}
+              <Link href="/wordbooks/market" className="font-semibold text-blue-700 hover:underline">마켓 둘러보기</Link>
             </>
           ) : (
             <>
@@ -197,15 +210,15 @@ export default function OfflineLibraryPage() {
                 </p>
                 <p className="mt-2 text-sm text-slate-600">단어 {wb.items.length}개</p>
               </div>
-                <button
-                  type="button"
-                  onClick={() => void onDelete(wb.id)}
-                  disabled={deletingId === wb.id}
-                  aria-label={`${wb.title} 오프라인 사본 삭제`}
-                  className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-sm font-semibold text-blue-800 hover:bg-blue-100"
-                >
-                  {deletingId === wb.id ? "삭제 중..." : "삭제"}
-                </button>
+              <button
+                type="button"
+                onClick={() => void onDelete(wb.id, wb.title)}
+                disabled={deletingId === wb.id}
+                aria-label={`${wb.title} 오프라인 사본 삭제`}
+                className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-sm font-semibold text-blue-800 hover:bg-blue-100"
+              >
+                {deletingId === wb.id ? "삭제 중..." : "삭제"}
+              </button>
             </div>
             <div className="mt-4 flex flex-wrap gap-2">
               <Link
@@ -215,6 +228,13 @@ export default function OfflineLibraryPage() {
               >
                 오프라인 학습
               </Link>
+              <Link
+                href={{ pathname: `/wordbooks/${wb.id}` }}
+                className="ui-btn-secondary px-3 py-1.5 text-sm"
+                aria-label={`${wb.title} 온라인 원본으로 이동`}
+              >
+                온라인 원본
+              </Link>
             </div>
           </div>
         ))}
@@ -222,5 +242,3 @@ export default function OfflineLibraryPage() {
     </section>
   );
 }
-
-

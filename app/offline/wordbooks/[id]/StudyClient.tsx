@@ -20,6 +20,7 @@ export function StudyClient({ id }: { id: number }) {
   const [wb, setWb] = useState<OfflineWordbook | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [info, setInfo] = useState("");
   const [idx, setIdx] = useState(0);
   const [showMeaning, setShowMeaning] = useState(false);
   const [orderSeed, setOrderSeed] = useState(0);
@@ -28,6 +29,7 @@ export function StudyClient({ id }: { id: number }) {
     const run = async () => {
       setLoading(true);
       setError("");
+      setInfo("");
       try {
         if (!Number.isFinite(id) || id <= 0) throw new Error("잘못된 ID입니다.");
         const found = await getOfflineWordbook(Math.floor(id));
@@ -51,8 +53,32 @@ export function StudyClient({ id }: { id: number }) {
     return shuffle(wb.items);
   }, [wb, orderSeed]);
 
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (loading || !wb || items.length === 0) return;
+      if (event.key === "ArrowRight") {
+        event.preventDefault();
+        setShowMeaning(false);
+        setIdx((v) => Math.min(v + 1, Math.max(items.length - 1, 0)));
+      }
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        setShowMeaning(false);
+        setIdx((v) => Math.max(v - 1, 0));
+      }
+      if (event.key === " ") {
+        event.preventDefault();
+        setShowMeaning((v) => !v);
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [items.length, loading, wb]);
+
   const current = items[idx] ?? null;
   const speakLang = wb?.fromLang?.toLowerCase().startsWith("en") ? "en-US" : undefined;
+  const progressPercent = items.length > 0 ? Math.round(((idx + 1) / items.length) * 100) : 0;
 
   const next = () => {
     setShowMeaning(false);
@@ -64,11 +90,11 @@ export function StudyClient({ id }: { id: number }) {
   };
 
   return (
-    <section className="space-y-6">
+    <section className="space-y-6" aria-labelledby="offline-study-title">
       <header className="flex flex-wrap items-end gap-3">
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">오프라인</p>
-          <h1 className="mt-2 truncate text-3xl font-black tracking-tight text-slate-900">
+          <h1 id="offline-study-title" className="mt-2 truncate text-3xl font-black tracking-tight text-slate-900">
             {wb ? wb.title : "학습"}
           </h1>
           {wb ? (
@@ -76,17 +102,20 @@ export function StudyClient({ id }: { id: number }) {
               단어 {items.length}개 | {idx + 1}/{Math.max(items.length, 1)}
             </p>
           ) : null}
+          <p className="mt-1 text-xs text-slate-500">단축키: ← 이전 / → 다음 / Space 보기·숨기기</p>
         </div>
         <div className="ml-auto flex flex-wrap gap-2">
-          <Link
-            href={{ pathname: "/offline" }}
-            className="ui-btn-secondary px-4 py-2 text-sm"
-          >
+          <Link href={{ pathname: "/offline" }} className="ui-btn-secondary px-4 py-2 text-sm">
             뒤로
           </Link>
           <button
             type="button"
-            onClick={() => setOrderSeed((v) => v + 1)}
+            onClick={() => {
+              setOrderSeed((v) => v + 1);
+              setIdx(0);
+              setShowMeaning(false);
+              setInfo("카드 순서를 다시 섞었습니다.");
+            }}
             className="ui-btn-secondary px-4 py-2 text-sm"
             disabled={!wb || items.length === 0}
           >
@@ -95,53 +124,53 @@ export function StudyClient({ id }: { id: number }) {
         </div>
       </header>
 
-      {loading ? <p className="text-sm text-slate-600">불러오는 중...</p> : null}
+      {loading ? <p className="text-sm text-slate-600" role="status" aria-live="polite">불러오는 중...</p> : null}
       {error ? (
-        <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
+        <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700" role="alert">
           {error}
         </p>
+      ) : null}
+      {info ? (
+        <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800" role="status" aria-live="polite">
+          {info}
+        </p>
+      ) : null}
+
+      {wb && items.length === 0 && !loading ? (
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-600" role="status" aria-live="polite">
+          이 오프라인 단어장에는 학습할 단어가 없습니다. <Link href={{ pathname: `/wordbooks/${id}` }} className="font-semibold text-blue-700 hover:underline">온라인 원본에서 단어를 확인</Link>해 주세요.
+        </div>
       ) : null}
 
       {wb && current ? (
         <div className="rounded-3xl border border-white/60 bg-white/85 p-6 shadow-[0_20px_50px_-30px_rgba(15,23,42,0.7)] backdrop-blur">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-              카드
-            </p>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">카드</p>
             <SpeakButton text={current.term} lang={speakLang} />
+          </div>
+
+          <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-slate-100" aria-label={`학습 진행률 ${progressPercent}%`}>
+            <div className="h-full bg-blue-500 transition-all" style={{ width: `${progressPercent}%` }} />
           </div>
 
           <div className="mt-5">
             <p className="text-4xl font-black tracking-tight text-slate-900">{current.term}</p>
-            {current.pronunciation ? (
-              <p className="mt-2 text-sm text-slate-500">[{current.pronunciation}]</p>
-            ) : null}
+            {current.pronunciation ? <p className="mt-2 text-sm text-slate-500">[{current.pronunciation}]</p> : null}
           </div>
 
           <div className="mt-6">
             {showMeaning ? (
               <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                  뜻
-                </p>
-                <p className="mt-2 text-xl font-bold text-slate-900">
-                  {sanitizeUserText(current.meaning, "의미 데이터 점검 중입니다")}
-                </p>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">뜻</p>
+                <p className="mt-2 text-xl font-bold text-slate-900">{sanitizeUserText(current.meaning, "의미 데이터 점검 중입니다")}</p>
                 <div className="mt-3">
-                  <Link
-                    href={{ pathname: `/wordbooks/${id}` }}
-                    className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-800 hover:bg-blue-100"
-                  >
+                  <Link href={{ pathname: `/wordbooks/${id}` }} className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-800 hover:bg-blue-100">
                     온라인 원본에서 동기화하기
                   </Link>
                 </div>
               </div>
             ) : (
-              <button
-                type="button"
-                onClick={() => setShowMeaning(true)}
-                className="ui-btn-secondary w-full px-4 py-4 text-left text-sm"
-              >
+              <button type="button" onClick={() => setShowMeaning(true)} className="ui-btn-secondary w-full px-4 py-4 text-left text-sm">
                 눌러서 뜻 보기
               </button>
             )}
@@ -152,31 +181,42 @@ export function StudyClient({ id }: { id: number }) {
               type="button"
               onClick={prev}
               disabled={idx <= 0}
+              aria-label={`이전 카드 (${Math.max(idx, 0)}/${items.length})`}
               className="ui-btn-secondary px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-60"
             >
               이전
             </button>
-            <button
-              type="button"
-              onClick={() => setShowMeaning((v) => !v)}
-              className="ui-btn-secondary px-4 py-2 text-sm"
-            >
+            <button type="button" onClick={() => setShowMeaning((v) => !v)} className="ui-btn-secondary px-4 py-2 text-sm">
               {showMeaning ? "숨기기" : "보기"}
             </button>
             <button
               type="button"
               onClick={next}
               disabled={idx >= items.length - 1}
+              aria-label={`다음 카드 (${Math.min(idx + 2, items.length)}/${items.length})`}
               className="ui-btn-primary px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-60"
             >
               다음
             </button>
           </div>
+
+          {idx >= items.length - 1 ? (
+            <div className="mt-3 flex justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  setIdx(0);
+                  setShowMeaning(false);
+                  setInfo("처음 카드로 돌아왔습니다.");
+                }}
+                className="ui-btn-secondary px-3 py-1.5 text-xs"
+              >
+                처음부터 다시
+              </button>
+            </div>
+          ) : null}
         </div>
       ) : null}
     </section>
   );
 }
-
-
-
