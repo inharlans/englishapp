@@ -648,3 +648,8 @@ Railway 기준:
 - 사용자 액션(새로고침 버튼/단축키)에서만 성공 메시지를 표시하도록 피드백 타이밍 보정
 - 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_98.md`
 
+### 2026-02-22 Iteration 99
+- `/offline/wordbooks/[id]` 키보드 단축키를 비인터랙티브 포커스에서만 동작하도록 제한
+- 버튼/링크 포커스 상태에서 단축키와 기본 동작이 중첩될 수 있는 충돌 여지를 제거
+- 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_99.md`
+

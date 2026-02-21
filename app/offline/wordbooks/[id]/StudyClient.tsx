@@ -68,6 +68,17 @@ export function StudyClient({ id }: { id: number }) {
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (loading || !wb || items.length === 0) return;
+      const target = event.target as HTMLElement | null;
+      const isInteractive =
+        !!target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.tagName === "SELECT" ||
+          target.tagName === "BUTTON" ||
+          target.tagName === "A" ||
+          target.getAttribute("contenteditable") === "true" ||
+          Boolean(target.closest("input, textarea, select, button, a, [contenteditable='true']")));
+      if (isInteractive) return;
       if (event.key === "Home" || event.key === "0") {
         event.preventDefault();
         setShowMeaning(false);
