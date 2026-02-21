@@ -583,3 +583,8 @@ Railway 기준:
 - 내부 경로만 허용해 오픈 리다이렉트 리스크를 완화
 - 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_85.md`
 
+### 2026-02-22 Iteration 86
+- 로그인 페이지 상단 `로그인` 재클릭 시 `next` 경로가 덮어써지지 않도록 보정
+- `/login`에서는 기존 `next`를 정규화해 유지하고, 비정상 값은 `/wordbooks`로 폴백
+- 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_86.md`
+

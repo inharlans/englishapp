@@ -11,12 +11,20 @@ const links: Array<{ href: string; label: string }> = [
   { href: "/pricing", label: "요금제" }
 ];
 
+function normalizeNextPath(raw: string | null): string {
+  if (!raw) return "/wordbooks";
+  if (!raw.startsWith("/")) return "/wordbooks";
+  if (raw.startsWith("//")) return "/wordbooks";
+  return raw;
+}
+
 export function AppNav({ isLoggedIn }: { isLoggedIn: boolean }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const qs = searchParams.toString();
   const pathWithQuery = pathname ? `${pathname}${qs ? `?${qs}` : ""}` : "/wordbooks";
-  const nextPath = pathname && pathname !== "/login" ? pathWithQuery : "/wordbooks";
+  const loginNextPath = normalizeNextPath(searchParams.get("next"));
+  const nextPath = pathname === "/login" ? loginNextPath : pathWithQuery;
   const isActive = (href: string) => {
     if (href === "/") return pathname === "/";
     return pathname === href || pathname.startsWith(`${href}/`);
