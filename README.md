@@ -558,3 +558,8 @@ Railway 기준:
 - 목록 페이지와 동일하게 `최신`/`업데이트 가능` 해석을 즉시 인지할 수 있도록 보강
 - 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_80.md`
 
+### 2026-02-22 Iteration 81
+- `/wordbooks/[id]` 상세 상단 `뒤로` 링크를 사용자 맥락 기반으로 보정
+- 소유/다운로드 사용자 동선은 `/wordbooks`, 그 외는 `/wordbooks/market`으로 분기
+- 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_81.md`
+

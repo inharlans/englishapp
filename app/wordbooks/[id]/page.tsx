@@ -192,6 +192,7 @@ export default async function WordbookDetailPage(props: {
           })
         )
       : { addedCount: 0, updatedCount: 0, deletedCount: 0 };
+  const backHref = isOwner || downloadedAt ? "/wordbooks" : "/wordbooks/market";
 
   return (
     <section className="space-y-6">
@@ -215,7 +216,7 @@ export default async function WordbookDetailPage(props: {
         </div>
         <div className="ml-auto flex flex-wrap items-center gap-2" role="group" aria-label="단어장 주요 동작">
           <Link
-            href={{ pathname: "/wordbooks/market" }}
+            href={{ pathname: backHref }}
             className="ui-btn-secondary px-4 py-2 text-sm"
           >
             뒤로
