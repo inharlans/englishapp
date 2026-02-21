@@ -233,7 +233,7 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
       const rows = await prisma.$queryRaw<Array<{ partIndex: number; totalInPart: number; matchedCount: number }>>(
         Prisma.sql`
           SELECT
-            ((wi."position" / ${partSize})::int + 1) AS "partIndex",
+            (((wi."position" - 1) / ${partSize})::int + 1) AS "partIndex",
             COUNT(*)::int AS "totalInPart",
             COUNT(*) FILTER (WHERE ${matchSql})::int AS "matchedCount"
           FROM "WordbookItem" wi

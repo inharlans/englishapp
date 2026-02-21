@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { apiFetch } from "@/lib/clientApi";
 import { sanitizeUserText } from "@/lib/textQuality";
+import { MeaningView } from "@/components/MeaningView";
 import { SpeakButton } from "@/components/wordbooks/SpeakButton";
 import { WordbookStudyTabs } from "@/components/wordbooks/WordbookStudyTabs";
 import { useWordbookParting } from "@/components/wordbooks/useWordbookParting";
@@ -562,7 +563,13 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
           </select>
           <button
             type="button"
-            onClick={() => setPartIndex(1)}
+            onClick={() => {
+              if (partIndex <= 1) {
+                setInfo("첫 파트입니다.");
+                return;
+              }
+              setPartIndex(1);
+            }}
             disabled={partIndex <= 1}
             className="ui-btn-secondary px-3 py-1 text-xs disabled:opacity-50"
             aria-label="첫 파트로 이동"
@@ -580,7 +587,7 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
           </button>
           <button
             type="button"
-            onClick={() => setPartIndex(Math.min(partCount, partIndex + 1))}
+            onClick={moveToNextPart}
             disabled={partIndex >= partCount}
             className="ui-btn-secondary px-3 py-1 text-xs disabled:opacity-50"
             aria-label={`${Math.min(partCount, partIndex + 1)}파트로 이동`}
@@ -589,7 +596,13 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
           </button>
           <button
             type="button"
-            onClick={() => setPartIndex(partCount)}
+            onClick={() => {
+              if (partIndex >= partCount) {
+                setInfo("마지막 파트입니다.");
+                return;
+              }
+              setPartIndex(partCount);
+            }}
             disabled={partIndex >= partCount}
             className="ui-btn-secondary px-3 py-1 text-xs disabled:opacity-50"
             aria-label="마지막 파트로 이동"
@@ -647,6 +660,7 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
                   entry.value === partIndex ? "ui-tab-active" : "ui-tab-inactive"
                 ].join(" ")}
                 aria-label={`${entry.value}파트 ${entry.value === partIndex ? "선택됨" : "선택"}`}
+                aria-current={entry.value === partIndex ? "page" : undefined}
               >
                 {entry.value}파트
               </button>
@@ -789,7 +803,11 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
             {showMeaning ? (
               <div className="rounded-2xl border border-slate-200 bg-white p-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">뜻</p>
-                <p className="mt-2 text-xl font-bold text-slate-900">{sanitizeUserText(current.meaning, "의미 데이터 점검 중입니다")}</p>
+                <MeaningView
+                  value={sanitizeUserText(current.meaning, "의미 데이터 점검 중입니다")}
+                  mode="detailed"
+                  className="mt-2 text-base font-semibold text-slate-900"
+                />
               </div>
             ) : (
               <button type="button" onClick={() => setShowMeaning(true)} className="ui-btn-secondary w-full px-4 py-4 text-left text-sm">
@@ -815,7 +833,7 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
               type="button"
               onClick={prev}
               disabled={idx <= 0}
-              aria-label={`이전 카드 (${Math.max(idx, 0)}/${shuffledItems.length})`}
+              aria-label={`이전 카드 (${Math.max(idx, 1)}/${shuffledItems.length})`}
               className="ui-btn-secondary px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-60"
             >
               이전

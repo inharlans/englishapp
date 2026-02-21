@@ -395,8 +395,9 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
 
       <div className="ui-card p-4">
         <div className="flex flex-wrap items-center gap-2 text-xs">
-          <label className="font-semibold text-slate-700">파트 크기(n)</label>
+          <label htmlFor="quiz-part-size" className="font-semibold text-slate-700">파트 크기(n)</label>
           <input
+            id="quiz-part-size"
             type="number"
             min={1}
             max={200}
@@ -530,6 +531,7 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
               event.preventDefault();
               const raw = Number(partJump);
               const next = Number.isFinite(raw) ? Math.min(Math.max(Math.floor(raw), 1), partCount) : partIndex;
+              setPartJump(String(next));
               setPartIndex(next);
               setPartAttempts(0);
               setFeedback(null);
@@ -584,6 +586,7 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
                     : "ui-tab-inactive"
                 ].join(" ")}
                 aria-label={`${entry.value}파트 ${entry.value === partIndex ? "선택됨" : "선택"}`}
+                aria-current={entry.value === partIndex ? "page" : undefined}
               >
                 {entry.value}파트
               </button>
@@ -614,7 +617,14 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
             <p className="mt-1 text-xs text-slate-500">
               {partIndex}파트 / {partItemCount}개 단어
             </p>
-            <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-100" aria-label={`파트 진행률 ${currentPartProgress}%`}>
+            <div
+              className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-100"
+              role="progressbar"
+              aria-label={`파트 진행률 ${currentPartProgress}%`}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={currentPartProgress}
+            >
               <div className="h-full bg-blue-500 transition-all" style={{ width: `${currentPartProgress}%` }} />
             </div>
             <div className="mt-2 text-3xl font-black tracking-tight text-slate-900">
@@ -656,9 +666,11 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
                 <button
                   type="button"
                   onClick={() => {
+                    if (loading) return;
                     void loadNext();
                     setMessage("문제를 건너뛰었습니다.");
                   }}
+                  disabled={loading}
                   className="ui-btn-secondary px-4 py-2 text-sm"
                 >
                   건너뛰기

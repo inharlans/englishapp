@@ -60,6 +60,7 @@ export function WordbookListClient({
   const [partStats, setPartStats] = useState<Array<{ partIndex: number; totalInPart: number; matchedCount: number }>>(
     []
   );
+  const [pagingPartCount, setPagingPartCount] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
@@ -90,6 +91,7 @@ export function WordbookListClient({
         setItems(json.items ?? []);
         setTotalItems(json.paging?.totalItems ?? 0);
         setPartStats(json.paging?.partStats ?? []);
+        setPagingPartCount(Math.max(1, json.paging?.partCount ?? 1));
       } catch (e) {
         setError(e instanceof Error ? e.message : "목록을 불러오지 못했습니다.");
       } finally {
@@ -100,8 +102,7 @@ export function WordbookListClient({
   }, [mode, partIndex, partSize, reloadTick, wordbookId]);
 
   const partStatsMap = useMemo(() => new Map(partStats.map((s) => [s.partIndex, s])), [partStats]);
-  const maxPartFromStats = partStats.reduce((max, s) => Math.max(max, s.partIndex), 0);
-  const displayPartCount = Math.max(partCount, maxPartFromStats);
+  const displayPartCount = Math.max(1, pagingPartCount, partCount);
   const parts = Array.from({ length: displayPartCount }, (_, idx) => {
     const n = idx + 1;
     const stat = partStatsMap.get(n);
@@ -344,6 +345,14 @@ export function WordbookListClient({
               max={displayPartCount}
               value={partJump}
               onChange={(event) => setPartJump(event.target.value)}
+              onBlur={() => {
+                const raw = Number(partJump);
+                if (!Number.isFinite(raw)) {
+                  setPartJump(String(partIndex));
+                  return;
+                }
+                setPartJump(String(Math.min(Math.max(Math.floor(raw), 1), displayPartCount)));
+              }}
               className="w-full rounded-lg border border-slate-300 bg-white px-3 py-1 text-sm sm:w-24"
             />
             <button type="submit" className="ui-btn-secondary px-3 py-1 text-xs">
@@ -370,11 +379,13 @@ export function WordbookListClient({
                     : "ui-tab-inactive"
                 ].join(" ")}
                 aria-label={`${entry.part.partIndex}파트 ${entry.part.matchedCount}/${entry.part.totalInPart}`}
+                aria-current={entry.part.partIndex === partIndex ? "page" : undefined}
               >
                 <span>{entry.part.partIndex}파트</span>
                 <span className={entry.part.partIndex === partIndex ? "ml-2 text-slate-200" : "ml-2 text-slate-500"}>
                   {entry.part.matchedCount}/{entry.part.totalInPart}
                 </span>
+                {entry.part.partIndex === partIndex ? <span className="sr-only">현재 파트</span> : null}
               </button>
             )
           )}
