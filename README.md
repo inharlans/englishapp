@@ -528,3 +528,8 @@ Railway 기준:
 - 버전 정보 뒤에 명시적 `상태` 라벨/구분자를 추가해 `최신`/`업데이트 가능` 배지 해석 명확화
 - 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_74.md`
 
+### 2026-02-22 Iteration 75
+- `/offline/wordbooks/[id]` 기본 진입 시 카드가 자동 셔플되던 동작을 수정
+- 기본은 원본 순서 유지, 사용자 액션(`섞기`/`R`)에서만 셔플되도록 변경
+- 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_75.md`
+

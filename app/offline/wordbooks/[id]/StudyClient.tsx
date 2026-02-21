@@ -60,8 +60,8 @@ export function StudyClient({ id }: { id: number }) {
 
   const items = useMemo(() => {
     if (!wb) return [];
-    // orderSeed is used to force reshuffle without mutating stored data.
-    void orderSeed;
+    // Keep stable source order by default; reshuffle only when user requests it.
+    if (orderSeed === 0) return wb.items;
     return shuffle(wb.items);
   }, [wb, orderSeed]);
 
