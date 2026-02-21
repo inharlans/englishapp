@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { apiFetch } from "@/lib/clientApi";
 import { sanitizeUserText } from "@/lib/textQuality";
@@ -56,6 +56,7 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
   const [partJump, setPartJump] = useState("1");
   const [reloadTick, setReloadTick] = useState(0);
   const [resumeEnabled, setResumeEnabled] = useState(true);
+  const [autoAdvancePart, setAutoAdvancePart] = useState(false);
   const [partShuffleSeed, setPartShuffleSeed] = useState(1);
   const mountedRef = useRef(true);
   const requestSeqRef = useRef(0);
@@ -63,6 +64,7 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
   const { partSize, setPartSize, partIndex, setPartIndex, partCount } = useWordbookParting(wordbookId, items.length);
   const progressStorageKey = `wordbook_cards_progress_${wordbookId}_${partSize}_${partIndex}`;
   const resumePrefKey = `wordbook_cards_resume_enabled_${wordbookId}`;
+  const autoAdvanceKey = `wordbook_cards_auto_advance_${wordbookId}`;
   const seedStorageKey = `wordbook_cards_seed_${wordbookId}_${partSize}_${partIndex}`;
 
   useEffect(() => {
@@ -70,13 +72,16 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
     try {
       const raw = window.localStorage.getItem(resumePrefKey);
       if (raw === "0") setResumeEnabled(false);
+      const autoAdvanceRaw = window.localStorage.getItem(autoAdvanceKey);
+      if (autoAdvanceRaw === "1") setAutoAdvancePart(true);
     } catch {
       setResumeEnabled(true);
+      setAutoAdvancePart(false);
     }
     return () => {
       mountedRef.current = false;
     };
-  }, [resumePrefKey]);
+  }, [autoAdvanceKey, resumePrefKey]);
 
   useEffect(() => {
     const loadAll = async () => {
@@ -145,6 +150,8 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
   const overallProgressPercent =
     items.length > 0 && hasPartItems ? Math.round((overallCardNumber / items.length) * 100) : 0;
   const isPartComplete = hasPartItems && idx >= shuffledItems.length - 1;
+  const remainingInPart = Math.max(shuffledItems.length - (idx + 1), 0);
+  const remainingParts = Math.max(partCount - partIndex, 0);
   const visiblePartButtons = useMemo(() => {
     if (partCount <= 9) return Array.from({ length: partCount }, (_, i) => ({ kind: "part" as const, value: i + 1 }));
     const set = new Set<number>([1, partCount]);
@@ -161,6 +168,32 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
     }
     return result;
   }, [partCount, partIndex]);
+
+  const moveToNextPart = useCallback(() => {
+    if (partIndex >= partCount) {
+      setInfo("마지막 파트입니다.");
+      return;
+    }
+    setPartIndex(Math.min(partCount, partIndex + 1));
+  }, [partCount, partIndex, setPartIndex]);
+
+  const next = useCallback(() => {
+    if (idx >= shuffledItems.length - 1) {
+      if (autoAdvancePart && partIndex < partCount) {
+        moveToNextPart();
+        return;
+      }
+      setInfo("현재 파트의 마지막 카드입니다.");
+      return;
+    }
+    setShowMeaning(false);
+    setIdx((v) => Math.min(v + 1, Math.max(shuffledItems.length - 1, 0)));
+  }, [autoAdvancePart, idx, moveToNextPart, partCount, partIndex, shuffledItems.length]);
+
+  const prev = useCallback(() => {
+    setShowMeaning(false);
+    setIdx((v) => Math.max(v - 1, 0));
+  }, []);
 
   useEffect(() => {
     setPartJump(String(partIndex));
@@ -271,12 +304,26 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
       }
       if (event.key.toLowerCase() === "n") {
         event.preventDefault();
-        setPartIndex(Math.min(partCount, partIndex + 1));
+        moveToNextPart();
         return;
       }
       if (event.key.toLowerCase() === "p") {
         event.preventDefault();
         setPartIndex(Math.max(1, partIndex - 1));
+        return;
+      }
+      if (event.key.toLowerCase() === "a") {
+        event.preventDefault();
+        setAutoAdvancePart((value) => {
+          const next = !value;
+          try {
+            window.localStorage.setItem(autoAdvanceKey, next ? "1" : "0");
+          } catch {
+            // ignore localStorage errors
+          }
+          setInfo(`자동 다음 파트 이동: ${next ? "켜짐" : "꺼짐"}`);
+          return next;
+        });
         return;
       }
       if (event.key === "Enter" && !loading && shuffledItems.length > 0) {
@@ -298,8 +345,7 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
       }
       if (event.key === "ArrowRight") {
         event.preventDefault();
-        setShowMeaning(false);
-        setIdx((v) => Math.min(v + 1, Math.max(shuffledItems.length - 1, 0)));
+        next();
       }
       if (event.key === " ") {
         event.preventDefault();
@@ -316,7 +362,7 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [loading, partCount, partIndex, setPartIndex, showMeaning, shuffledItems.length]);
+  }, [autoAdvanceKey, loading, moveToNextPart, next, partCount, partIndex, setPartIndex, showMeaning, shuffledItems.length]);
 
   useEffect(() => {
     setIdx((value) => Math.min(value, Math.max(shuffledItems.length - 1, 0)));
@@ -324,16 +370,6 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
 
   const current = shuffledItems[idx] ?? null;
   const progressPercent = shuffledItems.length > 0 ? Math.round(((idx + 1) / shuffledItems.length) * 100) : 0;
-
-  const next = () => {
-    setShowMeaning(false);
-    setIdx((v) => Math.min(v + 1, Math.max(shuffledItems.length - 1, 0)));
-  };
-
-  const prev = () => {
-    setShowMeaning(false);
-    setIdx((v) => Math.max(v - 1, 0));
-  };
 
   return (
     <section className="space-y-6" aria-labelledby="wordbook-cards-title">
@@ -346,7 +382,7 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
             {loading ? "-" : `${idx + 1}/${Math.max(shuffledItems.length, 1)}`}
           </p>
           <p className="mt-1 text-xs text-slate-500">
-            단축키: ←/→ 카드 이동 · Space/Enter 뜻 보기 · Esc 뜻 숨기기 · R 섞기 · `[`/`]`/`P`/`N` 파트 이동 · Home/End 처음/끝 카드 · PageUp/PageDown 파트 이동
+            단축키: ←/→ 카드 이동 · Space/Enter 뜻 보기 · Esc 뜻 숨기기 · R 섞기 · `[`/`]`/`P`/`N` 파트 이동 · `A` 자동 파트 이동 토글 · Home/End 처음/끝 카드 · PageUp/PageDown 파트 이동
           </p>
           <p className="mt-1 text-xs text-slate-500" role="status" aria-live="polite">
             전체 기준 {loading ? "-" : `${overallCardNumber}/${items.length}`}
@@ -371,6 +407,26 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
           />
           <span className="text-slate-500">전체 {items.length}개 / {partCount}개 파트</span>
           <span className="text-slate-500">· 현재 범위 {items.length === 0 || !hasPartItems ? "-" : `${partStart}~${partEnd}`}</span>
+          <span className="text-slate-500">· 남은 카드 {remainingInPart}개</span>
+          <span className="text-slate-500">· 남은 파트 {remainingParts}개</span>
+          <button
+            type="button"
+            onClick={() => {
+              setAutoAdvancePart((value) => {
+                const next = !value;
+                try {
+                  window.localStorage.setItem(autoAdvanceKey, next ? "1" : "0");
+                } catch {
+                  // ignore localStorage errors
+                }
+                return next;
+              });
+            }}
+            aria-pressed={autoAdvancePart}
+            className="ui-btn-secondary px-3 py-1 text-xs"
+          >
+            자동 다음 파트 {autoAdvancePart ? "켜짐" : "꺼짐"}
+          </button>
           <button
             type="button"
             onClick={() => {
@@ -519,6 +575,9 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
       {isPartComplete ? (
         <div className="ui-card p-3" role="status" aria-live="polite">
           <p className="text-sm font-semibold text-slate-800">현재 파트 학습을 완료했습니다.</p>
+          <p className="mt-1 text-xs text-slate-500">
+            남은 파트 {remainingParts}개 · 자동 다음 파트 {autoAdvancePart ? "켜짐" : "꺼짐"}
+          </p>
           <div className="mt-2 flex flex-wrap gap-2">
             <button
               type="button"
@@ -541,7 +600,7 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
             </button>
             <button
               type="button"
-              onClick={() => setPartIndex(Math.min(partCount, partIndex + 1))}
+              onClick={moveToNextPart}
               disabled={partIndex >= partCount}
               className="ui-btn-primary px-3 py-1 text-xs disabled:opacity-50"
             >
