@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 
 const links: Array<{ href: string; label: string }> = [
   { href: "/", label: "홈" },
@@ -13,7 +13,10 @@ const links: Array<{ href: string; label: string }> = [
 
 export function AppNav({ isLoggedIn }: { isLoggedIn: boolean }) {
   const pathname = usePathname();
-  const nextPath = pathname && pathname !== "/login" ? pathname : "/wordbooks";
+  const searchParams = useSearchParams();
+  const qs = searchParams.toString();
+  const pathWithQuery = pathname ? `${pathname}${qs ? `?${qs}` : ""}` : "/wordbooks";
+  const nextPath = pathname && pathname !== "/login" ? pathWithQuery : "/wordbooks";
   const isActive = (href: string) => {
     if (href === "/") return pathname === "/";
     return pathname === href || pathname.startsWith(`${href}/`);

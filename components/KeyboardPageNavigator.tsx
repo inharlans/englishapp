@@ -19,6 +19,16 @@ export function KeyboardPageNavigator() {
   const pathname = usePathname();
 
   useEffect(() => {
+    if (
+      pathname === "/login" ||
+      pathname === "/logout" ||
+      pathname === "/terms" ||
+      pathname === "/privacy" ||
+      pathname === "/pricing"
+    ) {
+      return;
+    }
+
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) {
         return;

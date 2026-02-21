@@ -10,6 +10,7 @@ Englishapp은 영어 학습과 단어장 마켓을 제공하는 웹 애플리케
 
 ## 최근 업데이트 (2026-02-21)
 
+- 전역 네비게이션 루틴을 보강해 로그인 이동 시 `next`에 현재 쿼리까지 보존하도록(`pathname + query`) 수정했고, 숫자 키 페이지 이동(`KeyboardPageNavigator`)은 로그인/로그아웃/약관/개인정보/요금제 화면에서 비활성화해 비학습 화면 오작동을 줄였습니다.
 - MCP 실측에서 전역적으로 반복된 manifest 아이콘 경고(`icon-192.png`) 대응을 위해 `public/site.webmanifest`를 정리해 설명 문구 인코딩을 복구하고, 아이콘 경로를 `android-chrome-192x192.png`/`android-chrome-512x512.png` 기준으로 정렬했으며 `scope`를 명시했습니다.
 - MCP 실측(`/wordbooks/new`) 기반으로 입력 방식 전환 영역을 `tablist/tabpanel` 구조로 보강하고, 파싱/초기화/업로드 액션의 로딩 중 비활성화 및 수동/검증 테이블 `aria-label`·행 삭제 버튼 라벨을 추가해 생성 플로우 키보드/보조기기 탐색성을 높였습니다.
 - MCP 실측(`/wordbooks/blocked`, `/logout`) 기반으로 차단 목록 용어를 `차단`으로 통일하고(제목/설명/빈 상태), KST 차단일 표기·목록 role 구조를 보강했으며, 차단 해제 성공/오류 피드백과 로그아웃 실패 메시지(`aria-live`/`role`)를 추가했습니다.
