@@ -548,3 +548,8 @@ Railway 기준:
 - 허용 답안을 토큰 단위로 정규화·중복 제거해 짧고 읽기 쉬운 예시만 노출
 - 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_78.md`
 
+### 2026-02-22 Iteration 79
+- `/wordbooks/[id]/list-*` 목록 페이지 초기 로딩 요약 수치를 `-`로 보정
+- 데이터 미수신 상태의 `0/0 (0%)` 오인 리스크 완화
+- 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_79.md`
+

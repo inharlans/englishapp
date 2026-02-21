@@ -123,6 +123,13 @@ export function WordbookListClient({
   const activePartRate =
     activePartStat.totalInPart > 0 ? Math.round((activePartStat.matchedCount / activePartStat.totalInPart) * 100) : 0;
   const remainingParts = Math.max(displayPartCount - partIndex, 0);
+  const isInitialLoading = loading && totalItems === 0;
+  const totalItemsLabel = isInitialLoading ? "-" : String(totalItems);
+  const partCountLabel = isInitialLoading ? "-" : String(displayPartCount);
+  const activeMatchedLabel = isInitialLoading ? "-" : String(activePartStat.matchedCount);
+  const activeTotalLabel = isInitialLoading ? "-" : String(activePartStat.totalInPart);
+  const activeRateLabel = isInitialLoading ? "-" : `${activePartRate}`;
+  const remainingPartsLabel = isInitialLoading ? "-" : String(remainingParts);
   const visibleParts = useMemo(() => {
     if (displayPartCount <= 9) return parts.map((p) => ({ kind: "part" as const, part: p }));
     const set = new Set<number>([1, displayPartCount]);
@@ -254,12 +261,12 @@ export function WordbookListClient({
             className="w-20 rounded border border-slate-300 bg-white px-2 py-1 text-sm"
           />
           <span className="text-slate-500">
-            총 {totalItems}개 / {displayPartCount}개 파트
+            총 {totalItemsLabel}개 / {partCountLabel}개 파트
           </span>
         </div>
         <div className="mt-2 text-xs text-slate-500">
-          현재 {partIndex}파트: {activePartStat.matchedCount}/{activePartStat.totalInPart} ({activePartRate}%)
-          {" · "}남은 파트 {remainingParts}개
+          현재 {partIndex}파트: {activeMatchedLabel}/{activeTotalLabel} ({activeRateLabel}%)
+          {" · "}남은 파트 {remainingPartsLabel}개
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
           <label className="sr-only" htmlFor="list-part-select">
