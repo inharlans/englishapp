@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { deleteOfflineWordbook, listOfflineWordbooks, type OfflineWordbook } from "@/lib/offlineWordbooks";
 import { maskEmailAddress } from "@/lib/textQuality";
@@ -13,6 +13,7 @@ export default function OfflineLibraryPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const formatDateKst = (iso: string) =>
     new Intl.DateTimeFormat("ko-KR", {
@@ -104,6 +105,7 @@ export default function OfflineLibraryPage() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="제목 또는 제작자 이메일"
+              ref={searchInputRef}
               className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
           </label>
@@ -125,6 +127,7 @@ export default function OfflineLibraryPage() {
               onClick={() => {
                 setQuery("");
                 setSortMode("saved-desc");
+                searchInputRef.current?.focus();
               }}
               className="ui-btn-secondary w-full px-4 py-2 text-sm"
             >
@@ -133,7 +136,7 @@ export default function OfflineLibraryPage() {
           </div>
         </div>
         {!loading ? (
-          <p className="mt-2 text-xs text-slate-500">
+          <p className="mt-2 text-xs text-slate-500" aria-live="polite" aria-atomic="true">
             총 {items.length}개 중 {filteredItems.length}개 표시
           </p>
         ) : null}

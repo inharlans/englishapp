@@ -50,9 +50,15 @@ export default async function PricingPage(props: { searchParams: Promise<{ payme
           <Link href={{ pathname: "/terms" }} className="ui-btn-secondary px-4 py-2 text-sm">
             서비스 약관
           </Link>
-          <Link href={{ pathname: "/wordbooks" }} className="ui-btn-secondary px-4 py-2 text-sm">
-            내 단어장
-          </Link>
+          {user ? (
+            <Link href={{ pathname: "/wordbooks" }} className="ui-btn-secondary px-4 py-2 text-sm">
+              내 단어장
+            </Link>
+          ) : (
+            <Link href={{ pathname: "/login", query: { next: "/pricing" } }} className="ui-btn-secondary px-4 py-2 text-sm">
+              로그인
+            </Link>
+          )}
         </div>
       </header>
 

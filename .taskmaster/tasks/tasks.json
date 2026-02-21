@@ -142,12 +142,24 @@
         "status": "done",
         "subtasks": [],
         "updatedAt": "2026-02-20T10:23:36.751Z"
+      },
+      {
+        "id": "11",
+        "title": "Run continuous service-quality audit loop (non-payment)",
+        "description": "Execute the seven-step service quality loop focused on UX/accessibility/stability/content clarity/ops while explicitly excluding payment-related pages and APIs.",
+        "details": "Leverage existing audit artifacts (e.g., `docs/service-audit-2026-02-21-loop/ITERATION_*.md`) and the protocol template in `docs/REPEAT_AUDIT_LOOP_PROTOCOL.md` as the baseline. For each cycle: (1) use MCP browser inspection to identify 10 concrete issues in non-payment areas (exclude `/pricing`, `app/api/payments/*`, and any PortOne/KG integrations); (2) create `docs/service-audit-YYYY-MM-DD-loop/ITERATION_k.md` with scope, 10 findings, fix plan, and validation notes; (3) implement all 10 fixes in the relevant Next.js/TypeScript code or content; (4) update `README.md` with concise Korean change notes per repo policy; (5) run `npm run typecheck`; (6) commit and push to `main`; (7) wait 4 minutes, then verify Railway deployment success before starting the next cycle. Track each cycle’s task status in Task Master as you progress. Pseudocode: `for cycle in cycles: issues = mcp.inspect(app, exclude=['/pricing','/api/payments']); doc.write(iteration_k, issues, fix_plan); apply_fixes(issues); update_readme_korean(notes); run('npm run typecheck'); git.commit_push('main'); sleep(240); assert(railway.deploy_ok)`.",
+        "testStrategy": "Run `npm run typecheck` after fixes; execute focused manual checks for the 10 fixed areas in the UI; confirm the iteration doc and `README.md` entries are updated; verify Railway deploy is successful before starting the next cycle.",
+        "priority": "medium",
+        "dependencies": [],
+        "status": "in-progress",
+        "subtasks": [],
+        "updatedAt": "2026-02-21T10:01:15.297Z"
       }
     ],
     "metadata": {
       "version": "1.0.0",
-      "lastModified": "2026-02-20T10:23:36.751Z",
-      "taskCount": 10,
+      "lastModified": "2026-02-21T10:01:15.297Z",
+      "taskCount": 11,
       "completedCount": 10,
       "tags": [
         "master"

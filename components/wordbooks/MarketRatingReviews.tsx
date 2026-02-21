@@ -46,6 +46,14 @@ export function MarketRatingReviews({
       setLoading(false);
     }
   };
+  const formattedAverage = Number.isFinite(ratingAvg) ? ratingAvg.toFixed(1) : "0.0";
+  const formatDateKst = (iso: string) =>
+    new Intl.DateTimeFormat("ko-KR", {
+      timeZone: "Asia/Seoul",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit"
+    }).format(new Date(iso));
 
   return (
     <div className="space-y-2">
@@ -54,6 +62,7 @@ export function MarketRatingReviews({
         onClick={() => void toggle()}
         className="rounded-lg border border-transparent px-1 py-0.5 text-left hover:border-slate-200"
         aria-expanded={open}
+        aria-label={`평점 ${formattedAverage}점, 리뷰 ${ratingCount}개`}
       >
         <StarRating value={ratingAvg} count={ratingCount} />
       </button>
@@ -74,7 +83,7 @@ export function MarketRatingReviews({
                     <StarRating value={r.rating} />
                     <span className="text-[11px] text-slate-500">{maskEmailAddress(r.userEmail)}</span>
                     <span className="text-[11px] text-slate-400">
-                      {new Date(r.updatedAt).toISOString().slice(0, 10)}
+                      {formatDateKst(r.updatedAt)}
                     </span>
                   </div>
                   {r.review ? <p className="mt-1 text-xs text-slate-700">{r.review}</p> : null}

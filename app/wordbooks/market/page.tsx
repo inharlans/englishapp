@@ -192,6 +192,7 @@ export default async function MarketPage(props: {
       </header>
 
       <form className="ui-card p-4" method="get">
+        <input type="hidden" name="page" value="0" />
         <div className="grid gap-3 md:grid-cols-12 md:items-end">
           <label className="block md:col-span-7">
             <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">검색</span>
@@ -199,9 +200,12 @@ export default async function MarketPage(props: {
               name="q"
               defaultValue={q}
               placeholder="제목, 설명, 제작자 이메일"
+              aria-describedby="market-search-help"
               className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
-            <span className="mt-1 block text-[11px] text-slate-500">제목/설명/제작자 이메일로 검색할 수 있습니다.</span>
+            <span id="market-search-help" className="mt-1 block text-[11px] text-slate-500">
+              제목/설명/제작자 이메일로 검색할 수 있습니다.
+            </span>
           </label>
           <label className="block md:col-span-3">
             <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">정렬</span>
@@ -237,10 +241,10 @@ export default async function MarketPage(props: {
       </form>
 
       <div className="flex items-center justify-between text-sm text-slate-600">
-        <p aria-live="polite">
+        <p aria-live="polite" aria-atomic="true">
           총 {total}개 - {page + 1}/{maxPage + 1}페이지
         </p>
-        <div className="flex items-center gap-2">
+        <nav aria-label="마켓 페이지네이션 (상단)" className="flex items-center gap-2">
           {prevDisabled ? (
             <span className="ui-btn-secondary cursor-not-allowed px-3 py-1.5 text-sm opacity-50" aria-disabled="true">
               이전
@@ -267,7 +271,7 @@ export default async function MarketPage(props: {
               다음
             </Link>
           )}
-        </div>
+        </nav>
       </div>
 
       {beginnerPicks.length > 0 ? (
@@ -299,12 +303,12 @@ export default async function MarketPage(props: {
           <p className="text-xs text-slate-500">
             신고는 관리자 검토 후 처리되며, 제작자 차단은 개인화 기능입니다.
           </p>
-          <div className="grid gap-3 md:grid-cols-2">
+          <div className="grid gap-3 md:grid-cols-2" role="list" aria-label="마켓 단어장 목록">
             {wordbooks.map((wb) => {
             const isDownloaded = downloadedIds.has(wb.id);
             const description = splitWordbookDescription(wb.description).displayDescription;
             return (
-              <div key={wb.id} className="ui-card p-4 transition hover:-translate-y-0.5">
+              <div key={wb.id} className="ui-card p-4 transition hover:-translate-y-0.5" role="listitem">
                 <div className="flex items-start gap-3">
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
@@ -384,7 +388,7 @@ export default async function MarketPage(props: {
                       </Link>
                     ) : null}
                     {user && wb.owner.id !== user.id ? (
-                      <div className="mt-2 flex flex-wrap items-start gap-2">
+                      <div className="mt-2 flex flex-wrap items-start gap-2" aria-label={`${wb.title} 신고/차단 동작`}>
                         <BlockOwnerButton wordbookId={wb.id} />
                         <ReportWordbookButton wordbookId={wb.id} hideHint />
                       </div>
@@ -398,9 +402,10 @@ export default async function MarketPage(props: {
         </>
       )}
 
+      {total > 0 ? (
       <div className="pointer-events-none fixed inset-x-0 bottom-4 z-40 md:hidden">
         <div className="mx-auto w-full max-w-5xl px-6">
-          <div className="pointer-events-auto ui-card flex items-center justify-between gap-2 p-2">
+          <nav aria-label="마켓 페이지네이션 (모바일 하단)" className="pointer-events-auto ui-card flex items-center justify-between gap-2 p-2">
             {prevDisabled ? (
               <span className="ui-btn-secondary cursor-not-allowed px-4 py-2 text-sm opacity-50" aria-disabled="true">
                 이전
@@ -430,9 +435,10 @@ export default async function MarketPage(props: {
                 다음
               </Link>
             )}
-          </div>
+          </nav>
         </div>
       </div>
+      ) : null}
     </section>
   );
 }
