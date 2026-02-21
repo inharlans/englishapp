@@ -650,6 +650,7 @@ export default function NewWordbookPage() {
           <button
             type="submit"
             disabled={!canSubmit}
+            aria-busy={loading}
             className="ui-btn-accent px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading ? "생성 중..." : "단어장 생성"}
@@ -665,12 +666,12 @@ export default function NewWordbookPage() {
         </div>
 
         {status ? (
-          <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
+          <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700" role="status" aria-live="polite">
             {status}
           </p>
         ) : null}
         {error ? (
-          <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
             {error}
           </p>
         ) : null}

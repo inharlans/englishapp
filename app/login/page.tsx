@@ -77,7 +77,7 @@ function LoginInner() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<p className="text-sm text-slate-700">불러오는 중...</p>}>
+    <Suspense fallback={<p className="text-sm text-slate-700" role="status" aria-live="polite">불러오는 중...</p>}>
       <LoginInner />
     </Suspense>
   );

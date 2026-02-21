@@ -77,17 +77,18 @@ export function LoginPanel({
         <button
           type="submit"
           disabled={loading}
+          aria-busy={loading}
           className="ui-btn-accent w-full px-4 py-2.5 text-sm transition disabled:cursor-not-allowed disabled:opacity-60"
         >
           {loading ? "로그인 중..." : "로그인"}
         </button>
 
         {error ? (
-          <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">{error}</p>
+          <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700" role="alert">{error}</p>
         ) : null}
 
         {oauthError ? (
-          <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">{oauthError}</p>
+          <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700" role="alert">{oauthError}</p>
         ) : null}
       </form>
 
@@ -101,6 +102,7 @@ export function LoginPanel({
         <div className="space-y-2">
           <a
             href={`/api/auth/google?next=${encodeURIComponent(nextPath)}`}
+            aria-label="Google로 계속하기"
             className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-50"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
@@ -117,6 +119,7 @@ export function LoginPanel({
 
           <a
             href={`/api/auth/naver?next=${encodeURIComponent(nextPath)}`}
+            aria-label="네이버로 계속하기"
             className="flex w-full cursor-pointer items-center justify-center rounded-xl border border-[#03C75A] bg-[#03C75A] px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-95"
           >
             네이버로 계속하기
@@ -124,6 +127,7 @@ export function LoginPanel({
 
           <a
             href={`/api/auth/kakao?next=${encodeURIComponent(nextPath)}`}
+            aria-label="카카오로 계속하기"
             className="flex w-full cursor-pointer items-center justify-center rounded-xl border border-[#FEE500] bg-[#FEE500] px-4 py-2.5 text-sm font-semibold text-[#191919] transition hover:brightness-95"
           >
             카카오로 계속하기
