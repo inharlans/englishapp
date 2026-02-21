@@ -55,12 +55,14 @@ export function WordbookListClient({
   title: string;
 }) {
   const [items, setItems] = useState<Item[]>([]);
+  const [wordbookTitle, setWordbookTitle] = useState("");
   const [totalItems, setTotalItems] = useState(0);
   const [partStats, setPartStats] = useState<Array<{ partIndex: number; totalInPart: number; matchedCount: number }>>(
     []
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [info, setInfo] = useState("");
   const { mode: meaningMode, setMode: setMeaningMode } = useMeaningViewMode();
   const { mode: densityMode, setMode: setDensityMode } = useDensityMode();
   const { partSize, setPartSize, partIndex, setPartIndex, partCount } = useWordbookParting(wordbookId, totalItems);
@@ -82,6 +84,7 @@ export function WordbookListClient({
         });
         const json = (await res.json()) as Payload;
         if (!res.ok) throw new Error(json.error ?? "목록을 불러오지 못했습니다.");
+        setWordbookTitle(json.wordbook?.title ?? "");
         setItems(json.items ?? []);
         setTotalItems(json.paging?.totalItems ?? 0);
         setPartStats(json.paging?.partStats ?? []);
@@ -95,7 +98,9 @@ export function WordbookListClient({
   }, [mode, partIndex, partSize, wordbookId]);
 
   const partStatsMap = useMemo(() => new Map(partStats.map((s) => [s.partIndex, s])), [partStats]);
-  const parts = Array.from({ length: partCount }, (_, idx) => {
+  const maxPartFromStats = partStats.reduce((max, s) => Math.max(max, s.partIndex), 0);
+  const displayPartCount = Math.max(partCount, maxPartFromStats);
+  const parts = Array.from({ length: displayPartCount }, (_, idx) => {
     const n = idx + 1;
     const stat = partStatsMap.get(n);
     return {
@@ -104,6 +109,31 @@ export function WordbookListClient({
       matchedCount: stat?.matchedCount ?? 0
     };
   });
+  const activePartStat = partStatsMap.get(partIndex) ?? { totalInPart: 0, matchedCount: 0 };
+  const activePartRate =
+    activePartStat.totalInPart > 0 ? Math.round((activePartStat.matchedCount / activePartStat.totalInPart) * 100) : 0;
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      const isTyping =
+        !!target &&
+        (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.getAttribute("contenteditable") === "true");
+      if (isTyping) return;
+      if (event.key === "[") {
+        event.preventDefault();
+        setPartIndex(Math.max(1, partIndex - 1));
+        setInfo("");
+      }
+      if (event.key === "]") {
+        event.preventDefault();
+        setPartIndex(Math.min(displayPartCount, partIndex + 1));
+        setInfo("");
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [displayPartCount, partIndex, setPartIndex]);
 
   return (
     <section className="space-y-4">
@@ -111,6 +141,8 @@ export function WordbookListClient({
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">단어장 목록</p>
           <h1 className="mt-2 text-2xl font-black tracking-tight text-slate-900">{title}</h1>
+          {wordbookTitle ? <p className="mt-1 text-sm text-slate-600">{wordbookTitle}</p> : null}
+          <p className="mt-1 text-xs text-slate-500">단축키: `[` 이전 파트 · `]` 다음 파트</p>
         </div>
         <WordbookStudyTabs wordbookId={wordbookId} active={activeTab(mode)} />
       </header>
@@ -158,21 +190,50 @@ export function WordbookListClient({
             className="w-20 rounded border border-slate-300 bg-white px-2 py-1 text-sm"
           />
           <span className="text-slate-500">
-            총 {totalItems}개 / {partCount}개 파트
+            총 {totalItems}개 / {displayPartCount}개 파트
           </span>
         </div>
+        <div className="mt-2 text-xs text-slate-500">
+          현재 {partIndex}파트: {activePartStat.matchedCount}/{activePartStat.totalInPart} ({activePartRate}%)
+        </div>
         <div className="mt-3 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              setPartIndex(Math.max(1, partIndex - 1));
+              setInfo("");
+            }}
+            disabled={partIndex <= 1}
+            className="ui-btn-secondary px-3 py-1 text-xs disabled:opacity-50"
+          >
+            이전 파트
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setPartIndex(Math.min(displayPartCount, partIndex + 1));
+              setInfo("");
+            }}
+            disabled={partIndex >= displayPartCount}
+            className="ui-btn-secondary px-3 py-1 text-xs disabled:opacity-50"
+          >
+            다음 파트
+          </button>
           {parts.map((p) => (
             <button
               key={p.partIndex}
               type="button"
-              onClick={() => setPartIndex(p.partIndex)}
+              onClick={() => {
+                setPartIndex(p.partIndex);
+                setInfo("");
+              }}
               className={[
                 "rounded-lg border px-3 py-1 text-left text-xs font-semibold",
                 p.partIndex === partIndex
                   ? "ui-tab-active"
                   : "ui-tab-inactive"
               ].join(" ")}
+              aria-label={`${p.partIndex}파트 ${p.matchedCount}/${p.totalInPart}`}
             >
               <span>{p.partIndex}파트</span>
               <span className={p.partIndex === partIndex ? "ml-2 text-slate-200" : "ml-2 text-slate-500"}>
@@ -184,12 +245,15 @@ export function WordbookListClient({
       </div>
 
             {error ? (
-        <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">{error}</p>
+        <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700" role="alert">{error}</p>
+      ) : null}
+      {info ? (
+        <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800" role="status" aria-live="polite">{info}</p>
       ) : null}
 
       <div className="relative min-h-[220px]">
         {loading ? (
-          <div className="pointer-events-none absolute right-2 top-2 rounded-full border border-slate-200 bg-white/90 px-3 py-1 text-xs font-semibold text-slate-600 shadow-sm">
+          <div className="pointer-events-none absolute right-2 top-2 rounded-full border border-slate-200 bg-white/90 px-3 py-1 text-xs font-semibold text-slate-600 shadow-sm" role="status" aria-live="polite">
             불러오는 중...
           </div>
         ) : null}
@@ -218,7 +282,7 @@ export function WordbookListClient({
             ) : null}
             {item.itemState ? (
               <p className="mt-2 text-xs text-slate-500">
-                상태 {item.itemState.status} / 이력 정답:{item.itemState.everCorrect ? "Y" : "N"} 오답:
+                상태 {item.itemState.status === "CORRECT" ? "정답" : item.itemState.status === "WRONG" ? "오답" : "새 단어"} / 이력 정답:{item.itemState.everCorrect ? "Y" : "N"} 오답:
                 {item.itemState.everWrong ? "Y" : "N"}
               </p>
             ) : null}
