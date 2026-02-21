@@ -13,6 +13,7 @@ const links: Array<{ href: string; label: string }> = [
 
 export function AppNav({ isLoggedIn }: { isLoggedIn: boolean }) {
   const pathname = usePathname();
+  const nextPath = pathname && pathname !== "/login" ? pathname : "/wordbooks";
   const isActive = (href: string) => {
     if (href === "/") return pathname === "/";
     return pathname === href || pathname.startsWith(`${href}/`);
@@ -35,17 +36,19 @@ export function AppNav({ isLoggedIn }: { isLoggedIn: boolean }) {
             </Link>
           </li>
         ))}
-        <li className="ml-auto flex items-center gap-2">
+        <li className="ml-auto">
+          <div className="flex items-center gap-2" role="group" aria-label="계정 메뉴">
           {!isLoggedIn ? (
-            <Link href="/login" className="ui-btn-secondary px-3 py-2 text-sm">
+            <Link href={{ pathname: "/login", query: { next: nextPath } }} className="ui-btn-secondary px-3 py-2 text-sm">
               로그인
             </Link>
           ) : null}
           {isLoggedIn ? (
-            <Link href="/logout" className="ui-btn-ghost px-3 py-2 text-sm">
+            <Link href="/logout" className="ui-btn-ghost px-3 py-2 text-sm" aria-label="계정 로그아웃">
               로그아웃
             </Link>
           ) : null}
+          </div>
         </li>
       </ul>
     </nav>

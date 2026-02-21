@@ -90,6 +90,7 @@ export default function OfflineLibraryPage() {
             type="button"
             onClick={() => void reload()}
             disabled={loading}
+            aria-busy={loading}
             className="ui-btn-secondary px-4 py-2 text-sm"
           >
             {loading ? "불러오는 중" : "새로고침"}
@@ -106,8 +107,12 @@ export default function OfflineLibraryPage() {
               onChange={(e) => setQuery(e.target.value)}
               placeholder="제목 또는 제작자 이메일"
               ref={searchInputRef}
+              aria-describedby="offline-search-help"
               className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
+            <span id="offline-search-help" className="mt-1 block text-[11px] text-slate-500">
+              제목 또는 제작자 이메일로 검색할 수 있습니다.
+            </span>
           </label>
           <label className="block md:col-span-3">
             <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">정렬</span>
@@ -159,16 +164,30 @@ export default function OfflineLibraryPage() {
             <>
               아직 저장된 항목이 없습니다. 다운로드한 단어장에서{" "}
               <span className="font-semibold">오프라인 저장</span>을 눌러주세요.
+              {" "}
+              <Link href="/wordbooks" className="font-semibold text-blue-700 hover:underline">내 단어장으로 이동</Link>
             </>
           ) : (
-            <>검색 결과가 없습니다. 검색어를 변경해 주세요.</>
+            <>
+              검색 결과가 없습니다. 검색어를 변경해 주세요.{" "}
+              <button
+                type="button"
+                className="font-semibold text-blue-700 hover:underline"
+                onClick={() => {
+                  setQuery("");
+                  searchInputRef.current?.focus();
+                }}
+              >
+                검색어 초기화
+              </button>
+            </>
           )}
         </div>
       ) : null}
 
-      <div className="grid gap-3 md:grid-cols-2">
+      <div className="grid gap-3 md:grid-cols-2" role="list" aria-label="오프라인 단어장 목록">
         {filteredItems.map((wb) => (
-          <div key={wb.id} className="rounded-2xl border border-slate-200 bg-white p-4">
+          <div key={wb.id} className="rounded-2xl border border-slate-200 bg-white p-4" role="listitem">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <h2 className="truncate text-lg font-black text-slate-900">{wb.title}</h2>
@@ -182,6 +201,7 @@ export default function OfflineLibraryPage() {
                   type="button"
                   onClick={() => void onDelete(wb.id)}
                   disabled={deletingId === wb.id}
+                  aria-label={`${wb.title} 오프라인 사본 삭제`}
                   className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-sm font-semibold text-blue-800 hover:bg-blue-100"
                 >
                   {deletingId === wb.id ? "삭제 중..." : "삭제"}
@@ -191,6 +211,7 @@ export default function OfflineLibraryPage() {
               <Link
                 href={{ pathname: `/offline/wordbooks/${wb.id}` }}
                 className="ui-btn-primary px-3 py-1.5 text-sm"
+                aria-label={`${wb.title} 오프라인 학습으로 이동`}
               >
                 오프라인 학습
               </Link>
