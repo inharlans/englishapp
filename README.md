@@ -533,3 +533,8 @@ Railway 기준:
 - 기본은 원본 순서 유지, 사용자 액션(`섞기`/`R`)에서만 셔플되도록 변경
 - 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_75.md`
 
+### 2026-02-22 Iteration 76
+- `/wordbooks/[id]/cards` 초기 로딩 요약 수치를 `-` 플레이스홀더로 보정
+- 데이터 미수신 상태의 `0개/1개 파트` 오인 리스크 완화
+- 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_76.md`
+

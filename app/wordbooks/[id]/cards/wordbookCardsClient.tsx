@@ -427,6 +427,13 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
 
   const current = shuffledItems[idx] ?? null;
   const progressPercent = shuffledItems.length > 0 ? Math.round(((idx + 1) / shuffledItems.length) * 100) : 0;
+  const isInitialLoading = loading && items.length === 0;
+  const totalItemsLabel = isInitialLoading ? "-" : String(items.length);
+  const partCountLabel = isInitialLoading ? "-" : String(partCount);
+  const currentRangeLabel = isInitialLoading || !hasPartItems ? "-" : `${partStart}~${partEnd}`;
+  const remainingInPartLabel = isInitialLoading ? "-" : String(remainingInPart);
+  const remainingPartsLabel = isInitialLoading ? "-" : String(remainingParts);
+  const overallProgressLabel = isInitialLoading ? "-" : `${overallCardNumber}/${items.length}`;
 
   useEffect(() => {
     if (!autoSpeak || !current) return;
@@ -455,7 +462,7 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
             단축키: ←/→ 카드 이동 · Space/Enter/M 뜻 보기 · Esc 뜻 숨기기 · 0 처음 카드 · R 섞기 · `[`/`]`/`P`/`N` 파트 이동 · `A` 자동 파트 이동 · `V` 자동 발음 토글 · Home/End 처음/끝 카드 · PageUp/PageDown 파트 이동
           </p>
           <p className="mt-1 text-xs text-slate-500" role="status" aria-live="polite">
-            전체 기준 {loading ? "-" : `${overallCardNumber}/${items.length}`}
+            전체 기준 {overallProgressLabel}
           </p>
         </div>
         <WordbookStudyTabs wordbookId={wordbookId} active="cards" showBack={false} />
@@ -481,10 +488,10 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
             }}
             className="w-20 rounded border border-slate-300 bg-white px-2 py-1 text-sm"
           />
-          <span className="text-slate-500">전체 {items.length}개 / {partCount}개 파트</span>
-          <span className="text-slate-500">· 현재 범위 {items.length === 0 || !hasPartItems ? "-" : `${partStart}~${partEnd}`}</span>
-          <span className="text-slate-500">· 남은 카드 {remainingInPart}개</span>
-          <span className="text-slate-500">· 남은 파트 {remainingParts}개</span>
+          <span className="text-slate-500">전체 {totalItemsLabel}개 / {partCountLabel}개 파트</span>
+          <span className="text-slate-500">· 현재 범위 {currentRangeLabel}</span>
+          <span className="text-slate-500">· 남은 카드 {remainingInPartLabel}개</span>
+          <span className="text-slate-500">· 남은 파트 {remainingPartsLabel}개</span>
           <button
             type="button"
             onClick={() => {
