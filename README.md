@@ -459,6 +459,11 @@ Railway 기준:
 - 채점 로직은 유지하고 사용자/로그 노출 문구만 정상 한글로 교체
 - 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_62.md`
 
+### 2026-02-22 Iteration 63
+- `quiz-word` 실플레이 기준으로 남은 문제 지표를 재도전 큐 포함 수치로 보강
+- 상단/상태바에 오답 큐와 남은 문제를 함께 노출해 진행 체감 일치도 개선
+- 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_63.md`
+
 
 
 
