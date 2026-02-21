@@ -23,10 +23,21 @@ type StudyPayload = {
   paging?: { totalFiltered: number; take: number };
 };
 
-function shuffle<T>(arr: T[]): T[] {
+function mulberry32(seed: number) {
+  let t = seed >>> 0;
+  return () => {
+    t += 0x6d2b79f5;
+    let r = Math.imul(t ^ (t >>> 15), t | 1);
+    r ^= r + Math.imul(r ^ (r >>> 7), r | 61);
+    return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function shuffleBySeed<T>(arr: T[], seed: number): T[] {
   const a = [...arr];
+  const rand = mulberry32(seed);
   for (let i = a.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(rand() * (i + 1));
     [a[i], a[j]] = [a[j], a[i]];
   }
   return a;
@@ -45,12 +56,14 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
   const [partJump, setPartJump] = useState("1");
   const [reloadTick, setReloadTick] = useState(0);
   const [resumeEnabled, setResumeEnabled] = useState(true);
+  const [partShuffleSeed, setPartShuffleSeed] = useState(1);
   const mountedRef = useRef(true);
   const requestSeqRef = useRef(0);
   const restoredKeyRef = useRef("");
   const { partSize, setPartSize, partIndex, setPartIndex, partCount } = useWordbookParting(wordbookId, items.length);
   const progressStorageKey = `wordbook_cards_progress_${wordbookId}_${partSize}_${partIndex}`;
   const resumePrefKey = `wordbook_cards_resume_enabled_${wordbookId}`;
+  const seedStorageKey = `wordbook_cards_seed_${wordbookId}_${partSize}_${partIndex}`;
 
   useEffect(() => {
     mountedRef.current = true;
@@ -123,8 +136,8 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
 
   const shuffledItems = useMemo(() => {
     void orderSeed;
-    return shuffle(partItems);
-  }, [partItems, orderSeed]);
+    return shuffleBySeed(partItems, partShuffleSeed);
+  }, [partItems, orderSeed, partShuffleSeed]);
   const hasPartItems = shuffledItems.length > 0;
   const partStart = (partIndex - 1) * partSize + 1;
   const partEnd = Math.min(partIndex * partSize, items.length);
@@ -155,6 +168,23 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
   }, [partIndex, partSize]);
 
   useEffect(() => {
+    let seed = 1;
+    try {
+      const raw = window.localStorage.getItem(seedStorageKey);
+      const parsed = Number(raw);
+      if (Number.isFinite(parsed) && parsed > 0) {
+        seed = Math.floor(parsed);
+      } else {
+        seed = Math.floor(Math.random() * 2_000_000_000) + 1;
+        window.localStorage.setItem(seedStorageKey, String(seed));
+      }
+    } catch {
+      seed = Math.floor(Math.random() * 2_000_000_000) + 1;
+    }
+    setPartShuffleSeed(seed);
+  }, [seedStorageKey]);
+
+  useEffect(() => {
     setIdx(0);
     setShowMeaning(false);
     setInfo(`${partIndex}파트로 이동했습니다.`);
@@ -167,9 +197,14 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
     try {
       const raw = window.localStorage.getItem(progressStorageKey);
       if (!raw) return;
-      const parsed = JSON.parse(raw) as { idx?: number; showMeaning?: boolean };
-      const nextIdx =
-        Number.isFinite(parsed.idx) && typeof parsed.idx === "number"
+      const parsed = JSON.parse(raw) as { idx?: number; showMeaning?: boolean; currentItemId?: number };
+      const indexByItemId =
+        typeof parsed.currentItemId === "number"
+          ? shuffledItems.findIndex((card) => card.id === parsed.currentItemId)
+          : -1;
+      const nextIdx = indexByItemId >= 0
+        ? indexByItemId
+        : Number.isFinite(parsed.idx) && typeof parsed.idx === "number"
           ? Math.min(Math.max(Math.floor(parsed.idx), 0), Math.max(shuffledItems.length - 1, 0))
           : 0;
       setIdx(nextIdx);
@@ -179,16 +214,20 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
       setIdx(0);
       setShowMeaning(false);
     }
-  }, [loading, partIndex, progressStorageKey, resumeEnabled, shuffledItems.length]);
+  }, [loading, partIndex, progressStorageKey, resumeEnabled, shuffledItems, shuffledItems.length]);
 
   useEffect(() => {
     if (!resumeEnabled || !hasPartItems) return;
     try {
-      window.localStorage.setItem(progressStorageKey, JSON.stringify({ idx, showMeaning, updatedAt: Date.now() }));
+      const currentItemId = shuffledItems[idx]?.id ?? null;
+      window.localStorage.setItem(
+        progressStorageKey,
+        JSON.stringify({ idx, showMeaning, currentItemId, updatedAt: Date.now() })
+      );
     } catch {
       // ignore localStorage errors
     }
-  }, [hasPartItems, idx, progressStorageKey, resumeEnabled, showMeaning]);
+  }, [hasPartItems, idx, progressStorageKey, resumeEnabled, showMeaning, shuffledItems]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -485,6 +524,13 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
               type="button"
               onClick={() => {
                 setOrderSeed((value) => value + 1);
+                const nextSeed = Math.floor(Math.random() * 2_000_000_000) + 1;
+                setPartShuffleSeed(nextSeed);
+                try {
+                  window.localStorage.setItem(seedStorageKey, String(nextSeed));
+                } catch {
+                  // ignore localStorage errors
+                }
                 setIdx(0);
                 setShowMeaning(false);
                 setInfo("현재 파트 카드를 다시 섞었습니다.");
@@ -574,6 +620,13 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
                 type="button"
                 onClick={() => {
                   setOrderSeed((v) => v + 1);
+                  const nextSeed = Math.floor(Math.random() * 2_000_000_000) + 1;
+                  setPartShuffleSeed(nextSeed);
+                  try {
+                    window.localStorage.setItem(seedStorageKey, String(nextSeed));
+                  } catch {
+                    // ignore localStorage errors
+                  }
                   setIdx(0);
                   setShowMeaning(false);
                   setInfo("카드 순서를 다시 섞었습니다.");
