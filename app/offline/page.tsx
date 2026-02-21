@@ -11,6 +11,15 @@ export default function OfflineLibraryPage() {
   const [sortMode, setSortMode] = useState<"saved-desc" | "saved-asc" | "words-desc">("saved-desc");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+
+  const formatDateKst = (iso: string) =>
+    new Intl.DateTimeFormat("ko-KR", {
+      timeZone: "Asia/Seoul",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit"
+    }).format(new Date(iso));
 
   const reload = async () => {
     setLoading(true);
@@ -44,8 +53,16 @@ export default function OfflineLibraryPage() {
   const onDelete = async (id: number) => {
     const ok = window.confirm("이 오프라인 사본을 삭제하시겠습니까?");
     if (!ok) return;
-    await deleteOfflineWordbook(id);
-    await reload();
+    setDeletingId(id);
+    setError("");
+    try {
+      await deleteOfflineWordbook(id);
+      await reload();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "오프라인 사본 삭제에 실패했습니다.");
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   return (
@@ -70,9 +87,10 @@ export default function OfflineLibraryPage() {
           <button
             type="button"
             onClick={() => void reload()}
+            disabled={loading}
             className="ui-btn-secondary px-4 py-2 text-sm"
           >
-            새로고침
+            {loading ? "불러오는 중" : "새로고침"}
           </button>
         </div>
       </header>
@@ -103,16 +121,21 @@ export default function OfflineLibraryPage() {
           <div className="md:col-span-2">
             <button
               type="button"
-              onClick={() => setQuery("")}
+              onClick={() => {
+                setQuery("");
+                setSortMode("saved-desc");
+              }}
               className="ui-btn-secondary w-full px-4 py-2 text-sm"
             >
-              검색 초기화
+              필터 초기화
             </button>
           </div>
         </div>
-        <p className="mt-2 text-xs text-slate-500">
-          총 {items.length}개 중 {filteredItems.length}개 표시
-        </p>
+        {!loading ? (
+          <p className="mt-2 text-xs text-slate-500">
+            총 {items.length}개 중 {filteredItems.length}개 표시
+          </p>
+        ) : null}
       </div>
 
       {loading ? <p className="text-sm text-slate-600">불러오는 중...</p> : null}
@@ -142,18 +165,19 @@ export default function OfflineLibraryPage() {
               <div className="min-w-0">
                 <h2 className="truncate text-lg font-black text-slate-900">{wb.title}</h2>
                 <p className="mt-1 text-xs text-slate-500">
-                  저장일 {wb.savedAt.slice(0, 10)}
+                  저장일 {formatDateKst(wb.savedAt)}
                   {wb.ownerEmail ? ` · 제작자 ${wb.ownerEmail}` : ""}
                 </p>
                 <p className="mt-2 text-sm text-slate-600">단어 {wb.items.length}개</p>
               </div>
-              <button
-                type="button"
-                onClick={() => void onDelete(wb.id)}
-                className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-sm font-semibold text-blue-800 hover:bg-blue-100"
-              >
-                삭제
-              </button>
+                <button
+                  type="button"
+                  onClick={() => void onDelete(wb.id)}
+                  disabled={deletingId === wb.id}
+                  className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-sm font-semibold text-blue-800 hover:bg-blue-100"
+                >
+                  {deletingId === wb.id ? "삭제 중..." : "삭제"}
+                </button>
             </div>
             <div className="mt-4 flex flex-wrap gap-2">
               <Link
