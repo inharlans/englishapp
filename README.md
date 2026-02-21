@@ -328,5 +328,6 @@ Railway 기준:
 
 ## 문서
 
+- 반복 점검 운영 프로토콜: `docs/REPEAT_AUDIT_LOOP_PROTOCOL.md`
 - 운영/점검/인수인계 문서: `docs/`
 - Round 2 계획 문서: `docs/service-audit-2026-02-19-round2/`
