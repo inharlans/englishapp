@@ -48,8 +48,15 @@ export function useWordbookParting(wordbookId: number, totalItems: number) {
   useEffect(() => {
     if (partIndex > partCount) {
       setPartIndexState(partCount);
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(indexKey, String(partCount));
+        const qs = new URLSearchParams(window.location.search);
+        qs.set("partSize", String(partSize));
+        qs.set("partIndex", String(partCount));
+        window.history.replaceState(null, "", `${window.location.pathname}?${qs.toString()}`);
+      }
     }
-  }, [partCount, partIndex]);
+  }, [indexKey, partCount, partIndex, partSize]);
 
   const setPartSize = (value: number) => {
     const next = clampPartSize(value);

@@ -1,8 +1,9 @@
 ﻿"use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import type { Route } from "next";
+import { useSearchParams } from "next/navigation";
 
 const cardsEnabled = process.env.NEXT_PUBLIC_ENABLE_WORDBOOK_CARDS !== "0";
 
@@ -27,18 +28,15 @@ export function WordbookStudyTabs({
   active: StudyTabKey;
   showBack?: boolean;
 }) {
-  const [queryString, setQueryString] = useState("");
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const qs = new URLSearchParams(window.location.search);
+  const searchParams = useSearchParams();
+  const queryString = useMemo(() => {
     const next = new URLSearchParams();
-    const partSize = qs.get("partSize");
-    const partIndex = qs.get("partIndex");
+    const partSize = searchParams.get("partSize");
+    const partIndex = searchParams.get("partIndex");
     if (partSize) next.set("partSize", partSize);
     if (partIndex) next.set("partIndex", partIndex);
-    setQueryString(next.toString());
-  }, []);
+    return next.toString();
+  }, [searchParams]);
 
   return (
     <nav aria-label="단어장 학습 탭" className="sticky top-2 z-20 ui-card p-2">
