@@ -563,3 +563,8 @@ Railway 기준:
 - 소유/다운로드 사용자 동선은 `/wordbooks`, 그 외는 `/wordbooks/market`으로 분기
 - 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_81.md`
 
+### 2026-02-22 Iteration 82
+- `/wordbooks/blocked` 차단 목록에서 내부 `ownerId` 노출 제거
+- 사용자 화면에는 마스킹 이메일만 노출해 정보 최소화 원칙 준수
+- 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_82.md`
+

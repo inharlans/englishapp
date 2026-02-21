@@ -58,7 +58,7 @@ export default async function BlockedOwnersPage() {
         <div className="grid gap-3" role="list" aria-label="차단한 제작자 목록">
           {blocks.map((b) => (
             <div key={b.ownerId} className="rounded-2xl border border-slate-200 bg-white p-4" role="listitem">
-              <p className="text-sm font-black text-slate-900">#{b.ownerId} {maskEmailAddress(b.owner.email)}</p>
+              <p className="text-sm font-black text-slate-900">{maskEmailAddress(b.owner.email)}</p>
               <p className="mt-1 text-xs text-slate-500">
                 차단일 {formatDateKst(b.createdAt)}
               </p>
