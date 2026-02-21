@@ -33,9 +33,16 @@ const OAUTH_ERROR_MESSAGES: Record<string, string> = {
   kakao_link_failed: "카카오 계정 연결 처리 중 오류가 발생했습니다."
 };
 
+function normalizeNextPath(raw: string | null): string {
+  if (!raw) return "/";
+  if (!raw.startsWith("/")) return "/";
+  if (raw.startsWith("//")) return "/";
+  return raw;
+}
+
 function LoginInner() {
   const searchParams = useSearchParams();
-  const nextPath = searchParams.get("next") || "/";
+  const nextPath = normalizeNextPath(searchParams.get("next"));
   const errorCode = searchParams.get("error") || "";
   const oauthError = OAUTH_ERROR_MESSAGES[errorCode] ?? "";
 

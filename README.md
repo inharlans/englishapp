@@ -578,3 +578,8 @@ Railway 기준:
 - 상세 페이지는 `showBack={false}`로 설정해 무의미한 액션 노출 방지
 - 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_84.md`
 
+### 2026-02-22 Iteration 85
+- `/login`의 `next` 리다이렉트 파라미터 정규화 추가
+- 내부 경로만 허용해 오픈 리다이렉트 리스크를 완화
+- 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_85.md`
+
