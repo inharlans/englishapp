@@ -658,3 +658,8 @@ Railway 기준:
 - 버튼/링크/셀렉트 포커스 상태에서 단축키와 요소 기본 동작 충돌 가능성을 제거
 - 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_100.md`
 
+### 2026-02-22 Iteration 101
+- `/offline` 목록 렌더 경로 최적화: 날짜 포맷터/콜레이터를 메모이즈해 재사용
+- 검색어 소문자 변환을 필터 루프 밖으로 이동해 불필요한 반복 연산 제거
+- 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_101.md`
+

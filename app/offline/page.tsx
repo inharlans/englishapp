@@ -16,14 +16,19 @@ export default function OfflineLibraryPage() {
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const busy = loading || deletingId !== null;
+  const dateFormatter = useMemo(
+    () =>
+      new Intl.DateTimeFormat("ko-KR", {
+        timeZone: "Asia/Seoul",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
+      }),
+    []
+  );
+  const savedAtCollator = useMemo(() => new Intl.Collator("ko"), []);
 
-  const formatDateKst = (iso: string) =>
-    new Intl.DateTimeFormat("ko-KR", {
-      timeZone: "Asia/Seoul",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit"
-    }).format(new Date(iso));
+  const formatDateKst = (iso: string) => dateFormatter.format(new Date(iso));
 
   const reload = async ({ announce }: { announce: boolean }) => {
     setLoading(true);
@@ -81,20 +86,20 @@ export default function OfflineLibraryPage() {
   }, [info]);
 
   const trimmedQuery = query.trim();
+  const queryLower = trimmedQuery.toLowerCase();
   const filteredItems = useMemo(
     () =>
       items
     .filter((wb) => {
-      const q = trimmedQuery.toLowerCase();
-      if (!q) return true;
-      return wb.title.toLowerCase().includes(q) || (wb.ownerEmail ?? "").toLowerCase().includes(q);
+      if (!queryLower) return true;
+      return wb.title.toLowerCase().includes(queryLower) || (wb.ownerEmail ?? "").toLowerCase().includes(queryLower);
     })
     .sort((a, b) => {
-      if (sortMode === "saved-asc") return a.savedAt.localeCompare(b.savedAt, "ko");
+      if (sortMode === "saved-asc") return savedAtCollator.compare(a.savedAt, b.savedAt);
       if (sortMode === "words-desc") return b.items.length - a.items.length;
-      return b.savedAt.localeCompare(a.savedAt, "ko");
+      return savedAtCollator.compare(b.savedAt, a.savedAt);
     }),
-    [items, sortMode, trimmedQuery]
+    [items, queryLower, savedAtCollator, sortMode]
   );
 
   const onDelete = async (id: number, title: string) => {
