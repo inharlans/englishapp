@@ -16,6 +16,13 @@ function buildIssueId(userId: number, cycle: BillingCycle): string {
   return `issue_${userId}_${cycle}_${Date.now()}_${Math.floor(Math.random() * 1_000_000)}`;
 }
 
+function resolveBillingPhoneNumber(): string {
+  const raw = (process.env.PORTONE_BILLING_PHONE ?? "").trim();
+  const digits = raw.replace(/\D/g, "");
+  if (digits.length >= 10 && digits.length <= 11) return digits;
+  return "01000000000";
+}
+
 export async function POST(req: NextRequest) {
   const startedAt = Date.now();
   const badReq = assertTrustedMutationRequest(req);
@@ -82,6 +89,7 @@ export async function POST(req: NextRequest) {
 
     const issueId = buildIssueId(user.id, cycle);
     const publicOrigin = getPublicOrigin(req);
+    const phoneNumber = resolveBillingPhoneNumber();
 
     const res = NextResponse.json(
       {
@@ -95,7 +103,8 @@ export async function POST(req: NextRequest) {
           customer: {
             customerId: String(user.id),
             email: user.email,
-            fullName: user.email
+            fullName: user.email,
+            phoneNumber
           },
           customData: {
             userId: user.id,
