@@ -50,6 +50,14 @@ export default function OfflineLibraryPage() {
       const isTyping =
         !!target &&
         (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.getAttribute("contenteditable") === "true");
+
+      if (event.key === "Escape" && query.trim()) {
+        event.preventDefault();
+        setQuery("");
+        searchInputRef.current?.focus();
+        return;
+      }
+
       if (isTyping) return;
       if (event.key === "/") {
         event.preventDefault();
@@ -58,11 +66,6 @@ export default function OfflineLibraryPage() {
       if (event.key.toLowerCase() === "r") {
         event.preventDefault();
         if (!busy) void reload();
-      }
-      if (event.key === "Escape" && query.trim()) {
-        event.preventDefault();
-        setQuery("");
-        searchInputRef.current?.focus();
       }
     };
     window.addEventListener("keydown", onKeyDown);

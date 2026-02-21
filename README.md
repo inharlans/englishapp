@@ -508,3 +508,8 @@ Railway 기준:
 - `이력 정답/오답` 표시를 `Y/N` 축약에서 `있음/없음`으로 변경하고 구분자 정리
 - 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_70.md`
 
+### 2026-02-22 Iteration 71
+- `/offline` 실측에서 검색 입력 포커스 상태의 `Esc` 미동작 이슈 수정
+- `Esc` 검색어 초기화 로직을 타이핑 분기보다 먼저 처리해 단축키 일관성 확보
+- 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_71.md`
+
