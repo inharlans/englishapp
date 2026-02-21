@@ -1,4 +1,8 @@
+import { getBusinessInfo } from "@/lib/businessInfo";
+
 export default function TermsPage() {
+  const business = getBusinessInfo();
+
   return (
     <section className="ui-card-soft p-6 sm:p-8">
       <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">서비스 이용약관</h1>
@@ -20,7 +24,15 @@ export default function TermsPage() {
           4. 유료 요금제 및 정기 결제는 가격 페이지에 표시된 요금 및 결제 조건을 따릅니다.
         </p>
         <p>
-          5. 이용자는 계정 삭제를 요청할 수 있으며, 법령상 보관 의무가 있는 정보는 예외로 합니다.
+          5. 디지털 서비스 특성상 결제 후 즉시 서비스가 개시되며, 환불/해지는 관련 법령 및 결제사
+          정책에 따라 처리합니다.
+        </p>
+        <p>
+          6. 이용자는 계정 삭제를 요청할 수 있으며, 법령상 보관 의무가 있는 정보는 예외로 합니다.
+        </p>
+        <p>
+          7. 고객센터: {business.supportEmail || "-"} / {business.supportPhone || "-"}
+          {business.supportHours ? ` (${business.supportHours})` : ""}
         </p>
       </div>
 

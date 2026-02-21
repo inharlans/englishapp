@@ -8,6 +8,7 @@ import { KeyboardPageNavigator } from "@/components/KeyboardPageNavigator";
 import { PwaInstallPrompt } from "@/components/PwaInstallPrompt";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import { getUserFromRequestCookies } from "@/lib/authServer";
+import { getBusinessInfo, isBusinessInfoComplete } from "@/lib/businessInfo";
 
 const appBaseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
@@ -51,6 +52,8 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const user = await getUserFromRequestCookies(await cookies());
+  const business = getBusinessInfo();
+  const businessInfoReady = isBusinessInfoComplete(business);
 
   return (
     <html lang="ko">
@@ -67,6 +70,25 @@ export default async function RootLayout({
           <PwaInstallPrompt />
           <AppNav isLoggedIn={Boolean(user)} />
           {children}
+          <footer className="mt-10 rounded-2xl border border-slate-200 bg-white px-4 py-5 text-xs leading-6 text-slate-600">
+            <p className="font-semibold text-slate-800">사업자 정보</p>
+            {!businessInfoReady ? (
+              <p className="mt-1 text-blue-700">
+                심사용 필수 사업자 정보가 일부 비어 있습니다. 운영 배포 전 환경변수를 입력해 주세요.
+              </p>
+            ) : null}
+            <p className="mt-2">
+              상호명: {business.legalName || "-"} | 대표자: {business.representative || "-"} | 사업자등록번호:{" "}
+              {business.businessRegistrationNumber || "-"}
+            </p>
+            <p>
+              통신판매업 신고번호: {business.mailOrderRegistrationNumber || "-"} | 주소: {business.address || "-"}
+            </p>
+            <p>
+              고객센터: {business.supportPhone || "-"} / {business.supportEmail || "-"}
+              {business.supportHours ? ` (${business.supportHours})` : ""}
+            </p>
+          </footer>
         </main>
       </body>
     </html>

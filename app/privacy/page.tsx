@@ -1,4 +1,8 @@
+import { getBusinessInfo } from "@/lib/businessInfo";
+
 export default function PrivacyPage() {
+  const business = getBusinessInfo();
+
   return (
     <section className="ui-card-soft p-6 sm:p-8">
       <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">개인정보처리방침</h1>
@@ -25,6 +29,10 @@ export default function PrivacyPage() {
         </p>
         <p>
           5. 문의: 개인정보 관련 요청은 공식 지원 채널을 통해 서비스 운영자에게 문의할 수 있습니다.
+        </p>
+        <p>
+          6. 개인정보 문의처: {business.supportEmail || "-"} / {business.supportPhone || "-"}
+          {business.supportHours ? ` (${business.supportHours})` : ""}
         </p>
       </div>
 

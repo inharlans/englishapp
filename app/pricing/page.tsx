@@ -3,12 +3,14 @@ import { cookies } from "next/headers";
 
 import { PricingActions } from "@/components/payments/PricingActions";
 import { getUserFromRequestCookies } from "@/lib/authServer";
+import { getBusinessInfo } from "@/lib/businessInfo";
 import { FREE_DOWNLOAD_WORD_LIMIT, getUserDownloadedWordCount } from "@/lib/planLimits";
 import { getPortOneConfig } from "@/lib/payments";
 
 export default async function PricingPage(props: { searchParams: Promise<{ payment?: string }> }) {
   const sp = await props.searchParams;
   const user = await getUserFromRequestCookies(await cookies());
+  const business = getBusinessInfo();
 
   const downloadWordsUsed = user ? await getUserDownloadedWordCount(user.id) : null;
   const paymentEnabled = Boolean(getPortOneConfig());
@@ -63,6 +65,21 @@ export default async function PricingPage(props: { searchParams: Promise<{ payme
           <li>잠금 상태에서는 학습/수정이 불가하며 공개 전환 또는 PRO 복구 후 다시 사용할 수 있습니다.</li>
         </ul>
       </div>
+
+      <section className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700">
+        <p className="font-semibold text-slate-900">전자결제 심사용 상품/환불 정보</p>
+        <ul className="mt-2 list-disc space-y-1 pl-5">
+          <li>상품명: Oing PRO 구독권(디지털 서비스)</li>
+          <li>결제금액: 월 2,900원 / 연 29,000원 (부가세 포함)</li>
+          <li>제공방식: 결제 즉시 계정 권한(PRO) 활성화, 물리 배송 없음</li>
+          <li>해지정책: 구독 해지 시 다음 결제일부터 자동 청구 중단</li>
+          <li>환불정책: 전자상거래법 및 결제사 정책에 따라 처리(고객센터 접수 후 검토)</li>
+          <li>
+            고객센터: {business.supportEmail || "-"} / {business.supportPhone || "-"}
+            {business.supportHours ? ` (${business.supportHours})` : ""}
+          </li>
+        </ul>
+      </section>
 
       {sp.payment === "success" ? (
         <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
