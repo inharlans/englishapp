@@ -110,10 +110,15 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
       ? Prisma.sql`ws."meaningCorrectStreak" > 0 AND ws."meaningNextReviewAt" IS NOT NULL AND ws."meaningNextReviewAt" <= ${now}`
       : Prisma.sql`ws."wordCorrectStreak" > 0 AND ws."wordNextReviewAt" IS NOT NULL AND ws."wordNextReviewAt" <= ${now}`;
 
+  const wrongFlagFilter =
+    mode === "MEANING"
+      ? Prisma.sql`ws."meaningWrongRequeueAt" IS NOT NULL`
+      : Prisma.sql`ws."wordWrongRequeueAt" IS NOT NULL`;
+
   const wrongReadyFilter =
     mode === "MEANING"
-      ? Prisma.sql`ws."status" = 'WRONG' AND ws."meaningWrongRequeueAt" IS NOT NULL AND ws."meaningWrongRequeueAt" <= ${questionCount}`
-      : Prisma.sql`ws."status" = 'WRONG' AND ws."wordWrongRequeueAt" IS NOT NULL AND ws."wordWrongRequeueAt" <= ${questionCount}`;
+      ? Prisma.sql`ws."meaningWrongRequeueAt" IS NOT NULL AND ws."meaningWrongRequeueAt" <= ${questionCount}`
+      : Prisma.sql`ws."wordWrongRequeueAt" IS NOT NULL AND ws."wordWrongRequeueAt" <= ${questionCount}`;
 
   const unseen = await pickRandomItem({
     wordbookId,
@@ -150,7 +155,7 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
         userId: user.id,
         partStart,
         partEndExclusive,
-        filterSql: Prisma.sql`ws."itemId" IS NULL OR ws."status" <> 'WRONG'`
+        filterSql: Prisma.sql`ws."itemId" IS NULL OR NOT (${wrongFlagFilter})`
       });
 
   // End-of-cycle recovery: if less than 10 remain before requeue, bring wrong items back at quiz tail.
@@ -161,7 +166,7 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
         userId: user.id,
         partStart,
         partEndExclusive,
-        filterSql: Prisma.sql`ws."status" = 'WRONG'`
+        filterSql: wrongFlagFilter
       });
 
   return NextResponse.json(

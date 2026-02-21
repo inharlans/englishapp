@@ -11,24 +11,37 @@ function getExpectedHost(req: NextRequest): string {
   ).toLowerCase();
 }
 
+function parseHostFromUrl(value: string): string | null {
+  try {
+    return new URL(value).host.toLowerCase();
+  } catch {
+    return null;
+  }
+}
+
 export function assertTrustedMutationRequest(req: NextRequest): NextResponse | null {
   const secFetchSite = (req.headers.get("sec-fetch-site") ?? "").toLowerCase();
   if (secFetchSite === "cross-site") {
     return NextResponse.json({ error: "Cross-site request blocked." }, { status: 403 });
   }
 
+  const expectedHost = getExpectedHost(req);
   const origin = req.headers.get("origin");
-  if (!origin) return null;
+  const referer = req.headers.get("referer");
+  const originHost = origin ? parseHostFromUrl(origin) : null;
+  const refererHost = referer ? parseHostFromUrl(referer) : null;
 
-  let originHost = "";
-  try {
-    originHost = new URL(origin).host.toLowerCase();
-  } catch {
+  if (origin && !originHost) {
     return NextResponse.json({ error: "Invalid origin." }, { status: 403 });
   }
+  if (referer && !refererHost) {
+    return NextResponse.json({ error: "Invalid referer." }, { status: 403 });
+  }
 
-  const expectedHost = getExpectedHost(req);
-  if (originHost !== expectedHost) {
+  if (!originHost && !refererHost) {
+    return NextResponse.json({ error: "Missing origin/referer." }, { status: 403 });
+  }
+  if ((originHost && originHost !== expectedHost) || (refererHost && refererHost !== expectedHost)) {
     return NextResponse.json({ error: "Origin mismatch." }, { status: 403 });
   }
 

@@ -115,22 +115,6 @@ function buildMeaningDiagnosis(input: string, acceptedMeaning: string): GradingD
   };
 }
 
-async function syncWordbookStudyState(userId: number, wordbookId: number) {
-  const states = await prisma.wordbookStudyItemState.findMany({
-    where: { userId, wordbookId },
-    select: { status: true }
-  });
-  const studiedCount = states.length;
-  const correctCount = states.filter((s) => s.status === "CORRECT").length;
-  const wrongCount = states.filter((s) => s.status === "WRONG").length;
-
-  return prisma.wordbookStudyState.upsert({
-    where: { userId_wordbookId: { userId, wordbookId } },
-    create: { userId, wordbookId, studiedCount, correctCount, wrongCount },
-    update: { studiedCount, correctCount, wrongCount }
-  });
-}
-
 export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const badReq = assertTrustedMutationRequest(req);
   if (badReq) return badReq;
@@ -198,6 +182,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   const existing = await prisma.wordbookStudyItemState.findUnique({
     where: { userId_wordbookId_itemId: { userId: user.id, wordbookId, itemId: item.id } },
     select: {
+      status: true,
       streak: true,
       everCorrect: true,
       everWrong: true,
@@ -232,6 +217,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   const modeNextStreak = correct ? modeCurrentStreak + 1 : 0;
   const modeNextReviewAt = correct ? computeNextReviewAt(now, modeNextStreak) : null;
   const modeWrongRequeueAt = correct ? null : questionCountAfter + 10;
+  const nextStatus = correct ? "CORRECT" : "WRONG";
 
   const streak = correct ? (existing?.streak ?? 0) + 1 : 0;
   const everCorrect = (existing?.everCorrect ?? false) || correct;
@@ -243,7 +229,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
       userId: user.id,
       wordbookId,
       itemId: item.id,
-      status: correct ? "CORRECT" : "WRONG",
+      status: nextStatus,
       streak,
       meaningCorrectStreak: mode === "MEANING" ? modeNextStreak : 0,
       meaningNextReviewAt: mode === "MEANING" ? modeNextReviewAt : null,
@@ -256,7 +242,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
       lastResult: correct ? "CORRECT" : "WRONG"
     },
     update: {
-      status: correct ? "CORRECT" : "WRONG",
+      status: nextStatus,
       streak,
       ...(mode === "MEANING"
         ? {
@@ -275,8 +261,22 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     }
   });
 
+  const previousStatus = existing?.status ?? null;
+  const studiedDelta = previousStatus ? 0 : 1;
+  const correctDelta = (previousStatus === "CORRECT" ? -1 : 0) + (nextStatus === "CORRECT" ? 1 : 0);
+  const wrongDelta = (previousStatus === "WRONG" ? -1 : 0) + (nextStatus === "WRONG" ? 1 : 0);
+  if (studiedDelta !== 0 || correctDelta !== 0 || wrongDelta !== 0) {
+    await prisma.wordbookStudyState.update({
+      where: { userId_wordbookId: { userId: user.id, wordbookId } },
+      data: {
+        ...(studiedDelta !== 0 ? { studiedCount: { increment: studiedDelta } } : {}),
+        ...(correctDelta !== 0 ? { correctCount: { increment: correctDelta } } : {}),
+        ...(wrongDelta !== 0 ? { wrongCount: { increment: wrongDelta } } : {})
+      }
+    });
+  }
+
   invalidateStudyPartStatsCacheForWordbook(user.id, wordbookId);
-  await syncWordbookStudyState(user.id, wordbookId);
 
   if (!correct) {
     await captureAppError({
