@@ -469,6 +469,11 @@ Railway 기준:
 - 데이터 미수신 상태를 `0`으로 오인하는 UX 리스크 완화
 - 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_64.md`
 
+### 2026-02-22 Iteration 65
+- 퀴즈 제출 API의 `answer` 최대 길이를 `1000 -> 120`으로 조정
+- 프론트 입력 제한과 서버 검증 상한을 일치시켜 정합성/성능 리스크 완화
+- 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_65.md`
+
 
 
 

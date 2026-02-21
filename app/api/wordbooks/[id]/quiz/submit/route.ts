@@ -21,7 +21,7 @@ function parseId(raw: string): number | null {
 const submitSchema = z.object({
   itemId: zPositiveInt,
   mode: z.enum(["MEANING", "WORD"]).optional(),
-  answer: z.string().trim().min(1).max(1000)
+  answer: z.string().trim().min(1).max(120)
 });
 
 type GradingDiagnosis = {
