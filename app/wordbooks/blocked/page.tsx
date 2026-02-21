@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 
 import { getUserFromRequestCookies } from "@/lib/authServer";
 import { prisma } from "@/lib/prisma";
+import { maskEmailAddress } from "@/lib/textQuality";
 import { UnblockOwnerButton } from "./unblockOwnerButton";
 
 export default async function BlockedOwnersPage() {
@@ -57,12 +58,12 @@ export default async function BlockedOwnersPage() {
         <div className="grid gap-3" role="list" aria-label="차단한 제작자 목록">
           {blocks.map((b) => (
             <div key={b.ownerId} className="rounded-2xl border border-slate-200 bg-white p-4" role="listitem">
-              <p className="text-sm font-black text-slate-900">#{b.ownerId} {b.owner.email}</p>
+              <p className="text-sm font-black text-slate-900">#{b.ownerId} {maskEmailAddress(b.owner.email)}</p>
               <p className="mt-1 text-xs text-slate-500">
                 차단일 {formatDateKst(b.createdAt)}
               </p>
               <div className="mt-3">
-                <UnblockOwnerButton ownerId={b.ownerId} ownerEmail={b.owner.email} />
+                <UnblockOwnerButton ownerId={b.ownerId} ownerEmail={maskEmailAddress(b.owner.email)} />
               </div>
             </div>
           ))}
