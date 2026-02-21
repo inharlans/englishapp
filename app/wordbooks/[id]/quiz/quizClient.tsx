@@ -694,6 +694,7 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
                 ref={answerInputRef}
                 value={answer}
                 onChange={(e) => setAnswer(e.target.value)}
+                disabled={loading || Boolean(feedback)}
                 data-testid="wordbook-quiz-answer"
                 aria-label="정답"
                 placeholder={mode === "MEANING" ? "뜻 입력" : "단어 입력"}
