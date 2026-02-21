@@ -399,19 +399,19 @@ export default function NewWordbookPage() {
 
         <section className="ui-card p-5">
           <div role="tablist" aria-label="단어장 입력 방식" className="inline-flex rounded-xl border border-slate-200 p-1 text-xs">
-            <button type="button" onClick={() => setTab("paste")} role="tab" aria-selected={tab === "paste"} className={tab === "paste" ? "rounded-lg ui-tab-active px-3 py-1.5 font-semibold" : "rounded-lg ui-tab-inactive px-3 py-1.5"}>
+            <button id="new-wordbook-tab-paste" type="button" onClick={() => setTab("paste")} role="tab" aria-selected={tab === "paste"} aria-controls="new-wordbook-panel-paste" tabIndex={tab === "paste" ? 0 : -1} className={tab === "paste" ? "rounded-lg ui-tab-active px-3 py-1.5 font-semibold" : "rounded-lg ui-tab-inactive px-3 py-1.5"}>
               붙여넣기
             </button>
-            <button type="button" onClick={() => setTab("upload")} role="tab" aria-selected={tab === "upload"} className={tab === "upload" ? "rounded-lg ui-tab-active px-3 py-1.5 font-semibold" : "rounded-lg ui-tab-inactive px-3 py-1.5"}>
+            <button id="new-wordbook-tab-upload" type="button" onClick={() => setTab("upload")} role="tab" aria-selected={tab === "upload"} aria-controls="new-wordbook-panel-upload" tabIndex={tab === "upload" ? 0 : -1} className={tab === "upload" ? "rounded-lg ui-tab-active px-3 py-1.5 font-semibold" : "rounded-lg ui-tab-inactive px-3 py-1.5"}>
               파일 업로드
             </button>
-            <button type="button" onClick={() => setTab("manual")} role="tab" aria-selected={tab === "manual"} className={tab === "manual" ? "rounded-lg ui-tab-active px-3 py-1.5 font-semibold" : "rounded-lg ui-tab-inactive px-3 py-1.5"}>
+            <button id="new-wordbook-tab-manual" type="button" onClick={() => setTab("manual")} role="tab" aria-selected={tab === "manual"} aria-controls="new-wordbook-panel-manual" tabIndex={tab === "manual" ? 0 : -1} className={tab === "manual" ? "rounded-lg ui-tab-active px-3 py-1.5 font-semibold" : "rounded-lg ui-tab-inactive px-3 py-1.5"}>
               수동 입력
             </button>
           </div>
 
           {tab === "paste" ? (
-            <div className="mt-3 space-y-3">
+            <div id="new-wordbook-panel-paste" role="tabpanel" aria-labelledby="new-wordbook-tab-paste" className="mt-3 space-y-3">
               <label className="block">
                 <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">여기에 붙여넣기</span>
                 <textarea value={pasteText} onChange={(e) => setPasteText(e.target.value)} rows={8} className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" placeholder="index,en,ko 또는 en,ko" />
@@ -425,7 +425,7 @@ export default function NewWordbookPage() {
           ) : null}
 
           {tab === "upload" ? (
-            <div className="mt-3 space-y-3">
+            <div id="new-wordbook-panel-upload" role="tabpanel" aria-labelledby="new-wordbook-tab-upload" className="mt-3 space-y-3">
               <label className="block">
                 <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">파일 선택</span>
                 <input type="file" accept=".csv,.tsv,.txt,text/csv,text/plain" className="mt-1 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm" disabled={loading} onChange={(e) => void onUploadFile(e.target.files?.[0] ?? null)} />
@@ -435,7 +435,7 @@ export default function NewWordbookPage() {
           ) : null}
 
           {tab === "manual" ? (
-            <div className="mt-3 space-y-3">
+            <div id="new-wordbook-panel-manual" role="tabpanel" aria-labelledby="new-wordbook-tab-manual" className="mt-3 space-y-3">
               <div className="flex flex-wrap gap-2">
                 <button type="button" onClick={() => addRows(1)} className="ui-btn-primary px-3 py-1.5 text-xs">+ row</button>
                 <button type="button" onClick={() => addRows(10)} className="ui-btn-secondary px-3 py-1.5 text-xs">+10 rows</button>

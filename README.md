@@ -518,3 +518,8 @@ Railway 기준:
 - 검색 입력 접근 이름이 도움말까지 합쳐지던 문제를 `label` + `aria-describedby` 구조로 보정
 - 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_72.md`
 
+### 2026-02-22 Iteration 73
+- `/wordbooks/new` 입력 방식 탭 접근성 구조(`tab`-`tabpanel`) 보강
+- 각 탭에 `aria-controls`/`tabIndex`, 각 패널에 `role=tabpanel`/`aria-labelledby` 연결 추가
+- 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_73.md`
+
