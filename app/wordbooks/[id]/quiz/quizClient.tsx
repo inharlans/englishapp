@@ -207,6 +207,22 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
       const isTyping =
         !!target &&
         (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.getAttribute("contenteditable") === "true");
+
+      if (event.key.toLowerCase() === "r" && feedback && !feedback.isCorrect) {
+        event.preventDefault();
+        setFeedback(null);
+        setAnswer("");
+        setMessage("");
+        answerInputRef.current?.focus();
+        return;
+      }
+
+      if (event.key === "Escape" && !feedback && answer.trim()) {
+        event.preventDefault();
+        setAnswer("");
+        return;
+      }
+
       if (isTyping) return;
 
       if (event.key === "/") {
@@ -217,21 +233,10 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
         event.preventDefault();
         void loadNext();
       }
-      if (event.key.toLowerCase() === "r" && feedback && !feedback.isCorrect) {
-        event.preventDefault();
-        setFeedback(null);
-        setAnswer("");
-        setMessage("");
-        answerInputRef.current?.focus();
-      }
       if (event.key.toLowerCase() === "s" && !feedback && !loading) {
         event.preventDefault();
         void loadNext();
         setMessage("문제를 건너뛰었습니다.");
-      }
-      if (event.key === "Escape" && !feedback && answer.trim()) {
-        event.preventDefault();
-        setAnswer("");
       }
       if (event.key === "[" && !loading) {
         event.preventDefault();

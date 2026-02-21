@@ -443,6 +443,11 @@ Railway 기준:
 - 정답 처리 후 동일 문제가 재출제되는 리스크 제거
 - 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_59.md`
 
+### 2026-02-22 Iteration 60
+- `quiz-word` 실플레이에서 재현된 `Esc` 입력 비우기 미동작 버그 수정
+- 키 핸들러 순서를 조정해 포커스 상태와 무관하게 `Esc`/`R` 단축키가 동작하도록 보강
+- 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_60.md`
+
 
 
 
