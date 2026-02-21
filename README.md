@@ -623,3 +623,8 @@ Railway 기준:
 - 인라인/CTA/카드 로그인 버튼 간 복귀 경로 불일치 가능성을 제거해 동선 일관성 개선
 - 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_93.md`
 
+### 2026-02-22 Iteration 94
+- `/offline/wordbooks/[id]`에서 잘못된 ID 처리 시 서버 선검증을 적용
+- 학습 레이아웃 렌더링 전에 오류 안내와 `/offline` 복귀 동선을 즉시 제공하도록 개선
+- 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_94.md`
+
