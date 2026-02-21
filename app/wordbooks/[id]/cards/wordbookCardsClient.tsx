@@ -44,6 +44,12 @@ function shuffleBySeed<T>(arr: T[], seed: number): T[] {
   return a;
 }
 
+function parseBoundedInt(raw: string, fallback: number, min: number, max: number) {
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.min(max, Math.max(min, Math.floor(parsed)));
+}
+
 export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
   const [title, setTitle] = useState("");
   const [speakLang, setSpeakLang] = useState<string | undefined>(undefined);
@@ -466,7 +472,13 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
             min={1}
             max={200}
             value={partSize}
-            onChange={(event) => setPartSize(Number(event.target.value))}
+            onChange={(event) => {
+              const next = parseBoundedInt(event.target.value, partSize, 1, 200);
+              setPartSize(next);
+              setPartIndex(1);
+              setPartJump("1");
+              setInfo(`파트 크기를 ${next}로 변경했습니다.`);
+            }}
             className="w-20 rounded border border-slate-300 bg-white px-2 py-1 text-sm"
           />
           <span className="text-slate-500">전체 {items.length}개 / {partCount}개 파트</span>
@@ -570,7 +582,7 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
               }
               setPartIndex(1);
             }}
-            disabled={partIndex <= 1}
+            disabled={loading || partIndex <= 1}
             className="ui-btn-secondary px-3 py-1 text-xs disabled:opacity-50"
             aria-label="첫 파트로 이동"
           >
@@ -579,7 +591,7 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
           <button
             type="button"
             onClick={moveToPrevPart}
-            disabled={partIndex <= 1}
+            disabled={loading || partIndex <= 1}
             className="ui-btn-secondary px-3 py-1 text-xs disabled:opacity-50"
             aria-label={`${Math.max(1, partIndex - 1)}파트로 이동`}
           >
@@ -588,7 +600,7 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
           <button
             type="button"
             onClick={moveToNextPart}
-            disabled={partIndex >= partCount}
+            disabled={loading || partIndex >= partCount}
             className="ui-btn-secondary px-3 py-1 text-xs disabled:opacity-50"
             aria-label={`${Math.min(partCount, partIndex + 1)}파트로 이동`}
           >
@@ -603,7 +615,7 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
               }
               setPartIndex(partCount);
             }}
-            disabled={partIndex >= partCount}
+            disabled={loading || partIndex >= partCount}
             className="ui-btn-secondary px-3 py-1 text-xs disabled:opacity-50"
             aria-label="마지막 파트로 이동"
           >
@@ -613,8 +625,7 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
             className="flex w-full items-center gap-2 sm:w-auto"
             onSubmit={(event) => {
               event.preventDefault();
-              const raw = Number(partJump);
-              const next = Number.isFinite(raw) ? Math.min(Math.max(Math.floor(raw), 1), partCount) : partIndex;
+              const next = parseBoundedInt(partJump, partIndex, 1, partCount);
               setPartJump(String(next));
               setPartIndex(next);
             }}
@@ -630,12 +641,7 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
               value={partJump}
               onChange={(event) => setPartJump(event.target.value)}
               onBlur={() => {
-                const raw = Number(partJump);
-                if (!Number.isFinite(raw)) {
-                  setPartJump(String(partIndex));
-                  return;
-                }
-                setPartJump(String(Math.min(Math.max(Math.floor(raw), 1), partCount)));
+                setPartJump(String(parseBoundedInt(partJump, partIndex, 1, partCount)));
               }}
               className="w-full rounded border border-slate-300 bg-white px-2 py-1 text-sm sm:w-24"
             />
@@ -654,13 +660,17 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
               <button
                 key={entry.value}
                 type="button"
-                onClick={() => setPartIndex(entry.value)}
+                onClick={() => {
+                  if (loading) return;
+                  setPartIndex(entry.value);
+                }}
                 className={[
                   "rounded-lg border px-3 py-1 text-xs font-semibold",
                   entry.value === partIndex ? "ui-tab-active" : "ui-tab-inactive"
                 ].join(" ")}
                 aria-label={`${entry.value}파트 ${entry.value === partIndex ? "선택됨" : "선택"}`}
                 aria-current={entry.value === partIndex ? "page" : undefined}
+                disabled={loading}
               >
                 {entry.value}파트
               </button>
@@ -697,7 +707,7 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
             <button
               type="button"
               onClick={moveToNextPart}
-              disabled={partIndex >= partCount}
+              disabled={loading || partIndex >= partCount}
               className="ui-btn-primary px-3 py-1 text-xs disabled:opacity-50"
             >
               다음 파트로 이동

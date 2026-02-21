@@ -53,6 +53,12 @@ type SubmitPayload = {
   error?: string;
 };
 
+function parseBoundedInt(raw: string, fallback: number, min: number, max: number) {
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.min(max, Math.max(min, Math.floor(parsed)));
+}
+
 export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Props) {
   const [mode] = useState<QuizMode>(initialMode);
   const [item, setItem] = useState<QuizItem | null>(null);
@@ -347,6 +353,11 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
   const currentPartProgress = partItemCount > 0 ? Math.min(100, Math.round((partAttempts / partItemCount) * 100)) : 0;
   const remainingInPart = Math.max(partItemCount - partAttempts, 0);
   const remainingParts = Math.max(partCount - partIndex, 0);
+  const acceptedMeaningPreview = useMemo(() => {
+    if (!feedback || feedback.isCorrect || mode !== "MEANING") return [];
+    const list = feedback.acceptedMeaningAnswers ?? [];
+    return Array.from(new Set(list.map((entry) => sanitizeUserText(entry, "").trim()).filter(Boolean))).slice(0, 4);
+  }, [feedback, mode]);
 
   return (
     <section className="space-y-4">
@@ -403,7 +414,10 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
             max={200}
             value={partSize}
             onChange={(e) => {
-              setPartSize(Number(e.target.value));
+              const next = parseBoundedInt(e.target.value, partSize, 1, 200);
+              setPartSize(next);
+              setPartIndex(1);
+              setPartJump("1");
               setPartAttempts(0);
             }}
             className="w-20 rounded border border-slate-300 bg-white px-2 py-1 text-sm"
@@ -467,7 +481,7 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
               setFeedback(null);
               setMessage("");
             }}
-            disabled={partIndex <= 1}
+            disabled={loading || partIndex <= 1}
             className="ui-btn-secondary w-full px-3 py-2 text-sm sm:w-auto disabled:opacity-50"
           >
             처음
@@ -484,7 +498,7 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
               setFeedback(null);
               setMessage("");
             }}
-            disabled={partIndex <= 1}
+            disabled={loading || partIndex <= 1}
             className="ui-btn-secondary w-full px-3 py-2 text-sm sm:w-auto disabled:opacity-50"
             aria-label={`${Math.max(1, partIndex - 1)}파트로 이동`}
           >
@@ -502,7 +516,7 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
               setFeedback(null);
               setMessage("");
             }}
-            disabled={partIndex >= partCount}
+            disabled={loading || partIndex >= partCount}
             className="ui-btn-secondary w-full px-3 py-2 text-sm sm:w-auto disabled:opacity-50"
             aria-label={`${Math.min(partCount, partIndex + 1)}파트로 이동`}
           >
@@ -520,7 +534,7 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
               setFeedback(null);
               setMessage("");
             }}
-            disabled={partIndex >= partCount}
+            disabled={loading || partIndex >= partCount}
             className="ui-btn-secondary w-full px-3 py-2 text-sm sm:w-auto disabled:opacity-50"
           >
             마지막
@@ -529,8 +543,7 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
             className="flex w-full items-center gap-2 sm:w-auto"
             onSubmit={(event) => {
               event.preventDefault();
-              const raw = Number(partJump);
-              const next = Number.isFinite(raw) ? Math.min(Math.max(Math.floor(raw), 1), partCount) : partIndex;
+              const next = parseBoundedInt(partJump, partIndex, 1, partCount);
               setPartJump(String(next));
               setPartIndex(next);
               setPartAttempts(0);
@@ -549,12 +562,7 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
               value={partJump}
               onChange={(event) => setPartJump(event.target.value)}
               onBlur={() => {
-                const raw = Number(partJump);
-                if (!Number.isFinite(raw)) {
-                  setPartJump(String(partIndex));
-                  return;
-                }
-                setPartJump(String(Math.min(Math.max(Math.floor(raw), 1), partCount)));
+                setPartJump(String(parseBoundedInt(partJump, partIndex, 1, partCount)));
               }}
               className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm sm:w-24"
             />
@@ -574,6 +582,7 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
                 key={entry.value}
                 type="button"
                 onClick={() => {
+                  if (loading) return;
                   setPartIndex(entry.value);
                   setPartAttempts(0);
                   setFeedback(null);
@@ -587,6 +596,7 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
                 ].join(" ")}
                 aria-label={`${entry.value}파트 ${entry.value === partIndex ? "선택됨" : "선택"}`}
                 aria-current={entry.value === partIndex ? "page" : undefined}
+                disabled={loading}
               >
                 {entry.value}파트
               </button>
@@ -670,7 +680,7 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
                     void loadNext();
                     setMessage("문제를 건너뛰었습니다.");
                   }}
-                  disabled={loading}
+                  disabled={loading || !item}
                   className="ui-btn-secondary px-4 py-2 text-sm"
                 >
                   건너뛰기
@@ -703,15 +713,15 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
                     {sanitizeUserText(feedback.correctAnswer.meaning, "의미 데이터 점검 중입니다")}
                   </p>
                 ) : null}
-                {!feedback.isCorrect && mode === "MEANING" && feedback.acceptedMeaningAnswers?.length ? (
+                {!feedback.isCorrect && acceptedMeaningPreview.length ? (
                   <p className="mt-1 text-xs font-medium text-red-700">
-                    허용 답안 예: {feedback.acceptedMeaningAnswers.slice(0, 4).join(", ")}
+                    허용 답안 예: {acceptedMeaningPreview.join(", ")}
                   </p>
                 ) : null}
                 {!feedback.isCorrect && feedback.gradingDiagnosis ? (
                   <p className="mt-1 text-xs font-medium text-red-700">
-                    채점 근거: 입력 정규화 `{feedback.gradingDiagnosis.normalizedInput || "-"}`
-                    {" / "}가장 가까운 허용 답안 `{feedback.gradingDiagnosis.closestAccepted || "-"}`
+                    채점 근거: 입력 정규화 {sanitizeUserText(feedback.gradingDiagnosis.normalizedInput || "-", "-")}
+                    {" / "}가장 가까운 허용 답안 {sanitizeUserText(feedback.gradingDiagnosis.closestAccepted || "-", "-")}
                     {" / "}유사도 {(feedback.gradingDiagnosis.similarityScore * 100).toFixed(1)}%
                   </p>
                 ) : null}
@@ -744,11 +754,9 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
         )}
       </div>
 
-      {message ? (
-        <p className="text-sm text-slate-700" role="status" aria-live="polite">
-          {message}
-        </p>
-      ) : null}
+      <p className="text-sm text-slate-700" role="status" aria-live="polite">
+        {message || "\u00A0"}
+      </p>
 
       {attempts >= 5 ? (
         <SessionRecapPanel

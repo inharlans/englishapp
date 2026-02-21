@@ -398,6 +398,13 @@ Railway 기준:
 - 반복 점검 운영 프로토콜: `docs/REPEAT_AUDIT_LOOP_PROTOCOL.md`
 - 운영/점검/인수인계 문서: `docs/`
 - Round 2 계획 문서: `docs/service-audit-2026-02-19-round2/`
+- 2026-02-21 루프 점검 문서: `docs/service-audit-2026-02-21-loop/`
+
+### 2026-02-22 Iteration 53
+- `/wordbooks/[id]/quiz*` 파트 입력값 방어(clamp) 및 로딩 중 파트 조작 비활성화
+- 오답 피드백의 허용 답안 예시 중복 제거 + 채점 근거 텍스트 정제
+- `/wordbooks/[id]/cards` 파트 입력값 방어(clamp) 및 로딩 중 파트 이동 제어 강화
+- 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_53.md`
 
 
 
