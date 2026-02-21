@@ -295,8 +295,12 @@ export default async function MarketPage(props: {
           secondary={{ label: "내 단어장", href: "/wordbooks" }}
         />
       ) : (
-        <div className="grid gap-3 md:grid-cols-2">
-          {wordbooks.map((wb) => {
+        <>
+          <p className="text-xs text-slate-500">
+            신고는 관리자 검토 후 처리되며, 제작자 차단은 개인화 기능입니다.
+          </p>
+          <div className="grid gap-3 md:grid-cols-2">
+            {wordbooks.map((wb) => {
             const isDownloaded = downloadedIds.has(wb.id);
             return (
               <div key={wb.id} className="ui-card p-4 transition hover:-translate-y-0.5">
@@ -380,17 +384,18 @@ export default async function MarketPage(props: {
                       </Link>
                     ) : null}
                     {user && wb.owner.id !== user.id ? (
-                      <div className="mt-2 space-y-2">
+                      <div className="mt-2 flex flex-wrap items-start gap-2">
                         <BlockOwnerButton wordbookId={wb.id} />
-                        <ReportWordbookButton wordbookId={wb.id} />
+                        <ReportWordbookButton wordbookId={wb.id} hideHint />
                       </div>
                     ) : null}
                   </div>
                 </div>
               </div>
             );
-          })}
-        </div>
+            })}
+          </div>
+        </>
       )}
 
       <div className="pointer-events-none fixed inset-x-0 bottom-4 z-40 md:hidden">
