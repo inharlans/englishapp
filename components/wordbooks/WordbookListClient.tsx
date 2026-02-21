@@ -114,6 +114,7 @@ export function WordbookListClient({
   const activePartStat = partStatsMap.get(partIndex) ?? { totalInPart: 0, matchedCount: 0 };
   const activePartRate =
     activePartStat.totalInPart > 0 ? Math.round((activePartStat.matchedCount / activePartStat.totalInPart) * 100) : 0;
+  const remainingParts = Math.max(displayPartCount - partIndex, 0);
   const visibleParts = useMemo(() => {
     if (displayPartCount <= 9) return parts.map((p) => ({ kind: "part" as const, part: p }));
     const set = new Set<number>([1, displayPartCount]);
@@ -145,11 +146,19 @@ export function WordbookListClient({
       if (isTyping) return;
       if (event.key === "[") {
         event.preventDefault();
+        if (partIndex <= 1) {
+          setInfo("첫 파트입니다.");
+          return;
+        }
         setPartIndex(Math.max(1, partIndex - 1));
         setInfo("");
       }
       if (event.key === "]") {
         event.preventDefault();
+        if (partIndex >= displayPartCount) {
+          setInfo("마지막 파트입니다.");
+          return;
+        }
         setPartIndex(Math.min(displayPartCount, partIndex + 1));
         setInfo("");
       }
@@ -167,6 +176,12 @@ export function WordbookListClient({
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [displayPartCount, partIndex, setPartIndex]);
+
+  useEffect(() => {
+    if (!info) return;
+    const timeout = window.setTimeout(() => setInfo(""), 3500);
+    return () => window.clearTimeout(timeout);
+  }, [info]);
 
   return (
     <section className="space-y-4">
@@ -228,11 +243,49 @@ export function WordbookListClient({
         </div>
         <div className="mt-2 text-xs text-slate-500">
           현재 {partIndex}파트: {activePartStat.matchedCount}/{activePartStat.totalInPart} ({activePartRate}%)
+          {" · "}남은 파트 {remainingParts}개
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
+          <label className="sr-only" htmlFor="list-part-select">
+            파트 선택
+          </label>
+          <select
+            id="list-part-select"
+            value={partIndex}
+            onChange={(event) => {
+              setPartIndex(Number(event.target.value));
+              setInfo("");
+            }}
+            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm sm:hidden"
+          >
+            {parts.map((part) => (
+              <option key={`part-select-${part.partIndex}`} value={part.partIndex}>
+                {part.partIndex}파트 ({part.matchedCount}/{part.totalInPart})
+              </option>
+            ))}
+          </select>
           <button
             type="button"
             onClick={() => {
+              if (partIndex <= 1) {
+                setInfo("첫 파트입니다.");
+                return;
+              }
+              setPartIndex(1);
+              setInfo("");
+            }}
+            disabled={partIndex <= 1}
+            className="ui-btn-secondary px-3 py-1 text-xs disabled:opacity-50"
+          >
+            처음
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              if (partIndex <= 1) {
+                setInfo("첫 파트입니다.");
+                return;
+              }
               setPartIndex(Math.max(1, partIndex - 1));
               setInfo("");
             }}
@@ -244,6 +297,10 @@ export function WordbookListClient({
           <button
             type="button"
             onClick={() => {
+              if (partIndex >= displayPartCount) {
+                setInfo("마지막 파트입니다.");
+                return;
+              }
               setPartIndex(Math.min(displayPartCount, partIndex + 1));
               setInfo("");
             }}
@@ -251,6 +308,21 @@ export function WordbookListClient({
             className="ui-btn-secondary px-3 py-1 text-xs disabled:opacity-50"
           >
             다음 파트
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              if (partIndex >= displayPartCount) {
+                setInfo("마지막 파트입니다.");
+                return;
+              }
+              setPartIndex(displayPartCount);
+              setInfo("");
+            }}
+            disabled={partIndex >= displayPartCount}
+            className="ui-btn-secondary px-3 py-1 text-xs disabled:opacity-50"
+          >
+            마지막
           </button>
           <form
             className="flex w-full items-center gap-2 sm:w-auto"
