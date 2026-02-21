@@ -181,7 +181,7 @@ export default async function MarketPage(props: {
             </p>
           ) : (
             <p className="mt-1 text-xs text-slate-500">
-              게스트 미리보기 모드 - 다운로드와 학습은 <Link href={{ pathname: "/login" }} className="font-semibold text-blue-700 hover:underline">로그인</Link> 후 가능합니다.
+              게스트 미리보기 모드 - 다운로드와 학습은 <Link href={marketLoginHref} className="font-semibold text-blue-700 hover:underline">로그인</Link> 후 가능합니다.
             </p>
           )}
         </div>
