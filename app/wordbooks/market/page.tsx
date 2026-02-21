@@ -199,9 +199,12 @@ export default async function MarketPage(props: {
       <form className="ui-card p-4" method="get">
         <input type="hidden" name="page" value="0" />
         <div className="grid gap-3 md:grid-cols-12 md:items-end">
-          <label className="block md:col-span-7">
-            <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">검색</span>
+          <div className="block md:col-span-7">
+            <label htmlFor="market-search-q" className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
+              검색
+            </label>
             <input
+              id="market-search-q"
               name="q"
               defaultValue={q}
               placeholder="제목, 설명, 제작자 이메일"
@@ -213,7 +216,7 @@ export default async function MarketPage(props: {
             <span id="market-search-help" className="mt-1 block text-[11px] text-slate-500">
               제목/설명/제작자 이메일로 검색할 수 있습니다.
             </span>
-          </label>
+          </div>
           <label className="block md:col-span-3">
             <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">정렬</span>
             <select

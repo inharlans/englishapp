@@ -513,3 +513,8 @@ Railway 기준:
 - `Esc` 검색어 초기화 로직을 타이핑 분기보다 먼저 처리해 단축키 일관성 확보
 - 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_71.md`
 
+### 2026-02-22 Iteration 72
+- `/wordbooks/market` 검색 필드 라벨/도움말 구조를 분리해 접근성 라벨 정확도 개선
+- 검색 입력 접근 이름이 도움말까지 합쳐지던 문제를 `label` + `aria-describedby` 구조로 보정
+- 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_72.md`
+
