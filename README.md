@@ -598,3 +598,8 @@ Railway 기준:
 - 기존 공유 링크(`?scope=...`) 진입 시에도 규모 필터가 의도대로 적용되도록 보정
 - 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_88.md`
 
+### 2026-02-22 Iteration 89
+- `/wordbooks/[id]/memorize`에서 ID 검증을 로그인 분기보다 먼저 수행하도록 순서 보정
+- 잘못된 ID 진입 시 로그인 유도 대신 즉시 무효 단어장 안내를 노출해 동선 혼란을 방지
+- 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_89.md`
+

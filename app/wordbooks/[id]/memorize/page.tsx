@@ -13,19 +13,6 @@ function parseId(raw: string): number | null {
 
 export default async function WordbookMemorizePage(props: { params: Promise<{ id: string }> }) {
   const { id: idRaw } = await props.params;
-  const user = await getUserFromRequestCookies(await cookies());
-  if (!user) {
-    return (
-      <section className="space-y-4">
-        <h1 className="text-2xl font-black tracking-tight text-slate-900">단어장 암기</h1>
-        <p className="text-sm text-slate-600">로그인이 필요합니다.</p>
-        <Link href={{ pathname: "/login", query: { next: `/wordbooks/${idRaw}/memorize` } }} className="text-sm font-semibold text-blue-700 hover:underline">
-          로그인
-        </Link>
-      </section>
-    );
-  }
-
   const id = parseId(idRaw);
   if (!id) {
     return (
@@ -33,6 +20,19 @@ export default async function WordbookMemorizePage(props: { params: Promise<{ id
         <h1 className="text-2xl font-black tracking-tight text-slate-900">잘못된 단어장입니다</h1>
         <Link href={{ pathname: "/wordbooks" }} className="text-sm font-semibold text-blue-700 hover:underline">
           뒤로
+        </Link>
+      </section>
+    );
+  }
+
+  const user = await getUserFromRequestCookies(await cookies());
+  if (!user) {
+    return (
+      <section className="space-y-4">
+        <h1 className="text-2xl font-black tracking-tight text-slate-900">단어장 암기</h1>
+        <p className="text-sm text-slate-600">로그인이 필요합니다.</p>
+        <Link href={{ pathname: "/login", query: { next: `/wordbooks/${id}/memorize` } }} className="text-sm font-semibold text-blue-700 hover:underline">
+          로그인
         </Link>
       </section>
     );
