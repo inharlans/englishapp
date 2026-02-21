@@ -219,9 +219,15 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
-      const isTyping =
+      const isInteractive =
         !!target &&
-        (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.getAttribute("contenteditable") === "true");
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.tagName === "SELECT" ||
+          target.tagName === "BUTTON" ||
+          target.tagName === "A" ||
+          target.getAttribute("contenteditable") === "true" ||
+          Boolean(target.closest("input, textarea, select, button, a, [contenteditable='true']")));
 
       if (event.key.toLowerCase() === "r" && feedback && !feedback.isCorrect) {
         event.preventDefault();
@@ -238,7 +244,7 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
         return;
       }
 
-      if (isTyping) return;
+      if (isInteractive) return;
 
       if (event.key === "/") {
         event.preventDefault();
