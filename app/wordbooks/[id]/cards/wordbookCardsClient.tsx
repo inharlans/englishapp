@@ -121,6 +121,7 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
   const overallCardNumber = hasPartItems ? (partIndex - 1) * partSize + (idx + 1) : 0;
   const overallProgressPercent =
     items.length > 0 && hasPartItems ? Math.round((overallCardNumber / items.length) * 100) : 0;
+  const isPartComplete = hasPartItems && idx >= shuffledItems.length - 1;
   const visiblePartButtons = useMemo(() => {
     if (partCount <= 9) return Array.from({ length: partCount }, (_, i) => ({ kind: "part" as const, value: i + 1 }));
     const set = new Set<number>([1, partCount]);
@@ -186,6 +187,16 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
       if (event.key === "PageDown") {
         event.preventDefault();
         setPartIndex(Math.min(partCount, partIndex + 1));
+        return;
+      }
+      if (event.key.toLowerCase() === "n") {
+        event.preventDefault();
+        setPartIndex(Math.min(partCount, partIndex + 1));
+        return;
+      }
+      if (event.key.toLowerCase() === "p") {
+        event.preventDefault();
+        setPartIndex(Math.max(1, partIndex - 1));
         return;
       }
       if (event.key === "Enter" && !loading && shuffledItems.length > 0) {
@@ -255,7 +266,7 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
             {loading ? "-" : `${idx + 1}/${Math.max(shuffledItems.length, 1)}`}
           </p>
           <p className="mt-1 text-xs text-slate-500">
-            단축키: ←/→ 카드 이동 · Space/Enter 뜻 보기 · Esc 뜻 숨기기 · R 섞기 · `[`/`]` 파트 이동 · Home/End 처음/끝 카드 · PageUp/PageDown 파트 이동
+            단축키: ←/→ 카드 이동 · Space/Enter 뜻 보기 · Esc 뜻 숨기기 · R 섞기 · `[`/`]`/`P`/`N` 파트 이동 · Home/End 처음/끝 카드 · PageUp/PageDown 파트 이동
           </p>
           <p className="mt-1 text-xs text-slate-500" role="status" aria-live="polite">
             전체 기준 {loading ? "-" : `${overallCardNumber}/${items.length}`}
@@ -391,6 +402,33 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
           )}
         </div>
       </div>
+      {isPartComplete ? (
+        <div className="ui-card p-3" role="status" aria-live="polite">
+          <p className="text-sm font-semibold text-slate-800">현재 파트 학습을 완료했습니다.</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setOrderSeed((value) => value + 1);
+                setIdx(0);
+                setShowMeaning(false);
+                setInfo("현재 파트 카드를 다시 섞었습니다.");
+              }}
+              className="ui-btn-secondary px-3 py-1 text-xs"
+            >
+              현재 파트 다시 섞기
+            </button>
+            <button
+              type="button"
+              onClick={() => setPartIndex(Math.min(partCount, partIndex + 1))}
+              disabled={partIndex >= partCount}
+              className="ui-btn-primary px-3 py-1 text-xs disabled:opacity-50"
+            >
+              다음 파트로 이동
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       <div className="ui-card p-4">
         <div className="flex items-center justify-between text-xs text-slate-500">
