@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { deleteOfflineWordbook, listOfflineWordbooks, type OfflineWordbook } from "@/lib/offlineWordbooks";
+import { maskEmailAddress } from "@/lib/textQuality";
 
 export default function OfflineLibraryPage() {
   const [items, setItems] = useState<OfflineWordbook[]>([]);
@@ -166,7 +167,7 @@ export default function OfflineLibraryPage() {
                 <h2 className="truncate text-lg font-black text-slate-900">{wb.title}</h2>
                 <p className="mt-1 text-xs text-slate-500">
                   저장일 {formatDateKst(wb.savedAt)}
-                  {wb.ownerEmail ? ` · 제작자 ${wb.ownerEmail}` : ""}
+                  {wb.ownerEmail ? ` · 제작자 ${maskEmailAddress(wb.ownerEmail)}` : ""}
                 </p>
                 <p className="mt-2 text-sm text-slate-600">단어 {wb.items.length}개</p>
               </div>

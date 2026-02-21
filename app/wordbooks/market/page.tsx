@@ -146,6 +146,7 @@ export default async function MarketPage(props: {
   const nextPage = Math.min(page + 1, maxPage);
   const prevDisabled = page <= 0;
   const nextDisabled = page >= maxPage;
+  const pagerQuery = { q, sort, size };
 
   return (
     <section className="space-y-6 pb-24">
@@ -236,28 +237,36 @@ export default async function MarketPage(props: {
       </form>
 
       <div className="flex items-center justify-between text-sm text-slate-600">
-        <p>
+        <p aria-live="polite">
           총 {total}개 - {page + 1}/{maxPage + 1}페이지
         </p>
         <div className="flex items-center gap-2">
-          <Link
-            href={{ pathname: "/wordbooks/market", query: { q, sort, size, page: String(prevPage) } }}
-            className={[
-              "ui-btn-secondary px-3 py-1.5 text-sm",
-              prevDisabled ? "pointer-events-none opacity-50" : ""
-            ].join(" ")}
-          >
-            이전
-          </Link>
-          <Link
-            href={{ pathname: "/wordbooks/market", query: { q, sort, size, page: String(nextPage) } }}
-            className={[
-              "ui-btn-secondary px-3 py-1.5 text-sm",
-              nextDisabled ? "pointer-events-none opacity-50" : ""
-            ].join(" ")}
-          >
-            다음
-          </Link>
+          {prevDisabled ? (
+            <span className="ui-btn-secondary cursor-not-allowed px-3 py-1.5 text-sm opacity-50" aria-disabled="true">
+              이전
+            </span>
+          ) : (
+            <Link
+              href={{ pathname: "/wordbooks/market", query: { ...pagerQuery, page: String(prevPage) } }}
+              className="ui-btn-secondary px-3 py-1.5 text-sm"
+              aria-label="이전 페이지"
+            >
+              이전
+            </Link>
+          )}
+          {nextDisabled ? (
+            <span className="ui-btn-secondary cursor-not-allowed px-3 py-1.5 text-sm opacity-50" aria-disabled="true">
+              다음
+            </span>
+          ) : (
+            <Link
+              href={{ pathname: "/wordbooks/market", query: { ...pagerQuery, page: String(nextPage) } }}
+              className="ui-btn-secondary px-3 py-1.5 text-sm"
+              aria-label="다음 페이지"
+            >
+              다음
+            </Link>
+          )}
         </div>
       </div>
 
@@ -384,30 +393,38 @@ export default async function MarketPage(props: {
         </div>
       )}
 
-      <div className="pointer-events-none fixed inset-x-0 bottom-4 z-40">
+      <div className="pointer-events-none fixed inset-x-0 bottom-4 z-40 md:hidden">
         <div className="mx-auto w-full max-w-5xl px-6">
           <div className="pointer-events-auto ui-card flex items-center justify-between gap-2 p-2">
-            <Link
-              href={{ pathname: "/wordbooks/market", query: { q, sort, size, page: String(prevPage) } }}
-              className={[
-                "ui-btn-secondary px-4 py-2 text-sm",
-                prevDisabled ? "pointer-events-none opacity-50" : ""
-              ].join(" ")}
-            >
-              이전
-            </Link>
+            {prevDisabled ? (
+              <span className="ui-btn-secondary cursor-not-allowed px-4 py-2 text-sm opacity-50" aria-disabled="true">
+                이전
+              </span>
+            ) : (
+              <Link
+                href={{ pathname: "/wordbooks/market", query: { ...pagerQuery, page: String(prevPage) } }}
+                className="ui-btn-secondary px-4 py-2 text-sm"
+                aria-label="이전 페이지"
+              >
+                이전
+              </Link>
+            )}
             <p className="text-xs font-semibold text-slate-600">
               {page + 1}/{maxPage + 1}
             </p>
-            <Link
-              href={{ pathname: "/wordbooks/market", query: { q, sort, size, page: String(nextPage) } }}
-              className={[
-                "ui-btn-secondary px-4 py-2 text-sm",
-                nextDisabled ? "pointer-events-none opacity-50" : ""
-              ].join(" ")}
-            >
-              다음
-            </Link>
+            {nextDisabled ? (
+              <span className="ui-btn-secondary cursor-not-allowed px-4 py-2 text-sm opacity-50" aria-disabled="true">
+                다음
+              </span>
+            ) : (
+              <Link
+                href={{ pathname: "/wordbooks/market", query: { ...pagerQuery, page: String(nextPage) } }}
+                className="ui-btn-secondary px-4 py-2 text-sm"
+                aria-label="다음 페이지"
+              >
+                다음
+              </Link>
+            )}
           </div>
         </div>
       </div>
