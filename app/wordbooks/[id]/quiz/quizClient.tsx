@@ -80,15 +80,24 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
   const [totalItems, setTotalItems] = useState(0);
   const [partItemCount, setPartItemCount] = useState(0);
   const [partJump, setPartJump] = useState("1");
+  const [autoNextOnCorrect, setAutoNextOnCorrect] = useState(false);
   const answerInputRef = useRef<HTMLInputElement>(null);
   const retryQueueRef = useRef<QuizItem[]>([]);
   const { mode: meaningMode, setMode: setMeaningMode } = useMeaningViewMode();
   const { mode: densityMode, setMode: setDensityMode } = useDensityMode();
   const { partSize, setPartSize, partIndex, setPartIndex, partCount } = useWordbookParting(wordbookId, totalItems);
+  const draftKey = `wordbook_quiz_draft_${wordbookId}_${mode}_${partSize}_${partIndex}`;
+  const autoNextKey = `wordbook_quiz_auto_next_correct_${wordbookId}_${mode}`;
 
   useEffect(() => {
     retryQueueRef.current = retryQueue;
   }, [retryQueue]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const raw = window.localStorage.getItem(autoNextKey);
+    if (raw === "1") setAutoNextOnCorrect(true);
+  }, [autoNextKey]);
 
   const loadNext = useCallback(async () => {
     const queued = retryQueueRef.current;
@@ -140,6 +149,29 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
   }, [feedback, item, loading]);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    const raw = window.localStorage.getItem(draftKey);
+    if (!raw) return;
+    setAnswer(raw);
+  }, [draftKey]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const trimmed = answer.trim();
+    if (!trimmed) {
+      window.localStorage.removeItem(draftKey);
+      return;
+    }
+    window.localStorage.setItem(draftKey, answer);
+  }, [answer, draftKey]);
+
+  useEffect(() => {
+    if (!message) return;
+    const timeout = window.setTimeout(() => setMessage(""), 3500);
+    return () => window.clearTimeout(timeout);
+  }, [message]);
+
+  useEffect(() => {
     setPartJump(String(partIndex));
   }, [partIndex]);
 
@@ -166,6 +198,10 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
       }
       if (event.key === "[" && !loading) {
         event.preventDefault();
+        if (partIndex <= 1) {
+          setMessage("첫 파트입니다.");
+          return;
+        }
         setPartIndex(Math.max(1, partIndex - 1));
         setPartAttempts(0);
         setFeedback(null);
@@ -173,6 +209,10 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
       }
       if (event.key === "]" && !loading) {
         event.preventDefault();
+        if (partIndex >= partCount) {
+          setMessage("마지막 파트입니다.");
+          return;
+        }
         setPartIndex(Math.min(partCount, partIndex + 1));
         setPartAttempts(0);
         setFeedback(null);
@@ -226,11 +266,19 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
         gradingDiagnosis: json.gradingDiagnosis
       });
       setAnswer("");
+      if (typeof window !== "undefined") {
+        window.localStorage.removeItem(draftKey);
+      }
       if (!json.correct && item) {
         setRetryQueue((prev) => {
           if (prev.some((queued) => queued.id === item.id) || prev.length >= 20) return prev;
           return [...prev, item];
         });
+      }
+      if (json.correct && autoNextOnCorrect) {
+        window.setTimeout(() => {
+          void loadNext();
+        }, 300);
       }
     } catch (e) {
       setMessage(e instanceof Error ? e.message : "제출에 실패했습니다.");
@@ -350,6 +398,22 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
             · 정답률 {accuracy}% ({corrects}/{attempts})
           </span>
           <span className="text-slate-500">· 단축키: `/` 입력 포커스 · `S` 건너뛰기 · `N` 다음 · `[`/`]` 파트 이동 · `Home`/`End` 처음/끝</span>
+          <button
+            type="button"
+            onClick={() => {
+              setAutoNextOnCorrect((value) => {
+                const next = !value;
+                if (typeof window !== "undefined") {
+                  window.localStorage.setItem(autoNextKey, next ? "1" : "0");
+                }
+                return next;
+              });
+            }}
+            aria-pressed={autoNextOnCorrect}
+            className="ui-btn-secondary px-3 py-1 text-xs"
+          >
+            정답 시 자동 다음 {autoNextOnCorrect ? "켜짐" : "꺼짐"}
+          </button>
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
           <label className="sr-only" htmlFor="wordbook-quiz-part-select">
@@ -372,6 +436,19 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
               </option>
             ))}
           </select>
+          <button
+            type="button"
+            onClick={() => {
+              setPartIndex(1);
+              setPartAttempts(0);
+              setFeedback(null);
+              setMessage("");
+            }}
+            disabled={partIndex <= 1}
+            className="ui-btn-secondary w-full px-3 py-2 text-sm sm:w-auto disabled:opacity-50"
+          >
+            처음
+          </button>
           <button
             type="button"
             onClick={() => {
@@ -399,6 +476,19 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
             aria-label={`${Math.min(partCount, partIndex + 1)}파트로 이동`}
           >
             다음 파트
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setPartIndex(partCount);
+              setPartAttempts(0);
+              setFeedback(null);
+              setMessage("");
+            }}
+            disabled={partIndex >= partCount}
+            className="ui-btn-secondary w-full px-3 py-2 text-sm sm:w-auto disabled:opacity-50"
+          >
+            마지막
           </button>
           <form
             className="flex w-full items-center gap-2 sm:w-auto"
