@@ -118,10 +118,29 @@ export default async function WordbooksPage() {
       })
     : [];
 
+  const downloadedVersionByWordbook = new Map<number, number>();
+  for (const d of downloaded) {
+    downloadedVersionByWordbook.set(d.wordbook.id, d.downloadedVersion);
+  }
+
+  const pendingLogsByWordbook = new Map<number, { wordbookId: number; version: number; addedCount: number; updatedCount: number; deletedCount: number }[]>();
+  for (const log of logs) {
+    const downloadedVersion = downloadedVersionByWordbook.get(log.wordbookId);
+    if (downloadedVersion === undefined || log.version <= downloadedVersion) {
+      continue;
+    }
+    const group = pendingLogsByWordbook.get(log.wordbookId);
+    if (group) {
+      group.push(log);
+    } else {
+      pendingLogsByWordbook.set(log.wordbookId, [log]);
+    }
+  }
+
   const summaryByWordbook = new Map<number, { addedCount: number; updatedCount: number; deletedCount: number }>();
   for (const d of downloaded) {
-    const relevant = logs.filter((l) => l.wordbookId === d.wordbook.id && l.version > d.downloadedVersion);
-    summaryByWordbook.set(d.wordbook.id, aggregateVersionLogs(relevant));
+    const relevantLogs = pendingLogsByWordbook.get(d.wordbook.id) ?? [];
+    summaryByWordbook.set(d.wordbook.id, aggregateVersionLogs(relevantLogs));
   }
 
   const staleDecks = downloaded.filter((d) => d.wordbook.contentVersion > d.downloadedVersion).length;
@@ -149,9 +168,11 @@ export default async function WordbooksPage() {
           : "/wordbooks/new";
   const suggestedLabel =
     hasLastStudyDeck ? "마지막 단어장 이어서" : staleDecks > 0 ? "업데이트 단어장 확인" : downloaded.length > 0 ? "마지막 단어장 이어서" : "첫 단어장 만들기";
+  const isFreeUser = user.plan === "FREE";
+  const freeWordRemaining = Math.max(0, FREE_DOWNLOAD_WORD_LIMIT - downloadedWordCount);
 
   return (
-    <section className="space-y-6">
+    <section className="space-y-6" aria-labelledby="wordbooks-page-title">
       <PostDownloadOnboardingBanner availableWordbookIds={downloadedWordbookIds} />
       <LearningDashboardHeader
         studyRate={studyRate}
@@ -167,17 +188,17 @@ export default async function WordbooksPage() {
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
             단어장
           </p>
-          <h1 className="ui-h2 mt-2">내 단어장</h1>
+          <h1 id="wordbooks-page-title" className="ui-h2 mt-2">내 단어장</h1>
           <p className="ui-body mt-2">
             직접 단어장을 만들거나 공개 단어장을 다운로드하세요.
           </p>
           <p className="mt-1 text-xs text-slate-500">
             요금제: <span className="font-semibold">{user.plan}</span>
-            {user.plan === "FREE" ? (
+            {isFreeUser ? (
               <>
                 {" "}
                 - 다운로드 사용량: <span className="font-semibold">{downloadedWordCount}/{FREE_DOWNLOAD_WORD_LIMIT}단어</span> - 무료
-                업로드는 공개 고정 -{" "}
+                업로드는 공개 고정 - 남은 다운로드 용량 <span className="font-semibold">{freeWordRemaining}단어</span> -{" "}
                 <Link
                   href={{ pathname: "/pricing" }}
                   className="font-semibold text-blue-700 hover:underline"
@@ -227,10 +248,26 @@ export default async function WordbooksPage() {
           </Link>
         </div>
       </header>
+      {staleDecks > 0 && firstStaleDownload ? (
+        <div
+          className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+          role="status"
+          aria-live="polite"
+        >
+          업데이트 가능한 다운로드 단어장이 <span className="font-semibold">{staleDecks}개</span> 있습니다.
+          {" "}
+          <Link
+            href={{ pathname: `/wordbooks/${firstStaleDownload.wordbook.id}` }}
+            className="font-semibold underline underline-offset-2"
+          >
+            최신 변경 확인하기
+          </Link>
+        </div>
+      ) : null}
 
-      <section className="space-y-3">
+      <section className="space-y-3" aria-labelledby="owned-wordbooks-title">
         <h2 className="text-sm font-black uppercase tracking-[0.2em] text-slate-700">
-          내가 만든 단어장
+          <span id="owned-wordbooks-title">내가 만든 단어장</span>
         </h2>
         {mine.length === 0 ? (
           <EmptyStateCard
@@ -249,6 +286,7 @@ export default async function WordbooksPage() {
                     href={{ pathname: `/wordbooks/${wb.id}` }}
                     className="ui-card p-4 transition hover:-translate-y-0.5 hover:border-blue-300"
                     role="listitem"
+                    aria-label={`${wb.title} 상세로 이동`}
                   >
                     <div className="flex items-start gap-3">
                       <div className="min-w-0 flex-1">
@@ -269,6 +307,7 @@ export default async function WordbooksPage() {
                         <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-slate-600">
                           <span>{wb._count.items}개 단어</span>
                           <span>{wb.downloadCount}회 다운로드</span>
+                          <span>최근 수정 {formatDateKst(wb.updatedAt)}</span>
                         </div>
                         <div className="mt-2">
                           <StarRating value={wb.ratingAvg} count={wb.ratingCount} />
@@ -283,21 +322,23 @@ export default async function WordbooksPage() {
         )}
       </section>
 
-      <section className="space-y-3">
+      <section className="space-y-3" aria-labelledby="downloaded-wordbooks-title">
         <h2 className="text-sm font-black uppercase tracking-[0.2em] text-slate-700">
-          다운로드한 단어장(읽기 전용)
+          <span id="downloaded-wordbooks-title">다운로드한 단어장(읽기 전용)</span>
         </h2>
         {downloaded.length === 0 ? (
           <EmptyStateCard
             title="다운로드한 단어장이 없습니다"
             description="마켓에서 단어장을 내려받아 바로 암기/퀴즈를 시작할 수 있습니다."
             primary={{ label: "마켓 둘러보기", href: "/wordbooks/market" }}
+            secondary={{ label: "오프라인 보기", href: "/offline" }}
           />
         ) : (
           <div className="grid gap-3 md:grid-cols-2" role="list" aria-label="다운로드한 단어장 목록">
             {downloaded.map((d) => (
               (() => {
                 const description = splitWordbookDescription(d.wordbook.description).displayDescription;
+                const versionSummary = summaryByWordbook.get(d.wordbook.id) ?? { addedCount: 0, updatedCount: 0, deletedCount: 0 };
                 return (
                   <div
                     key={d.wordbook.id}
@@ -310,6 +351,7 @@ export default async function WordbooksPage() {
                           <Link
                             href={{ pathname: `/wordbooks/${d.wordbook.id}` }}
                             className="truncate text-lg font-black text-slate-900 hover:underline"
+                            aria-label={`${d.wordbook.title} 상세로 이동`}
                           >
                             {d.wordbook.title}
                           </Link>
@@ -321,6 +363,7 @@ export default async function WordbooksPage() {
                           제작자 {maskEmailAddress(d.wordbook.owner.email)} - 다운로드일{" "}
                           {formatDateKst(d.createdAt)}
                         </p>
+                        <p className="mt-1 text-xs text-slate-500">최근 수정일 {formatDateKst(d.wordbook.updatedAt)}</p>
                         {description ? <p className="mt-2 line-clamp-2 text-sm text-slate-600">{description}</p> : null}
                     <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-slate-600">
                       <span>{d.wordbook._count.items}개 단어</span>
@@ -332,7 +375,7 @@ export default async function WordbooksPage() {
                     <div className="mt-3">
                       <OfflineSaveButton wordbookId={d.wordbook.id} />
                     </div>
-                    <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
+                    <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700" role="status" aria-live="polite">
                       <p>
                         내 버전 v{d.downloadedVersion} / 최신 v{d.wordbook.contentVersion}
                         {d.wordbook.contentVersion > d.downloadedVersion ? (
@@ -346,9 +389,9 @@ export default async function WordbooksPage() {
                         )}
                       </p>
                       <p className="mt-1 text-[11px] text-slate-600">
-                        변경 요약: +{summaryByWordbook.get(d.wordbook.id)?.addedCount ?? 0} /
-                        ~{summaryByWordbook.get(d.wordbook.id)?.updatedCount ?? 0} /
-                        -{summaryByWordbook.get(d.wordbook.id)?.deletedCount ?? 0}
+                        변경 요약: +{versionSummary.addedCount} /
+                        ~{versionSummary.updatedCount} /
+                        -{versionSummary.deletedCount}
                       </p>
                       <p className="mt-1 text-[11px] text-slate-500">
                         단어 수 변화: {d.snapshotItemCount} → {d.wordbook._count.items} / 최근 동기화 {formatDateKst(d.syncedAt)}
@@ -359,7 +402,7 @@ export default async function WordbooksPage() {
                         </div>
                       ) : null}
                     </div>
-                    <div className="mt-2 flex flex-wrap gap-2">
+                    <div className="mt-2 flex flex-wrap gap-2" role="group" aria-label={`${d.wordbook.title} 학습 바로가기`}>
                       <Link
                         href={{ pathname: `/wordbooks/${d.wordbook.id}/memorize` }}
                         data-testid="library-study-link"
