@@ -608,3 +608,8 @@ Railway 기준:
 - 성공 안내는 실제 메시지가 있을 때만 렌더링하도록 정리해 피드백 우선순위를 명확화
 - 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_90.md`
 
+### 2026-02-22 Iteration 91
+- `/offline/wordbooks/[id]` 학습 화면에서도 빈 성공 상태 박스가 상시 노출되던 문제 수정
+- 성공 안내(`info`) 존재 시에만 상태 박스를 렌더링해 상태 피드백 가독성 개선
+- 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_91.md`
+
