@@ -456,8 +456,9 @@ export function WordbookListClient({
             ) : null}
             {item.itemState ? (
               <p className="mt-2 text-xs text-slate-500">
-                상태 {item.itemState.status === "CORRECT" ? "정답" : item.itemState.status === "WRONG" ? "오답" : "새 단어"} / 이력 정답:{item.itemState.everCorrect ? "Y" : "N"} 오답:
-                {item.itemState.everWrong ? "Y" : "N"}
+                상태 {item.itemState.status === "CORRECT" ? "정답" : item.itemState.status === "WRONG" ? "오답" : "새 단어"}
+                {" / "}이력 정답 {item.itemState.everCorrect ? "있음" : "없음"}
+                {" · "}이력 오답 {item.itemState.everWrong ? "있음" : "없음"}
               </p>
             ) : null}
           </article>

@@ -503,3 +503,8 @@ Railway 기준:
 - 컴팩트 의미 칩에서 품사 배지와 의미 텍스트가 붙어 보이던 문제를 분리 렌더링으로 보정
 - 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_69.md`
 
+### 2026-02-22 Iteration 70
+- `/wordbooks/[id]/list-wrong` 실측 기준 목록 카드 상태 이력 가독성 개선
+- `이력 정답/오답` 표시를 `Y/N` 축약에서 `있음/없음`으로 변경하고 구분자 정리
+- 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_70.md`
+
