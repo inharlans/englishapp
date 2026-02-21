@@ -14,18 +14,26 @@ const pageByNumber: Record<string, Route> = {
   "7": "/list-half"
 };
 
+const legacyStudyPaths = new Set<string>([
+  "/memorize",
+  "/quiz-meaning",
+  "/quiz-word",
+  "/list-correct",
+  "/list-wrong",
+  "/list-half"
+]);
+
+function isWordbookStudyPath(pathname: string): boolean {
+  return /^\/wordbooks\/\d+\/(memorize|quiz-meaning|quiz-word|list-correct|list-wrong|list-half)$/.test(pathname);
+}
+
 export function KeyboardPageNavigator() {
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
-    if (
-      pathname === "/login" ||
-      pathname === "/logout" ||
-      pathname === "/terms" ||
-      pathname === "/privacy" ||
-      pathname === "/pricing"
-    ) {
+    const shortcutEnabled = legacyStudyPaths.has(pathname) || isWordbookStudyPath(pathname);
+    if (!shortcutEnabled) {
       return;
     }
 

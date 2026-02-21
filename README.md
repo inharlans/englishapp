@@ -628,3 +628,8 @@ Railway 기준:
 - 학습 레이아웃 렌더링 전에 오류 안내와 `/offline` 복귀 동선을 즉시 제공하도록 개선
 - 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_94.md`
 
+### 2026-02-22 Iteration 95
+- `KeyboardPageNavigator` 숫자 단축키를 학습 화면에서만 동작하도록 범위 제한
+- 홈/마켓 등 비학습 페이지에서 숫자 키 입력으로 강제 라우팅되던 동선 이슈 수정
+- 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_95.md`
+
