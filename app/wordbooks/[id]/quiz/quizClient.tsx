@@ -91,11 +91,20 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
   const skipInitialPartNoticeRef = useRef(true);
   const answerInputRef = useRef<HTMLInputElement>(null);
   const retryQueueRef = useRef<QuizItem[]>([]);
+  const mountedRef = useRef(true);
+  const requestSeqRef = useRef(0);
   const { mode: meaningMode, setMode: setMeaningMode } = useMeaningViewMode();
   const { mode: densityMode, setMode: setDensityMode } = useDensityMode();
   const { partSize, setPartSize, partIndex, setPartIndex, partCount } = useWordbookParting(wordbookId, totalItems);
   const draftKey = `wordbook_quiz_draft_${wordbookId}_${mode}_${partSize}_${partIndex}`;
   const autoNextKey = `wordbook_quiz_auto_next_correct_${wordbookId}_${mode}`;
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     retryQueueRef.current = retryQueue;
@@ -121,9 +130,12 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
   );
 
   const loadNext = useCallback(async () => {
+    const requestSeq = requestSeqRef.current + 1;
+    requestSeqRef.current = requestSeq;
     const queued = retryQueueRef.current;
     if (queued.length > 0) {
       const [next, ...rest] = queued;
+      if (!mountedRef.current || requestSeqRef.current !== requestSeq) return;
       retryQueueRef.current = rest;
       setRetryQueue(rest);
       setItem(next);
@@ -148,13 +160,16 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
       });
       const json = (await res.json()) as LoadPayload;
       if (!res.ok) throw new Error(json.error ?? "문제를 불러오지 못했습니다.");
+      if (!mountedRef.current || requestSeqRef.current !== requestSeq) return;
       setItem(json.item ?? null);
       setTotalItems(json.totalItems ?? 0);
       setPartItemCount(json.partItemCount ?? 0);
     } catch (e) {
+      if (!mountedRef.current || requestSeqRef.current !== requestSeq) return;
       setItem(null);
       setMessage(e instanceof Error ? e.message : "문제를 불러오지 못했습니다.");
     } finally {
+      if (!mountedRef.current || requestSeqRef.current !== requestSeq) return;
       setLoading(false);
     }
   }, [mode, partIndex, partSize, wordbookId]);

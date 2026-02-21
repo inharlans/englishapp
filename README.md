@@ -448,6 +448,12 @@ Railway 기준:
 - 키 핸들러 순서를 조정해 포커스 상태와 무관하게 `Esc`/`R` 단축키가 동작하도록 보강
 - 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_60.md`
 
+### 2026-02-22 Iteration 61
+- `quiz-word` 실플레이 중 수치 불일치 가능성을 유발하는 로딩 레이스 조건 완화
+- `requestSeqRef`/`mountedRef` 기반으로 최신 요청만 상태를 갱신하도록 보강
+- 파트/모드 전환 중 늦게 도착한 이전 응답이 최신 상태를 덮어쓰는 리스크 제거
+- 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_61.md`
+
 
 
 
