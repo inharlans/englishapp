@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 const DEFAULT_PART_SIZE = 30;
 const MIN_PART_SIZE = 1;
@@ -28,28 +28,53 @@ export function useWordbookParting(wordbookId: number, totalItems: number) {
     [partSize, totalItems]
   );
 
-  useEffect(() => {
+  const syncFromLocation = useCallback(() => {
     if (typeof window === "undefined") return;
     const qs = new URLSearchParams(window.location.search);
     const querySize = Number(qs.get("partSize") ?? "");
     const queryIndex = Number(qs.get("partIndex") ?? "");
-    const rawSize = Number(window.localStorage.getItem(sizeKey) ?? "");
-    const rawIndex = Number(window.localStorage.getItem(indexKey) ?? "");
+    let rawSize = Number.NaN;
+    let rawIndex = Number.NaN;
+    try {
+      rawSize = Number(window.localStorage.getItem(sizeKey) ?? "");
+      rawIndex = Number(window.localStorage.getItem(indexKey) ?? "");
+    } catch {
+      rawSize = Number.NaN;
+      rawIndex = Number.NaN;
+    }
     const sizeSource = Number.isFinite(querySize) && querySize > 0 ? querySize : rawSize;
     const indexSource = Number.isFinite(queryIndex) && queryIndex > 0 ? queryIndex : rawIndex;
     const nextSize = clampPartSize(sizeSource);
     const resolvedIndex = clampPartIndex(indexSource, Math.max(1, Math.ceil(Math.max(totalItems, 0) / nextSize)));
     setPartSizeState(nextSize);
     setPartIndexState(resolvedIndex);
-    window.localStorage.setItem(sizeKey, String(nextSize));
-    window.localStorage.setItem(indexKey, String(resolvedIndex));
+    try {
+      window.localStorage.setItem(sizeKey, String(nextSize));
+      window.localStorage.setItem(indexKey, String(resolvedIndex));
+    } catch {
+      // localStorage can be unavailable in private mode or strict browser settings.
+    }
   }, [indexKey, sizeKey, totalItems]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    syncFromLocation();
+    const onPopState = () => {
+      syncFromLocation();
+    };
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, [syncFromLocation]);
 
   useEffect(() => {
     if (partIndex > partCount) {
       setPartIndexState(partCount);
       if (typeof window !== "undefined") {
-        window.localStorage.setItem(indexKey, String(partCount));
+        try {
+          window.localStorage.setItem(indexKey, String(partCount));
+        } catch {
+          // localStorage unavailable
+        }
         const qs = new URLSearchParams(window.location.search);
         qs.set("partSize", String(partSize));
         qs.set("partIndex", String(partCount));
@@ -62,7 +87,11 @@ export function useWordbookParting(wordbookId: number, totalItems: number) {
     const next = clampPartSize(value);
     setPartSizeState(next);
     if (typeof window !== "undefined") {
-      window.localStorage.setItem(sizeKey, String(next));
+      try {
+        window.localStorage.setItem(sizeKey, String(next));
+      } catch {
+        // localStorage unavailable
+      }
       const qs = new URLSearchParams(window.location.search);
       qs.set("partSize", String(next));
       qs.set("partIndex", String(clampPartIndex(partIndex, Math.max(1, Math.ceil(Math.max(totalItems, 0) / next)))));
@@ -74,7 +103,11 @@ export function useWordbookParting(wordbookId: number, totalItems: number) {
     const next = clampPartIndex(value, partCount);
     setPartIndexState(next);
     if (typeof window !== "undefined") {
-      window.localStorage.setItem(indexKey, String(next));
+      try {
+        window.localStorage.setItem(indexKey, String(next));
+      } catch {
+        // localStorage unavailable
+      }
       const qs = new URLSearchParams(window.location.search);
       qs.set("partSize", String(partSize));
       qs.set("partIndex", String(next));
