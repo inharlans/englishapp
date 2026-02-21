@@ -43,6 +43,33 @@ export default function OfflineLibraryPage() {
     void reload();
   }, []);
 
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      const isTyping =
+        !!target &&
+        (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.getAttribute("contenteditable") === "true");
+      if (isTyping) return;
+      if (event.key === "/") {
+        event.preventDefault();
+        searchInputRef.current?.focus();
+      }
+      if (event.key === "Escape" && query.trim()) {
+        event.preventDefault();
+        setQuery("");
+        searchInputRef.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [query]);
+
+  useEffect(() => {
+    if (!info) return;
+    const timeout = window.setTimeout(() => setInfo(""), 3500);
+    return () => window.clearTimeout(timeout);
+  }, [info]);
+
   const filteredItems = items
     .filter((wb) => {
       const q = query.trim().toLowerCase();
@@ -94,7 +121,7 @@ export default function OfflineLibraryPage() {
           <button
             type="button"
             onClick={() => void reload()}
-            disabled={loading}
+            disabled={loading || deletingId !== null}
             aria-busy={loading}
             className="ui-btn-secondary px-4 py-2 text-sm"
           >
@@ -215,6 +242,7 @@ export default function OfflineLibraryPage() {
                 onClick={() => void onDelete(wb.id, wb.title)}
                 disabled={deletingId === wb.id}
                 aria-label={`${wb.title} 오프라인 사본 삭제`}
+                aria-busy={deletingId === wb.id}
                 className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-sm font-semibold text-blue-800 hover:bg-blue-100"
               >
                 {deletingId === wb.id ? "삭제 중..." : "삭제"}

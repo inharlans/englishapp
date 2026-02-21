@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
+import { MeaningView } from "@/components/MeaningView";
 import { getOfflineWordbook, type OfflineWordbook } from "@/lib/offlineWordbooks";
 import { SpeakButton } from "@/components/wordbooks/SpeakButton";
 import { sanitizeUserText } from "@/lib/textQuality";
@@ -56,6 +57,18 @@ export function StudyClient({ id }: { id: number }) {
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (loading || !wb || items.length === 0) return;
+      if (event.key === "Home" || event.key === "0") {
+        event.preventDefault();
+        setShowMeaning(false);
+        setIdx(0);
+        return;
+      }
+      if (event.key === "End") {
+        event.preventDefault();
+        setShowMeaning(false);
+        setIdx(Math.max(items.length - 1, 0));
+        return;
+      }
       if (event.key === "ArrowRight") {
         event.preventDefault();
         setShowMeaning(false);
@@ -70,11 +83,21 @@ export function StudyClient({ id }: { id: number }) {
         event.preventDefault();
         setShowMeaning((v) => !v);
       }
+      if (event.key === "Enter" || event.key.toLowerCase() === "m") {
+        event.preventDefault();
+        setShowMeaning((v) => !v);
+      }
     };
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [items.length, loading, wb]);
+
+  useEffect(() => {
+    if (!info) return;
+    const timeout = window.setTimeout(() => setInfo(""), 3500);
+    return () => window.clearTimeout(timeout);
+  }, [info]);
 
   const current = items[idx] ?? null;
   const speakLang = wb?.fromLang?.toLowerCase().startsWith("en") ? "en-US" : undefined;
@@ -102,7 +125,7 @@ export function StudyClient({ id }: { id: number }) {
               단어 {items.length}개 | {idx + 1}/{Math.max(items.length, 1)}
             </p>
           ) : null}
-          <p className="mt-1 text-xs text-slate-500">단축키: ← 이전 / → 다음 / Space 보기·숨기기</p>
+          <p className="mt-1 text-xs text-slate-500">단축키: ←/→ 카드 이동 · Space/Enter/M 뜻 보기 · Home/End/0 처음·끝 카드</p>
         </div>
         <div className="ml-auto flex flex-wrap gap-2">
           <Link href={{ pathname: "/offline" }} className="ui-btn-secondary px-4 py-2 text-sm">
@@ -149,7 +172,14 @@ export function StudyClient({ id }: { id: number }) {
             <SpeakButton text={current.term} lang={speakLang} />
           </div>
 
-          <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-slate-100" aria-label={`학습 진행률 ${progressPercent}%`}>
+          <div
+            className="mt-3 h-2 w-full overflow-hidden rounded-full bg-slate-100"
+            role="progressbar"
+            aria-label={`학습 진행률 ${progressPercent}%`}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={progressPercent}
+          >
             <div className="h-full bg-blue-500 transition-all" style={{ width: `${progressPercent}%` }} />
           </div>
 
@@ -162,7 +192,11 @@ export function StudyClient({ id }: { id: number }) {
             {showMeaning ? (
               <div className="rounded-2xl border border-slate-200 bg-white p-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">뜻</p>
-                <p className="mt-2 text-xl font-bold text-slate-900">{sanitizeUserText(current.meaning, "의미 데이터 점검 중입니다")}</p>
+                <MeaningView
+                  value={sanitizeUserText(current.meaning, "의미 데이터 점검 중입니다")}
+                  mode="detailed"
+                  className="mt-2 text-base font-semibold text-slate-900"
+                />
                 <div className="mt-3">
                   <Link href={{ pathname: `/wordbooks/${id}` }} className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-800 hover:bg-blue-100">
                     온라인 원본에서 동기화하기
@@ -179,9 +213,21 @@ export function StudyClient({ id }: { id: number }) {
           <div className="mt-6 flex items-center justify-between gap-2">
             <button
               type="button"
+              onClick={() => {
+                setIdx(0);
+                setShowMeaning(false);
+              }}
+              disabled={idx <= 0}
+              aria-label="첫 카드로 이동"
+              className="ui-btn-secondary px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              처음
+            </button>
+            <button
+              type="button"
               onClick={prev}
               disabled={idx <= 0}
-              aria-label={`이전 카드 (${Math.max(idx, 0)}/${items.length})`}
+              aria-label={`이전 카드 (${Math.max(idx, 1)}/${items.length})`}
               className="ui-btn-secondary px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-60"
             >
               이전
@@ -197,6 +243,18 @@ export function StudyClient({ id }: { id: number }) {
               className="ui-btn-primary px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-60"
             >
               다음
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setIdx(Math.max(items.length - 1, 0));
+                setShowMeaning(false);
+              }}
+              disabled={idx >= items.length - 1}
+              aria-label="마지막 카드로 이동"
+              className="ui-btn-secondary px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              마지막
             </button>
           </div>
 
