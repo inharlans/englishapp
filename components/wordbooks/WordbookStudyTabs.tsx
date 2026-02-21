@@ -59,6 +59,10 @@ export function WordbookStudyTabs({
               onClick={() => {
                 if (typeof window !== "undefined") {
                   window.localStorage.setItem(`wordbook_last_tab_${wordbookId}`, tab.key);
+                  window.localStorage.setItem(
+                    `wordbook_last_studied_at_${wordbookId}`,
+                    String(Date.now())
+                  );
                 }
               }}
               aria-current={isActive ? "page" : undefined}
