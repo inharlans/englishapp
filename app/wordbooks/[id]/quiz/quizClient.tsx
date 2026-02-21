@@ -2,7 +2,7 @@
 
 import { apiFetch } from "@/lib/clientApi";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Route } from "next";
 
 import { MeaningView } from "@/components/MeaningView";
@@ -78,6 +78,7 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
   const [wrongs, setWrongs] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
   const [partItemCount, setPartItemCount] = useState(0);
+  const answerInputRef = useRef<HTMLInputElement>(null);
   const { mode: meaningMode, setMode: setMeaningMode } = useMeaningViewMode();
   const { mode: densityMode, setMode: setDensityMode } = useDensityMode();
   const { partSize, setPartSize, partIndex, setPartIndex, partCount } = useWordbookParting(wordbookId, totalItems);
@@ -123,6 +124,12 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
     void loadNext();
   }, [loadNext]);
 
+  useEffect(() => {
+    if (!loading && item && !feedback) {
+      answerInputRef.current?.focus();
+    }
+  }, [feedback, item, loading]);
+
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (feedback) {
@@ -166,6 +173,7 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
     setFeedback(null);
     setAnswer("");
     setMessage("");
+    answerInputRef.current?.focus();
   };
 
   const activeTab = mode === "MEANING" ? "quiz-meaning" : "quiz-word";
@@ -185,6 +193,8 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
         };
 
   const partButtons = useMemo(() => Array.from({ length: partCount }, (_, idx) => idx + 1), [partCount]);
+  const accuracy = attempts > 0 ? Math.round((corrects / attempts) * 100) : 0;
+  const currentPartProgress = partItemCount > 0 ? Math.min(100, Math.round(((corrects + wrongs) / partItemCount) * 100)) : 0;
 
   return (
     <section className="space-y-4">
@@ -245,6 +255,9 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
           <span className="text-slate-500">
             총 {totalItems}개 / {partCount}개 파트
           </span>
+          <span className="text-slate-500">
+            · 정답률 {accuracy}% ({corrects}/{Math.max(attempts, 1)})
+          </span>
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
           <label className="sr-only" htmlFor="wordbook-quiz-part-select">
@@ -253,7 +266,11 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
           <select
             id="wordbook-quiz-part-select"
             value={partIndex}
-            onChange={(e) => setPartIndex(Number(e.target.value))}
+            onChange={(e) => {
+              setPartIndex(Number(e.target.value));
+              setFeedback(null);
+              setMessage("");
+            }}
             className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm sm:hidden"
           >
             {partButtons.map((n) => (
@@ -268,7 +285,11 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
             <button
               key={n}
               type="button"
-              onClick={() => setPartIndex(n)}
+              onClick={() => {
+                setPartIndex(n);
+                setFeedback(null);
+                setMessage("");
+              }}
               className={[
                 "rounded-lg border px-3 py-1 text-xs font-semibold",
                 n === partIndex
@@ -304,6 +325,9 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
             <p className="mt-1 text-xs text-slate-500">
               {partIndex}파트 / {partItemCount}개 단어
             </p>
+            <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-100" aria-label={`파트 진행률 ${currentPartProgress}%`}>
+              <div className="h-full bg-blue-500 transition-all" style={{ width: `${currentPartProgress}%` }} />
+            </div>
             <div className="mt-2 text-3xl font-black tracking-tight text-slate-900">
               {mode === "MEANING" ? item.term : <MeaningView value={item.meaning} mode={meaningMode} />}
             </div>
@@ -319,6 +343,7 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
               </label>
               <input
                 id="wordbook-quiz-answer"
+                ref={answerInputRef}
                 value={answer}
                 onChange={(e) => setAnswer(e.target.value)}
                 data-testid="wordbook-quiz-answer"
@@ -329,11 +354,20 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
               <button
                 type="submit"
                 data-testid="wordbook-quiz-submit"
-                disabled={loading}
+                disabled={loading || (!feedback && !answer.trim())}
                 className="ui-btn-accent px-4 py-2 text-sm disabled:opacity-60"
               >
                 {feedback ? "다음 (Enter)" : "제출"}
               </button>
+              {!feedback ? (
+                <button
+                  type="button"
+                  onClick={() => void loadNext()}
+                  className="ui-btn-secondary px-4 py-2 text-sm"
+                >
+                  건너뛰기
+                </button>
+              ) : null}
             </form>
             {feedback ? (
               <div
