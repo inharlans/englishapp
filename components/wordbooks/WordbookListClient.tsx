@@ -428,9 +428,11 @@ export function WordbookListClient({
           </button>
         </div>
       ) : null}
-      <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800" role="status" aria-live="polite">
-        {info || "\u00A0"}
-      </p>
+      {info ? (
+        <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800" role="status" aria-live="polite">
+          {info}
+        </p>
+      ) : null}
 
       <div className="relative min-h-[220px]">
         {loading ? (
