@@ -79,6 +79,7 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
   const [partAttempts, setPartAttempts] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
   const [partItemCount, setPartItemCount] = useState(0);
+  const [partJump, setPartJump] = useState("1");
   const answerInputRef = useRef<HTMLInputElement>(null);
   const retryQueueRef = useRef<QuizItem[]>([]);
   const { mode: meaningMode, setMode: setMeaningMode } = useMeaningViewMode();
@@ -139,6 +140,10 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
   }, [feedback, item, loading]);
 
   useEffect(() => {
+    setPartJump(String(partIndex));
+  }, [partIndex]);
+
+  useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
       const isTyping =
@@ -169,6 +174,20 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
       if (event.key === "]" && !loading) {
         event.preventDefault();
         setPartIndex(Math.min(partCount, partIndex + 1));
+        setPartAttempts(0);
+        setFeedback(null);
+        setMessage("");
+      }
+      if (event.key === "Home" && !loading) {
+        event.preventDefault();
+        setPartIndex(1);
+        setPartAttempts(0);
+        setFeedback(null);
+        setMessage("");
+      }
+      if (event.key === "End" && !loading) {
+        event.preventDefault();
+        setPartIndex(partCount);
         setPartAttempts(0);
         setFeedback(null);
         setMessage("");
@@ -206,6 +225,7 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
         acceptedMeaningAnswers: json.acceptedMeaningAnswers,
         gradingDiagnosis: json.gradingDiagnosis
       });
+      setAnswer("");
       if (!json.correct && item) {
         setRetryQueue((prev) => {
           if (prev.some((queued) => queued.id === item.id) || prev.length >= 20) return prev;
@@ -243,6 +263,24 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
         };
 
   const partButtons = useMemo(() => Array.from({ length: partCount }, (_, idx) => idx + 1), [partCount]);
+  const visiblePartButtons = useMemo(() => {
+    if (partCount <= 9) return partButtons.map((n) => ({ kind: "part" as const, value: n }));
+    const set = new Set<number>([1, partCount]);
+    for (let n = partIndex - 2; n <= partIndex + 2; n += 1) {
+      if (n >= 1 && n <= partCount) set.add(n);
+    }
+    const sorted = Array.from(set).sort((a, b) => a - b);
+    const result: Array<{ kind: "part"; value: number } | { kind: "ellipsis"; id: string }> = [];
+    for (let i = 0; i < sorted.length; i += 1) {
+      const current = sorted[i];
+      const prev = sorted[i - 1];
+      if (prev && current - prev > 1) {
+        result.push({ kind: "ellipsis", id: `ellipsis-${prev}-${current}` });
+      }
+      result.push({ kind: "part", value: current });
+    }
+    return result;
+  }, [partButtons, partCount, partIndex]);
   const accuracy = attempts > 0 ? Math.round((corrects / attempts) * 100) : 0;
   const currentPartProgress = partItemCount > 0 ? Math.min(100, Math.round((partAttempts / partItemCount) * 100)) : 0;
 
@@ -311,7 +349,7 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
           <span className="text-slate-500">
             · 정답률 {accuracy}% ({corrects}/{attempts})
           </span>
-          <span className="text-slate-500">· 단축키: `/` 입력 포커스 · `S` 건너뛰기 · `N` 다음 · `[`/`]` 파트 이동</span>
+          <span className="text-slate-500">· 단축키: `/` 입력 포커스 · `S` 건너뛰기 · `N` 다음 · `[`/`]` 파트 이동 · `Home`/`End` 처음/끝</span>
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
           <label className="sr-only" htmlFor="wordbook-quiz-part-select">
@@ -362,29 +400,63 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
           >
             다음 파트
           </button>
+          <form
+            className="flex w-full items-center gap-2 sm:w-auto"
+            onSubmit={(event) => {
+              event.preventDefault();
+              const raw = Number(partJump);
+              const next = Number.isFinite(raw) ? Math.min(Math.max(Math.floor(raw), 1), partCount) : partIndex;
+              setPartIndex(next);
+              setPartAttempts(0);
+              setFeedback(null);
+              setMessage("");
+            }}
+          >
+            <label htmlFor="quiz-part-jump" className="sr-only">
+              이동할 파트 번호
+            </label>
+            <input
+              id="quiz-part-jump"
+              type="number"
+              min={1}
+              max={partCount}
+              value={partJump}
+              onChange={(event) => setPartJump(event.target.value)}
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm sm:w-24"
+            />
+            <button type="submit" className="ui-btn-secondary px-3 py-2 text-sm">
+              이동
+            </button>
+          </form>
         </div>
         <div className="mt-3 hidden flex-wrap gap-2 sm:flex">
-          {partButtons.map((n) => (
-            <button
-              key={n}
-              type="button"
-              onClick={() => {
-                setPartIndex(n);
-                setPartAttempts(0);
-                setFeedback(null);
-                setMessage("");
-              }}
-              className={[
-                "rounded-lg border px-3 py-1 text-xs font-semibold",
-                n === partIndex
-                  ? "ui-tab-active"
-                  : "ui-tab-inactive"
-              ].join(" ")}
-              aria-label={`${n}파트 ${n === partIndex ? "선택됨" : "선택"}`}
-            >
-              {n}파트
-            </button>
-          ))}
+          {visiblePartButtons.map((entry) =>
+            entry.kind === "ellipsis" ? (
+              <span key={entry.id} className="px-2 py-1 text-xs font-semibold text-slate-400" aria-hidden="true">
+                ...
+              </span>
+            ) : (
+              <button
+                key={entry.value}
+                type="button"
+                onClick={() => {
+                  setPartIndex(entry.value);
+                  setPartAttempts(0);
+                  setFeedback(null);
+                  setMessage("");
+                }}
+                className={[
+                  "rounded-lg border px-3 py-1 text-xs font-semibold",
+                  entry.value === partIndex
+                    ? "ui-tab-active"
+                    : "ui-tab-inactive"
+                ].join(" ")}
+                aria-label={`${entry.value}파트 ${entry.value === partIndex ? "선택됨" : "선택"}`}
+              >
+                {entry.value}파트
+              </button>
+            )
+          )}
         </div>
       </div>
 

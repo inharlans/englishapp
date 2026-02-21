@@ -63,6 +63,7 @@ export function WordbookListClient({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
+  const [partJump, setPartJump] = useState("1");
   const [reloadTick, setReloadTick] = useState(0);
   const { mode: meaningMode, setMode: setMeaningMode } = useMeaningViewMode();
   const { mode: densityMode, setMode: setDensityMode } = useDensityMode();
@@ -113,6 +114,27 @@ export function WordbookListClient({
   const activePartStat = partStatsMap.get(partIndex) ?? { totalInPart: 0, matchedCount: 0 };
   const activePartRate =
     activePartStat.totalInPart > 0 ? Math.round((activePartStat.matchedCount / activePartStat.totalInPart) * 100) : 0;
+  const visibleParts = useMemo(() => {
+    if (displayPartCount <= 9) return parts.map((p) => ({ kind: "part" as const, part: p }));
+    const set = new Set<number>([1, displayPartCount]);
+    for (let n = partIndex - 2; n <= partIndex + 2; n += 1) {
+      if (n >= 1 && n <= displayPartCount) set.add(n);
+    }
+    const sorted = Array.from(set).sort((a, b) => a - b);
+    const result: Array<{ kind: "part"; part: (typeof parts)[number] } | { kind: "ellipsis"; id: string }> = [];
+    for (let i = 0; i < sorted.length; i += 1) {
+      const current = sorted[i];
+      const prev = sorted[i - 1];
+      if (prev && current - prev > 1) result.push({ kind: "ellipsis", id: `ellipsis-${prev}-${current}` });
+      const found = parts.find((p) => p.partIndex === current);
+      if (found) result.push({ kind: "part", part: found });
+    }
+    return result;
+  }, [displayPartCount, partIndex, parts]);
+
+  useEffect(() => {
+    setPartJump(String(partIndex));
+  }, [partIndex]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -131,6 +153,16 @@ export function WordbookListClient({
         setPartIndex(Math.min(displayPartCount, partIndex + 1));
         setInfo("");
       }
+      if (event.key === "Home") {
+        event.preventDefault();
+        setPartIndex(1);
+        setInfo("");
+      }
+      if (event.key === "End") {
+        event.preventDefault();
+        setPartIndex(displayPartCount);
+        setInfo("");
+      }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
@@ -143,7 +175,7 @@ export function WordbookListClient({
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">단어장 목록</p>
           <h1 className="mt-2 text-2xl font-black tracking-tight text-slate-900">{title}</h1>
           {wordbookTitle ? <p className="mt-1 text-sm text-slate-600">{wordbookTitle}</p> : null}
-          <p className="mt-1 text-xs text-slate-500">단축키: `[` 이전 파트 · `]` 다음 파트</p>
+          <p className="mt-1 text-xs text-slate-500">단축키: `[` 이전 파트 · `]` 다음 파트 · `Home`/`End` 처음/끝 파트</p>
         </div>
         <WordbookStudyTabs wordbookId={wordbookId} active={activeTab(mode)} />
       </header>
@@ -220,28 +252,60 @@ export function WordbookListClient({
           >
             다음 파트
           </button>
-          {parts.map((p) => (
-            <button
-              key={p.partIndex}
-              type="button"
-              onClick={() => {
-                setPartIndex(p.partIndex);
-                setInfo("");
-              }}
-              className={[
-                "rounded-lg border px-3 py-1 text-left text-xs font-semibold",
-                p.partIndex === partIndex
-                  ? "ui-tab-active"
-                  : "ui-tab-inactive"
-              ].join(" ")}
-              aria-label={`${p.partIndex}파트 ${p.matchedCount}/${p.totalInPart}`}
-            >
-              <span>{p.partIndex}파트</span>
-              <span className={p.partIndex === partIndex ? "ml-2 text-slate-200" : "ml-2 text-slate-500"}>
-                {p.matchedCount}/{p.totalInPart}
-              </span>
+          <form
+            className="flex w-full items-center gap-2 sm:w-auto"
+            onSubmit={(event) => {
+              event.preventDefault();
+              const raw = Number(partJump);
+              const next = Number.isFinite(raw) ? Math.min(Math.max(Math.floor(raw), 1), displayPartCount) : partIndex;
+              setPartIndex(next);
+              setInfo("");
+            }}
+          >
+            <label htmlFor="list-part-jump" className="sr-only">
+              이동할 파트 번호
+            </label>
+            <input
+              id="list-part-jump"
+              type="number"
+              min={1}
+              max={displayPartCount}
+              value={partJump}
+              onChange={(event) => setPartJump(event.target.value)}
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-1 text-sm sm:w-24"
+            />
+            <button type="submit" className="ui-btn-secondary px-3 py-1 text-xs">
+              이동
             </button>
-          ))}
+          </form>
+          {visibleParts.map((entry) =>
+            entry.kind === "ellipsis" ? (
+              <span key={entry.id} className="px-2 py-1 text-xs font-semibold text-slate-400" aria-hidden="true">
+                ...
+              </span>
+            ) : (
+              <button
+                key={entry.part.partIndex}
+                type="button"
+                onClick={() => {
+                  setPartIndex(entry.part.partIndex);
+                  setInfo("");
+                }}
+                className={[
+                  "rounded-lg border px-3 py-1 text-left text-xs font-semibold",
+                  entry.part.partIndex === partIndex
+                    ? "ui-tab-active"
+                    : "ui-tab-inactive"
+                ].join(" ")}
+                aria-label={`${entry.part.partIndex}파트 ${entry.part.matchedCount}/${entry.part.totalInPart}`}
+              >
+                <span>{entry.part.partIndex}파트</span>
+                <span className={entry.part.partIndex === partIndex ? "ml-2 text-slate-200" : "ml-2 text-slate-500"}>
+                  {entry.part.matchedCount}/{entry.part.totalInPart}
+                </span>
+              </button>
+            )
+          )}
         </div>
       </div>
 
@@ -276,8 +340,8 @@ export function WordbookListClient({
         <EmptyStateCard
           title="조건에 맞는 단어가 없습니다"
           description={`${partIndex}파트에서 조건에 맞는 단어를 찾지 못했습니다. 다른 파트를 선택해보세요.`}
-          primary={{ label: "암기 화면으로 이동", href: `/wordbooks/${wordbookId}/memorize` }}
-          secondary={{ label: "퀴즈 화면으로 이동", href: `/wordbooks/${wordbookId}/quiz-meaning` }}
+          primary={{ label: "암기 화면으로 이동", href: `/wordbooks/${wordbookId}/memorize?partSize=${partSize}&partIndex=${partIndex}` }}
+          secondary={{ label: "퀴즈 화면으로 이동", href: `/wordbooks/${wordbookId}/quiz-meaning?partSize=${partSize}&partIndex=${partIndex}` }}
         />
       ) : null}
 
