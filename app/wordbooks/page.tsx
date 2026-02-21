@@ -125,6 +125,7 @@ export default async function WordbooksPage() {
   }
 
   const staleDecks = downloaded.filter((d) => d.wordbook.contentVersion > d.downloadedVersion).length;
+  const firstStaleDownload = downloaded.find((d) => d.wordbook.contentVersion > d.downloadedVersion);
   const activeDecks = mine.length + downloaded.length;
   const dailyGoal = Math.max(1, user.dailyGoal || 30);
   const studyRate = Math.min(100, Math.round((todayCorrect / dailyGoal) * 100));
@@ -139,8 +140,8 @@ export default async function WordbooksPage() {
   const suggestedHref =
     hasLastStudyDeck && lastStudyId
       ? `/wordbooks/${lastStudyId}/memorize`
-      : downloaded.find((d) => d.wordbook.contentVersion > d.downloadedVersion)?.wordbook.id
-      ? `/wordbooks/${downloaded.find((d) => d.wordbook.contentVersion > d.downloadedVersion)!.wordbook.id}/memorize`
+      : firstStaleDownload?.wordbook.id
+      ? `/wordbooks/${firstStaleDownload.wordbook.id}/memorize`
       : downloaded[0]?.wordbook?.id
         ? `/wordbooks/${downloaded[0].wordbook.id}/memorize`
         : mine[0]?.id
@@ -238,7 +239,7 @@ export default async function WordbooksPage() {
             primary={{ label: "새 단어장 만들기", href: "/wordbooks/new" }}
           />
         ) : (
-          <div className="grid gap-3 md:grid-cols-2">
+          <div className="grid gap-3 md:grid-cols-2" role="list" aria-label="내가 만든 단어장 목록">
             {mine.map((wb) => (
               (() => {
                 const description = splitWordbookDescription(wb.description).displayDescription;
@@ -247,6 +248,7 @@ export default async function WordbooksPage() {
                     key={wb.id}
                     href={{ pathname: `/wordbooks/${wb.id}` }}
                     className="ui-card p-4 transition hover:-translate-y-0.5 hover:border-blue-300"
+                    role="listitem"
                   >
                     <div className="flex items-start gap-3">
                       <div className="min-w-0 flex-1">
@@ -292,7 +294,7 @@ export default async function WordbooksPage() {
             primary={{ label: "마켓 둘러보기", href: "/wordbooks/market" }}
           />
         ) : (
-          <div className="grid gap-3 md:grid-cols-2">
+          <div className="grid gap-3 md:grid-cols-2" role="list" aria-label="다운로드한 단어장 목록">
             {downloaded.map((d) => (
               (() => {
                 const description = splitWordbookDescription(d.wordbook.description).displayDescription;
@@ -300,6 +302,7 @@ export default async function WordbooksPage() {
                   <div
                     key={d.wordbook.id}
                     className="ui-card p-4"
+                    role="listitem"
                   >
                     <div className="flex items-start gap-3">
                       <div className="min-w-0 flex-1">
@@ -361,6 +364,7 @@ export default async function WordbooksPage() {
                         href={{ pathname: `/wordbooks/${d.wordbook.id}/memorize` }}
                         data-testid="library-study-link"
                         className="ui-btn-secondary px-3 py-1.5 text-xs"
+                        aria-label={`${d.wordbook.title} 암기`}
                       >
                         암기
                       </Link>
@@ -368,12 +372,14 @@ export default async function WordbooksPage() {
                         href={{ pathname: `/wordbooks/${d.wordbook.id}/quiz-meaning` }}
                         data-testid="library-quiz-link"
                         className="ui-btn-secondary px-3 py-1.5 text-xs"
+                        aria-label={`${d.wordbook.title} 의미 퀴즈`}
                       >
                         의미 퀴즈
                       </Link>
                       <Link
                         href={{ pathname: `/wordbooks/${d.wordbook.id}/quiz-word` }}
                         className="ui-btn-secondary px-3 py-1.5 text-xs"
+                        aria-label={`${d.wordbook.title} 단어 퀴즈`}
                       >
                         단어 퀴즈
                       </Link>

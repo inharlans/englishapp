@@ -20,6 +20,7 @@ Englishapp은 영어 학습과 단어장 마켓을 제공하는 웹 애플리케
 - 마켓 카드 액션 영역을 경량화해 신고 안내 문구 반복을 제거하고, 차단 관련 용어를 `차단 목록`으로 통일했습니다.
 - 로그인/빈 상태 CTA를 정리하고 상태 메시지 접근성(`role`, `aria-live`)을 보강했으며, 단어장/마켓 설명 파싱 중복 계산을 제거해 렌더 비용을 줄였습니다.
 - 마켓/오프라인 접근성 점검 10건을 반영해 필터 페이지 리셋, 페이지네이션 랜드마크, 목록 role, 리뷰 aria-label/날짜 표기, 오프라인 필터 초기화 포커스 복귀를 개선했습니다.
+- 단어장 대시보드 점검 10건을 반영해 당일 목표 입력 검증/성공·실패 피드백/Enter 저장/유효성 기반 버튼 상태를 보강하고, 다운로드 배너 및 단어장 목록의 접근성 role/aria-label을 강화했습니다.
 - 단어장 퀴즈 제출 시 전체 문항 상태 재집계를 제거하고, 상태 변화량(delta) 기반으로 학습 집계를 갱신하도록 개선해 대용량 단어장 응답 지연을 완화했습니다.
 - 단어장 퀴즈 출제 로직에서 모드별 오답 재출제 큐를 `status` 공용값이 아닌 모드별 재출제 필드(`meaningWrongRequeueAt` / `wordWrongRequeueAt`) 기준으로 분리해 재출제 정확도를 높였습니다.
 - 변경 요청 보호 로직을 강화해 `Origin`/`Referer`가 모두 없는 요청을 차단하고, 호스트 불일치 요청을 더 엄격하게 차단합니다.
@@ -167,6 +168,21 @@ npm run build
 npm run test:e2e:local
 npm run test:e2e:local:smoke
 npm run test:e2e:local:ui
+```
+
+자동 반복 실행(12분 주기 기본값, 승인 없음):
+```bash
+npm run auto:loop
+```
+
+예시(5분 주기, 지정 명령 무한 반복):
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/auto-loop-runner.ps1 -IntervalMinutes 5 -CycleCommand "npm run typecheck"
+```
+
+예시(체인 명령 + 타임아웃/연속실패/로그):
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/auto-loop-runner.ps1 -IntervalMinutes 5 -CycleCommand "npm run typecheck && npm test" -TimeoutMinutes 8 -MaxConsecutiveFailures 2 -LogPath ".\auto-loop.log"
 ```
 
 ## 필수 환경 변수(대표)
