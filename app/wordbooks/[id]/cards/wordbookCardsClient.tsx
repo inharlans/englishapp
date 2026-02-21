@@ -57,6 +57,7 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
   const [reloadTick, setReloadTick] = useState(0);
   const [resumeEnabled, setResumeEnabled] = useState(true);
   const [autoAdvancePart, setAutoAdvancePart] = useState(false);
+  const [autoSpeak, setAutoSpeak] = useState(false);
   const [partShuffleSeed, setPartShuffleSeed] = useState(1);
   const mountedRef = useRef(true);
   const requestSeqRef = useRef(0);
@@ -66,6 +67,7 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
   const progressStorageKey = `wordbook_cards_progress_${wordbookId}_${partSize}_${partIndex}`;
   const resumePrefKey = `wordbook_cards_resume_enabled_${wordbookId}`;
   const autoAdvanceKey = `wordbook_cards_auto_advance_${wordbookId}`;
+  const autoSpeakKey = `wordbook_cards_auto_speak_${wordbookId}`;
   const seedStorageKey = `wordbook_cards_seed_${wordbookId}_${partSize}_${partIndex}`;
 
   useEffect(() => {
@@ -75,14 +77,17 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
       if (raw === "0") setResumeEnabled(false);
       const autoAdvanceRaw = window.localStorage.getItem(autoAdvanceKey);
       if (autoAdvanceRaw === "1") setAutoAdvancePart(true);
+      const autoSpeakRaw = window.localStorage.getItem(autoSpeakKey);
+      if (autoSpeakRaw === "1") setAutoSpeak(true);
     } catch {
       setResumeEnabled(true);
       setAutoAdvancePart(false);
+      setAutoSpeak(false);
     }
     return () => {
       mountedRef.current = false;
     };
-  }, [autoAdvanceKey, resumePrefKey]);
+  }, [autoAdvanceKey, autoSpeakKey, resumePrefKey]);
 
   useEffect(() => {
     const loadAll = async () => {
@@ -357,6 +362,20 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
         });
         return;
       }
+      if (event.key.toLowerCase() === "v") {
+        event.preventDefault();
+        setAutoSpeak((value) => {
+          const next = !value;
+          try {
+            window.localStorage.setItem(autoSpeakKey, next ? "1" : "0");
+          } catch {
+            // ignore localStorage errors
+          }
+          setInfo(`자동 발음: ${next ? "켜짐" : "꺼짐"}`);
+          return next;
+        });
+        return;
+      }
       if (event.key === "Enter" && !loading && shuffledItems.length > 0) {
         event.preventDefault();
         setShowMeaning((v) => !v);
@@ -393,7 +412,7 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [autoAdvanceKey, loading, moveToNextPart, moveToPrevPart, next, showMeaning, shuffledItems.length]);
+  }, [autoAdvanceKey, autoSpeakKey, loading, moveToNextPart, moveToPrevPart, next, showMeaning, shuffledItems.length]);
 
   useEffect(() => {
     setIdx((value) => Math.min(value, Math.max(shuffledItems.length - 1, 0)));
@@ -401,6 +420,19 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
 
   const current = shuffledItems[idx] ?? null;
   const progressPercent = shuffledItems.length > 0 ? Math.round(((idx + 1) / shuffledItems.length) * 100) : 0;
+
+  useEffect(() => {
+    if (!autoSpeak || !current) return;
+    try {
+      if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+      const utterance = new SpeechSynthesisUtterance(current.term.trim());
+      if (speakLang) utterance.lang = speakLang;
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(utterance);
+    } catch {
+      // ignore speech errors
+    }
+  }, [autoSpeak, current, speakLang]);
 
   return (
     <section className="space-y-6" aria-labelledby="wordbook-cards-title">
@@ -413,7 +445,7 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
             {loading ? "-" : `${idx + 1}/${Math.max(shuffledItems.length, 1)}`}
           </p>
           <p className="mt-1 text-xs text-slate-500">
-            단축키: ←/→ 카드 이동 · Space/Enter/M 뜻 보기 · Esc 뜻 숨기기 · 0 처음 카드 · R 섞기 · `[`/`]`/`P`/`N` 파트 이동 · `A` 자동 파트 이동 토글 · Home/End 처음/끝 카드 · PageUp/PageDown 파트 이동
+            단축키: ←/→ 카드 이동 · Space/Enter/M 뜻 보기 · Esc 뜻 숨기기 · 0 처음 카드 · R 섞기 · `[`/`]`/`P`/`N` 파트 이동 · `A` 자동 파트 이동 · `V` 자동 발음 토글 · Home/End 처음/끝 카드 · PageUp/PageDown 파트 이동
           </p>
           <p className="mt-1 text-xs text-slate-500" role="status" aria-live="polite">
             전체 기준 {loading ? "-" : `${overallCardNumber}/${items.length}`}
@@ -457,6 +489,25 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
             className="ui-btn-secondary px-3 py-1 text-xs"
           >
             자동 다음 파트 {autoAdvancePart ? "켜짐" : "꺼짐"}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setAutoSpeak((value) => {
+                const next = !value;
+                try {
+                  window.localStorage.setItem(autoSpeakKey, next ? "1" : "0");
+                } catch {
+                  // ignore localStorage errors
+                }
+                setInfo(`자동 발음: ${next ? "켜짐" : "꺼짐"}`);
+                return next;
+              });
+            }}
+            aria-pressed={autoSpeak}
+            className="ui-btn-secondary px-3 py-1 text-xs"
+          >
+            자동 발음 {autoSpeak ? "켜짐" : "꺼짐"}
           </button>
           <button
             type="button"
