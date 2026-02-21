@@ -37,10 +37,18 @@ export function WordbookStudyTabs({
     if (partIndex) next.set("partIndex", partIndex);
     return next.toString();
   }, [searchParams]);
+  const partSize = searchParams.get("partSize");
+  const partIndex = searchParams.get("partIndex");
+  const activeLabel = tabs.find((tab) => tab.key === active)?.label ?? "학습";
 
   return (
     <nav aria-label="단어장 학습 탭" className="sticky top-2 z-20 ui-card p-2">
-      <div className="flex flex-wrap gap-2">
+      <p className="sr-only" role="status" aria-live="polite">
+        현재 탭 {activeLabel}
+        {partIndex ? `, ${partIndex}파트` : ""}
+        {partSize ? `, 파트 크기 ${partSize}` : ""}
+      </p>
+      <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap pb-1">
         {tabs.map((tab) => {
           const isActive = tab.key === active;
           return (
@@ -53,6 +61,10 @@ export function WordbookStudyTabs({
                   window.localStorage.setItem(`wordbook_last_tab_${wordbookId}`, tab.key);
                 }
               }}
+              aria-current={isActive ? "page" : undefined}
+              aria-label={`${tab.label}${isActive ? " (현재 탭)" : ""}`}
+              title={`${tab.label}${partIndex ? ` · ${partIndex}파트` : ""}`}
+              data-state={isActive ? "active" : "inactive"}
               className={[
                 "rounded-lg px-3 py-2 text-xs font-semibold transition",
                 isActive ? "ui-tab-active" : "ui-tab-inactive"
@@ -63,7 +75,10 @@ export function WordbookStudyTabs({
           );
         })}
         {showBack ? (
-          <Link href={{ pathname: `/wordbooks/${wordbookId}` }} className="ml-auto ui-btn-secondary px-3 py-2 text-xs font-semibold">
+          <Link
+            href={(queryString ? `/wordbooks/${wordbookId}?${queryString}` : `/wordbooks/${wordbookId}`) as Route}
+            className="ml-auto ui-btn-secondary px-3 py-2 text-xs font-semibold"
+          >
             뒤로
           </Link>
         ) : null}
