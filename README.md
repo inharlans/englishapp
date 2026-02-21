@@ -618,3 +618,8 @@ Railway 기준:
 - 성공 안내(`info`)가 있을 때만 상태 박스를 렌더링하도록 정리
 - 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_92.md`
 
+### 2026-02-22 Iteration 93
+- `/wordbooks/market` 내 로그인 링크들의 `next` 목적지를 현재 URL 기준으로 통일
+- 인라인/CTA/카드 로그인 버튼 간 복귀 경로 불일치 가능성을 제거해 동선 일관성 개선
+- 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_93.md`
+

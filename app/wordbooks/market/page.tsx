@@ -152,9 +152,17 @@ export default async function MarketPage(props: {
   const sortLabel = sort === "new" ? "최신순" : sort === "downloads" ? "다운로드순" : "인기순";
   const sizeLabel = size === "100-300" ? "100~300단어" : size === "301-700" ? "301~700단어" : size === "701+" ? "701단어 이상" : "전체";
   const pagerQuery = { q, sort, size };
-  const nextMarketPath = `/wordbooks/market?${new URLSearchParams({ q, sort, size, page: String(page) }).toString()}`;
-  const marketLoginHref = { pathname: "/login", query: { next: nextMarketPath } };
-  const marketLoginHrefAsString = `/login?next=${encodeURIComponent(nextMarketPath)}`;
+  const currentMarketParams = new URLSearchParams();
+  if (sp.q !== undefined) currentMarketParams.set("q", sp.q);
+  if (sp.sort !== undefined) currentMarketParams.set("sort", sp.sort);
+  if (sp.size !== undefined) currentMarketParams.set("size", sp.size);
+  if (sp.scope !== undefined) currentMarketParams.set("scope", sp.scope);
+  if (sp.page !== undefined) currentMarketParams.set("page", sp.page);
+  const marketNextPath = currentMarketParams.size > 0
+    ? `/wordbooks/market?${currentMarketParams.toString()}`
+    : "/wordbooks/market";
+  const marketLoginHref = { pathname: "/login", query: { next: marketNextPath } };
+  const marketLoginHrefAsString = `/login?next=${encodeURIComponent(marketNextPath)}`;
 
   return (
     <section className="space-y-6 pb-24">
