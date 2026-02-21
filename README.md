@@ -454,6 +454,11 @@ Railway 기준:
 - 파트/모드 전환 중 늦게 도착한 이전 응답이 최신 상태를 덮어쓰는 리스크 제거
 - 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_61.md`
 
+### 2026-02-22 Iteration 62
+- 의미 퀴즈 오답 진단(`reason`) 문구의 깨진 인코딩 문자열 정리
+- 채점 로직은 유지하고 사용자/로그 노출 문구만 정상 한글로 교체
+- 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_62.md`
+
 
 
 

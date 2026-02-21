@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 
 import { getUserFromRequestCookies } from "@/lib/authServer";
 import { getMeaningCandidates, normalizeEn } from "@/lib/text";
@@ -100,10 +100,10 @@ function buildMeaningDiagnosis(input: string, acceptedMeaning: string): GradingD
   const potentiallyDisputable = bestScore >= 0.78 && bestScore < 1;
   const reason =
     bestScore < 0.4
-      ? "허용 답안과 유사성이 낮아 오답으로 판정되었습니다."
+      ? "허용 답안과 유사성이 낮아 오답으로 판정했습니다."
       : potentiallyDisputable
-      ? "허용 답안과 유사도가 높아 재검토 여지가 있습니다."
-      : "허용 답안과 부분적으로 유사하지만 기준 미달입니다.";
+      ? "허용 답안과 유사도가 높아 재검토 가능성이 있습니다."
+      : "허용 답안과 부분적으로 유사하지만 채점 기준에 미달했습니다.";
 
   return {
     input,
@@ -176,7 +176,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
           closestAccepted: item.term,
           similarityScore: Number(scoreSimilarity(answer, item.term).toFixed(3)),
           potentiallyDisputable: false,
-          reason: "단어 모드는 정규화된 완전 일치 기준으로 채점합니다."
+          reason: "?⑥뼱 紐⑤뱶???뺢퇋?붾맂 ?꾩쟾 ?쇱튂 湲곗??쇰줈 梨꾩젏?⑸땲??"
         };
 
   const existing = await prisma.wordbookStudyItemState.findUnique({
@@ -304,4 +304,5 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     { status: 200 }
   );
 }
+
 
