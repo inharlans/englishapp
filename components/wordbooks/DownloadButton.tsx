@@ -62,6 +62,7 @@ export function DownloadButton({
         onClick={onDownload}
         data-testid="download-wordbook"
         disabled={loading || disabled}
+        aria-busy={loading}
         className={[
           "ui-btn-accent px-3 py-1.5 text-sm disabled:cursor-not-allowed disabled:opacity-60",
           className ?? ""

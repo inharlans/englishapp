@@ -23,6 +23,7 @@ export function ReportWordbookButton({ wordbookId, hideHint = false }: Props) {
   const [detail, setDetail] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const detailLength = detail.length;
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,6 +53,7 @@ export function ReportWordbookButton({ wordbookId, hideHint = false }: Props) {
         type="button"
         onClick={() => setOpen((prev) => !prev)}
         data-testid="report-toggle"
+        disabled={loading}
         aria-expanded={open}
         aria-controls={`report-form-${wordbookId}`}
         className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-800 hover:bg-blue-100 disabled:opacity-60"
@@ -94,13 +96,16 @@ export function ReportWordbookButton({ wordbookId, hideHint = false }: Props) {
               data-testid="report-detail"
               rows={3}
               maxLength={2000}
+              placeholder="문제 상황을 간단히 적어주세요"
               className="mt-1 w-full rounded border border-slate-300 bg-white px-2 py-1 text-xs"
             />
+            <span className="mt-1 block text-[11px] text-slate-500">{detailLength}/2000</span>
           </label>
           <button
             type="submit"
             data-testid="report-submit"
             disabled={loading}
+            aria-busy={loading}
             className="ui-btn-primary px-3 py-1.5 text-xs disabled:opacity-60"
           >
             {loading ? "신고 중..." : "신고 제출"}

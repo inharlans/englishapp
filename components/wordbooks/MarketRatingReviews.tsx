@@ -28,8 +28,10 @@ export function MarketRatingReviews({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [reviews, setReviews] = useState<Review[]>([]);
+  const panelId = `market-reviews-${wordbookId}`;
 
   const toggle = async () => {
+    if (loading) return;
     const nextOpen = !open;
     setOpen(nextOpen);
     if (!nextOpen || reviews.length > 0) return;
@@ -47,13 +49,16 @@ export function MarketRatingReviews({
     }
   };
   const formattedAverage = Number.isFinite(ratingAvg) ? ratingAvg.toFixed(1) : "0.0";
-  const formatDateKst = (iso: string) =>
-    new Intl.DateTimeFormat("ko-KR", {
+  const formatDateKst = (iso: string) => {
+    const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) return "날짜 정보 없음";
+    return new Intl.DateTimeFormat("ko-KR", {
       timeZone: "Asia/Seoul",
       year: "numeric",
       month: "2-digit",
       day: "2-digit"
-    }).format(new Date(iso));
+    }).format(date);
+  };
 
   return (
     <div className="space-y-2">
@@ -62,16 +67,17 @@ export function MarketRatingReviews({
         onClick={() => void toggle()}
         className="rounded-lg border border-transparent px-1 py-0.5 text-left hover:border-slate-200"
         aria-expanded={open}
+        aria-controls={panelId}
         aria-label={`평점 ${formattedAverage}점, 리뷰 ${ratingCount}개`}
       >
         <StarRating value={ratingAvg} count={ratingCount} />
       </button>
 
       {open ? (
-        <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+        <div id={panelId} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">리뷰</p>
-          {loading ? <p className="mt-2 text-xs text-slate-500">불러오는 중...</p> : null}
-          {error ? <p className="mt-2 text-xs text-blue-700">{error}</p> : null}
+          {loading ? <p className="mt-2 text-xs text-slate-500" role="status" aria-live="polite">불러오는 중...</p> : null}
+          {error ? <p className="mt-2 text-xs text-blue-700" role="alert">{error}</p> : null}
           {!loading && !error && reviews.length === 0 ? (
             <p className="mt-2 text-xs text-slate-500">아직 등록된 리뷰가 없습니다.</p>
           ) : null}

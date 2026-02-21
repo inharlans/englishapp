@@ -4,7 +4,7 @@ import { apiFetch } from "@/lib/clientApi";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type Props = {
   wordbookId: number;
@@ -14,6 +14,12 @@ export function BlockOwnerButton({ wordbookId }: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    if (!message) return;
+    const timeout = window.setTimeout(() => setMessage(""), 5000);
+    return () => window.clearTimeout(timeout);
+  }, [message]);
 
   const onBlock = async () => {
     const ok = window.confirm(
@@ -46,6 +52,7 @@ export function BlockOwnerButton({ wordbookId }: Props) {
         type="button"
         onClick={onBlock}
         disabled={loading}
+        aria-busy={loading}
         className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
       >
         {loading ? "차단 중..." : "차단"}
