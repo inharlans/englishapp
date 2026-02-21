@@ -32,6 +32,9 @@ export default async function WordbooksPage() {
       <section className="space-y-4">
         <h1 className="text-2xl font-black tracking-tight text-slate-900">단어장</h1>
         <p className="text-sm text-slate-600">로그인이 필요합니다.</p>
+        <Link href={{ pathname: "/login", query: { next: "/wordbooks" } }} className="ui-btn-primary inline-flex px-4 py-2 text-sm">
+          로그인하러 가기
+        </Link>
       </section>
     );
   }
@@ -237,41 +240,42 @@ export default async function WordbooksPage() {
         ) : (
           <div className="grid gap-3 md:grid-cols-2">
             {mine.map((wb) => (
-              <Link
-                key={wb.id}
-                href={{ pathname: `/wordbooks/${wb.id}` }}
-                className="ui-card p-4 transition hover:-translate-y-0.5 hover:border-blue-300"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="truncate text-lg font-black text-slate-900">{wb.title}</h3>
-                      <span
-                        className={[
-                          "rounded-full px-2 py-0.5 text-[11px] font-semibold",
-                          wb.isPublic
-                            ? "border border-blue-200 bg-blue-50 text-blue-800"
-                            : "border border-slate-200 bg-slate-50 text-slate-700"
-                        ].join(" ")}
-                      >
-                        {wb.isPublic ? "공개" : "비공개"}
-                      </span>
+              (() => {
+                const description = splitWordbookDescription(wb.description).displayDescription;
+                return (
+                  <Link
+                    key={wb.id}
+                    href={{ pathname: `/wordbooks/${wb.id}` }}
+                    className="ui-card p-4 transition hover:-translate-y-0.5 hover:border-blue-300"
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="truncate text-lg font-black text-slate-900">{wb.title}</h3>
+                          <span
+                            className={[
+                              "rounded-full px-2 py-0.5 text-[11px] font-semibold",
+                              wb.isPublic
+                                ? "border border-blue-200 bg-blue-50 text-blue-800"
+                                : "border border-slate-200 bg-slate-50 text-slate-700"
+                            ].join(" ")}
+                          >
+                            {wb.isPublic ? "공개" : "비공개"}
+                          </span>
+                        </div>
+                        {description ? <p className="mt-1 line-clamp-2 text-sm text-slate-600">{description}</p> : null}
+                        <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-slate-600">
+                          <span>{wb._count.items}개 단어</span>
+                          <span>{wb.downloadCount}회 다운로드</span>
+                        </div>
+                        <div className="mt-2">
+                          <StarRating value={wb.ratingAvg} count={wb.ratingCount} />
+                        </div>
+                      </div>
                     </div>
-                    {splitWordbookDescription(wb.description).displayDescription ? (
-                      <p className="mt-1 line-clamp-2 text-sm text-slate-600">
-                        {splitWordbookDescription(wb.description).displayDescription}
-                      </p>
-                    ) : null}
-                    <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-slate-600">
-                      <span>{wb._count.items}개 단어</span>
-                      <span>{wb.downloadCount}회 다운로드</span>
-                    </div>
-                    <div className="mt-2">
-                      <StarRating value={wb.ratingAvg} count={wb.ratingCount} />
-                    </div>
-                  </div>
-                </div>
-              </Link>
+                  </Link>
+                );
+              })()
             ))}
           </div>
         )}
@@ -290,32 +294,31 @@ export default async function WordbooksPage() {
         ) : (
           <div className="grid gap-3 md:grid-cols-2">
             {downloaded.map((d) => (
-              <div
-                key={d.wordbook.id}
-                className="ui-card p-4"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Link
-                        href={{ pathname: `/wordbooks/${d.wordbook.id}` }}
-                        className="truncate text-lg font-black text-slate-900 hover:underline"
-                      >
-                        {d.wordbook.title}
-                      </Link>
-                      <span className="rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-800">
-                        다운로드됨
-                      </span>
-                    </div>
-                    <p className="mt-1 text-xs text-slate-500">
-                      제작자 {maskEmailAddress(d.wordbook.owner.email)} - 다운로드일{" "}
-                      {formatDateKst(d.createdAt)}
-                    </p>
-                    {splitWordbookDescription(d.wordbook.description).displayDescription ? (
-                      <p className="mt-2 line-clamp-2 text-sm text-slate-600">
-                        {splitWordbookDescription(d.wordbook.description).displayDescription}
-                      </p>
-                    ) : null}
+              (() => {
+                const description = splitWordbookDescription(d.wordbook.description).displayDescription;
+                return (
+                  <div
+                    key={d.wordbook.id}
+                    className="ui-card p-4"
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Link
+                            href={{ pathname: `/wordbooks/${d.wordbook.id}` }}
+                            className="truncate text-lg font-black text-slate-900 hover:underline"
+                          >
+                            {d.wordbook.title}
+                          </Link>
+                          <span className="rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-800">
+                            다운로드됨
+                          </span>
+                        </div>
+                        <p className="mt-1 text-xs text-slate-500">
+                          제작자 {maskEmailAddress(d.wordbook.owner.email)} - 다운로드일{" "}
+                          {formatDateKst(d.createdAt)}
+                        </p>
+                        {description ? <p className="mt-2 line-clamp-2 text-sm text-slate-600">{description}</p> : null}
                     <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-slate-600">
                       <span>{d.wordbook._count.items}개 단어</span>
                       <span>{d.wordbook.downloadCount}회 다운로드</span>
@@ -378,6 +381,8 @@ export default async function WordbooksPage() {
                   </div>
                 </div>
               </div>
+                );
+              })()
             ))}
           </div>
         )}

@@ -69,7 +69,11 @@ export function DownloadButton({
       >
         {loading ? "다운로드 중..." : "다운로드"}
       </button>
-      {error ? <p className="mt-1 text-xs text-blue-700">{error}</p> : null}
+      {error ? (
+        <p className="mt-1 text-xs text-blue-700" role="alert">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }

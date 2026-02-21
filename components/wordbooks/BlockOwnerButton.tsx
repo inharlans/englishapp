@@ -51,7 +51,7 @@ export function BlockOwnerButton({ wordbookId }: Props) {
         {loading ? "차단 중..." : "차단"}
       </button>
       {message ? (
-        <p className="mt-1 text-[11px] text-slate-600">
+        <p className="mt-1 text-[11px] text-slate-600" role="status" aria-live="polite">
           {message}{" "}
           <Link href={{ pathname: "/wordbooks/blocked" }} className="font-semibold text-blue-700 hover:underline">
             차단 목록 관리

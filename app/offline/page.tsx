@@ -139,9 +139,13 @@ export default function OfflineLibraryPage() {
         ) : null}
       </div>
 
-      {loading ? <p className="text-sm text-slate-600">불러오는 중...</p> : null}
+      {loading ? (
+        <p className="text-sm text-slate-600" role="status" aria-live="polite">
+          불러오는 중...
+        </p>
+      ) : null}
       {error ? (
-        <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
+        <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700" role="alert">
           {error}
         </p>
       ) : null}

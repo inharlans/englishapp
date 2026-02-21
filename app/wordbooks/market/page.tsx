@@ -292,7 +292,7 @@ export default async function MarketPage(props: {
           title="검색 결과가 없습니다"
           description="검색어를 줄이거나 정렬 기준을 바꿔서 다시 찾아보세요."
           primary={{ label: "필터 초기화", href: "/wordbooks/market?sort=top&size=all&page=0" }}
-          secondary={{ label: "내 단어장", href: "/wordbooks" }}
+          secondary={{ label: user ? "내 단어장" : "로그인", href: user ? "/wordbooks" : "/login?next=/wordbooks" }}
         />
       ) : (
         <>
@@ -302,6 +302,7 @@ export default async function MarketPage(props: {
           <div className="grid gap-3 md:grid-cols-2">
             {wordbooks.map((wb) => {
             const isDownloaded = downloadedIds.has(wb.id);
+            const description = splitWordbookDescription(wb.description).displayDescription;
             return (
               <div key={wb.id} className="ui-card p-4 transition hover:-translate-y-0.5">
                 <div className="flex items-start gap-3">
@@ -318,8 +319,7 @@ export default async function MarketPage(props: {
                     </div>
                     <p className="mt-1 text-xs text-slate-500">제작자 {maskEmailAddress(wb.owner.email)}</p>
                     <p className="mt-2 line-clamp-2 text-sm text-slate-600">
-                      {splitWordbookDescription(wb.description).displayDescription ??
-                        `${wb._count.items}개 단어 · ${wb.fromLang}에서 ${wb.toLang}로 학습하는 기본 단어장입니다.`}
+                      {description ?? `${wb._count.items}개 단어 · ${wb.fromLang}에서 ${wb.toLang}로 학습하는 기본 단어장입니다.`}
                     </p>
                     <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-slate-600">
                       <span>{wb._count.items}개 단어</span>
@@ -337,7 +337,7 @@ export default async function MarketPage(props: {
                         ratingCount: wb.ratingCount,
                         downloadCount: wb.downloadCount,
                         createdAt: wb.createdAt,
-                        hasDescription: !!splitWordbookDescription(wb.description).displayDescription,
+                        hasDescription: !!description,
                         isRecommended: sort === "top" && page === 0
                       }).map((badge) => (
                         <span
