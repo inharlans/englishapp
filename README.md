@@ -418,6 +418,12 @@ Railway 기준:
 - `/offline/wordbooks/[id]` 마지막 학습 위치(localStorage) 복원 + `R` 섞기 단축키 추가
 - 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_55.md`
 
+### 2026-02-22 Iteration 56
+- `/wordbooks/new` 페이지를 동일 기능으로 재작성해 깨진 인코딩 문구 전면 복구
+- 가이드/탭/입력 라벨/상태 메시지/오류 메시지/예시 데이터 문구 정상화
+- 수동 입력/검증 테이블 접근성 라벨 정리 및 상태 영역 상시 렌더링 적용
+- 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_56.md`
+
 
 
 
