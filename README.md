@@ -412,6 +412,12 @@ Railway 기준:
 - 목록 제목/의미/예문 텍스트 정제 가드 적용 및 상태 메시지 영역 안정화
 - 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_54.md`
 
+### 2026-02-22 Iteration 55
+- `/offline` 로딩/삭제 중 입력 충돌 방지(`busy` 상태) 및 단축키 `R` 새로고침 추가
+- 오프라인 목록 제목 텍스트 정제 + 상태 메시지 상시 렌더링으로 레이아웃 안정화
+- `/offline/wordbooks/[id]` 마지막 학습 위치(localStorage) 복원 + `R` 섞기 단축키 추가
+- 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_55.md`
+
 
 
 

@@ -25,6 +25,7 @@ export function StudyClient({ id }: { id: number }) {
   const [idx, setIdx] = useState(0);
   const [showMeaning, setShowMeaning] = useState(false);
   const [orderSeed, setOrderSeed] = useState(0);
+  const progressStorageKey = `offline_wordbook_progress_${id}`;
 
   useEffect(() => {
     const run = async () => {
@@ -36,7 +37,17 @@ export function StudyClient({ id }: { id: number }) {
         const found = await getOfflineWordbook(Math.floor(id));
         if (!found) throw new Error("오프라인 라이브러리에서 찾을 수 없습니다.");
         setWb(found);
-        setIdx(0);
+        let restored = 0;
+        try {
+          const raw = window.localStorage.getItem(progressStorageKey);
+          const parsed = Number(raw);
+          if (Number.isFinite(parsed) && parsed >= 0) {
+            restored = Math.floor(parsed);
+          }
+        } catch {
+          restored = 0;
+        }
+        setIdx(Math.min(restored, Math.max(found.items.length - 1, 0)));
         setShowMeaning(false);
       } catch (e) {
         setError(e instanceof Error ? e.message : "불러오기에 실패했습니다.");
@@ -45,7 +56,7 @@ export function StudyClient({ id }: { id: number }) {
       }
     };
     void run();
-  }, [id]);
+  }, [id, progressStorageKey]);
 
   const items = useMemo(() => {
     if (!wb) return [];
@@ -87,6 +98,13 @@ export function StudyClient({ id }: { id: number }) {
         event.preventDefault();
         setShowMeaning((v) => !v);
       }
+      if (event.key.toLowerCase() === "r") {
+        event.preventDefault();
+        setOrderSeed((v) => v + 1);
+        setIdx(0);
+        setShowMeaning(false);
+        setInfo("카드 순서를 다시 섞었습니다.");
+      }
     };
 
     window.addEventListener("keydown", onKeyDown);
@@ -98,6 +116,14 @@ export function StudyClient({ id }: { id: number }) {
     const timeout = window.setTimeout(() => setInfo(""), 3500);
     return () => window.clearTimeout(timeout);
   }, [info]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(progressStorageKey, String(idx));
+    } catch {
+      // ignore localStorage errors
+    }
+  }, [idx, progressStorageKey]);
 
   const current = items[idx] ?? null;
   const speakLang = wb?.fromLang?.toLowerCase().startsWith("en") ? "en-US" : undefined;
@@ -118,14 +144,14 @@ export function StudyClient({ id }: { id: number }) {
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">오프라인</p>
           <h1 id="offline-study-title" className="mt-2 truncate text-3xl font-black tracking-tight text-slate-900">
-            {wb ? wb.title : "학습"}
+            {wb ? sanitizeUserText(wb.title, "학습") : "학습"}
           </h1>
           {wb ? (
             <p className="mt-2 text-sm text-slate-600">
               단어 {items.length}개 | {idx + 1}/{Math.max(items.length, 1)}
             </p>
           ) : null}
-          <p className="mt-1 text-xs text-slate-500">단축키: ←/→ 카드 이동 · Space/Enter/M 뜻 보기 · Home/End/0 처음·끝 카드</p>
+          <p className="mt-1 text-xs text-slate-500">단축키: ←/→ 카드 이동 · Space/Enter/M 뜻 보기 · Home/End/0 처음·끝 카드 · R 섞기</p>
         </div>
         <div className="ml-auto flex flex-wrap gap-2">
           <Link href={{ pathname: "/offline" }} className="ui-btn-secondary px-4 py-2 text-sm">
@@ -153,11 +179,9 @@ export function StudyClient({ id }: { id: number }) {
           {error}
         </p>
       ) : null}
-      {info ? (
-        <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800" role="status" aria-live="polite">
-          {info}
-        </p>
-      ) : null}
+      <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800" role="status" aria-live="polite">
+        {info || "\u00A0"}
+      </p>
 
       {wb && items.length === 0 && !loading ? (
         <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-600" role="status" aria-live="polite">

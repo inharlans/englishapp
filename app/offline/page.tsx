@@ -1,10 +1,10 @@
 ﻿"use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { deleteOfflineWordbook, listOfflineWordbooks, type OfflineWordbook } from "@/lib/offlineWordbooks";
-import { maskEmailAddress } from "@/lib/textQuality";
+import { maskEmailAddress, sanitizeUserText } from "@/lib/textQuality";
 
 export default function OfflineLibraryPage() {
   const [items, setItems] = useState<OfflineWordbook[]>([]);
@@ -15,6 +15,7 @@ export default function OfflineLibraryPage() {
   const [info, setInfo] = useState("");
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const busy = loading || deletingId !== null;
 
   const formatDateKst = (iso: string) =>
     new Intl.DateTimeFormat("ko-KR", {
@@ -54,6 +55,10 @@ export default function OfflineLibraryPage() {
         event.preventDefault();
         searchInputRef.current?.focus();
       }
+      if (event.key.toLowerCase() === "r") {
+        event.preventDefault();
+        if (!busy) void reload();
+      }
       if (event.key === "Escape" && query.trim()) {
         event.preventDefault();
         setQuery("");
@@ -62,7 +67,7 @@ export default function OfflineLibraryPage() {
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [query]);
+  }, [busy, query]);
 
   useEffect(() => {
     if (!info) return;
@@ -70,17 +75,22 @@ export default function OfflineLibraryPage() {
     return () => window.clearTimeout(timeout);
   }, [info]);
 
-  const filteredItems = items
+  const trimmedQuery = query.trim();
+  const filteredItems = useMemo(
+    () =>
+      items
     .filter((wb) => {
-      const q = query.trim().toLowerCase();
+      const q = trimmedQuery.toLowerCase();
       if (!q) return true;
       return wb.title.toLowerCase().includes(q) || (wb.ownerEmail ?? "").toLowerCase().includes(q);
     })
     .sort((a, b) => {
-      if (sortMode === "saved-asc") return a.savedAt.localeCompare(b.savedAt);
+      if (sortMode === "saved-asc") return a.savedAt.localeCompare(b.savedAt, "ko");
       if (sortMode === "words-desc") return b.items.length - a.items.length;
-      return b.savedAt.localeCompare(a.savedAt);
-    });
+      return b.savedAt.localeCompare(a.savedAt, "ko");
+    }),
+    [items, sortMode, trimmedQuery]
+  );
 
   const onDelete = async (id: number, title: string) => {
     const ok = window.confirm(`"${title}" 오프라인 사본을 삭제하시겠습니까?`);
@@ -99,7 +109,7 @@ export default function OfflineLibraryPage() {
     }
   };
 
-  const hasActiveFilters = query.trim().length > 0 || sortMode !== "saved-desc";
+  const hasActiveFilters = trimmedQuery.length > 0 || sortMode !== "saved-desc";
   const sortModeLabel = sortMode === "saved-asc" ? "저장일 오래된순" : sortMode === "words-desc" ? "단어 수 많은순" : "저장일 최신순";
 
   return (
@@ -121,7 +131,7 @@ export default function OfflineLibraryPage() {
           <button
             type="button"
             onClick={() => void reload()}
-            disabled={loading || deletingId !== null}
+            disabled={busy}
             aria-busy={loading}
             className="ui-btn-secondary px-4 py-2 text-sm"
           >
@@ -142,6 +152,7 @@ export default function OfflineLibraryPage() {
               aria-label="오프라인 단어장 검색"
               aria-describedby="offline-search-help"
               className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              disabled={busy}
             />
             <span id="offline-search-help" className="mt-1 block text-[11px] text-slate-500">
               제목 또는 제작자 이메일로 검색할 수 있습니다.
@@ -154,6 +165,7 @@ export default function OfflineLibraryPage() {
               onChange={(e) => setSortMode(e.target.value as "saved-desc" | "saved-asc" | "words-desc")}
               aria-label="오프라인 단어장 정렬"
               className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              disabled={busy}
             >
               <option value="saved-desc">저장일 최신순</option>
               <option value="saved-asc">저장일 오래된순</option>
@@ -168,6 +180,7 @@ export default function OfflineLibraryPage() {
                 setSortMode("saved-desc");
                 searchInputRef.current?.focus();
               }}
+              disabled={busy || !hasActiveFilters}
               className="ui-btn-secondary w-full px-4 py-2 text-sm"
             >
               필터 초기화
@@ -177,7 +190,7 @@ export default function OfflineLibraryPage() {
         {!loading ? (
           <p className="mt-2 text-xs text-slate-500" aria-live="polite" aria-atomic="true">
             총 {items.length}개 중 {filteredItems.length}개 표시 · 정렬: {sortModeLabel}
-            {query.trim() ? ` · 검색어: "${query.trim()}"` : ""}
+            {trimmedQuery ? ` · 검색어: "${trimmedQuery}"` : ""}
             {hasActiveFilters ? " · 필터 적용됨" : ""}
           </p>
         ) : null}
@@ -193,11 +206,9 @@ export default function OfflineLibraryPage() {
           {error}
         </p>
       ) : null}
-      {info ? (
-        <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800" role="status" aria-live="polite">
-          {info}
-        </p>
-      ) : null}
+      <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800" role="status" aria-live="polite">
+        {info || "\u00A0"}
+      </p>
 
       {filteredItems.length === 0 && !loading ? (
         <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-600" role="status" aria-live="polite">
@@ -225,12 +236,12 @@ export default function OfflineLibraryPage() {
         </div>
       ) : null}
 
-      <div className="grid gap-3 md:grid-cols-2" role="list" aria-label="오프라인 단어장 목록">
+      <div className="grid gap-3 md:grid-cols-2" role="list" aria-label="오프라인 단어장 목록" aria-busy={busy}>
         {filteredItems.map((wb) => (
           <div key={wb.id} className="rounded-2xl border border-slate-200 bg-white p-4" role="listitem">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <h2 className="truncate text-lg font-black text-slate-900">{wb.title}</h2>
+                <h2 className="truncate text-lg font-black text-slate-900">{sanitizeUserText(wb.title, "제목 없음")}</h2>
                 <p className="mt-1 text-xs text-slate-500">
                   저장일 {formatDateKst(wb.savedAt)}
                   {wb.ownerEmail ? ` · 제작자 ${maskEmailAddress(wb.ownerEmail)}` : ""}
@@ -240,7 +251,7 @@ export default function OfflineLibraryPage() {
               <button
                 type="button"
                 onClick={() => void onDelete(wb.id, wb.title)}
-                disabled={deletingId === wb.id}
+                disabled={busy}
                 aria-label={`${wb.title} 오프라인 사본 삭제`}
                 aria-busy={deletingId === wb.id}
                 className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-sm font-semibold text-blue-800 hover:bg-blue-100"
