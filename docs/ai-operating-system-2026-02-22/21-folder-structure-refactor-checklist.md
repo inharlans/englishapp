@@ -83,3 +83,13 @@ Date: 2026-02-22
   - 산출물 생성 확인:
     - `.loop/last-ops-readiness.json`
     - `docs/ai-operating-system-2026-02-22/reports/ops-readiness-20260222-202117.md`
+
+### 2026-02-22 (Update 13)
+- `29-release-preflight-2026-02-22.md` 작성 완료 (GO conditional 기준 명시)
+- `30-post-deploy-runbook.md` 작성 완료
+- 배포 후 점검 표준 경로 고정:
+  - 기본 접속
+  - 인증 경계
+  - 핵심 API
+  - 결제/크론 경계
+  - `ops:readiness` 운영 게이트

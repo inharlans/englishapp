@@ -31,3 +31,5 @@
    - `/api/auth/me`
    - `/api/wordbooks/market`
    - `/api/admin/reports` (auth boundary check)
+4. Follow detailed runbook:
+   - `docs/ai-operating-system-2026-02-22/30-post-deploy-runbook.md`
