@@ -7,7 +7,7 @@ Date: 2026-02-22
 - Keep runtime checks aligned with existing quality gates and hook system.
 
 ## Implementation
-- Added `scripts/ops-readiness.js`
+- Added `scripts/ops/ops-readiness.js`
   - Runs:
     - `npm run hooks:validate`
     - `npm run mcp:cycle`

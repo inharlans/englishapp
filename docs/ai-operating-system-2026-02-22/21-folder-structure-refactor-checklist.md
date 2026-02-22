@@ -76,7 +76,7 @@ Date: 2026-02-22
 
 ### 2026-02-22 (Update 12)
 - `28-phase-f-operations-automation.md` 작성 완료
-- `scripts/ops-readiness.js` 추가
+- `scripts/ops/ops-readiness.js` 추가
 - `package.json`에 `ops:readiness` 스크립트 추가
 - 실행 검증:
   - `npm run ops:readiness` pass
