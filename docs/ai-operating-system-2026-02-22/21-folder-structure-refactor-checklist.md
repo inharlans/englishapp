@@ -71,4 +71,15 @@ Date: 2026-02-22
 
 ## Ready State
 - Phase A~E 완료
-- 다음 세션은 `Phase F (운영 자동화/관측 강화)` 또는 `릴리즈 준비`로 시작 가능
+- Phase F kickoff 완료 (`ops:readiness` 자동화 추가 및 pass 확인)
+- 다음 세션은 `Phase F-2 (CI 연동/관측 대시보드 고정)` 또는 `릴리즈 준비`로 시작 가능
+
+### 2026-02-22 (Update 12)
+- `28-phase-f-operations-automation.md` 작성 완료
+- `scripts/ops-readiness.js` 추가
+- `package.json`에 `ops:readiness` 스크립트 추가
+- 실행 검증:
+  - `npm run ops:readiness` pass
+  - 산출물 생성 확인:
+    - `.loop/last-ops-readiness.json`
+    - `docs/ai-operating-system-2026-02-22/reports/ops-readiness-20260222-202117.md`
