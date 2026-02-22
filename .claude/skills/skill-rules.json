@@ -1,0 +1,71 @@
+{
+  "version": "1.0",
+  "skills": {
+    "planner": {
+      "priority": "high",
+      "promptTriggers": {
+        "keywords": ["plan", "planning", "roadmap", "design", "architecture", "계획", "플랜", "설계", "아키텍처"]
+      }
+    },
+    "plan-reviewer": {
+      "priority": "high",
+      "promptTriggers": {
+        "keywords": ["review", "검토", "리뷰", "strategy review", "plan review"]
+      }
+    },
+    "code-architecture-reviewer": {
+      "priority": "medium",
+      "promptTriggers": {
+        "keywords": ["architecture review", "code review", "design review", "아키텍처 리뷰", "코드 리뷰"]
+      }
+    },
+    "auto-error-resolver": {
+      "priority": "high",
+      "promptTriggers": {
+        "keywords": ["typescript", "tsc", "type error", "compile error", "build error", "타입 에러", "컴파일 에러", "빌드 에러"]
+      }
+    },
+    "refactor-planner": {
+      "priority": "high",
+      "promptTriggers": {
+        "keywords": ["refactor", "restructure", "cleanup", "리팩터", "리팩토링", "구조 개선", "코드 정리"]
+      }
+    },
+    "code-refactor-master": {
+      "priority": "medium",
+      "promptTriggers": {
+        "keywords": ["execute refactor", "apply refactor", "perform refactor", "implement refactor", "리팩터링 실행"]
+      }
+    },
+    "frontend-error-fixer": {
+      "priority": "high",
+      "promptTriggers": {
+        "keywords": ["frontend error", "react error", "runtime error", "console error", "hydration", "ui bug", "프론트 에러", "리액트 에러", "브라우저 에러"]
+      }
+    },
+    "auth-route-debugger": {
+      "priority": "high",
+      "promptTriggers": {
+        "keywords": ["auth route", "authentication route", "401", "403", "jwt", "cookie auth", "login api", "forbidden", "unauthorized", "인증 라우트", "인증 오류", "로그인 api"]
+      }
+    },
+    "auth-route-tester": {
+      "priority": "high",
+      "promptTriggers": {
+        "keywords": ["route test", "endpoint test", "api test", "integration test route", "verify endpoint", "라우트 테스트", "엔드포인트 테스트", "api 테스트", "검증"]
+      }
+    },
+    "web-research-specialist": {
+      "priority": "medium",
+      "promptTriggers": {
+        "keywords": ["research", "look up", "investigate", "github issue", "stackoverflow", "reddit", "리서치", "찾아봐", "조사", "검색"]
+      }
+    },
+    "documentation-architect": {
+      "priority": "medium",
+      "promptTriggers": {
+        "keywords": ["document", "documentation", "readme", "write docs", "api docs", "handoff", "문서", "문서화", "리드미", "핸드오프"]
+      }
+    }
+  }
+}

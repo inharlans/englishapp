@@ -5,22 +5,32 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"C:/Program Files/PowerShell/7/pwsh.exe\" -NoProfile -ExecutionPolicy Bypass -File \"$CLAUDE_PROJECT_DIR/.claude/hooks/plan-gate-prompt.ps1\""
-          },
-          {
-            "type": "command",
-            "command": "\"C:/Program Files/PowerShell/7/pwsh.exe\" -NoProfile -ExecutionPolicy Bypass -File \"$CLAUDE_PROJECT_DIR/.claude/hooks/subagent-router.ps1\""
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/skill-activation-prompt.mjs\""
           }
         ]
       }
     ],
-    "PreToolUse": [
+    "PostToolUse": [
       {
-        "matcher": "Edit|Write|MultiEdit|NotebookEdit",
+        "matcher": "Edit|Write|MultiEdit|NotebookEdit|apply_patch|shell_command|Bash",
         "hooks": [
           {
             "type": "command",
-            "command": "\"C:/Program Files/PowerShell/7/pwsh.exe\" -NoProfile -ExecutionPolicy Bypass -File \"$CLAUDE_PROJECT_DIR/.claude/hooks/plan-gate-pretool.ps1\""
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/post-tool-use-tracker.mjs\""
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/tsc-check.mjs\""
+          },
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/trigger-build-resolver.mjs\""
           }
         ]
       }
