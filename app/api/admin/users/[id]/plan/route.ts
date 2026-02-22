@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { getUserFromRequestCookies } from "@/lib/authServer";
-import { prisma } from "@/lib/prisma";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
 import { parseJsonWithSchema } from "@/lib/validation";
+import { AdminService } from "@/server/domain/admin/service";
 import { z } from "zod";
 
 function parseId(raw: string): number | null {
@@ -26,21 +26,20 @@ const updatePlanSchema = z.object({
   isAdmin: z.boolean().optional()
 });
 
+const adminService = new AdminService();
+
 export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const badReq = assertTrustedMutationRequest(req);
   if (badReq) return badReq;
 
-  const admin = await getUserFromRequestCookies(req.cookies);
-  if (!admin) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
-  if (!admin.isAdmin) return NextResponse.json({ error: "Forbidden." }, { status: 403 });
-
   const { id: idRaw } = await ctx.params;
-  const id = parseId(idRaw);
-  if (!id) return NextResponse.json({ error: "Invalid id." }, { status: 400 });
+  const userId = parseId(idRaw);
+  if (!userId) return NextResponse.json({ error: "Invalid id." }, { status: 400 });
 
   const parsedBody = await parseJsonWithSchema(req, updatePlanSchema);
   if (!parsedBody.ok) return parsedBody.response;
   const body = parsedBody.data;
+
   const plan = parsePlan(body.plan);
   if (!plan) return NextResponse.json({ error: "plan must be FREE or PRO." }, { status: 400 });
 
@@ -54,15 +53,16 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     return NextResponse.json({ error: "Invalid proUntil." }, { status: 400 });
   }
 
-  const updated = await prisma.user.update({
-    where: { id },
-    data: {
-      plan,
-      ...(proUntil === undefined ? {} : { proUntil }),
-      ...(typeof body?.isAdmin === "boolean" ? { isAdmin: body.isAdmin } : {})
-    },
-    select: { id: true, email: true, isAdmin: true, plan: true, proUntil: true }
+  const user = await getUserFromRequestCookies(req.cookies);
+  const result = await adminService.updateUserPlan(user, {
+    userId,
+    plan,
+    proUntil,
+    isAdmin: typeof body?.isAdmin === "boolean" ? body.isAdmin : undefined
   });
-
-  return NextResponse.json({ user: updated }, { status: 200 });
+  if (!result.ok) {
+    return NextResponse.json({ error: result.error }, { status: result.status });
+  }
+  return NextResponse.json(result.payload, { status: result.status });
 }
+

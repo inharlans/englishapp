@@ -1,15 +1,16 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 
-import { prisma } from "@/lib/prisma";
 import { checkRateLimit, getClientIpFromHeaders } from "@/lib/rateLimit";
-import { hashPassword } from "@/lib/password";
 import { parseJsonWithSchema } from "@/lib/validation";
+import { AuthService } from "@/server/domain/auth/service";
 import { z } from "zod";
 
 const bootstrapSchema = z.object({
   email: z.string().email().max(320),
   password: z.string().min(8).max(512)
 });
+
+const authService = new AuthService();
 
 export async function POST(req: NextRequest) {
   const ip = getClientIpFromHeaders(req.headers);
@@ -40,26 +41,11 @@ export async function POST(req: NextRequest) {
 
   const parsed = await parseJsonWithSchema(req, bootstrapSchema);
   if (!parsed.ok) return parsed.response;
-  const email = parsed.data.email.trim().toLowerCase();
-  const password = parsed.data.password;
 
-  const passwordHash = await hashPassword(password);
-  const user = await prisma.$transaction(async (tx) => {
-    // Prevent concurrent bootstrap races on PostgreSQL.
-    await tx.$executeRawUnsafe("SELECT pg_advisory_xact_lock(946824611::bigint)");
-    const existingCount = await tx.user.count();
-    if (existingCount > 0) {
-      return null;
-    }
-
-    return tx.user.create({
-      data: { email, passwordHash, isAdmin: true, plan: "PRO", proUntil: null },
-      select: { id: true, email: true }
-    });
-  });
-  if (!user) {
+  const result = await authService.bootstrap(parsed.data);
+  if (!result) {
     return NextResponse.json({ error: "Bootstrap already completed." }, { status: 409 });
   }
 
-  return NextResponse.json({ ok: true, user });
+  return NextResponse.json(result);
 }

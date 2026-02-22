@@ -1,12 +1,10 @@
 ﻿import { NextRequest, NextResponse } from "next/server";
 
 import { getUserFromRequestCookies } from "@/lib/authServer";
-import { prisma } from "@/lib/prisma";
-import { computeWordbookRankScore } from "@/lib/wordbookRanking";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
-import { getEffectivePlan } from "@/lib/userPlan";
 import { parseJsonWithSchema } from "@/lib/validation";
 import { isBrokenUserText } from "@/lib/textQuality";
+import { WordbookService } from "@/server/domain/wordbook/service";
 import { z } from "zod";
 
 const createWordbookSchema = z.object({
@@ -16,31 +14,15 @@ const createWordbookSchema = z.object({
   toLang: z.string().trim().min(2).max(12).optional()
 });
 
+const wordbookService = new WordbookService();
+
 export async function GET(req: NextRequest) {
   const user = await getUserFromRequestCookies(req.cookies);
   if (!user) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
-  const wordbooks = await prisma.wordbook.findMany({
-    where: { ownerId: user.id },
-    orderBy: { updatedAt: "desc" },
-    select: {
-      id: true,
-      title: true,
-      description: true,
-      fromLang: true,
-      toLang: true,
-      isPublic: true,
-      downloadCount: true,
-      ratingAvg: true,
-      ratingCount: true,
-      createdAt: true,
-      updatedAt: true,
-      _count: { select: { items: true } }
-    }
-  });
-
+  const wordbooks = await wordbookService.listMine(user);
   return NextResponse.json({ wordbooks }, { status: 200 });
 }
 
@@ -65,53 +47,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "설명 텍스트가 올바르지 않습니다." }, { status: 400 });
   }
 
-  const effectivePlan = getEffectivePlan({ plan: user.plan, proUntil: user.proUntil });
-  if (effectivePlan === "FREE") {
-    const createdCount = await prisma.wordbook.count({ where: { ownerId: user.id } });
-    if (createdCount >= 1) {
-      return NextResponse.json(
-        { error: "무료 요금제는 단어장 1개만 생성할 수 있습니다. PRO로 업그레이드해 주세요." },
-        { status: 403 }
-      );
-    }
+  const created = await wordbookService.createMine(user, {
+    title,
+    description,
+    fromLang,
+    toLang
+  });
+
+  if (!created.ok) {
+    return NextResponse.json({ error: created.error }, { status: created.status });
   }
 
-  const wordbook = await prisma.wordbook.create({
-    data: {
-      ownerId: user.id,
-      title,
-      description,
-      fromLang,
-      toLang,
-      isPublic: effectivePlan === "FREE"
-    },
-    select: {
-      id: true,
-      title: true,
-      description: true,
-      fromLang: true,
-      toLang: true,
-      isPublic: true,
-      downloadCount: true,
-      ratingAvg: true,
-      ratingCount: true,
-      createdAt: true,
-      updatedAt: true
-    }
-  });
-
-  await prisma.wordbook.update({
-    where: { id: wordbook.id },
-    data: {
-      rankScore: computeWordbookRankScore({
-        ratingAvg: 0,
-        ratingCount: 0,
-        downloadCount: 0,
-        createdAt: wordbook.createdAt
-      }),
-      rankScoreUpdatedAt: new Date()
-    }
-  });
-
-  return NextResponse.json({ wordbook }, { status: 201 });
+  return NextResponse.json({ wordbook: created.wordbook }, { status: 201 });
 }

@@ -1,9 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 
 import { getUserFromRequestCookies } from "@/lib/authServer";
-import { prisma } from "@/lib/prisma";
 import { checkRateLimit, getClientIpFromHeaders } from "@/lib/rateLimit";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
+import { WordbookModerationService } from "@/server/domain/wordbook/moderation-service";
+
+const moderationService = new WordbookModerationService();
 
 function parseId(raw: string): number | null {
   const n = Number(raw);
@@ -39,22 +41,14 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
-  const wordbook = await prisma.wordbook.findUnique({
-    where: { id: wordbookId },
-    select: { ownerId: true, isPublic: true }
+  const result = await moderationService.blockOwner({
+    actorId: user.id,
+    wordbookId
   });
-  if (!wordbook || !wordbook.isPublic) {
-    return NextResponse.json({ error: "Not found." }, { status: 404 });
-  }
-  if (wordbook.ownerId === user.id) {
-    return NextResponse.json({ error: "Cannot block yourself." }, { status: 400 });
-  }
 
-  await prisma.blockedOwner.upsert({
-    where: { userId_ownerId: { userId: user.id, ownerId: wordbook.ownerId } },
-    create: { userId: user.id, ownerId: wordbook.ownerId },
-    update: {}
-  });
+  if (!result.ok) {
+    return NextResponse.json({ error: result.error }, { status: result.status });
+  }
 
   return NextResponse.json({ ok: true }, { status: 200 });
 }

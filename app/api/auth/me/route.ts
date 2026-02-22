@@ -1,17 +1,18 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 
-import { getUserFromRequestCookies } from "@/lib/authServer";
 import { getCsrfCookieName, issueCsrfToken } from "@/lib/csrf";
 import { captureAppError, recordApiMetricFromStart } from "@/lib/observability";
-import { FREE_DOWNLOAD_WORD_LIMIT, getUserDownloadedWordCount } from "@/lib/planLimits";
-import { isActiveProPlan } from "@/lib/userPlan";
+import { toAuthMeResponse } from "@/server/domain/auth/mapper";
+import { AuthService } from "@/server/domain/auth/service";
+
+const authService = new AuthService();
 
 export async function GET(req: NextRequest) {
   const startedAt = Date.now();
   try {
-    const user = await getUserFromRequestCookies(req.cookies);
-    if (!user) {
-      const res = NextResponse.json({ user: null }, { status: 200 });
+    const payload = await authService.getMe(req.cookies);
+    if (!payload.user) {
+      const res = NextResponse.json(toAuthMeResponse(payload), { status: 200 });
       await recordApiMetricFromStart({
         route: "/api/auth/me",
         method: "GET",
@@ -21,26 +22,7 @@ export async function GET(req: NextRequest) {
       return res;
     }
 
-    const downloadWordsUsed = await getUserDownloadedWordCount(user.id);
-
-    const pro = isActiveProPlan({ plan: user.plan, proUntil: user.proUntil });
-
-    const res = NextResponse.json(
-      {
-        user: { id: user.id, email: user.email, isAdmin: user.isAdmin, dailyGoal: user.dailyGoal },
-        plan: {
-          code: pro ? "PRO" : "FREE",
-          raw: user.plan,
-          proUntil: user.proUntil,
-          downloadWordsUsed,
-          freeDownloadWordLimit: FREE_DOWNLOAD_WORD_LIMIT,
-          freeDownloadWordsRemaining: pro ? null : Math.max(0, FREE_DOWNLOAD_WORD_LIMIT - downloadWordsUsed),
-          priceMonthlyKrw: 2900,
-          priceYearlyKrw: 29000
-        }
-      },
-      { status: 200 }
-    );
+    const res = NextResponse.json(toAuthMeResponse(payload), { status: 200 });
 
     if (!req.cookies.get(getCsrfCookieName())?.value) {
       res.cookies.set(getCsrfCookieName(), issueCsrfToken(), {
@@ -57,7 +39,7 @@ export async function GET(req: NextRequest) {
       method: "GET",
       status: 200,
       startedAt,
-      userId: user.id
+      userId: payload.user.id
     });
     return res;
   } catch (error) {

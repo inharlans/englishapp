@@ -1,18 +1,18 @@
 ﻿import { NextRequest, NextResponse } from "next/server";
 
-import { prisma } from "@/lib/prisma";
 import { checkRateLimit, getClientIpFromHeaders } from "@/lib/rateLimit";
-import { getSessionCookieName, issueSessionToken } from "@/lib/authJwt";
-import { getCsrfCookieName, issueCsrfToken } from "@/lib/csrf";
 import { captureAppError, recordApiMetric } from "@/lib/observability";
-import { verifyPassword } from "@/lib/password";
 import { parseJsonWithSchema } from "@/lib/validation";
+import { toUnauthorizedMessage } from "@/server/domain/auth/mapper";
+import { AuthService } from "@/server/domain/auth/service";
 import { z } from "zod";
 
 const loginSchema = z.object({
   email: z.string().email().max(320),
   password: z.string().min(1).max(512)
 });
+
+const authService = new AuthService();
 
 export async function POST(req: NextRequest) {
   const startedAt = Date.now();
@@ -39,15 +39,10 @@ export async function POST(req: NextRequest) {
   try {
     const parsed = await parseJsonWithSchema(req, loginSchema);
     if (!parsed.ok) return parsed.response;
-    const email = parsed.data.email.trim().toLowerCase();
-    const password = parsed.data.password;
 
-    const user = await prisma.user.findUnique({
-      where: { email },
-      select: { id: true, email: true, passwordHash: true }
-    });
-    if (!user) {
-      const res = NextResponse.json({ error: "이메일 또는 비밀번호가 올바르지 않습니다." }, { status: 401 });
+    const result = await authService.login(parsed.data);
+    if (!result) {
+      const res = NextResponse.json(toUnauthorizedMessage(), { status: 401 });
       await recordApiMetric({
         route: "/api/auth/login",
         method: "POST",
@@ -57,46 +52,30 @@ export async function POST(req: NextRequest) {
       return res;
     }
 
-    const ok = await verifyPassword(password, user.passwordHash);
-    if (!ok) {
-      const res = NextResponse.json({ error: "이메일 또는 비밀번호가 올바르지 않습니다." }, { status: 401 });
-      await recordApiMetric({
-        route: "/api/auth/login",
-        method: "POST",
-        status: 401,
-        latencyMs: Date.now() - startedAt
-      });
-      return res;
-    }
+    const res = NextResponse.json({ ok: true, user: result.user });
+    const { sessionCookieName, csrfCookieName } = authService.getCookieNames();
 
-    const token = await issueSessionToken({
-      userId: user.id,
-      email: user.email,
-      ttlSeconds: 60 * 60 * 24 * 30
-    });
-
-    const res = NextResponse.json({ ok: true, user: { id: user.id, email: user.email } });
-    const csrfToken = issueCsrfToken();
-    res.cookies.set(getSessionCookieName(), token, {
+    res.cookies.set(sessionCookieName, result.sessionToken, {
       httpOnly: true,
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production",
       path: "/",
       maxAge: 60 * 60 * 24 * 30
     });
-    res.cookies.set(getCsrfCookieName(), csrfToken, {
+    res.cookies.set(csrfCookieName, result.csrfToken, {
       httpOnly: false,
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production",
       path: "/",
       maxAge: 60 * 60 * 24 * 30
     });
+
     await recordApiMetric({
       route: "/api/auth/login",
       method: "POST",
       status: 200,
       latencyMs: Date.now() - startedAt,
-      userId: user.id
+      userId: result.user.id
     });
     return res;
   } catch (error) {

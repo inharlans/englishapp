@@ -1,6 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 
-import { prisma } from "@/lib/prisma";
+import { WordbookFeedbackService } from "@/server/domain/wordbook/feedback-service";
+
+const feedbackService = new WordbookFeedbackService();
 
 function parseId(raw: string): number | null {
   const n = Number(raw);
@@ -15,43 +17,13 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
     return NextResponse.json({ error: "Invalid id." }, { status: 400 });
   }
 
-  const wb = await prisma.wordbook.findUnique({
-    where: { id },
-    select: { id: true, isPublic: true, hiddenByAdmin: true }
-  });
-  if (!wb || !wb.isPublic || wb.hiddenByAdmin) {
-    return NextResponse.json({ error: "Not found." }, { status: 404 });
-  }
-
   const takeRaw = Number(new URL(req.url).searchParams.get("take") ?? "30");
   const take = Math.min(Math.max(Number.isFinite(takeRaw) ? Math.floor(takeRaw) : 30, 1), 100);
 
-  const reviews = await prisma.wordbookRating.findMany({
-    where: {
-      wordbookId: id,
-      OR: [{ review: { not: null } }, { rating: { gte: 1 } }]
-    },
-    orderBy: [{ updatedAt: "desc" }],
-    take,
-    select: {
-      id: true,
-      rating: true,
-      review: true,
-      updatedAt: true,
-      user: { select: { email: true } }
-    }
-  });
+  const result = await feedbackService.listReviews(id, take);
+  if (!result.ok) {
+    return NextResponse.json({ error: result.error }, { status: result.status });
+  }
 
-  return NextResponse.json(
-    {
-      reviews: reviews.map((r) => ({
-        id: r.id,
-        rating: r.rating,
-        review: r.review,
-        updatedAt: r.updatedAt,
-        userEmail: r.user.email
-      }))
-    },
-    { status: 200 }
-  );
+  return NextResponse.json({ reviews: result.reviews }, { status: 200 });
 }

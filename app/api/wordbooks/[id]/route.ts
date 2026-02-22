@@ -1,13 +1,10 @@
 ﻿import { NextRequest, NextResponse } from "next/server";
 
 import { getUserFromRequestCookies } from "@/lib/authServer";
-import { prisma } from "@/lib/prisma";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
-import { parseJsonWithSchema } from "@/lib/validation";
-import { isPrivateWordbookLockedForFree } from "@/lib/wordbookAccess";
-import { bumpWordbookVersion } from "@/lib/wordbookVersion";
-import { getEffectivePlan } from "@/lib/userPlan";
 import { isBrokenUserText } from "@/lib/textQuality";
+import { parseJsonWithSchema } from "@/lib/validation";
+import { WordbookService } from "@/server/domain/wordbook/service";
 import { z } from "zod";
 
 const patchWordbookSchema = z
@@ -18,6 +15,8 @@ const patchWordbookSchema = z
     toLang: z.string().trim().min(2).max(12).optional()
   })
   .refine((value) => Object.keys(value).length > 0, "At least one field is required.");
+
+const wordbookService = new WordbookService();
 
 function parseId(raw: string): number | null {
   const n = Number(raw);
@@ -37,69 +36,12 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
-  const wordbook = await prisma.wordbook.findUnique({
-    where: { id },
-    select: {
-      id: true,
-      ownerId: true,
-      title: true,
-      description: true,
-      fromLang: true,
-      toLang: true,
-      isPublic: true,
-      hiddenByAdmin: true,
-      downloadCount: true,
-      ratingAvg: true,
-      ratingCount: true,
-      createdAt: true,
-      updatedAt: true,
-      owner: { select: { id: true, email: true } },
-      items: {
-        orderBy: [{ position: "asc" }, { id: "asc" }],
-        select: {
-          id: true,
-          term: true,
-          meaning: true,
-          pronunciation: true,
-          example: true,
-          exampleMeaning: true,
-          position: true
-        }
-      }
-    }
-  });
-
-  if (!wordbook) {
-    return NextResponse.json({ error: "Not found." }, { status: 404 });
+  const found = await wordbookService.getByIdForActor(user, id);
+  if (!found.ok) {
+    return NextResponse.json({ error: found.error }, { status: found.status });
   }
 
-  const isOwner = wordbook.ownerId === user.id;
-  if ((!wordbook.isPublic || wordbook.hiddenByAdmin) && !isOwner) {
-    return NextResponse.json({ error: "Not found." }, { status: 404 });
-  }
-
-  const [download, rating] = await Promise.all([
-    prisma.wordbookDownload.findUnique({
-      where: { userId_wordbookId: { userId: user.id, wordbookId: id } },
-      select: { createdAt: true }
-    }),
-    prisma.wordbookRating.findUnique({
-      where: { userId_wordbookId: { userId: user.id, wordbookId: id } },
-      select: { rating: true, updatedAt: true }
-    })
-  ]);
-
-  return NextResponse.json(
-    {
-      wordbook: {
-        ...wordbook,
-        isOwner,
-        downloadedAt: download?.createdAt ?? null,
-        myRating: rating?.rating ?? null
-      }
-    },
-    { status: 200 }
-  );
+  return NextResponse.json({ wordbook: found.wordbook }, { status: 200 });
 }
 
 export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
@@ -115,29 +57,6 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   const user = await getUserFromRequestCookies(req.cookies);
   if (!user) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
-  }
-
-  const existing = await prisma.wordbook.findUnique({
-    where: { id },
-    select: { ownerId: true, isPublic: true }
-  });
-  if (!existing) {
-    return NextResponse.json({ error: "Not found." }, { status: 404 });
-  }
-  if (existing.ownerId !== user.id) {
-    return NextResponse.json({ error: "Forbidden." }, { status: 403 });
-  }
-  if (
-    isPrivateWordbookLockedForFree({
-      plan: getEffectivePlan({ plan: user.plan, proUntil: user.proUntil }),
-      isOwner: true,
-      isPublic: existing.isPublic
-    })
-  ) {
-    return NextResponse.json(
-      { error: "무료 요금제에서는 비공개 단어장을 수정할 수 없습니다. 공개 전환 또는 업그레이드가 필요합니다." },
-      { status: 403 }
-    );
   }
 
   const parsedBody = await parseJsonWithSchema(req, patchWordbookSchema);
@@ -162,29 +81,12 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     data.toLang = body.toLang.trim() || "ko";
   }
 
-  const wordbook = await prisma.$transaction(async (tx) => {
-    const next = await tx.wordbook.update({
-      where: { id },
-      data,
-      select: {
-        id: true,
-        title: true,
-        description: true,
-        fromLang: true,
-        toLang: true,
-        isPublic: true,
-        downloadCount: true,
-        ratingAvg: true,
-        ratingCount: true,
-        createdAt: true,
-        updatedAt: true
-      }
-    });
-    await bumpWordbookVersion(tx, id, { updatedCount: 1 });
-    return next;
-  });
+  const updated = await wordbookService.updateMine(user, id, data);
+  if (!updated.ok) {
+    return NextResponse.json({ error: updated.error }, { status: updated.status });
+  }
 
-  return NextResponse.json({ wordbook }, { status: 200 });
+  return NextResponse.json({ wordbook: updated.wordbook }, { status: 200 });
 }
 
 export async function DELETE(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
@@ -202,17 +104,10 @@ export async function DELETE(req: NextRequest, ctx: { params: Promise<{ id: stri
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
-  const existing = await prisma.wordbook.findUnique({
-    where: { id },
-    select: { ownerId: true }
-  });
-  if (!existing) {
-    return NextResponse.json({ error: "Not found." }, { status: 404 });
-  }
-  if (existing.ownerId !== user.id) {
-    return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+  const removed = await wordbookService.deleteMine(user, id);
+  if (!removed.ok) {
+    return NextResponse.json({ error: removed.error }, { status: removed.status });
   }
 
-  await prisma.wordbook.delete({ where: { id } });
   return NextResponse.json({ ok: true }, { status: 200 });
 }

@@ -2,26 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { getUserFromRequestCookies } from "@/lib/authServer";
 import { captureAppError, recordApiMetricFromStart } from "@/lib/observability";
-import { BillingCycle, getPortOneConfig, normalizeCycle } from "@/lib/payments";
 import { getPublicOrigin } from "@/lib/publicOrigin";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
 import { parseJsonWithSchema } from "@/lib/validation";
+import { PaymentsService } from "@/server/domain/payments/service";
 import { z } from "zod";
 
 const checkoutSchema = z.object({
   cycle: z.enum(["monthly", "yearly"])
 });
 
-function buildIssueId(userId: number, cycle: BillingCycle): string {
-  return `issue_${userId}_${cycle}_${Date.now()}_${Math.floor(Math.random() * 1_000_000)}`;
-}
-
-function resolveBillingPhoneNumber(): string {
-  const raw = (process.env.PORTONE_BILLING_PHONE ?? "").trim();
-  const digits = raw.replace(/\D/g, "");
-  if (digits.length >= 10 && digits.length <= 11) return digits;
-  return "01000000000";
-}
+const paymentsService = new PaymentsService();
 
 export async function POST(req: NextRequest) {
   const startedAt = Date.now();
@@ -49,19 +40,6 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const config = getPortOneConfig();
-    if (!config) {
-      const res = NextResponse.json({ error: "결제 설정이 아직 완료되지 않았습니다." }, { status: 503 });
-      await recordApiMetricFromStart({
-        route: "/api/payments/checkout",
-        method: "POST",
-        status: 503,
-        startedAt,
-        userId: user.id
-      });
-      return res;
-    }
-
     const parsed = await parseJsonWithSchema(req, checkoutSchema);
     if (!parsed.ok) {
       await recordApiMetricFromStart({
@@ -74,51 +52,18 @@ export async function POST(req: NextRequest) {
       return parsed.response;
     }
 
-    const cycle = normalizeCycle(parsed.data.cycle);
-    if (!cycle) {
-      const res = NextResponse.json({ error: "지원하지 않는 결제 주기입니다." }, { status: 400 });
-      await recordApiMetricFromStart({
-        route: "/api/payments/checkout",
-        method: "POST",
-        status: 400,
-        startedAt,
-        userId: user.id
-      });
-      return res;
-    }
+    const result = await paymentsService.createCheckout(user, {
+      cycle: parsed.data.cycle,
+      publicOrigin: getPublicOrigin(req)
+    });
+    const res = result.ok
+      ? NextResponse.json(result.payload, { status: result.status })
+      : NextResponse.json({ error: result.error }, { status: result.status });
 
-    const issueId = buildIssueId(user.id, cycle);
-    const publicOrigin = getPublicOrigin(req);
-    const phoneNumber = resolveBillingPhoneNumber();
-
-    const res = NextResponse.json(
-      {
-        request: {
-          storeId: config.storeId,
-          channelKey: config.channelKey,
-          billingKeyMethod: "CARD",
-          issueId,
-          issueName: cycle === "monthly" ? "Oing PRO Monthly Billing Key" : "Oing PRO Yearly Billing Key",
-          redirectUrl: `${publicOrigin}/pricing`,
-          customer: {
-            customerId: String(user.id),
-            email: user.email,
-            fullName: user.email,
-            phoneNumber
-          },
-          customData: {
-            userId: user.id,
-            cycle
-          }
-        },
-        cycle
-      },
-      { status: 200 }
-    );
     await recordApiMetricFromStart({
       route: "/api/payments/checkout",
       method: "POST",
-      status: 200,
+      status: result.status,
       startedAt,
       userId: user.id
     });

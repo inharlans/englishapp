@@ -1,9 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 
-import { getSessionCookieName } from "@/lib/authJwt";
-import { getCsrfCookieName } from "@/lib/csrf";
 import { captureAppError, recordApiMetricFromStart } from "@/lib/observability";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
+import { AuthService } from "@/server/domain/auth/service";
+
+const authService = new AuthService();
 
 export async function POST(req: NextRequest) {
   const startedAt = Date.now();
@@ -19,15 +20,17 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    const { sessionCookieName, csrfCookieName } = authService.getCookieNames();
+
     const res = NextResponse.json({ ok: true });
-    res.cookies.set(getSessionCookieName(), "", {
+    res.cookies.set(sessionCookieName, "", {
       httpOnly: true,
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production",
       path: "/",
       maxAge: 0
     });
-    res.cookies.set(getCsrfCookieName(), "", {
+    res.cookies.set(csrfCookieName, "", {
       httpOnly: false,
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production",
