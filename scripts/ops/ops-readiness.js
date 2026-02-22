@@ -65,11 +65,12 @@ function writeReport(payload) {
 function main() {
   const startedAt = nowIso();
   fs.mkdirSync(runtimeDir, { recursive: true });
+  const e2eSmokeCommand = process.env.CI ? "npm run test:e2e" : "npm run test:e2e:local:smoke";
 
   const steps = [
     runStep("hooks-validate", "npm run hooks:validate"),
     runStep("mcp-cycle", "npm run mcp:cycle"),
-    runStep("e2e-smoke", "npm run test:e2e:local:smoke")
+    runStep("e2e-smoke", e2eSmokeCommand)
   ];
   const status = steps.every((s) => s.status === "pass") ? "pass" : "fail";
   const payload = {
