@@ -1,5 +1,3 @@
-/* eslint-disable no-console */
-
 import { chromium, devices } from "playwright";
 
 const BASE_URL = process.env.E2E_BASE_URL || "http://127.0.0.1:3000";
