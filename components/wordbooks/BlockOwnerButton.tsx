@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { apiFetch } from "@/lib/clientApi";
+import { blockWordbookOwner } from "@/lib/api/wordbook";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -30,13 +30,7 @@ export function BlockOwnerButton({ wordbookId }: Props) {
     setLoading(true);
     setMessage("");
     try {
-      const res = await apiFetch(`/api/wordbooks/${wordbookId}/block`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: "{}"
-      });
-      const json = (await res.json()) as { error?: string };
-      if (!res.ok) throw new Error(json.error ?? "처리에 실패했습니다.");
+      await blockWordbookOwner(wordbookId);
       setMessage("제작자를 차단했습니다. 차단 목록에서 언제든 해제할 수 있습니다.");
       router.refresh();
     } catch (e) {

@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { apiFetch } from "@/lib/clientApi";
+import { importWordbookItems } from "@/lib/api/wordbook";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -22,13 +22,13 @@ export function WordbookImportExportPanel({ wordbookId }: { wordbookId: number }
     setLoading(true);
     setMessage("");
     try {
-      const res = await apiFetch(`/api/wordbooks/${wordbookId}/import`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rawText, format, fillPronunciation: fillPron, replaceAll })
+      const json = await importWordbookItems({
+        wordbookId,
+        rawText,
+        format,
+        fillPronunciation: fillPron,
+        replaceAll
       });
-      const json = (await res.json()) as { importedCount?: number; error?: string };
-      if (!res.ok) throw new Error(json.error ?? "가져오기에 실패했습니다.");
       setMessage(`${json.importedCount ?? 0}개 행을 가져왔습니다.`);
       setRawText("");
       router.refresh();

@@ -1,12 +1,13 @@
-"use client";
+﻿"use client";
+
 import { useState } from "react";
 
-import { apiFetch } from "@/lib/clientApi";
+import { loginWithEmail } from "@/lib/api/auth";
 
 export function LoginPanel({
   nextPath = "/wordbooks",
   title = "로그인",
-  subtitle = "계속하려면 로그인하세요.",
+  subtitle = "계속하려면 로그인해 주세요.",
   oauthError
 }: {
   nextPath?: string;
@@ -24,15 +25,7 @@ export function LoginPanel({
     setLoading(true);
     setError("");
     try {
-      const res = await apiFetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password })
-      });
-      const json = (await res.json()) as { ok?: boolean; error?: string };
-      if (!res.ok) {
-        throw new Error(json.error ?? "로그인에 실패했습니다.");
-      }
+      await loginWithEmail({ email, password });
       window.location.assign(nextPath);
     } catch (err) {
       setError(err instanceof Error ? err.message : "로그인에 실패했습니다.");
@@ -43,7 +36,7 @@ export function LoginPanel({
 
   return (
     <section className="rounded-3xl border border-white/60 bg-white/90 p-6 shadow-[0_24px_55px_-30px_rgba(15,23,42,0.75)] backdrop-blur">
-      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">다시 오신 것을 환영합니다</p>
+      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">다시 당신 것을 환영합니다</p>
       <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-900">{title}</h1>
       <p className="mt-2 text-sm text-slate-600">{subtitle}</p>
 
@@ -84,11 +77,15 @@ export function LoginPanel({
         </button>
 
         {error ? (
-          <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700" role="alert">{error}</p>
+          <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700" role="alert">
+            {error}
+          </p>
         ) : null}
 
         {oauthError ? (
-          <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700" role="alert">{oauthError}</p>
+          <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700" role="alert">
+            {oauthError}
+          </p>
         ) : null}
       </form>
 

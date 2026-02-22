@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { apiFetch } from "@/lib/clientApi";
+import { downloadWordbook } from "@/lib/api/wordbook";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -29,13 +29,7 @@ export function DownloadButton({
     setLoading(true);
     setError("");
     try {
-      const res = await apiFetch(`/api/wordbooks/${wordbookId}/download`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: "{}"
-      });
-      const json = (await res.json()) as { ok?: boolean; error?: string; wordbookTitle?: string };
-      if (!res.ok) throw new Error(json.error ?? "다운로드에 실패했습니다.");
+      const json = await downloadWordbook({ wordbookId });
       if (typeof window !== "undefined") {
         window.localStorage.setItem(
           "download_onboarding_pending",

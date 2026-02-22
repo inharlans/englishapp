@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { apiFetch } from "@/lib/clientApi";
+import { fetchWordbookStudy } from "@/lib/api/study";
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -22,21 +22,13 @@ type Item = {
   id: number;
   term: string;
   meaning: string;
-  pronunciation: string | null;
+  pronunciation?: string | null;
   example: string | null;
   exampleMeaning: string | null;
   itemState: {
     status: "NEW" | "CORRECT" | "WRONG";
-    streak: number;
+    streak?: number;
   } | null;
-};
-
-type Payload = {
-  error?: string;
-  wordbook?: { title: string; fromLang?: string };
-  studyState?: StudyState;
-  items?: Item[];
-  paging?: { page: number; take: number; totalFiltered: number; totalItems: number };
 };
 
 export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
@@ -87,18 +79,15 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
     setLoading(true);
     setError("");
     try {
-      const qs = new URLSearchParams({
+      const json = await fetchWordbookStudy({
+        wordbookId,
         view: "memorize",
-        page: String(currentPage),
-        take: String(pageSize),
+        page: currentPage,
+        take: pageSize,
         q: query.trim(),
-        hideCorrect: hideCorrect ? "1" : "0"
+        hideCorrect
       });
-      const res = await apiFetch(`/api/wordbooks/${wordbookId}/study?${qs.toString()}`, {
-        cache: "no-store"
-      });
-      const json = (await res.json()) as Payload;
-      if (!res.ok || !json.wordbook) throw new Error(json.error ?? "학습 상태를 불러오지 못했습니다.");
+      if (!json.wordbook) throw new Error("학습 상태를 불러오지 못했습니다.");
       setTitle(json.wordbook.title);
       setSpeakLang(json.wordbook.fromLang?.toLowerCase().startsWith("en") ? "en-US" : undefined);
       setItems(json.items ?? []);

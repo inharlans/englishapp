@@ -1,8 +1,8 @@
 ﻿"use client";
 
-import { apiFetch } from "@/lib/clientApi";
-
 import { useState } from "react";
+
+import { updateAdminUserPlan } from "@/lib/api/admin";
 
 type UserRow = {
   id: number;
@@ -32,17 +32,12 @@ export function UserPlanEditor({ user, onUpdated }: { user: UserRow; onUpdated: 
     setLoading(true);
     setError("");
     try {
-      const res = await apiFetch(`/api/admin/users/${user.id}/plan`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          plan,
-          isAdmin,
-          proUntil: proUntil.trim() ? proUntil.trim() : null
-        })
+      await updateAdminUserPlan({
+        userId: user.id,
+        plan,
+        isAdmin,
+        proUntil: proUntil.trim() ? proUntil.trim() : null
       });
-      const json = (await res.json()) as { error?: string };
-      if (!res.ok) throw new Error(json.error ?? "저장에 실패했습니다.");
       onUpdated();
     } catch (e) {
       setError(e instanceof Error ? e.message : "저장에 실패했습니다.");
@@ -94,8 +89,3 @@ export function UserPlanEditor({ user, onUpdated }: { user: UserRow; onUpdated: 
     </div>
   );
 }
-
-
-
-
-

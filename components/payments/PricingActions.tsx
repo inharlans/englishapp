@@ -3,26 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 
-import { apiFetch } from "@/lib/clientApi";
+import { confirmPayment, createCheckout, getPortalUrl, type BillingCycle } from "@/lib/api/payments";
 import PortOne from "@portone/browser-sdk/v2";
-
-type CheckoutRequest = {
-  storeId: string;
-  channelKey: string;
-  billingKeyMethod: "CARD";
-  issueId: string;
-  issueName: string;
-  redirectUrl: string;
-  customer?: {
-    customerId?: string;
-    email?: string;
-    fullName?: string;
-  };
-  customData?: {
-    userId: number;
-    cycle: "monthly" | "yearly";
-  };
-};
 
 export function PricingActions(props: {
   plan: "FREE" | "PRO" | null;
@@ -32,21 +14,13 @@ export function PricingActions(props: {
   const [loading, setLoading] = useState<"monthly" | "yearly" | "portal" | null>(null);
   const [error, setError] = useState("");
 
-  const goCheckout = async (cycle: "monthly" | "yearly") => {
+  const goCheckout = async (cycle: BillingCycle) => {
     setLoading(cycle);
     setError("");
     try {
-      const checkoutRes = await apiFetch("/api/payments/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cycle })
-      });
-      const checkoutJson = (await checkoutRes.json()) as { request?: CheckoutRequest; error?: string };
-      if (!checkoutRes.ok || !checkoutJson.request) {
-        throw new Error(checkoutJson.error ?? "결제 요청 생성에 실패했습니다.");
-      }
+      const checkoutRequest = await createCheckout(cycle);
 
-      const issueResult = await PortOne.requestIssueBillingKey(checkoutJson.request);
+      const issueResult = await PortOne.requestIssueBillingKey(checkoutRequest);
       if (!issueResult) {
         throw new Error("빌링키 발급 결과를 확인할 수 없습니다. 잠시 후 다시 시도해 주세요.");
       }
@@ -54,18 +28,10 @@ export function PricingActions(props: {
         throw new Error(issueResult.message ?? issueResult.code ?? "빌링키 발급에 실패했습니다.");
       }
 
-      const confirmRes = await apiFetch("/api/payments/confirm", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          billingKey: issueResult.billingKey,
-          cycle
-        })
+      await confirmPayment({
+        billingKey: issueResult.billingKey,
+        cycle
       });
-      const confirmJson = (await confirmRes.json()) as { ok?: boolean; error?: string };
-      if (!confirmRes.ok || !confirmJson.ok) {
-        throw new Error(confirmJson.error ?? "결제 검증에 실패했습니다.");
-      }
 
       window.location.assign("/pricing?payment=success");
     } catch (e) {
@@ -79,10 +45,8 @@ export function PricingActions(props: {
     setLoading("portal");
     setError("");
     try {
-      const res = await apiFetch("/api/payments/portal", { method: "POST" });
-      const json = (await res.json()) as { url?: string; error?: string };
-      if (!res.ok || !json.url) throw new Error(json.error ?? "구독 관리 이동에 실패했습니다.");
-      window.location.assign(json.url);
+      const url = await getPortalUrl();
+      window.location.assign(url);
     } catch (e) {
       setError(e instanceof Error ? e.message : "구독 관리 이동에 실패했습니다.");
     } finally {

@@ -1,9 +1,9 @@
 ﻿"use client";
 
-import { apiFetch } from "@/lib/clientApi";
-
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+
+import { updateWordbookMeta } from "@/lib/api/wordbook";
 
 type Props = {
   wordbookId: number;
@@ -27,21 +27,13 @@ export function WordbookMetaEditor({ wordbookId, title, description, fromLang, t
     setLoading(true);
     setError("");
     try {
-      const res = await apiFetch(`/api/wordbooks/${wordbookId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: t,
-          description: d ? d : null,
-          fromLang: f,
-          toLang: to
-        })
+      await updateWordbookMeta({
+        wordbookId,
+        title: t,
+        description: d ? d : null,
+        fromLang: f,
+        toLang: to
       });
-      const json = (await res.json()) as {
-        wordbook?: { id: number; title: string; description: string | null; fromLang: string; toLang: string };
-        error?: string;
-      };
-      if (!res.ok) throw new Error(json.error ?? "저장에 실패했습니다.");
       router.refresh();
     } catch (e2) {
       setError(e2 instanceof Error ? e2.message : "저장에 실패했습니다.");
@@ -54,9 +46,7 @@ export function WordbookMetaEditor({ wordbookId, title, description, fromLang, t
     <form onSubmit={onSave} className="space-y-3">
       <div className="grid gap-3 md:grid-cols-2">
         <label className="block">
-          <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
-            제목
-          </span>
+          <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">제목</span>
           <input
             value={t}
             onChange={(e) => setT(e.target.value)}
@@ -67,9 +57,7 @@ export function WordbookMetaEditor({ wordbookId, title, description, fromLang, t
         </label>
         <div className="grid grid-cols-2 gap-3">
           <label className="block">
-            <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
-              원본 언어
-            </span>
+            <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">원본 언어</span>
             <input
               value={f}
               onChange={(e) => setF(e.target.value)}
@@ -78,9 +66,7 @@ export function WordbookMetaEditor({ wordbookId, title, description, fromLang, t
             />
           </label>
           <label className="block">
-            <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
-              번역 언어
-            </span>
+            <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">번역 언어</span>
             <input
               value={to}
               onChange={(e) => setTo(e.target.value)}
@@ -92,9 +78,7 @@ export function WordbookMetaEditor({ wordbookId, title, description, fromLang, t
       </div>
 
       <label className="block">
-        <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
-          설명
-        </span>
+        <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">설명</span>
         <textarea
           value={d}
           onChange={(e) => setD(e.target.value)}
@@ -117,7 +101,3 @@ export function WordbookMetaEditor({ wordbookId, title, description, fromLang, t
     </form>
   );
 }
-
-
-
-

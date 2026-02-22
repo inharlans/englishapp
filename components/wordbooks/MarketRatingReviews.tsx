@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { apiFetch } from "@/lib/clientApi";
+import { fetchWordbookReviews } from "@/lib/api/wordbook";
 
 import { useState } from "react";
 
@@ -38,9 +38,7 @@ export function MarketRatingReviews({
     setLoading(true);
     setError("");
     try {
-      const res = await apiFetch(`/api/wordbooks/${wordbookId}/reviews?take=20`, { cache: "no-store" });
-      const json = (await res.json()) as { reviews?: Review[]; error?: string };
-      if (!res.ok) throw new Error(json.error ?? "리뷰를 불러오지 못했습니다.");
+      const json = await fetchWordbookReviews({ wordbookId, take: 20 });
       setReviews(json.reviews ?? []);
     } catch (e) {
       setError(e instanceof Error ? e.message : "리뷰를 불러오지 못했습니다.");

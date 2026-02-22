@@ -9,7 +9,7 @@ import { useWordbookParting } from "@/components/wordbooks/useWordbookParting";
 import { DensityModeToggle } from "@/components/ui/DensityModeToggle";
 import { densityCardClass, useDensityMode } from "@/components/ui/useDensityMode";
 import { EmptyStateCard } from "@/components/ui/EmptyStateCard";
-import { apiFetch } from "@/lib/clientApi";
+import { fetchWordbookStudy } from "@/lib/api/study";
 import { sanitizeUserText } from "@/lib/textQuality";
 
 type ListMode = "listCorrect" | "listWrong" | "listHalf";
@@ -82,18 +82,14 @@ export function WordbookListClient({
       setLoading(true);
       setError("");
       try {
-        const qs = new URLSearchParams({
+        const json = (await fetchWordbookStudy({
+          wordbookId,
           view: mode,
-          page: "0",
-          take: String(partSize),
-          partSize: String(partSize),
-          partIndex: String(partIndex)
-        });
-        const res = await apiFetch(`/api/wordbooks/${wordbookId}/study?${qs.toString()}`, {
-          cache: "no-store"
-        });
-        const json = (await res.json()) as Payload;
-        if (!res.ok) throw new Error(json.error ?? "목록을 불러오지 못했습니다.");
+          page: 0,
+          take: partSize,
+          partSize,
+          partIndex
+        })) as Payload;
         setWordbookTitle(json.wordbook?.title ?? "");
         setItems(json.items ?? []);
         setTotalItems(json.paging?.totalItems ?? 0);

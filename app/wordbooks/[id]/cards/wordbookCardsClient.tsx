@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { apiFetch } from "@/lib/clientApi";
+import { fetchWordbookStudy } from "@/lib/api/study";
 import { sanitizeUserText } from "@/lib/textQuality";
 import { MeaningView } from "@/components/MeaningView";
 import { SpeakButton } from "@/components/wordbooks/SpeakButton";
@@ -14,14 +14,7 @@ type Item = {
   id: number;
   term: string;
   meaning: string;
-  pronunciation: string | null;
-};
-
-type StudyPayload = {
-  error?: string;
-  wordbook?: { title: string; fromLang?: string };
-  items?: Item[];
-  paging?: { totalFiltered: number; take: number };
+  pronunciation?: string | null;
 };
 
 function mulberry32(seed: number) {
@@ -104,27 +97,31 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
       setError("");
       setInfo("");
       try {
-        const firstRes = await apiFetch(`/api/wordbooks/${wordbookId}/study?view=memorize&page=0&take=200`, {
-          cache: "no-store"
+        const first = await fetchWordbookStudy({
+          wordbookId,
+          view: "memorize",
+          page: 0,
+          take: 200
         });
-        const first = (await firstRes.json()) as StudyPayload;
-        if (!firstRes.ok || !first.wordbook) {
-          throw new Error(first.error ?? "카드 데이터를 불러오지 못했습니다.");
-        }
+        if (!first.wordbook) throw new Error("카드 데이터를 불러오지 못했습니다.");
 
         const total = first.paging?.totalFiltered ?? (first.items?.length ?? 0);
         const take = first.paging?.take ?? 200;
         const pageCount = Math.max(1, Math.ceil(total / Math.max(take, 1)));
         const merged = [...(first.items ?? [])];
         if (pageCount > 1) {
-          const pagePromises = Array.from({ length: pageCount - 1 }, (_, idx) =>
-            apiFetch(`/api/wordbooks/${wordbookId}/study?view=memorize&page=${idx + 1}&take=${take}`, { cache: "no-store" })
+          const pagePayloads = await Promise.all(
+            Array.from({ length: pageCount - 1 }, (_, idx) =>
+              fetchWordbookStudy({
+                wordbookId,
+                view: "memorize",
+                page: idx + 1,
+                take
+              })
+            )
           );
-          const pageResponses = await Promise.all(pagePromises);
-          const pagePayloads = await Promise.all(pageResponses.map(async (res) => ({ ok: res.ok, json: (await res.json()) as StudyPayload })));
           for (const payload of pagePayloads) {
-            if (!payload.ok) throw new Error(payload.json.error ?? "카드 데이터를 불러오지 못했습니다.");
-            if (payload.json.items?.length) merged.push(...payload.json.items);
+            if (payload.items?.length) merged.push(...payload.items);
           }
         }
 

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { apiFetch } from "@/lib/clientApi";
+import { updateDailyGoal } from "@/lib/api/users";
 
 export function DailyGoalSetter({ initialGoal }: { initialGoal: number }) {
   const router = useRouter();
@@ -25,13 +25,7 @@ export function DailyGoalSetter({ initialGoal }: { initialGoal: number }) {
     setError("");
     setSuccess("");
     try {
-      const res = await apiFetch("/api/users/me/daily-goal", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dailyGoal: Math.floor(goalNum) })
-      });
-      const json = (await res.json()) as { error?: string };
-      if (!res.ok) throw new Error(json.error ?? "당일 목표 저장에 실패했습니다.");
+      await updateDailyGoal(Math.floor(goalNum));
       setSuccess("당일 목표가 저장되었습니다.");
       router.refresh();
     } catch (e) {

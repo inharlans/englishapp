@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { apiFetch } from "@/lib/clientApi";
+import { addWordbookItems } from "@/lib/api/wordbook";
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -72,13 +72,7 @@ export function AddItemsForm({ wordbookId }: Props) {
     setLoading(true);
     setError("");
     try {
-      const res = await apiFetch(`/api/wordbooks/${wordbookId}/items`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ items })
-      });
-      const json = (await res.json()) as { error?: string };
-      if (!res.ok) throw new Error(json.error ?? "추가에 실패했습니다.");
+      await addWordbookItems({ wordbookId, items });
       router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "추가에 실패했습니다.");

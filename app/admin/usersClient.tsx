@@ -1,78 +1,28 @@
 ﻿"use client";
 
-import { apiFetch } from "@/lib/clientApi";
-
-import { useState } from "react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import { UserPlanEditor } from "@/components/admin/UserPlanEditor";
+import {
+  getAdminMetrics,
+  getAdminReports,
+  getAdminUsers,
+  moderateAdminReport,
+  recomputeAdminWordbookRank,
+  type AdminErrorMetricRow,
+  type AdminQuizQualitySummary,
+  type AdminReportRow,
+  type AdminRouteMetricRow,
+  type AdminSloSummary,
+  type AdminUserRow
+} from "@/lib/api/admin";
 
-type UserRow = {
-  id: number;
-  email: string;
-  isAdmin: boolean;
-  plan: "FREE" | "PRO";
-  proUntil: string | null;
-  createdAt: string;
-};
-
-type ReportRow = {
-  id: number;
-  reason: string;
-  detail: string | null;
-  status: "OPEN" | "RESOLVED" | "DISMISSED";
-  reporterTrustScore: number;
-  createdAt: string;
-  reviewedAt: string | null;
-  moderatorNote: string | null;
-  reviewAction: string | null;
-  qualityScore: number;
-  previousStatus: "OPEN" | "RESOLVED" | "DISMISSED" | null;
-  nextStatus: "OPEN" | "RESOLVED" | "DISMISSED" | null;
-  reviewerIpHash: string | null;
-  reporter: { id: number; email: string };
-  reviewedBy: { id: number; email: string } | null;
-  wordbook: {
-    id: number;
-    title: string;
-    isPublic: boolean;
-    hiddenByAdmin: boolean;
-    owner: { id: number; email: string };
-  };
-};
-
-type RouteMetricRow = {
-  route: string;
-  total: number;
-  status4xx: number;
-  status5xx: number;
-  avgLatencyMs: number;
-  p95LatencyMs: number;
-};
-
-type ErrorMetricRow = {
-  id: number;
-  level: string;
-  route: string | null;
-  message: string;
-  createdAt: string;
-};
-
-type SloSummary = {
-  apiSuccessRate: number;
-  apiSuccessTarget: number;
-  cronSuccessRate: number;
-  cronSuccessTarget: number;
-  coreP95LatencyMs: number;
-  coreP95LatencyTargetMs: number;
-  violations: string[];
-};
-
-type QuizQualitySummary = {
-  wrongAnswers: number;
-  disputableWrongCount: number;
-  disputableWrongRate: number;
-};
+type UserRow = AdminUserRow;
+type ReportRow = AdminReportRow;
+type RouteMetricRow = AdminRouteMetricRow;
+type ErrorMetricRow = AdminErrorMetricRow;
+type SloSummary = AdminSloSummary;
+type QuizQualitySummary = AdminQuizQualitySummary;
 
 export function AdminUsersClient({ initialUsers }: { initialUsers: UserRow[] }) {
   const [users, setUsers] = useState<UserRow[]>(initialUsers);
@@ -89,43 +39,17 @@ export function AdminUsersClient({ initialUsers }: { initialUsers: UserRow[] }) 
     setRefreshing(true);
     setError("");
     try {
-      const res = await apiFetch("/api/admin/users");
-      const json = (await res.json()) as {
-        users?: Array<{
-          id: number;
-          email: string;
-          isAdmin: boolean;
-          plan: "FREE" | "PRO";
-          proUntil: string | null;
-          createdAt: string;
-        }>;
-        error?: string;
-      };
-      if (!res.ok) throw new Error(json.error ?? "불러오기에 실패했습니다.");
-      setUsers((json.users ?? []) as UserRow[]);
-
-      const reportRes = await apiFetch("/api/admin/reports");
-      const reportJson = (await reportRes.json()) as { reports?: ReportRow[]; error?: string };
-      if (!reportRes.ok) throw new Error(reportJson.error ?? "신고 목록을 불러오지 못했습니다.");
-      setReports((reportJson.reports ?? []).map((r) => ({
-        ...r,
-        createdAt: new Date(r.createdAt).toISOString(),
-        reviewedAt: r.reviewedAt ? new Date(r.reviewedAt).toISOString() : null
-      })));
-
-      const metricRes = await apiFetch("/api/admin/metrics");
-      const metricJson = (await metricRes.json()) as {
-        routeStats?: RouteMetricRow[];
-        recentErrors?: ErrorMetricRow[];
-        error?: string;
-        slo?: SloSummary;
-        quizQuality?: QuizQualitySummary;
-      };
-      if (!metricRes.ok) throw new Error(metricJson.error ?? "관측성 지표를 불러오지 못했습니다.");
-      setRouteMetrics(metricJson.routeStats ?? []);
-      setRecentErrors(metricJson.recentErrors ?? []);
-      setSlo(metricJson.slo ?? null);
-      setQuizQuality(metricJson.quizQuality ?? null);
+      const [users, reports, metrics] = await Promise.all([
+        getAdminUsers(),
+        getAdminReports(),
+        getAdminMetrics()
+      ]);
+      setUsers(users);
+      setReports(reports);
+      setRouteMetrics(metrics.routeStats);
+      setRecentErrors(metrics.recentErrors);
+      setSlo(metrics.slo);
+      setQuizQuality(metrics.quizQuality);
     } catch (e) {
       setError(e instanceof Error ? e.message : "불러오기에 실패했습니다.");
     } finally {
@@ -135,7 +59,6 @@ export function AdminUsersClient({ initialUsers }: { initialUsers: UserRow[] }) 
 
   useEffect(() => {
     void reload();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -153,13 +76,7 @@ export function AdminUsersClient({ initialUsers }: { initialUsers: UserRow[] }) 
               setRecomputing(true);
               setError("");
               try {
-                const res = await apiFetch("/api/admin/wordbooks/recompute-rank", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: "{}"
-                });
-                const json = (await res.json()) as { error?: string };
-                if (!res.ok) throw new Error(json.error ?? "재계산에 실패했습니다.");
+                await recomputeAdminWordbookRank();
                 await reload();
               } catch (e) {
                 setError(e instanceof Error ? e.message : "재계산에 실패했습니다.");
@@ -222,7 +139,7 @@ export function AdminUsersClient({ initialUsers }: { initialUsers: UserRow[] }) 
                 #{r.id} [{r.status}] {r.reason}
               </p>
               <p className="mt-1 text-xs text-slate-500">
-                단어장 #{r.wordbook.id} {r.wordbook.title} · 제작자 {r.wordbook.owner.email} / 신고자{" "}
+                단어장 #{r.wordbook.id} {r.wordbook.title} · 제작자 {r.wordbook.owner.email} / 신고자 {" "}
                 {r.reporter.email}
               </p>
               {r.detail ? <p className="mt-2 text-sm text-slate-700">{r.detail}</p> : null}
@@ -245,11 +162,7 @@ export function AdminUsersClient({ initialUsers }: { initialUsers: UserRow[] }) 
                     data-testid="admin-report-reviewing"
                     onClick={async () => {
                       const note = window.prompt("검토 메모 (선택):", "") ?? "";
-                      await apiFetch(`/api/admin/reports/${r.id}`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ action: "review", note })
-                      });
+                      await moderateAdminReport({ reportId: r.id, action: "review", note });
                       await reload();
                     }}
                     className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold hover:bg-slate-50"
@@ -260,11 +173,7 @@ export function AdminUsersClient({ initialUsers }: { initialUsers: UserRow[] }) 
                     type="button"
                     data-testid="admin-report-resolve"
                     onClick={async () => {
-                      await apiFetch(`/api/admin/reports/${r.id}`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ action: "resolve" })
-                      });
+                      await moderateAdminReport({ reportId: r.id, action: "resolve" });
                       await reload();
                     }}
                     className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-800 hover:bg-blue-100"
@@ -276,11 +185,7 @@ export function AdminUsersClient({ initialUsers }: { initialUsers: UserRow[] }) 
                     data-testid="admin-report-dismiss"
                     onClick={async () => {
                       const note = window.prompt("관리자 메모 (선택):", "") ?? "";
-                      await apiFetch(`/api/admin/reports/${r.id}`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ action: "dismiss", note })
-                      });
+                      await moderateAdminReport({ reportId: r.id, action: "dismiss", note });
                       await reload();
                     }}
                     className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold hover:bg-slate-50"
@@ -292,11 +197,7 @@ export function AdminUsersClient({ initialUsers }: { initialUsers: UserRow[] }) 
                     data-testid="admin-report-hide"
                     onClick={async () => {
                       const note = window.prompt("이 단어장을 숨기고 신고를 처리합니다. 메모:", "") ?? "";
-                      await apiFetch(`/api/admin/reports/${r.id}`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ action: "hide", note })
-                      });
+                      await moderateAdminReport({ reportId: r.id, action: "hide", note });
                       await reload();
                     }}
                     className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-800 hover:bg-blue-100"
@@ -401,7 +302,3 @@ export function AdminUsersClient({ initialUsers }: { initialUsers: UserRow[] }) 
     </section>
   );
 }
-
-
-
-

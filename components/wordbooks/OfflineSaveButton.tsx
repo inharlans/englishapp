@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { apiFetch } from "@/lib/clientApi";
+import { fetchWordbookDetail } from "@/lib/api/wordbook";
 
 import { useState } from "react";
 
@@ -11,16 +11,6 @@ type Props = {
   className?: string;
 };
 
-type ApiWordbookDetail = {
-  id: number;
-  title: string;
-  description: string | null;
-  fromLang: string;
-  toLang: string;
-  owner?: { email: string };
-  items: Array<{ term: string; meaning: string; pronunciation: string | null }>;
-};
-
 export function OfflineSaveButton({ wordbookId, className }: Props) {
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string>("");
@@ -29,11 +19,7 @@ export function OfflineSaveButton({ wordbookId, className }: Props) {
     setSaving(true);
     setMsg("");
     try {
-      const res = await apiFetch(`/api/wordbooks/${wordbookId}`, { method: "GET" });
-      const json = (await res.json()) as { wordbook?: ApiWordbookDetail; error?: string };
-      if (!res.ok) throw new Error(json.error ?? "단어장을 불러오지 못했습니다.");
-      const wb = json.wordbook;
-      if (!wb) throw new Error("응답 형식이 올바르지 않습니다.");
+      const wb = await fetchWordbookDetail(wordbookId);
       await saveOfflineWordbook({
         id: wb.id,
         title: wb.title,

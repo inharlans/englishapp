@@ -1,9 +1,9 @@
 ﻿"use client";
 
-import { apiFetch } from "@/lib/clientApi";
-
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+
+import { deleteWordbook } from "@/lib/api/wordbook";
 
 type Props = {
   wordbookId: number;
@@ -20,9 +20,7 @@ export function DeleteWordbookButton({ wordbookId }: Props) {
     setLoading(true);
     setError("");
     try {
-      const res = await apiFetch(`/api/wordbooks/${wordbookId}`, { method: "DELETE" });
-      const json = (await res.json()) as { ok?: boolean; error?: string };
-      if (!res.ok) throw new Error(json.error ?? "삭제에 실패했습니다.");
+      await deleteWordbook(wordbookId);
       const href = "/wordbooks";
       router.replace(href as unknown as Parameters<typeof router.replace>[0]);
       router.refresh();
@@ -47,7 +45,3 @@ export function DeleteWordbookButton({ wordbookId }: Props) {
     </div>
   );
 }
-
-
-
-

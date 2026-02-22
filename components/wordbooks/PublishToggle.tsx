@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { apiFetch } from "@/lib/clientApi";
+import { setWordbookPublic } from "@/lib/api/wordbook";
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -19,13 +19,7 @@ export function PublishToggle({ wordbookId, isPublic }: Props) {
     setLoading(true);
     setError("");
     try {
-      const res = await apiFetch(`/api/wordbooks/${wordbookId}/publish`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isPublic: !isPublic })
-      });
-      const json = (await res.json()) as { wordbook?: { id: number; isPublic: boolean }; error?: string };
-      if (!res.ok) throw new Error(json.error ?? "변경에 실패했습니다.");
+      await setWordbookPublic({ wordbookId, isPublic: !isPublic });
       router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "변경에 실패했습니다.");

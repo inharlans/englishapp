@@ -1,13 +1,12 @@
 ﻿"use client";
 
-import { apiFetch } from "@/lib/clientApi";
-
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { MeaningView } from "@/components/MeaningView";
 import { SpeakButton } from "@/components/wordbooks/SpeakButton";
 import { useMeaningViewMode } from "@/components/wordbooks/useMeaningViewMode";
+import { deleteWordbookItem, updateWordbookItem } from "@/lib/api/wordbook";
 
 type Item = {
   id: number;
@@ -41,19 +40,15 @@ export function WordbookItemRow({ wordbookId, item, editable, speakLang }: Props
     setSaving(true);
     setError("");
     try {
-      const res = await apiFetch(`/api/wordbooks/${wordbookId}/items/${item.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          term,
-          meaning,
-          pronunciation: pron ? pron : null,
-          example: example ? example : null,
-          exampleMeaning: exampleMeaning ? exampleMeaning : null
-        })
+      await updateWordbookItem({
+        wordbookId,
+        itemId: item.id,
+        term,
+        meaning,
+        pronunciation: pron ? pron : null,
+        example: example ? example : null,
+        exampleMeaning: exampleMeaning ? exampleMeaning : null
       });
-      const json = (await res.json()) as { item?: Item; error?: string };
-      if (!res.ok) throw new Error(json.error ?? "저장에 실패했습니다.");
       router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "저장에 실패했습니다.");
@@ -68,9 +63,7 @@ export function WordbookItemRow({ wordbookId, item, editable, speakLang }: Props
     setSaving(true);
     setError("");
     try {
-      const res = await apiFetch(`/api/wordbooks/${wordbookId}/items/${item.id}`, { method: "DELETE" });
-      const json = (await res.json()) as { ok?: boolean; error?: string };
-      if (!res.ok) throw new Error(json.error ?? "삭제에 실패했습니다.");
+      await deleteWordbookItem({ wordbookId, itemId: item.id });
       router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "삭제에 실패했습니다.");
@@ -153,9 +146,7 @@ export function WordbookItemRow({ wordbookId, item, editable, speakLang }: Props
             <p className="text-sm font-semibold text-slate-900">
               {item.term}{" "}
               {item.pronunciation ? (
-                <span className="ml-2 text-xs font-normal text-slate-500">
-                  [{item.pronunciation}]
-                </span>
+                <span className="ml-2 text-xs font-normal text-slate-500">[{item.pronunciation}]</span>
               ) : null}
             </p>
             <MeaningView value={item.meaning} mode={mode} className="mt-1 text-sm text-slate-700" />
@@ -172,5 +163,3 @@ export function WordbookItemRow({ wordbookId, item, editable, speakLang }: Props
     </div>
   );
 }
-
-

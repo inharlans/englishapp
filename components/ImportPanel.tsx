@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { apiFetch } from "@/lib/clientApi";
+import { importWordsRaw } from "@/lib/api/words";
 
 import { useState } from "react";
 
@@ -21,15 +21,7 @@ export function ImportPanel() {
     setMessage("");
 
     try {
-      const res = await apiFetch("/api/words/import", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rawText })
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error ?? "가져오기에 실패했습니다.");
-      }
+      const data = await importWordsRaw(rawText);
       setMessage(
         `완료: ${data.importedCount}개 추가, ${data.skippedCount}개 건너뜀 (구분자: ${data.delimiter})`
       );

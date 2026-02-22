@@ -1,6 +1,6 @@
 "use client";
 
-import { apiFetch } from "@/lib/clientApi";
+import { createWordbook, saveWordbookItems } from "@/lib/api/wordbook";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
@@ -292,38 +292,25 @@ export default function NewWordbookPage() {
     setError("");
     setStatus("");
     try {
-      const createRes = await apiFetch("/api/wordbooks", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: title.trim(),
-          description: description.trim() ? description.trim() : null,
-          fromLang: fromLang.trim() || "en",
-          toLang: toLang.trim() || "ko"
-        })
+      const { id: wordbookId } = await createWordbook({
+        title: title.trim(),
+        description: description.trim() ? description.trim() : null,
+        fromLang: fromLang.trim() || "en",
+        toLang: toLang.trim() || "ko"
       });
-      const createJson = (await createRes.json()) as { wordbook?: { id: number }; error?: string };
-      if (!createRes.ok || !createJson.wordbook?.id) {
-        throw new Error(createJson.error ?? "단어장 생성에 실패했습니다.");
-      }
-
-      const wordbookId = createJson.wordbook.id;
-      const saveRes = await apiFetch(`/api/wordbooks/${wordbookId}/items`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ items: finalItems })
-      });
-
-      if (!saveRes.ok) {
-        const saveJson = (await saveRes.json().catch(() => ({}))) as { error?: string };
+      try {
+        await saveWordbookItems({ wordbookId, items: finalItems });
+      } catch (saveError) {
         if (typeof window !== "undefined") {
           window.localStorage.setItem(`pending_wordbook_items_${wordbookId}`, JSON.stringify(finalItems));
           window.localStorage.setItem(
             `wordbook_flash_${wordbookId}`,
-            "단어장은 생성됐지만 단어 저장에 실패했습니다. 다시 시도해 주세요."
+            "Wordbook was created, but saving items failed. Please try again."
           );
         }
-        setStatus(saveJson.error ?? "단어장은 생성됐지만 단어 저장에 실패했습니다.");
+        setStatus(
+          saveError instanceof Error ? saveError.message : "Wordbook was created, but saving items failed."
+        );
         router.replace(`/wordbooks/${wordbookId}` as unknown as Parameters<typeof router.replace>[0]);
         return;
       }

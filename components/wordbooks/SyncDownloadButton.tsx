@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { apiFetch } from "@/lib/clientApi";
+import { syncDownloadedWordbook } from "@/lib/api/wordbook";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -19,18 +19,7 @@ export function SyncDownloadButton({ wordbookId }: Props) {
     setError("");
     setMessage("");
     try {
-      const res = await apiFetch(`/api/wordbooks/${wordbookId}/sync-download`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ preserveStudyState })
-      });
-      const json = (await res.json()) as {
-        ok?: boolean;
-        error?: string;
-        summary?: { addedCount: number; updatedCount: number; deletedCount: number };
-      };
-      if (!res.ok) throw new Error(json.error ?? "동기화에 실패했습니다.");
-      const s = json.summary ?? { addedCount: 0, updatedCount: 0, deletedCount: 0 };
+      const s = await syncDownloadedWordbook({ wordbookId, preserveStudyState });
       setMessage(`동기화 완료: +${s.addedCount} / ~${s.updatedCount} / -${s.deletedCount}`);
       router.refresh();
     } catch (e) {

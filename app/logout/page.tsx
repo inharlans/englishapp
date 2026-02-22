@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { apiFetch } from "@/lib/clientApi";
+import { logoutSession } from "@/lib/api/auth";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -17,7 +17,7 @@ export default function LogoutPage() {
       try {
         setError("");
         setStatus("로그아웃 중...");
-        await apiFetch("/api/auth/logout", { method: "POST" });
+        await logoutSession();
         if (cancelled) return;
         setStatus("로그아웃되었습니다. 로그인 화면으로 이동합니다.");
         router.replace("/login");

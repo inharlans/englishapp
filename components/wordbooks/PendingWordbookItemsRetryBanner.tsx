@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import { apiFetch } from "@/lib/clientApi";
+import { addWordbookItems } from "@/lib/api/wordbook";
 
 type PendingItem = {
   position: number;
@@ -58,13 +58,7 @@ export function PendingWordbookItemsRetryBanner({ wordbookId }: { wordbookId: nu
     setRetrying(true);
     setError("");
     try {
-      const res = await apiFetch(`/api/wordbooks/${wordbookId}/items`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ items: pending })
-      });
-      const json = (await res.json()) as { error?: string };
-      if (!res.ok) throw new Error(json.error ?? "단어 저장 재시도에 실패했습니다.");
+      await addWordbookItems({ wordbookId, items: pending });
       if (typeof window !== "undefined") {
         window.localStorage.removeItem(`pending_wordbook_items_${wordbookId}`);
       }

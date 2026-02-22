@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { apiFetch } from "@/lib/clientApi";
+import { rateWordbook } from "@/lib/api/wordbook";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -28,13 +28,11 @@ export function RateBox({ wordbookId, ratingAvg, ratingCount, myRating, myReview
     setLoading(true);
     setError("");
     try {
-      const res = await apiFetch(`/api/wordbooks/${wordbookId}/rate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rating, review: review.trim() ? review.trim() : null })
+      await rateWordbook({
+        wordbookId,
+        rating,
+        review: review.trim() ? review.trim() : null
       });
-      const json = (await res.json()) as { ok?: boolean; error?: string };
-      if (!res.ok) throw new Error(json.error ?? "평가 저장에 실패했습니다.");
       router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "평가 저장에 실패했습니다.");

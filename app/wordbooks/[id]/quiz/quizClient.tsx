@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { apiFetch } from "@/lib/clientApi";
+import { fetchWordbookQuizQuestion, submitWordbookQuizAnswer, type QuizItem, type QuizMode } from "@/lib/api/quiz";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Route } from "next";
@@ -15,42 +15,10 @@ import { useDensityMode } from "@/components/ui/useDensityMode";
 import { EmptyStateCard } from "@/components/ui/EmptyStateCard";
 import { sanitizeUserText } from "@/lib/textQuality";
 
-type QuizItem = {
-  id: number;
-  term: string;
-  meaning: string;
-  example: string | null;
-  exampleMeaning: string | null;
-};
-
-type QuizMode = "MEANING" | "WORD";
-
 type Props = {
   wordbookId: number;
   initialMode?: QuizMode;
   lockMode?: boolean;
-};
-
-type LoadPayload = {
-  item?: QuizItem | null;
-  error?: string;
-  totalItems?: number;
-  partItemCount?: number;
-};
-
-type SubmitPayload = {
-  correct?: boolean;
-  correctAnswer?: { term: string; meaning: string };
-  acceptedMeaningAnswers?: string[];
-  gradingDiagnosis?: {
-    input: string;
-    normalizedInput: string;
-    closestAccepted: string;
-    similarityScore: number;
-    potentiallyDisputable: boolean;
-    reason: string;
-  };
-  error?: string;
 };
 
 function parseBoundedInt(raw: string, fallback: number, min: number, max: number) {
@@ -150,16 +118,12 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
     setAnswer("");
     setFeedback(null);
     try {
-      const qs = new URLSearchParams({
+      const json = await fetchWordbookQuizQuestion({
+        wordbookId,
         mode,
-        partSize: String(partSize),
-        partIndex: String(partIndex)
+        partSize,
+        partIndex
       });
-      const res = await apiFetch(`/api/wordbooks/${wordbookId}/quiz?${qs.toString()}`, {
-        cache: "no-store"
-      });
-      const json = (await res.json()) as LoadPayload;
-      if (!res.ok) throw new Error(json.error ?? "문제를 불러오지 못했습니다.");
       if (!mountedRef.current || requestSeqRef.current !== requestSeq) return;
       setItem(json.item ?? null);
       setTotalItems(json.totalItems ?? 0);
@@ -311,13 +275,12 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
     setLoading(true);
     setMessage("");
     try {
-      const res = await apiFetch(`/api/wordbooks/${wordbookId}/quiz/submit`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ itemId: item.id, mode, answer: answer.trim() })
+      const json = await submitWordbookQuizAnswer({
+        wordbookId,
+        itemId: item.id,
+        mode,
+        answer: answer.trim()
       });
-      const json = (await res.json()) as SubmitPayload;
-      if (!res.ok) throw new Error(json.error ?? "제출에 실패했습니다.");
       setAttempts((v) => v + 1);
       setPartAttempts((v) => v + 1);
       setPartSolvedIds((prev) => {

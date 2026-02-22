@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { apiFetch } from "@/lib/clientApi";
+import { reportWordbook } from "@/lib/api/wordbook";
 
 type Props = {
   wordbookId: number;
@@ -30,13 +30,7 @@ export function ReportWordbookButton({ wordbookId, hideHint = false }: Props) {
     setLoading(true);
     setMessage("");
     try {
-      const res = await apiFetch(`/api/wordbooks/${wordbookId}/report`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reason: reason.trim(), detail: detail.trim() || null })
-      });
-      const json = (await res.json()) as { error?: string };
-      if (!res.ok) throw new Error(json.error ?? "처리에 실패했습니다.");
+      await reportWordbook({ wordbookId, reason: reason.trim(), detail: detail.trim() || null });
       setMessage("신고가 접수되었습니다.");
       setOpen(false);
       setDetail("");

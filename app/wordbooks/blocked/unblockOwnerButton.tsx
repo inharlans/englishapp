@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { apiFetch } from "@/lib/clientApi";
+import { unblockOwner } from "@/lib/api/blockedOwners";
 
 export function UnblockOwnerButton({ ownerId, ownerEmail }: { ownerId: number; ownerEmail: string }) {
   const router = useRouter();
@@ -19,13 +19,7 @@ export function UnblockOwnerButton({ ownerId, ownerEmail }: { ownerId: number; o
     setError("");
     setStatus("");
     try {
-      const res = await apiFetch("/api/blocked-owners", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ownerId })
-      });
-      const json = (await res.json()) as { error?: string };
-      if (!res.ok) throw new Error(json.error ?? "차단 해제에 실패했습니다.");
+      await unblockOwner(ownerId);
       setStatus("차단을 해제했습니다.");
       router.refresh();
     } catch (e) {
