@@ -7,7 +7,7 @@
 )
 
 $ErrorActionPreference = "Stop"
-$projectRoot = Split-Path -Parent $PSScriptRoot
+$projectRoot = (Get-Location).Path
 $runtimeDir = Join-Path $projectRoot ".loop"
 New-Item -ItemType Directory -Path $runtimeDir -Force | Out-Null
 $devOutLog = Join-Path $runtimeDir "dev-server.out.log"
