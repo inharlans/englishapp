@@ -9,8 +9,8 @@
  *   data/extracted/moel/moel.wordlist.txt (one entry per line)
  *
  * Usage:
- *   node scripts/extract-moel-xlsx.mjs
- *   node scripts/extract-moel-xlsx.mjs --in <xlsx> --out <txt>
+ *   node scripts/data/extract-moel-xlsx.mjs
+ *   node scripts/data/extract-moel-xlsx.mjs --in <xlsx> --out <txt>
  */
 
 import fs from "node:fs";
@@ -89,7 +89,7 @@ function main() {
     process.stdout.write(
       [
         "Usage:",
-        "  node scripts/extract-moel-xlsx.mjs [--in <xlsx>] [--out <txt>] [--sheet <name>]",
+        "  node scripts/data/extract-moel-xlsx.mjs [--in <xlsx>] [--out <txt>] [--sheet <name>]",
         "",
       ].join("\n"),
     );
@@ -98,7 +98,7 @@ function main() {
 
   const inPath = path.resolve(process.cwd(), args.in || pickDefaultMoelXlsx() || "");
   if (!inPath || !fs.existsSync(inPath)) {
-    throw new Error("MOEL xlsx not found. Run: node scripts/crawl-ngsl-family.mjs");
+    throw new Error("MOEL xlsx not found. Run: node scripts/data/crawl-ngsl-family.mjs");
   }
 
   const wb = xlsx.readFile(inPath, { cellDates: false });

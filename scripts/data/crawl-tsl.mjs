@@ -7,8 +7,8 @@
  * - NGSL "TOEIC Service List" (TSL) 1.1 alphabetized list (CC BY-SA 4.0).
  *
  * Usage:
- *   node scripts/crawl-tsl.mjs
- *   node scripts/crawl-tsl.mjs --outDir data/crawled/ngsl
+ *   node scripts/data/crawl-tsl.mjs
+ *   node scripts/data/crawl-tsl.mjs --outDir data/crawled/ngsl
  */
 
 import fs from "node:fs";
@@ -40,7 +40,7 @@ async function main() {
   const args = parseArgs(process.argv);
   if (args.help) {
     process.stdout.write(
-      ["Usage:", "  node scripts/crawl-tsl.mjs [--outDir data/crawled/ngsl]", ""].join("\n"),
+      ["Usage:", "  node scripts/data/crawl-tsl.mjs [--outDir data/crawled/ngsl]", ""].join("\n"),
     );
     return;
   }

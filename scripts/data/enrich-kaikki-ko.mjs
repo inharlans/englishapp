@@ -6,7 +6,7 @@
  * Data source: https://kaikki.org (derived from Wiktionary; CC BY-SA 4.0 / GFDL).
  *
  * Usage:
- *   node scripts/enrich-kaikki-ko.mjs --in data/wordbooks/ngsl/1~500\ NGSL\ 1.2.generated.tsv --out data/wordbooks-ko/ngsl/1~500\ NGSL\ 1.2.generated.tsv
+ *   node scripts/data/enrich-kaikki-ko.mjs --in data/wordbooks/ngsl/1~500\ NGSL\ 1.2.generated.tsv --out data/wordbooks-ko/ngsl/1~500\ NGSL\ 1.2.generated.tsv
  *
  * Notes:
  * - This keeps the existing `en` as the lookup term. If Kaikki has no KO translations,
@@ -16,7 +16,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { ensureDir, fetchKoForWords } from "./lib/kaikki-ko.mjs";
+import { ensureDir, fetchKoForWords } from "../lib/kaikki-ko.mjs";
 
 function parseArgs(argv) {
   const args = {
@@ -78,7 +78,7 @@ async function main() {
     process.stdout.write(
       [
         "Usage:",
-        "  node scripts/enrich-kaikki-ko.mjs --in <input.tsv> --out <output.tsv> [--cacheDir data/cache/kaikki] [--concurrency 4] [--minFill 0.6]",
+        "  node scripts/data/enrich-kaikki-ko.mjs --in <input.tsv> --out <output.tsv> [--cacheDir data/cache/kaikki] [--concurrency 4] [--minFill 0.6]",
         "",
       ].join("\n"),
     );

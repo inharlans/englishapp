@@ -17,7 +17,7 @@
  * - data/wordbooks-ko/derived/*.generated.tsv
  *
  * Usage:
- *   node scripts/build-derived-level-wordbooks.mjs
+ *   node scripts/data/build-derived-level-wordbooks.mjs
  */
 
 import fs from "node:fs";

@@ -5,7 +5,7 @@
  * Note: This produces an empty `ko` column (TSL doesn't include Korean meanings).
  *
  * Usage:
- *   node scripts/extract-tsl.mjs --in data/crawled/ngsl/tsl_11_alphabetized_description.txt --out data/extracted/tsl_11.words.generated.tsv
+ *   node scripts/data/extract-tsl.mjs --in data/crawled/ngsl/tsl_11_alphabetized_description.txt --out data/extracted/tsl_11.words.generated.tsv
  */
 
 import fs from "node:fs";
@@ -58,7 +58,7 @@ function main() {
     process.stdout.write(
       [
         "Usage:",
-        "  node scripts/extract-tsl.mjs --in <tsl_txt> --out <generated_tsv>",
+        "  node scripts/data/extract-tsl.mjs --in <tsl_txt> --out <generated_tsv>",
         "",
       ].join("\n"),
     );

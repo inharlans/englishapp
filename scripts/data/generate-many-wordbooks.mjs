@@ -11,8 +11,8 @@
  *   data/wordbooks/<slug>/<range> <title>.generated.tsv
  *
  * Usage:
- *   node scripts/generate-many-wordbooks.mjs
- *   node scripts/generate-many-wordbooks.mjs --chunk 500
+ *   node scripts/data/generate-many-wordbooks.mjs
+ *   node scripts/data/generate-many-wordbooks.mjs --chunk 500
  */
 
 import fs from "node:fs";
@@ -49,7 +49,7 @@ function findFirstStatsCsv(dir) {
 function main() {
   const args = parseArgs(process.argv);
   if (args.help) {
-    process.stdout.write(["Usage:", "  node scripts/generate-many-wordbooks.mjs [--chunk 500]", ""].join("\n"));
+    process.stdout.write(["Usage:", "  node scripts/data/generate-many-wordbooks.mjs [--chunk 500]", ""].join("\n"));
     return;
   }
 

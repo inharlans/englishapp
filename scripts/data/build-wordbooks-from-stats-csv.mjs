@@ -10,7 +10,7 @@
  * - Range TSV files compatible with this repo's seeding: "1~500 <title>.generated.tsv"
  *
  * Usage:
- *   node scripts/build-wordbooks-from-stats-csv.mjs --in data/crawled/ngsl-family/ngsl/NGSL_12_stats.csv --title "NGSL 1.2" --outDir data/wordbooks/ngsl --chunk 500 --max 2500
+ *   node scripts/data/build-wordbooks-from-stats-csv.mjs --in data/crawled/ngsl-family/ngsl/NGSL_12_stats.csv --title "NGSL 1.2" --outDir data/wordbooks/ngsl --chunk 500 --max 2500
  */
 
 import fs from "node:fs";
@@ -147,7 +147,7 @@ function main() {
     process.stdout.write(
       [
         "Usage:",
-        "  node scripts/build-wordbooks-from-stats-csv.mjs --in <stats.csv> --title <title> --outDir <dir> [--chunk 500] [--max 2500]",
+        "  node scripts/data/build-wordbooks-from-stats-csv.mjs --in <stats.csv> --title <title> --outDir <dir> [--chunk 500] [--max 2500]",
         "",
       ].join("\n"),
     );

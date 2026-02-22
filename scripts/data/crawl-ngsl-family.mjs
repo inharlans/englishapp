@@ -14,8 +14,8 @@
  * - MOEL 1.0 (Medical Oral English List) [xlsx]
  *
  * Usage:
- *   node scripts/crawl-ngsl-family.mjs
- *   node scripts/crawl-ngsl-family.mjs --outDir data/crawled/ngsl-family
+ *   node scripts/data/crawl-ngsl-family.mjs
+ *   node scripts/data/crawl-ngsl-family.mjs --outDir data/crawled/ngsl-family
  */
 
 import fs from "node:fs";
@@ -63,7 +63,7 @@ async function main() {
   const args = parseArgs(process.argv);
   if (args.help) {
     process.stdout.write(
-      ["Usage:", "  node scripts/crawl-ngsl-family.mjs [--outDir data/crawled/ngsl-family]", ""].join(
+      ["Usage:", "  node scripts/data/crawl-ngsl-family.mjs [--outDir data/crawled/ngsl-family]", ""].join(
         "\n",
       ),
     );

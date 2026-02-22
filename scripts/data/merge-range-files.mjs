@@ -8,7 +8,7 @@
  *     -> "1~200 토익 영단어.txt"
  *
  * Usage:
- *   node scripts/merge-range-files.mjs --inDir data/crawled --outDir data/merged
+ *   node scripts/data/merge-range-files.mjs --inDir data/crawled --outDir data/merged
  */
 
 import fs from "node:fs";
@@ -56,7 +56,7 @@ function main() {
     process.stdout.write(
       [
         "Usage:",
-        "  node scripts/merge-range-files.mjs --inDir <dir> --outDir <dir>",
+        "  node scripts/data/merge-range-files.mjs --inDir <dir> --outDir <dir>",
         "",
       ].join("\n"),
     );

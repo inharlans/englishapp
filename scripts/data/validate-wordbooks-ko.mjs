@@ -8,8 +8,8 @@
  * - ko begins with "(" and contains at least one "(명)/(동)/(형)/(부)" etc.
  *
  * Usage:
- *   node scripts/validate-wordbooks-ko.mjs
- *   node scripts/validate-wordbooks-ko.mjs --fixDelete
+ *   node scripts/data/validate-wordbooks-ko.mjs
+ *   node scripts/data/validate-wordbooks-ko.mjs --fixDelete
  *
  * If --fixDelete is set, invalid files are deleted (within data/wordbooks-ko only).
  */
@@ -75,7 +75,7 @@ function safeDelete(baseDir, filePath) {
 function main() {
   const args = parseArgs(process.argv);
   if (args.help) {
-    process.stdout.write(["Usage:", "  node scripts/validate-wordbooks-ko.mjs [--fixDelete]", ""].join("\n"));
+    process.stdout.write(["Usage:", "  node scripts/data/validate-wordbooks-ko.mjs [--fixDelete]", ""].join("\n"));
     return;
   }
 

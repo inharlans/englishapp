@@ -7,8 +7,8 @@
  * and the run continues.
  *
  * Usage:
- *   node scripts/enrich-all-wordbooks.mjs
- *   node scripts/enrich-all-wordbooks.mjs --minFill 0.5 --concurrency 6
+ *   node scripts/data/enrich-all-wordbooks.mjs
+ *   node scripts/data/enrich-all-wordbooks.mjs --minFill 0.5 --concurrency 6
  */
 
 import fs from "node:fs";
@@ -53,7 +53,7 @@ function main() {
     process.stdout.write(
       [
         "Usage:",
-        "  node scripts/enrich-all-wordbooks.mjs [--minFill 0.6] [--concurrency 4]",
+        "  node scripts/data/enrich-all-wordbooks.mjs [--minFill 0.6] [--concurrency 4]",
         "",
       ].join("\n"),
     );

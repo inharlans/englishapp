@@ -13,12 +13,12 @@
  * - "<start>~<end> <title>.txt" with "en\tko" per line (human friendly)
  *
  * Usage:
- *   node scripts/build-wordbooks-ko-from-stats-csv.mjs --in data/crawled/ngsl-family/ngsl/NGSL_1.2_stats.csv --title "NGSL 1.2 (KO)" --outDir data/wordbooks-ko/ngsl --chunk 300 --max 2400
+ *   node scripts/data/build-wordbooks-ko-from-stats-csv.mjs --in data/crawled/ngsl-family/ngsl/NGSL_1.2_stats.csv --title "NGSL 1.2 (KO)" --outDir data/wordbooks-ko/ngsl --chunk 300 --max 2400
  */
 
 import fs from "node:fs";
 import path from "node:path";
-import { ensureDir, fetchKoForWords } from "./lib/kaikki-ko.mjs";
+import { ensureDir, fetchKoForWords } from "../lib/kaikki-ko.mjs";
 
 function parseArgs(argv) {
   const args = {
@@ -155,7 +155,7 @@ async function main() {
     process.stdout.write(
       [
         "Usage:",
-        "  node scripts/build-wordbooks-ko-from-stats-csv.mjs --in <stats.csv> --title <title> --outDir <dir> [--chunk 300] [--max 2400] [--concurrency 6] [--minBooks 1]",
+        "  node scripts/data/build-wordbooks-ko-from-stats-csv.mjs --in <stats.csv> --title <title> --outDir <dir> [--chunk 300] [--max 2400] [--concurrency 6] [--minBooks 1]",
         "",
       ].join("\n"),
     );

@@ -7,8 +7,8 @@
  * - Low-quality sources are discarded automatically by QC.
  *
  * Usage:
- *   node scripts/generate-many-wordbooks-ko.mjs
- *   node scripts/generate-many-wordbooks-ko.mjs --chunk 300 --max 2100
+ *   node scripts/data/generate-many-wordbooks-ko.mjs
+ *   node scripts/data/generate-many-wordbooks-ko.mjs --chunk 300 --max 2100
  */
 
 import fs from "node:fs";
@@ -53,7 +53,7 @@ function main() {
     process.stdout.write(
       [
         "Usage:",
-        "  node scripts/generate-many-wordbooks-ko.mjs [--chunk 300] [--max 2100] [--concurrency 6] [--minBooksPerList 1]",
+        "  node scripts/data/generate-many-wordbooks-ko.mjs [--chunk 300] [--max 2100] [--concurrency 6] [--minBooksPerList 1]",
         "",
       ].join("\n"),
     );

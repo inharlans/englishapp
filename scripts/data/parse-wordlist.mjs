@@ -10,8 +10,8 @@
  *   index  en  ko
  *
  * Usage:
- *   node scripts/parse-wordlist.mjs --in input.txt --out words.generated.tsv
- *   type input.txt | node scripts/parse-wordlist.mjs > words.generated.tsv
+ *   node scripts/data/parse-wordlist.mjs --in input.txt --out words.generated.tsv
+ *   type input.txt | node scripts/data/parse-wordlist.mjs > words.generated.tsv
  */
 
 import fs from "node:fs";
@@ -90,8 +90,8 @@ function main() {
     process.stdout.write(
       [
         "Usage:",
-        "  node scripts/parse-wordlist.mjs --in input.txt --out words.generated.tsv",
-        "  type input.txt | node scripts/parse-wordlist.mjs > words.generated.tsv",
+        "  node scripts/data/parse-wordlist.mjs --in input.txt --out words.generated.tsv",
+        "  type input.txt | node scripts/data/parse-wordlist.mjs > words.generated.tsv",
         "",
       ].join("\n"),
     );

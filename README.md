@@ -221,12 +221,12 @@ npm run auto:loop
 
 예시(5분 주기, 지정 명령 무한 반복):
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts/auto-loop-runner.ps1 -IntervalMinutes 5 -CycleCommand "npm run typecheck"
+powershell -ExecutionPolicy Bypass -File scripts/ops/auto-loop-runner.ps1 -IntervalMinutes 5 -CycleCommand "npm run typecheck"
 ```
 
 예시(체인 명령 + 타임아웃/연속실패/로그):
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts/auto-loop-runner.ps1 -IntervalMinutes 5 -CycleCommand "npm run typecheck && npm test" -TimeoutMinutes 8 -MaxConsecutiveFailures 2 -LogPath ".\auto-loop.log"
+powershell -ExecutionPolicy Bypass -File scripts/ops/auto-loop-runner.ps1 -IntervalMinutes 5 -CycleCommand "npm run typecheck && npm test" -TimeoutMinutes 8 -MaxConsecutiveFailures 2 -LogPath ".\auto-loop.log"
 ```
 
 ## 필수 환경 변수(대표)

@@ -13,12 +13,12 @@
  * - If not enough entries for 1 chunk, delete outputs in outDir and fail.
  *
  * Usage:
- *   node scripts/build-wordbooks-ko-from-wordlist.mjs --in data/extracted/moel/moel.wordlist.txt --title "MOEL 1.0" --outDir data/wordbooks-ko/moel --chunk 150 --max 600
+ *   node scripts/data/build-wordbooks-ko-from-wordlist.mjs --in data/extracted/moel/moel.wordlist.txt --title "MOEL 1.0" --outDir data/wordbooks-ko/moel --chunk 150 --max 600
  */
 
 import fs from "node:fs";
 import path from "node:path";
-import { ensureDir, fetchKoForWords } from "./lib/kaikki-ko.mjs";
+import { ensureDir, fetchKoForWords } from "../lib/kaikki-ko.mjs";
 
 function parseArgs(argv) {
   const args = {
@@ -100,7 +100,7 @@ async function main() {
     process.stdout.write(
       [
         "Usage:",
-        "  node scripts/build-wordbooks-ko-from-wordlist.mjs --in <list.txt> --title <title> --outDir <dir> [--chunk 150] [--max 600]",
+        "  node scripts/data/build-wordbooks-ko-from-wordlist.mjs --in <list.txt> --title <title> --outDir <dir> [--chunk 150] [--max 600]",
         "",
       ].join("\n"),
     );

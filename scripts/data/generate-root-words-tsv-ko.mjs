@@ -6,12 +6,12 @@
  * This does NOT overwrite words.tsv automatically.
  *
  * Usage:
- *   node scripts/generate-root-words-tsv-ko.mjs --count 1500
+ *   node scripts/data/generate-root-words-tsv-ko.mjs --count 1500
  */
 
 import fs from "node:fs";
 import path from "node:path";
-import { ensureDir, fetchKoForWords } from "./lib/kaikki-ko.mjs";
+import { ensureDir, fetchKoForWords } from "../lib/kaikki-ko.mjs";
 
 function parseArgs(argv) {
   const args = { count: 1500, concurrency: 6, cacheDir: "data/cache/kaikki" };
@@ -82,14 +82,14 @@ function loadNgslWords(csvPath) {
 async function main() {
   const args = parseArgs(process.argv);
   if (args.help) {
-    process.stdout.write(["Usage:", "  node scripts/generate-root-words-tsv-ko.mjs [--count 1500]", ""].join("\n"));
+    process.stdout.write(["Usage:", "  node scripts/data/generate-root-words-tsv-ko.mjs [--count 1500]", ""].join("\n"));
     return;
   }
   if (!Number.isFinite(args.count) || args.count <= 0) throw new Error("--count must be > 0");
 
   const ngslCsv = path.join("data", "crawled", "ngsl-family", "ngsl", "NGSL_1.2_stats.csv");
   if (!fs.existsSync(ngslCsv)) {
-    throw new Error(`Missing ${ngslCsv}. Run: node scripts/crawl-ngsl-family.mjs`);
+    throw new Error(`Missing ${ngslCsv}. Run: node scripts/data/crawl-ngsl-family.mjs`);
   }
 
   const words = loadNgslWords(ngslCsv).slice(0, args.count * 2);

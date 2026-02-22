@@ -7,7 +7,7 @@
  * - Build 5 NGSL range books: 1~500, 501~1000, 1001~1500, 1501~2000, 2001~2500
  *
  * Usage:
- *   node scripts/generate-5-wordbooks.mjs
+ *   node scripts/data/generate-5-wordbooks.mjs
  */
 
 import path from "node:path";
