@@ -12,6 +12,7 @@ ui-e2e.out.log
 ui-e2e.err.log
 /.loop/
 /.claude/hooks/state/*.json
+/.claude/tsc-cache/
 auto-loop.log
 macro-loop.log
 mcp-cycle.log
