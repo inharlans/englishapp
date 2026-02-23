@@ -69,9 +69,9 @@ Owner: Platform/AI Ops
 - [x] Team-facing note added: Claude hook files are not a Codex guarantee.
 
 ## 6) Optional Audit Layer
-- [ ] Evaluate `codex exec --json` logging for session audit.
-- [ ] Define minimal retained fields (timestamp, command, result, verify status).
-- [ ] Define retention policy and storage location.
+- [x] Evaluate `codex exec --json` logging for session audit.
+- [x] Define minimal retained fields (timestamp, command, result, verify status).
+- [x] Define retention policy and storage location.
 
 ## 7) Exit Criteria
 - [x] At least one PR merged with new Codex policy + verify gate.
