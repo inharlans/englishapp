@@ -46,7 +46,7 @@ Owner: Platform/AI Ops
 - [x] `npm test` (or documented alternative)
 - [x] `npm run verify` passes end-to-end.
 - [x] Evidence capture rule defined:
-- [x] Primary evidence: CI required check success (GitHub Actions CI run `22294209290` passed on 2026-02-23)
+- [x] Primary evidence: CI required check success (GitHub Actions CI run `22298256674` passed on 2026-02-23)
 - [x] Secondary evidence: PR template checkbox or merge note
 
 ## 4) CI Gate Hardening
