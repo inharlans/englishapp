@@ -41,3 +41,45 @@ For implementation tasks that change behavior or code:
 - Because both users and admins are Korean, all user-visible application text must be written in Korean.
 - `README.md` must be written in Korean.
 - Other `.md` files may be written in English when appropriate.
+
+## Codex Skill Routing (Claude Parity)
+
+### Workflow Entry
+- If task scope is unclear, run `$workflow-router` first.
+- `$workflow-router` outputs:
+  - Scope
+  - BLOCK requirements
+  - Required-when-matched skills
+  - Suggested skills
+  - Required checks
+
+### Guardrails (Mandatory)
+- BLOCK (critical guardrails only):
+  - `nextjs-frontend-guidelines` for frontend UI/component architecture work.
+  - Brand guideline skills only when branding/presentation scope is explicit.
+
+- REQUIRED when matched (Claude suggest parity):
+  - `fastapi-backend-guidelines` for backend API/service/repository/domain changes.
+  - `pytest-backend-testing` for backend test authoring/debugging.
+  - `error-tracking` for Sentry/error-monitoring/cron-instrumentation changes.
+  - `skill-developer` for skill/hook/routing-rule changes.
+
+- Suggested:
+  - Use related domain skills based on router output.
+
+- Enforcement intent:
+  - `BLOCK` = must stop and apply the guardrail skill first.
+  - `REQUIRED` = must apply when matched, but not hard-stop block.
+
+### Required checks after code changes
+- Always run:
+  - `npm run codex:workflow:check`
+- Do not claim verification unless commands were actually executed.
+
+### Start/Finish Template
+- Start:
+  - "Run `$workflow-router`, decide scope/required skills/checks, then implement."
+- Finish:
+  - "Run `npm run codex:workflow:check` and summarize executed checks/results."
+- Standard template doc:
+  - `docs/ai-operating-system-2026-02-22/39-codex-workflow-start-template.md`

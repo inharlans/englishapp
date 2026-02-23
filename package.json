@@ -20,6 +20,7 @@
     "ops:readiness": "node scripts/ops/ops-readiness.js",
     "completion:report": "node scripts/ops/write-completion-report.js",
     "hooks:validate": "node scripts/ops/validate-hook-chains.js && node scripts/ops/validate-text-encoding.js",
+    "ai:review:gate": "node scripts/ops/ai-review-gate.js",
     "codex:workflow:check": "node scripts/ops/codex-workflow-guard.js",
     "codex:precommit": "npm run codex:workflow:check",
     "codex:hooks:install": "node scripts/dev/install-githooks.mjs",

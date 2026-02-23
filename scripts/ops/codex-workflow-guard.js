@@ -1,10 +1,9 @@
 #!/usr/bin/env node
 /* eslint-disable no-console */
 const { spawnSync } = require("node:child_process");
-const path = require("node:path");
 
 const root = process.cwd();
-const watched = [
+const codeWatch = [
   "app/",
   "components/",
   "lib/",
@@ -12,11 +11,13 @@ const watched = [
   "scripts/",
   "tests/",
   "prisma/",
-  ".claude/",
-  ".codex/",
   "package.json",
-  "package-lock.json"
+  "package-lock.json",
+  "middleware.ts",
+  "next.config.ts"
 ];
+const policyWatch = [".claude/", ".codex/", ".agents/", "scripts/", ".githooks/", "AGENTS.md"];
+const docsWatch = ["docs/", "README.md"];
 
 function run(command, args) {
   const res = spawnSync(command, args, { cwd: root, encoding: "utf8" });
@@ -30,19 +31,30 @@ function run(command, args) {
     .filter(Boolean);
 }
 
-function hasRelevantChanges() {
+function collectChangedFiles() {
   const staged = run("git", ["diff", "--cached", "--name-only"]);
   const unstaged = run("git", ["diff", "--name-only"]);
-  const changed = new Set([...staged, ...unstaged]);
-  if (changed.size === 0) return false;
+  return [...new Set([...staged, ...unstaged])];
+}
 
-  for (const file of changed) {
-    const normalized = file.replace(/\\/g, "/");
-    if (watched.some((prefix) => normalized === prefix || normalized.startsWith(prefix))) {
-      return true;
-    }
-  }
-  return false;
+function matches(file, patterns) {
+  const normalized = file.replace(/\\/g, "/");
+  return patterns.some((prefix) => normalized === prefix || normalized.startsWith(prefix));
+}
+
+function getPlan(changedFiles) {
+  const hasCode = changedFiles.some((f) => matches(f, codeWatch));
+  const hasPolicy = changedFiles.some((f) => matches(f, policyWatch));
+  const hasDocs = changedFiles.some((f) => matches(f, docsWatch));
+  const hasRelevant = hasCode || hasPolicy || hasDocs;
+
+  if (!hasRelevant) return { hasRelevant: false, steps: [] };
+
+  const steps = ["hooks:validate"];
+  if (hasCode) steps.push("verify");
+  steps.push("ai:review:gate");
+
+  return { hasRelevant: true, steps, hasCode, hasPolicy, hasDocs };
 }
 
 function runNpm(script) {
@@ -55,14 +67,18 @@ function runNpm(script) {
 }
 
 function main() {
-  const relevant = hasRelevantChanges();
-  if (!relevant) {
+  const changed = collectChangedFiles();
+  const plan = getPlan(changed);
+
+  if (!plan.hasRelevant) {
     console.log("codex-workflow-guard: SKIP (no relevant changes)");
     process.exit(0);
   }
 
-  const steps = ["hooks:validate", "verify"];
-  for (const step of steps) {
+  console.log(`codex-workflow-guard: changed=${changed.length} code=${Boolean(plan.hasCode)} policy=${Boolean(plan.hasPolicy)} docs=${Boolean(plan.hasDocs)}`);
+  console.log(`codex-workflow-guard: steps=${plan.steps.join(",")}`);
+
+  for (const step of plan.steps) {
     const code = runNpm(step);
     if (code !== 0) {
       console.error(`codex-workflow-guard: FAIL at ${step}`);

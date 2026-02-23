@@ -6,7 +6,7 @@
   - Examples: `dev-and-test.ps1`, `auth-smoke-test.ps1`, `test-auth-route.js`, `get-auth-token.js`, `install-githooks.mjs`
 - `scripts/ops/`
   - Operational automation and validation.
-  - Examples: `mcp-cycle.js`, `ops-readiness.js`, `validate-hook-chains.js`, `codex-workflow-guard.js`
+  - Examples: `mcp-cycle.js`, `ops-readiness.js`, `validate-hook-chains.js`, `codex-workflow-guard.js`, `ai-review-gate.js`
 - `scripts/data/`
   - Data ingestion/generation/cleanup utilities for wordbook datasets.
 - `scripts/lib/`
