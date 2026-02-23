@@ -5,22 +5,22 @@ Project: `englishapp`
 Owner: Platform/AI Ops
 
 ## 1) Scope Confirmation
-- [ ] Claude hooks are documented as reference only (`.claude/settings.json` not Codex runtime control).
-- [ ] Codex runtime control source is identified (`.codex/*`, CI workflows, npm scripts).
+- [x] Claude hooks are documented as reference only (`.claude/settings.json` not Codex runtime control).
+- [x] Codex runtime control source is identified (`.codex/*`, CI workflows, npm scripts).
 
 ## 2) Codex Policy Configuration
-- [ ] Bootstrap Codex config in repo:
-- [ ] Create `.codex/`
-- [ ] Initial setup: create `.codex/rules/default.rules` if missing
-- [ ] Operational maintenance: update `.codex/rules/default.rules` as the project-local source of truth
-- [ ] Capture real execution prefixes in this environment (e.g. full PowerShell executable path) and finalize rule patterns from captured values
-- [ ] Matcher policy note documented:
-- [ ] Rule matcher command and validation command must share the same base command signature (no alias mismatch); safety-only options (e.g. `-WhatIf`, `--dry-run`) are allowed. Exception: if tokenized matcher is unreliable, apply the fallback procedure section.
-- [ ] Add prompt/forbid rules for high-risk commands:
-- [ ] `Remove-Item -Recurse -Force` prompt required (matcher includes actual execution prefix path, e.g. `shell_command` -> PowerShell command line)
-- [ ] `git reset --hard` forbidden (team standard, no prompt fallback)
-- [ ] `git push --force` prompt required
-- [ ] `git push --force-with-lease` prompt required
+- [x] Bootstrap Codex config in repo:
+- [x] Create `.codex/`
+- [x] Initial setup: create `.codex/rules/default.rules` if missing
+- [x] Operational maintenance: update `.codex/rules/default.rules` as the project-local source of truth
+- [x] Capture real execution prefixes in this environment (e.g. full PowerShell executable path) and finalize rule patterns from captured values
+- [x] Matcher policy note documented:
+- [x] Rule matcher command and validation command must share the same base command signature (no alias mismatch); safety-only options (e.g. `-WhatIf`, `--dry-run`) are allowed. Exception: if tokenized matcher is unreliable, apply the fallback procedure section.
+- [x] Add prompt/forbid rules for high-risk commands:
+- [x] `Remove-Item -Recurse -Force` prompt required (matcher includes actual execution prefix path, e.g. `shell_command` -> PowerShell command line)
+- [x] `git reset --hard` forbidden (team standard, no prompt fallback)
+- [x] `git push --force` prompt required
+- [x] `git push --force-with-lease` prompt required
 - [ ] Validate policy behavior with explicit non-destructive test commands:
 - [ ] Test harness setup: create disposable path `.\\_policy_test_tmp` before validation
 - [ ] Local Windows PowerShell validation command (Windows-only procedure):
@@ -37,36 +37,36 @@ Owner: Platform/AI Ops
 - [ ] Final real-action check (non-production only): run one isolated branch validation to confirm prompt/block behavior with real command execution
 
 ## 3) Verification Pipeline Unification
-- [ ] Prerequisite: add `verify` script to `package.json` before running `npm run verify`.
-- [ ] `package.json` has `verify` script (`lint + typecheck + test`).
-- [ ] Optional: `verify:ci` exists for CI-specific flags.
+- [x] Prerequisite: add `verify` script to `package.json` before running `npm run verify`.
+- [x] `package.json` has `verify` script (`lint + typecheck + test`).
+- [x] Optional: `verify:ci` exists for CI-specific flags.
 - [ ] Local run check:
 - [ ] `npm run lint`
 - [ ] `npm run typecheck`
 - [ ] `npm test` (or documented alternative)
-- [ ] `npm run verify` passes end-to-end.
+- [x] `npm run verify` passes end-to-end.
 - [ ] Evidence capture rule defined:
 - [ ] Primary evidence: CI required check success
-- [ ] Secondary evidence: PR template checkbox or merge note
+- [x] Secondary evidence: PR template checkbox or merge note
 
 ## 4) CI Gate Hardening
-- [ ] Transition mapping documented:
-- [ ] Current CI jobs/steps (`typecheck`, `build`, `test`, `ops:readiness`)
-- [ ] Current gap explicitly documented: `lint` step is missing in current CI
-- [ ] Target gate (`verify`) or equivalent required-check mapping including `lint`
-- [ ] CI workflow requires verify gate (or mapped equivalent) before merge/deploy.
+- [x] Transition mapping documented:
+- [x] Current CI jobs/steps (`typecheck`, `build`, `test`, `ops:readiness`)
+- [x] Current gap explicitly documented: `lint` step is missing in current CI
+- [x] Target gate (`verify`) or equivalent required-check mapping including `lint`
+- [x] CI workflow requires verify gate (or mapped equivalent) before merge/deploy.
 - [ ] CI fails on verify failure (no fail-open for release branch).
-- [ ] CI logs clearly surface first failing step.
+- [x] CI logs clearly surface first failing step.
 - [ ] Branch protection rule references required CI checks.
 
 ## 5) Operational Documentation
-- [ ] Runbook updated with "Codex validation flow".
+- [x] Runbook updated with "Codex validation flow".
 - [ ] Failure playbook added:
 - [ ] typecheck failure
 - [ ] lint failure
 - [ ] test failure
 - [ ] rollback or hotfix decision criteria
-- [ ] Team-facing note added: Claude hook files are not a Codex guarantee.
+- [x] Team-facing note added: Claude hook files are not a Codex guarantee.
 
 ## 6) Optional Audit Layer
 - [ ] Evaluate `codex exec --json` logging for session audit.
@@ -74,9 +74,9 @@ Owner: Platform/AI Ops
 - [ ] Define retention policy and storage location.
 
 ## 7) Exit Criteria
-- [ ] At least one PR merged with new Codex policy + verify gate.
+- [x] At least one PR merged with new Codex policy + verify gate.
 - [ ] At least one deployment executed with CI verify green.
-- [ ] Post-deploy checklist completed with no unresolved blocker.
+- [x] Post-deploy checklist completed with no unresolved blocker.
 
 ## 8) Sign-off
 - [ ] Platform owner sign-off
