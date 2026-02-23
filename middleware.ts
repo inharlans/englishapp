@@ -34,6 +34,12 @@ function isPublicPath(pathname: string): boolean {
 }
 
 export async function middleware(req: NextRequest) {
+  if (req.nextUrl.hostname === "oingapp.com") {
+    const redirectUrl = req.nextUrl.clone();
+    redirectUrl.hostname = "www.oingapp.com";
+    return NextResponse.redirect(redirectUrl, 308);
+  }
+
   const { pathname } = req.nextUrl;
   if (isPublicPath(pathname) || hasValidPreviewAccess(req)) {
     const res = NextResponse.next();

@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import { cookies } from "next/headers";
 
 import { PricingActions } from "@/components/payments/PricingActions";
@@ -64,31 +64,6 @@ export default async function PricingPage(props: { searchParams: Promise<{ payme
         </div>
       </header>
 
-      <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
-        <p className="font-semibold">요금제 요약</p>
-        <ul className="mt-2 list-disc space-y-1 pl-5">
-          <li>FREE: 단어장 생성 1개, 다운로드 누적 {FREE_DOWNLOAD_WORD_LIMIT}단어, 비공개 업로드 불가</li>
-          <li>PRO: 단어장 생성/다운로드 무제한, 공개/비공개 선택 가능</li>
-          <li>PRO에서 FREE로 변경되면 기존 비공개 단어장은 자동 삭제되지 않지만 잠금 상태가 됩니다.</li>
-          <li>잠금 상태에서는 학습/수정이 불가하며 공개 전환 또는 PRO 복구 후 다시 사용할 수 있습니다.</li>
-        </ul>
-      </div>
-
-      <section className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700">
-        <p className="font-semibold text-slate-900">전자결제 심사용 상품/환불 정보</p>
-        <ul className="mt-2 list-disc space-y-1 pl-5">
-          <li>상품명: Oing PRO 구독권(디지털 서비스)</li>
-          <li>결제금액: 월 2,900원 / 연 29,000원 (부가세 포함)</li>
-          <li>제공방식: 결제 즉시 계정 권한(PRO) 활성화, 물리 배송 없음</li>
-          <li>해지정책: 구독 해지 시 다음 결제일부터 자동 청구 중단</li>
-          <li>환불정책: 전자상거래법 및 결제사 정책에 따라 처리(고객센터 접수 후 검토)</li>
-          <li>
-            고객센터: {supportEmail} / {supportPhone}
-            {business.supportHours ? ` (${business.supportHours})` : ""}
-          </li>
-        </ul>
-      </section>
-
       {sp.payment === "success" ? (
         <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900" role="status" aria-live="polite">
           결제가 완료되었습니다. 결제 상태는 자동으로 반영됩니다.
@@ -139,23 +114,30 @@ export default async function PricingPage(props: { searchParams: Promise<{ payme
         무료 다운로드 누적 한도에 도달하면 PRO로 업그레이드해 계속 다운로드할 수 있습니다.
       </div>
 
-      <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-        <p className="font-semibold">환불/해지 안내</p>
+      <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
+        <p className="font-semibold">요금제 요약</p>
         <ul className="mt-2 list-disc space-y-1 pl-5">
-          <li>구독 해지는 결제사 고객센터 또는 구독 관리에서 가능합니다.</li>
-          <li>이미 결제된 기간은 사용 가능하며, 다음 결제부터 자동 청구가 중단됩니다.</li>
-          <li>환불 정책은 결제사 약관 및 관련 법령을 따릅니다.</li>
+          <li>FREE: 단어장 생성 1개, 다운로드 누적 {FREE_DOWNLOAD_WORD_LIMIT}단어, 비공개 업로드 불가</li>
+          <li>PRO: 단어장 생성/다운로드 무제한, 공개/비공개 선택 가능</li>
+          <li>PRO에서 FREE로 변경되면 기존 비공개 단어장은 자동 삭제되지 않지만 잠금 상태가 됩니다.</li>
+          <li>잠금 상태에서는 학습/수정이 불가하며 공개 전환 또는 PRO 복구 후 다시 사용할 수 있습니다.</li>
         </ul>
       </div>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700" aria-labelledby="pricing-faq-title">
-        <p id="pricing-faq-title" className="font-semibold text-slate-900">자주 묻는 질문</p>
-        <dl className="mt-3 space-y-2">
-          <dt><span className="font-semibold">Q.</span> 무료에서도 가격표를 볼 수 있나요?</dt>
-          <dd className="text-slate-600"><span className="font-semibold">A.</span> 네, 로그인 없이 가격/혜택/약관을 확인할 수 있습니다.</dd>
-          <dt><span className="font-semibold">Q.</span> 결제 실패 후 다시 시도할 수 있나요?</dt>
-          <dd className="text-slate-600"><span className="font-semibold">A.</span> 가능합니다. 같은 페이지에서 다시 결제를 진행하면 됩니다.</dd>
-        </dl>
+      <section className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700">
+        <p className="font-semibold text-slate-900">상품/결제/환불 안내</p>
+        <ul className="mt-2 list-disc space-y-1 pl-5">
+          <li>상품명: Oing PRO 구독권(디지털 서비스)</li>
+          <li>결제금액: 월 2,900원 / 연 29,000원 (부가세 포함)</li>
+          <li>제공방식: 결제 즉시 계정 권한(PRO) 활성화, 물리 배송 없음</li>
+          <li>해지방법: 결제사 고객센터 또는 구독 관리에서 해지할 수 있습니다.</li>
+          <li>해지정책: 이미 결제된 기간은 사용 가능하며, 다음 결제일부터 자동 청구가 중단됩니다.</li>
+          <li>환불정책: 전자상거래법 및 결제사 정책에 따라 처리(고객센터 접수 후 검토)</li>
+          <li>
+            고객센터: {supportEmail} / {supportPhone}
+            {business.supportHours ? ` (${business.supportHours})` : ""}
+          </li>
+        </ul>
       </section>
     </section>
   );
