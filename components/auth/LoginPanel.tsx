@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 
@@ -36,7 +36,7 @@ export function LoginPanel({
 
   return (
     <section className="rounded-3xl border border-white/60 bg-white/90 p-6 shadow-[0_24px_55px_-30px_rgba(15,23,42,0.75)] backdrop-blur">
-      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">다시 당신 것을 환영합니다</p>
+      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">다시 오신 것을 환영합니다</p>
       <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-900">{title}</h1>
       <p className="mt-2 text-sm text-slate-600">{subtitle}</p>
 

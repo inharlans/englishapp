@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
 
-import { LoginPanel } from "@/components/auth/LoginPanel";
 import { getUserFromRequestCookies } from "@/lib/authServer";
 
 export default async function HomePage() {
@@ -129,7 +128,27 @@ export default async function HomePage() {
 
       <div className="lg:pt-2 home-reveal-up [animation-delay:220ms]">
         {!user ? (
-          <LoginPanel nextPath="/wordbooks" title="학습 시작" subtitle="로그인하고 바로 내 단어장 학습으로 이동하세요." />
+          <section className="rounded-3xl border border-white/70 bg-white/90 p-6 shadow-[0_24px_55px_-30px_rgba(15,23,42,0.75)] backdrop-blur">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">빠른 시작</p>
+            <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-900">지금 바로 학습을 시작하세요</h2>
+            <p className="mt-2 text-sm text-slate-600">
+              먼저 마켓을 둘러보거나 로그인 후 내 단어장 학습으로 바로 이어갈 수 있습니다.
+            </p>
+            <div className="mt-4 grid gap-2 sm:grid-cols-2">
+              <Link
+                href="/login?next=/wordbooks"
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-center text-sm font-semibold text-slate-800 hover:bg-slate-50"
+              >
+                로그인하고 시작하기
+              </Link>
+              <Link
+                href="/wordbooks/market"
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-center text-sm font-semibold text-slate-800 hover:bg-slate-50"
+              >
+                마켓 둘러보기
+              </Link>
+            </div>
+          </section>
         ) : (
           <section className="rounded-3xl border border-white/70 bg-white/90 p-6 shadow-[0_24px_55px_-30px_rgba(15,23,42,0.75)] backdrop-blur">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">다시 오신 것을 환영합니다</p>
