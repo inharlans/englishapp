@@ -1,4 +1,4 @@
-﻿# Codex Runtime Transition Checklist (2026-02-23)
+# Codex Runtime Transition Checklist (2026-02-23)
 
 Date: 2026-02-23  
 Project: `englishapp`  
@@ -37,6 +37,10 @@ Owner: Platform/AI Ops
 - [ ] Final real-action check (non-production only): run one isolated branch validation to confirm prompt/block behavior with real command execution
 
 ## 3) Verification Pipeline Unification
+- [x] Local commit gate installed:
+- [x] `npm run codex:hooks:install` executed at least once per clone
+- [x] `git config --get core.hooksPath` returns `.githooks`
+- [x] `npm run codex:workflow:check` passes on runtime-relevant change set
 - [x] Prerequisite: add `verify` script to `package.json` before running `npm run verify`.
 - [x] `package.json` has `verify` script (`lint + typecheck + test`).
 - [x] Optional: `verify:ci` exists for CI-specific flags.

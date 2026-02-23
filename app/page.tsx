@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import { cookies } from "next/headers";
 
 import { LoginPanel } from "@/components/auth/LoginPanel";
@@ -47,6 +47,48 @@ export default async function HomePage() {
               <h2 className="mt-1 text-base font-extrabold text-slate-900">오프라인 복습</h2>
               <p className="mt-1 text-sm text-slate-600">이동 중에도 저장한 단어장을 끊김 없이 복습할 수 있습니다.</p>
             </article>
+          </div>
+
+          <div className="home-reveal-up grid gap-3 lg:grid-cols-[1.1fr_0.9fr] [animation-delay:180ms]" aria-label="학습 루틴 안내">
+            <section className="rounded-2xl border border-slate-200/90 bg-white/85 p-4">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">today flow</p>
+              <ol className="mt-2 grid gap-2 text-sm text-slate-700">
+                <li className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2">
+                  <span>1. 마켓에서 주제 선택</span>
+                  <span className="font-semibold text-blue-700">3분</span>
+                </li>
+                <li className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2">
+                  <span>2. 단어장 암기 세션</span>
+                  <span className="font-semibold text-blue-700">12분</span>
+                </li>
+                <li className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2">
+                  <span>3. 퀴즈로 취약 단어 점검</span>
+                  <span className="font-semibold text-blue-700">8분</span>
+                </li>
+              </ol>
+            </section>
+
+            <section className="rounded-2xl border border-slate-200/90 bg-white/85 p-4">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">learning pulse</p>
+              <dl className="mt-2 grid grid-cols-2 gap-2">
+                <div className="rounded-lg bg-slate-50 px-3 py-2">
+                  <dt className="text-[11px] text-slate-500">오늘 목표</dt>
+                  <dd className="text-lg font-black text-slate-900">25 단어</dd>
+                </div>
+                <div className="rounded-lg bg-slate-50 px-3 py-2">
+                  <dt className="text-[11px] text-slate-500">예상 완료</dt>
+                  <dd className="text-lg font-black text-slate-900">23분</dd>
+                </div>
+                <div className="rounded-lg bg-slate-50 px-3 py-2">
+                  <dt className="text-[11px] text-slate-500">복습 주기</dt>
+                  <dd className="text-lg font-black text-slate-900">D+1</dd>
+                </div>
+                <div className="rounded-lg bg-slate-50 px-3 py-2">
+                  <dt className="text-[11px] text-slate-500">진행 템포</dt>
+                  <dd className="text-lg font-black text-slate-900">집중 모드</dd>
+                </div>
+              </dl>
+            </section>
           </div>
 
           <ul className="home-reveal-up grid gap-2 rounded-2xl border border-slate-200/90 bg-white/85 p-4 text-sm text-slate-700 [animation-delay:220ms]" aria-label="빠른 시작 체크리스트">

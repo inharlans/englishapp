@@ -1,4 +1,4 @@
-﻿# Englishapp
+# Englishapp
 
 Englishapp은 영어 학습과 단어장 마켓을 제공하는 웹 애플리케이션입니다.
 
@@ -197,6 +197,16 @@ npm run prisma:migrate
 ```bash
 npm run dev
 ```
+
+4. Codex 로컬 게이트 설치(최초 1회)
+```bash
+npm run codex:hooks:install
+git config --get core.hooksPath
+```
+
+기대값:
+- `git config --get core.hooksPath` 출력이 `.githooks`
+- 커밋 시 `hooks:validate` + `verify`가 자동 실행됨
 
 ## 테스트/검증
 
