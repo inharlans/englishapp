@@ -35,3 +35,18 @@ Rollback immediately if any of these occur:
 1. `/login` or `/wordbooks/market` fails to render.
 2. Auth boundary regression (`/api/admin/reports` not `401` when logged out).
 3. `ops:readiness` fails.
+
+## 7) Codex Validation Flow
+1. Ensure Codex policy rules exist:
+   - `.codex/rules/default.rules`
+2. Run local verification:
+   - `npm run verify`
+3. Confirm CI gate uses verify flow:
+   - `.github/workflows/ci.yml` includes `npm run verify:ci`
+4. Evidence capture:
+   - Primary: CI required check success
+   - Secondary: PR checklist includes verify confirmation
+5. If verify fails:
+   - Fix lint/typecheck/test failure first
+   - Re-run `npm run verify`
+   - Re-deploy only after verify + ops readiness pass
