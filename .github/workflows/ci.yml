@@ -38,9 +38,8 @@ jobs:
       - run: npm ci
       - run: npm run prisma:generate
       - run: npm run prisma:deploy
-      - run: npm run typecheck
+      - run: npm run verify:ci
       - run: npm run build
-      - run: npm run test
       - run: npm run start -- --hostname 127.0.0.1 --port 3000 > /tmp/next-start.log 2>&1 &
       - run: |
           for i in {1..60}; do

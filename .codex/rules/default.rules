@@ -1,0 +1,23 @@
+prefix_rule(
+  pattern=["C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\powershell.exe", "-Command", "Remove-Item", "-Recurse", "-Force"],
+  decision="prompt",
+  justification="Destructive delete requires explicit approval."
+)
+
+prefix_rule(
+  pattern=["git", "reset", "--hard"],
+  decision="forbidden",
+  justification="Hard reset is blocked by team policy."
+)
+
+prefix_rule(
+  pattern=["git", "push", "--force"],
+  decision="prompt",
+  justification="Force push requires explicit approval."
+)
+
+prefix_rule(
+  pattern=["git", "push", "--force-with-lease"],
+  decision="prompt",
+  justification="Force push requires explicit approval."
+)
