@@ -40,12 +40,12 @@ Owner: Platform/AI Ops
 - [x] Prerequisite: add `verify` script to `package.json` before running `npm run verify`.
 - [x] `package.json` has `verify` script (`lint + typecheck + test`).
 - [x] Optional: `verify:ci` exists for CI-specific flags.
-- [ ] Local run check:
-- [ ] `npm run lint`
-- [ ] `npm run typecheck`
-- [ ] `npm test` (or documented alternative)
+- [x] Local run check:
+- [x] `npm run lint`
+- [x] `npm run typecheck`
+- [x] `npm test` (or documented alternative)
 - [x] `npm run verify` passes end-to-end.
-- [ ] Evidence capture rule defined:
+- [x] Evidence capture rule defined:
 - [ ] Primary evidence: CI required check success
 - [x] Secondary evidence: PR template checkbox or merge note
 
@@ -55,17 +55,17 @@ Owner: Platform/AI Ops
 - [x] Current gap explicitly documented: `lint` step is missing in current CI
 - [x] Target gate (`verify`) or equivalent required-check mapping including `lint`
 - [x] CI workflow requires verify gate (or mapped equivalent) before merge/deploy.
-- [ ] CI fails on verify failure (no fail-open for release branch).
+- [x] CI fails on verify failure (no fail-open for release branch).
 - [x] CI logs clearly surface first failing step.
 - [ ] Branch protection rule references required CI checks.
 
 ## 5) Operational Documentation
 - [x] Runbook updated with "Codex validation flow".
-- [ ] Failure playbook added:
-- [ ] typecheck failure
-- [ ] lint failure
-- [ ] test failure
-- [ ] rollback or hotfix decision criteria
+- [x] Failure playbook added:
+- [x] typecheck failure
+- [x] lint failure
+- [x] test failure
+- [x] rollback or hotfix decision criteria
 - [x] Team-facing note added: Claude hook files are not a Codex guarantee.
 
 ## 6) Optional Audit Layer

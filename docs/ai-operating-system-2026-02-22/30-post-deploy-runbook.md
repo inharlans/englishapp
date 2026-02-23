@@ -50,3 +50,19 @@ Rollback immediately if any of these occur:
    - Fix lint/typecheck/test failure first
    - Re-run `npm run verify`
    - Re-deploy only after verify + ops readiness pass
+
+## 8) Failure Playbook
+1. `typecheck` failure:
+   - Run `npm run typecheck` and capture first error location.
+   - Fix type mismatch/import/config issue.
+   - Re-run `npm run verify`.
+2. `lint` failure:
+   - Run `npm run lint` and resolve reported rule violations.
+   - Re-run `npm run verify`.
+3. `test` failure:
+   - Run `npm test` and identify first failing test.
+   - Fix regression or update test only when behavior change is intentional.
+   - Re-run `npm run verify`.
+4. Rollback/hotfix decision:
+   - If verify or readiness cannot be restored quickly, rollback to last green deploy.
+   - If fix is small and low-risk, prepare hotfix and require verify pass before deploy.
