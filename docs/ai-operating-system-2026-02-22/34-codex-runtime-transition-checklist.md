@@ -57,7 +57,7 @@ Owner: Platform/AI Ops
 - [x] CI workflow requires verify gate (or mapped equivalent) before merge/deploy.
 - [x] CI fails on verify failure (no fail-open for release branch).
 - [x] CI logs clearly surface first failing step.
-- [ ] Branch protection rule references required CI checks. (Manual/GitHub settings step; API check returned 403 plan restriction)
+- [x] Branch protection rule references required CI checks. (Configured via GitHub UI on 2026-02-23: `main` rule + required check `test`; note: marked \"Not enforced\" on private-repo plan)
 
 ## 5) Operational Documentation
 - [x] Runbook updated with "Codex validation flow".
