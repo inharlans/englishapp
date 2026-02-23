@@ -46,7 +46,7 @@ Owner: Platform/AI Ops
 - [x] `npm test` (or documented alternative)
 - [x] `npm run verify` passes end-to-end.
 - [x] Evidence capture rule defined:
-- [ ] Primary evidence: CI required check success
+- [x] Primary evidence: CI required check success (GitHub Actions CI run `22294209290` passed on 2026-02-23)
 - [x] Secondary evidence: PR template checkbox or merge note
 
 ## 4) CI Gate Hardening
@@ -57,7 +57,7 @@ Owner: Platform/AI Ops
 - [x] CI workflow requires verify gate (or mapped equivalent) before merge/deploy.
 - [x] CI fails on verify failure (no fail-open for release branch).
 - [x] CI logs clearly surface first failing step.
-- [ ] Branch protection rule references required CI checks.
+- [ ] Branch protection rule references required CI checks. (Manual/GitHub settings step; API check returned 403 plan restriction)
 
 ## 5) Operational Documentation
 - [x] Runbook updated with "Codex validation flow".
