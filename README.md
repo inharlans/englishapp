@@ -1,5 +1,16 @@
 # Englishapp
 
+## 최근 업데이트 (2026-02-24)
+
+- PDF/웹 텍스트 선택을 단어장으로 보내는 클리퍼 경로를 추가했습니다.
+  - `POST /api/clipper/add`
+  - `GET/PATCH /api/users/me/clipper-settings`
+  - `POST /api/internal/cron/clipper-enrichment`
+- 클리퍼 저장은 즉시 `QUEUED` 상태로 저장하고, 배치 워커가 Gemini 기반 의미/품사/예문 해석을 비동기로 채웁니다.
+- 단어 중복 방지를 위해 단어장 단위 정규화 키(`normalizedTerm`)를 추가하고 유니크 인덱스로 레이스를 방어했습니다.
+- 학습 UI(암기/카드)에 `예문 보기` 인터랙션을 추가하고, AI 생성 예문은 배지로 구분해 표시합니다.
+- 브릿지 페이지(`/clipper/add`)와 크롬 확장 기본 골격(`extension/`)을 추가했습니다.
+
 Englishapp은 영어 학습과 단어장 마켓을 제공하는 웹 애플리케이션입니다.
 
 - 프레임워크: Next.js(App Router)

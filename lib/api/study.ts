@@ -1,4 +1,4 @@
-﻿import { apiFetch } from "@/lib/clientApi";
+import { apiFetch } from "@/lib/clientApi";
 
 import { parseApiResponse } from "@/lib/api/base";
 
@@ -16,6 +16,10 @@ export interface StudyItem {
   pronunciation?: string | null;
   example: string | null;
   exampleMeaning: string | null;
+  exampleSentenceEn?: string | null;
+  exampleSentenceKo?: string | null;
+  exampleSource?: "SOURCE" | "AI" | "NONE" | null;
+  partOfSpeech?: "NOUN" | "VERB" | "ADJECTIVE" | "ADVERB" | "PHRASE" | "OTHER" | "UNKNOWN" | null;
   itemState: StudyItemState | null;
 }
 

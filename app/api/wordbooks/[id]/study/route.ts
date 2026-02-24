@@ -58,9 +58,12 @@ function buildItemWhere(input: {
     where.OR = [
       { term: { contains: input.q, mode: "insensitive" } },
       { meaning: { contains: input.q, mode: "insensitive" } },
+      { meaningKo: { contains: input.q, mode: "insensitive" } },
       { pronunciation: { contains: input.q, mode: "insensitive" } },
       { example: { contains: input.q, mode: "insensitive" } },
-      { exampleMeaning: { contains: input.q, mode: "insensitive" } }
+      { exampleMeaning: { contains: input.q, mode: "insensitive" } },
+      { exampleSentenceEn: { contains: input.q, mode: "insensitive" } },
+      { exampleSentenceKo: { contains: input.q, mode: "insensitive" } }
     ];
   }
 
@@ -101,9 +104,12 @@ function buildMatchSql(input: {
     ? Prisma.sql`(
       wi."term" ILIKE ${input.qLike}
       OR wi."meaning" ILIKE ${input.qLike}
+      OR COALESCE(wi."meaningKo", '') ILIKE ${input.qLike}
       OR COALESCE(wi."pronunciation", '') ILIKE ${input.qLike}
       OR COALESCE(wi."example", '') ILIKE ${input.qLike}
       OR COALESCE(wi."exampleMeaning", '') ILIKE ${input.qLike}
+      OR COALESCE(wi."exampleSentenceEn", '') ILIKE ${input.qLike}
+      OR COALESCE(wi."exampleSentenceKo", '') ILIKE ${input.qLike}
     )`
     : Prisma.sql`TRUE`;
 
@@ -196,6 +202,10 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
         pronunciation: true,
         example: true,
         exampleMeaning: true,
+        exampleSentenceEn: true,
+        exampleSentenceKo: true,
+        exampleSource: true,
+        partOfSpeech: true,
         position: true,
         studyItemStates: {
           where: { userId: user.id, wordbookId },
@@ -267,6 +277,10 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
         pronunciation: it.pronunciation,
         example: it.example,
         exampleMeaning: it.exampleMeaning,
+        exampleSentenceEn: it.exampleSentenceEn,
+        exampleSentenceKo: it.exampleSentenceKo,
+        exampleSource: it.exampleSource,
+        partOfSpeech: it.partOfSpeech,
         position: it.position,
         itemState: it.studyItemStates[0] ?? null
       })),

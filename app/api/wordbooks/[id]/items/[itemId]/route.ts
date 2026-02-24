@@ -1,6 +1,7 @@
-﻿import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 import { getUserFromRequestCookies } from "@/lib/authServer";
+import { normalizeTermForKey } from "@/lib/clipper";
 import { prisma } from "@/lib/prisma";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
 import { isBrokenUserText } from "@/lib/textQuality";
@@ -91,18 +92,23 @@ export async function PATCH(
 
   if ("term" in body && typeof body.term === "string") {
     data.term = body.term.trim();
+    (data as { normalizedTerm?: string }).normalizedTerm = normalizeTermForKey(body.term.trim());
   }
   if ("meaning" in body && typeof body.meaning === "string") {
     data.meaning = body.meaning.trim();
+    (data as { meaningKo?: string }).meaningKo = body.meaning.trim();
   }
   if ("pronunciation" in body) {
     data.pronunciation = body.pronunciation ? String(body.pronunciation).trim() : null;
   }
   if ("example" in body) {
     data.example = body.example ? String(body.example).trim() : null;
+    (data as { exampleSentenceEn?: string | null }).exampleSentenceEn = body.example ? String(body.example).trim() : null;
+    (data as { exampleSource?: "SOURCE" | "NONE" }).exampleSource = body.example ? "SOURCE" : "NONE";
   }
   if ("exampleMeaning" in body) {
     data.exampleMeaning = body.exampleMeaning ? String(body.exampleMeaning).trim() : null;
+    (data as { exampleSentenceKo?: string | null }).exampleSentenceKo = body.exampleMeaning ? String(body.exampleMeaning).trim() : null;
   }
   if (typeof body.position === "number" && Number.isFinite(body.position)) {
     data.position = Math.max(0, Math.floor(body.position));
@@ -119,6 +125,11 @@ export async function PATCH(
         pronunciation: true,
         example: true,
         exampleMeaning: true,
+        meaningKo: true,
+        exampleSentenceEn: true,
+        exampleSentenceKo: true,
+        exampleSource: true,
+        partOfSpeech: true,
         position: true
       }
     });

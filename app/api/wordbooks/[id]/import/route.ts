@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { getUserFromRequestCookies } from "@/lib/authServer";
+import { normalizeTermForKey } from "@/lib/clipper";
 import { parseWordbookText } from "@/lib/wordbookIo";
 import { prisma } from "@/lib/prisma";
 import { checkRateLimit, getClientIpFromHeaders } from "@/lib/rateLimit";
@@ -98,9 +99,16 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
         wordbookId,
         term: row.term,
         meaning: row.meaning,
+        meaningKo: row.meaning,
+        normalizedTerm: normalizeTermForKey(row.term),
         pronunciation: row.pronunciation ?? null,
         example: row.example ?? null,
         exampleMeaning: row.exampleMeaning ?? null,
+        exampleSentenceEn: row.example ?? null,
+        exampleSentenceKo: row.exampleMeaning ?? null,
+        exampleSource: row.example ? "SOURCE" : "NONE",
+        enrichmentStatus: "DONE",
+        enrichmentCompletedAt: new Date(),
         position: start + idx
       }))
     });
@@ -112,4 +120,3 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
 
   return NextResponse.json({ ok: true, importedCount: parsed.length }, { status: 201 });
 }
-

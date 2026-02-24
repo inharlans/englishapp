@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -15,6 +15,12 @@ type Item = {
   term: string;
   meaning: string;
   pronunciation?: string | null;
+  example: string | null;
+  exampleMeaning: string | null;
+  exampleSentenceEn?: string | null;
+  exampleSentenceKo?: string | null;
+  exampleSource?: "SOURCE" | "AI" | "NONE" | null;
+  partOfSpeech?: "NOUN" | "VERB" | "ADJECTIVE" | "ADVERB" | "PHRASE" | "OTHER" | "UNKNOWN" | null;
 };
 
 function mulberry32(seed: number) {
@@ -52,6 +58,7 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
   const [info, setInfo] = useState("");
   const [idx, setIdx] = useState(0);
   const [showMeaning, setShowMeaning] = useState(false);
+  const [showExample, setShowExample] = useState(false);
   const [orderSeed, setOrderSeed] = useState(0);
   const [partJump, setPartJump] = useState("1");
   const [reloadTick, setReloadTick] = useState(0);
@@ -251,6 +258,12 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
     const timeout = window.setTimeout(() => setInfo(""), 4500);
     return () => window.clearTimeout(timeout);
   }, [info]);
+
+  useEffect(() => {
+    if (!showMeaning) {
+      setShowExample(false);
+    }
+  }, [showMeaning]);
 
   useEffect(() => {
     if (!resumeEnabled || loading || shuffledItems.length === 0) return;
@@ -823,6 +836,43 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
                   mode="detailed"
                   className="mt-2 text-base font-semibold text-slate-900"
                 />
+                {(() => {
+                  const exampleEn = current.exampleSentenceEn ?? current.example;
+                  const exampleKo = current.exampleSentenceKo ?? current.exampleMeaning;
+                  if (!exampleEn) return null;
+                  return (
+                    <div className="mt-3">
+                      <button
+                        type="button"
+                        onClick={() => setShowExample((value) => !value)}
+                        className="ui-btn-secondary px-3 py-1.5 text-xs"
+                      >
+                        {showExample ? "예문 숨기기" : "예문 보기"}
+                      </button>
+                      {showExample ? (
+                        <div className="mt-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+                          <p>예문: {exampleEn}</p>
+                          {exampleKo ? <p className="mt-1">해석: {exampleKo}</p> : null}
+                          <div className="mt-2 flex flex-wrap items-center gap-2">
+                            {current.partOfSpeech ? (
+                              <span className="rounded-full border border-slate-300 bg-white px-2 py-0.5 text-[11px] font-semibold text-slate-600">
+                                {current.partOfSpeech.toLowerCase()}
+                              </span>
+                            ) : null}
+                            {current.exampleSource === "AI" ? (
+                              <span
+                                className="rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700"
+                                title="원문에서 추출되지 않아 AI가 생성한 예문입니다."
+                              >
+                                AI 생성 예문
+                              </span>
+                            ) : null}
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                  );
+                })()}
               </div>
             ) : (
               <button type="button" onClick={() => setShowMeaning(true)} className="ui-btn-secondary w-full px-4 py-4 text-left text-sm">

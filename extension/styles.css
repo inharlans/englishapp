@@ -1,0 +1,19 @@
+.englishapp-clipper-btn {
+  position: absolute;
+  z-index: 2147483646;
+  border: 1px solid #2563eb;
+  background: #2563eb;
+  color: #ffffff;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 8px 10px;
+  cursor: pointer;
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.35);
+}
+
+.englishapp-clipper-btn:hover {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+}

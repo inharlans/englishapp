@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { fetchWordbookStudy } from "@/lib/api/study";
 
@@ -25,6 +25,10 @@ type Item = {
   pronunciation?: string | null;
   example: string | null;
   exampleMeaning: string | null;
+  exampleSentenceEn?: string | null;
+  exampleSentenceKo?: string | null;
+  exampleSource?: "SOURCE" | "AI" | "NONE" | null;
+  partOfSpeech?: "NOUN" | "VERB" | "ADJECTIVE" | "ADVERB" | "PHRASE" | "OTHER" | "UNKNOWN" | null;
   itemState: {
     status: "NEW" | "CORRECT" | "WRONG";
     streak?: number;
@@ -50,6 +54,7 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
+  const [openExamples, setOpenExamples] = useState<Record<number, boolean>>({});
   const searchInputRef = useRef<HTMLInputElement>(null);
   const restoredPrefsRef = useRef(false);
   const { mode, setMode } = useMeaningViewMode();
@@ -91,6 +96,7 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
       setTitle(json.wordbook.title);
       setSpeakLang(json.wordbook.fromLang?.toLowerCase().startsWith("en") ? "en-US" : undefined);
       setItems(json.items ?? []);
+      setOpenExamples({});
       if (json.studyState) setStudyState(json.studyState);
       setTotalFiltered(json.paging?.totalFiltered ?? 0);
       setTotalItems(json.paging?.totalItems ?? 0);
@@ -325,12 +331,49 @@ export function WordbookStudyClient({ wordbookId }: { wordbookId: number }) {
                   <SpeakButton text={item.term} lang={speakLang} iconOnly className="border-slate-300" />
                 </div>
                 <MeaningView value={item.meaning} mode={mode} className="mt-1 text-sm text-slate-700" />
-                {item.example ? (
-                  <p className="mt-1 text-xs text-slate-500">
-                    예문: {item.example}
-                    {item.exampleMeaning ? ` - ${item.exampleMeaning}` : ""}
-                  </p>
-                ) : null}
+                {(() => {
+                  const exampleEn = item.exampleSentenceEn ?? item.example;
+                  const exampleKo = item.exampleSentenceKo ?? item.exampleMeaning;
+                  if (!exampleEn) return null;
+                  const opened = Boolean(openExamples[item.id]);
+                  return (
+                    <div className="mt-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setOpenExamples((prev) => ({
+                            ...prev,
+                            [item.id]: !prev[item.id]
+                          }))
+                        }
+                        className="ui-btn-secondary px-2.5 py-1 text-xs"
+                      >
+                        {opened ? "예문 숨기기" : "예문 보기"}
+                      </button>
+                      {opened ? (
+                        <div className="mt-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+                          <p>예문: {exampleEn}</p>
+                          {exampleKo ? <p className="mt-1">해석: {exampleKo}</p> : null}
+                          <div className="mt-2 flex flex-wrap items-center gap-2">
+                            {item.partOfSpeech ? (
+                              <span className="rounded-full border border-slate-300 bg-white px-2 py-0.5 text-[11px] font-semibold text-slate-600">
+                                {item.partOfSpeech.toLowerCase()}
+                              </span>
+                            ) : null}
+                            {item.exampleSource === "AI" ? (
+                              <span
+                                className="rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700"
+                                title="원문에서 추출되지 않아 AI가 생성한 예문입니다."
+                              >
+                                AI 생성 예문
+                              </span>
+                            ) : null}
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                  );
+                })()}
                 {item.itemState ? (
                   <p className="mt-1 text-xs text-slate-500">
                     상태 {item.itemState.status === "CORRECT" ? "정답" : item.itemState.status === "WRONG" ? "오답" : "새 단어"} / 연속 정답 {item.itemState.streak}

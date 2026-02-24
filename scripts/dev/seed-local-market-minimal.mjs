@@ -16,6 +16,14 @@ const marketBooks = [
   { title: "[LOCAL] Business News 220", itemCount: 220, theme: "Business news and economy reading terms." }
 ];
 
+function normalizeTermForKey(term) {
+  return term
+    .trim()
+    .replace(/^[\p{P}\p{S}]+|[\p{P}\p{S}]+$/gu, "")
+    .replace(/\s+/g, " ")
+    .toLowerCase();
+}
+
 function makeItems(title, count) {
   return Array.from({ length: count }).map((_, idx) => ({
     term: `${title.split(" ").slice(-1)[0].toLowerCase()}-${idx + 1}`,
@@ -88,6 +96,11 @@ async function main() {
         wordbookId: created.id,
         term: item.term,
         meaning: item.meaning,
+        meaningKo: item.meaning,
+        normalizedTerm: normalizeTermForKey(item.term),
+        exampleSource: "NONE",
+        enrichmentStatus: "DONE",
+        enrichmentCompletedAt: new Date(),
         position: item.position
       }))
     });

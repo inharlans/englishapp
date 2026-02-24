@@ -6,6 +6,14 @@ const path = require("path");
 const { PrismaClient } = require("@prisma/client");
 const bcrypt = require("bcryptjs");
 
+function normalizeTermForKey(term) {
+  return term
+    .trim()
+    .replace(/^[\p{P}\p{S}]+|[\p{P}\p{S}]+$/gu, "")
+    .replace(/\s+/g, " ")
+    .toLowerCase();
+}
+
 function parseWordsTsv(raw) {
   const lines = raw
     .split(/\r?\n/)
@@ -237,6 +245,11 @@ async function seedGeneratedWordbooks(prisma) {
         wordbookId,
         term: item.term,
         meaning: item.meaning,
+        meaningKo: item.meaning,
+        normalizedTerm: normalizeTermForKey(item.term),
+        exampleSource: "NONE",
+        enrichmentStatus: "DONE",
+        enrichmentCompletedAt: new Date(),
         pronunciation: null,
         position: idx
       }))

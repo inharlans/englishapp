@@ -1,6 +1,7 @@
-﻿import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 import { getUserFromRequestCookies } from "@/lib/authServer";
+import { normalizeTermForKey } from "@/lib/clipper";
 import { prisma } from "@/lib/prisma";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
 import { isBrokenUserText } from "@/lib/textQuality";
@@ -96,9 +97,16 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
         wordbookId: id,
         term: it.term,
         meaning: it.meaning,
+        meaningKo: it.meaning,
+        normalizedTerm: normalizeTermForKey(it.term),
         pronunciation: it.pronunciation,
         example: it.example,
         exampleMeaning: it.exampleMeaning,
+        exampleSentenceEn: it.example,
+        exampleSentenceKo: it.exampleMeaning,
+        exampleSource: it.example ? "SOURCE" : "NONE",
+        enrichmentStatus: "DONE",
+        enrichmentCompletedAt: new Date(),
         position: start + idx
       }))
     });

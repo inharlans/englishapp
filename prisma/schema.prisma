@@ -75,6 +75,7 @@ model User {
   stripeCustomerId String? @unique
   stripeSubscriptionId String? @unique
   stripeSubscriptionStatus String?
+  defaultWordbookId Int?
 
   wordbooks Wordbook[]
   downloads WordbookDownload[]
@@ -200,9 +201,23 @@ model WordbookItem {
   wordbookId    Int
   term          String
   meaning       String
+  meaningKo     String?
+  normalizedTerm String?
+  partOfSpeech  PartOfSpeech?
   pronunciation String?
   example       String?
   exampleMeaning String?
+  exampleSentenceEn String?
+  exampleSentenceKo String?
+  exampleSource ExampleSource @default(NONE)
+  enrichmentStatus EnrichmentStatus @default(DONE)
+  enrichmentError String?
+  enrichmentQueuedAt DateTime @default(now())
+  enrichmentStartedAt DateTime?
+  enrichmentCompletedAt DateTime?
+  enrichmentAttempts Int @default(0)
+  sourceUrl String?
+  sourceTitle String?
   position      Int      @default(0)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -211,6 +226,9 @@ model WordbookItem {
   studyItemStates WordbookStudyItemState[]
 
   @@index([wordbookId, position])
+  @@index([enrichmentStatus, enrichmentQueuedAt])
+  @@index([wordbookId, enrichmentStatus])
+  @@unique([wordbookId, normalizedTerm])
 }
 
 model WordbookDownload {
@@ -379,4 +397,27 @@ enum WordbookReportStatus {
   OPEN
   RESOLVED
   DISMISSED
+}
+
+enum PartOfSpeech {
+  NOUN
+  VERB
+  ADJECTIVE
+  ADVERB
+  PHRASE
+  OTHER
+  UNKNOWN
+}
+
+enum ExampleSource {
+  SOURCE
+  AI
+  NONE
+}
+
+enum EnrichmentStatus {
+  QUEUED
+  PROCESSING
+  DONE
+  FAILED
 }
