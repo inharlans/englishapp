@@ -1,22 +1,24 @@
-FROM node:20-bookworm-slim AS deps
+FROM node:20-bookworm-slim AS base
 WORKDIR /app
-ENV PRISMA_SKIP_POSTINSTALL_GENERATE=true
-COPY package.json package-lock.json ./
-RUN npm ci --ignore-scripts
+RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 
-FROM node:20-bookworm-slim AS builder
+FROM base AS deps
+COPY package.json package-lock.json ./
+COPY prisma ./prisma
+RUN npm ci
+
+FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build
 
-FROM node:20-bookworm-slim AS prod-deps
-WORKDIR /app
-ENV PRISMA_SKIP_POSTINSTALL_GENERATE=true
+FROM base AS prod-deps
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev --ignore-scripts
+COPY prisma ./prisma
+RUN npm ci --omit=dev
 
-FROM node:20-bookworm-slim AS runner
+FROM base AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000

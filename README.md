@@ -13,6 +13,7 @@
 - 배포 안정화를 위해 `.dockerignore`를 추가해 Docker 빌드 컨텍스트 크기를 줄였습니다.
 - Railway Nixpacks 배포 기본 변수(`CLIPPER_LLM_PROVIDER`, `CLIPPER_LLM_MODEL`)를 `nixpacks.toml`에 명시했습니다.
 - Railway 배포 안정성을 위해 멀티스테이지 `Dockerfile` 기반 빌드로 전환했습니다(`railway.json` builder=`DOCKERFILE`).
+- Docker 빌드에서 Prisma postinstall 실패를 막기 위해 `npm ci` 이전에 `prisma/`를 먼저 복사하고, OpenSSL을 이미지에 설치하도록 조정했습니다.
 
 Englishapp은 영어 학습과 단어장 마켓을 제공하는 웹 애플리케이션입니다.
 
