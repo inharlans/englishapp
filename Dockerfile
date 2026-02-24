@@ -1,5 +1,6 @@
 FROM node:20-bookworm-slim AS deps
 WORKDIR /app
+ENV PRISMA_SKIP_POSTINSTALL_GENERATE=true
 COPY package.json package-lock.json ./
 RUN npm ci --ignore-scripts
 
@@ -11,6 +12,7 @@ RUN npm run build
 
 FROM node:20-bookworm-slim AS prod-deps
 WORKDIR /app
+ENV PRISMA_SKIP_POSTINSTALL_GENERATE=true
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev --ignore-scripts
 
