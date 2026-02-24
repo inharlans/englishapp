@@ -1,0 +1,3 @@
+[variables]
+CLIPPER_LLM_PROVIDER = "gemini"
+CLIPPER_LLM_MODEL = "gemini-2.5-flash-lite"
