@@ -1,4 +1,4 @@
-﻿import type { MeaningViewMode } from "@/components/wordbooks/useMeaningViewMode";
+import type { MeaningViewMode } from "@/components/wordbooks/useMeaningViewMode";
 import { sanitizeUserText } from "@/lib/textQuality";
 
 type MeaningEntry = {
@@ -50,6 +50,10 @@ function normalizeTag(raw: string): string | null {
 
 function normalizeMeaning(value: string): string {
   return value
+    .replace(
+      /(?<=[가-힣A-Za-z)])(명사|동사|형용사|부사|대명사|전치사|접속사|감탄사|조동사|관형사|관사|수사)(?=[가-힣A-Za-z])/g,
+      ", $1"
+    )
     .replace(/\(\s*명사\s*\)/g, "(명)")
     .replace(/\(\s*동사\s*\)/g, "(동)")
     .replace(/\(\s*형용사\s*\)/g, "(형)")
@@ -122,7 +126,7 @@ function parseMeaningEntries(value: string): MeaningEntry[] {
     seen.add(key);
     deduped.push(entry);
   }
-  return deduped;
+  return deduped.slice(0, 24);
 }
 
 function groupByTag(entries: MeaningEntry[]) {
@@ -181,9 +185,12 @@ export function MeaningView({
     return <span className={className}>{entries[0].text}</span>;
   }
 
+  const compactItems = entries.slice(0, 10);
+  const hiddenCount = Math.max(0, entries.length - compactItems.length);
+
   return (
     <span className={`inline-flex flex-wrap items-center gap-1 ${className}`}>
-      {entries.map((entry, idx) => (
+      {compactItems.map((entry, idx) => (
         <span
           key={`${entry.tag ?? "none"}-${entry.text}-${idx}`}
           className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[12px] text-slate-700"
@@ -200,6 +207,11 @@ export function MeaningView({
           )}
         </span>
       ))}
+      {hiddenCount > 0 ? (
+        <span className="rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600">
+          +{hiddenCount}
+        </span>
+      ) : null}
     </span>
   );
 }

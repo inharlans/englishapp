@@ -17,6 +17,8 @@ auto-loop.log
 macro-loop.log
 mcp-cycle.log
 *.tsbuildinfo
+.local-market-dev.log
+.local-market-dev.err.log
 
 # generated/crawled datasets (keep out of git by default)
 /data

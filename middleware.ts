@@ -5,6 +5,22 @@ import { getSessionCookieName, verifySessionToken } from "@/lib/authJwt";
 
 const PREVIEW_COOKIE_NAME = "preview_access";
 
+function withSecurityHeaders(res: NextResponse): NextResponse {
+  res.headers.set("X-Frame-Options", "DENY");
+  res.headers.set("X-Content-Type-Options", "nosniff");
+  res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  res.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+  return res;
+}
+
+function isLocalDebugBypass(req: NextRequest): boolean {
+  if (process.env.NODE_ENV === "production") return false;
+  const bypassFlag = process.env.LOCAL_AUTH_BYPASS?.toLowerCase();
+  if (bypassFlag === "false" || bypassFlag === "0") return false;
+  const host = req.nextUrl.hostname;
+  return host === "localhost" || host === "127.0.0.1" || host === "::1";
+}
+
 function hasValidPreviewAccess(req: NextRequest): boolean {
   const expected = process.env.PREVIEW_ACCESS_TOKEN;
   if (!expected) return false;
@@ -40,45 +56,29 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(redirectUrl, 308);
   }
 
+  if (isLocalDebugBypass(req)) {
+    return withSecurityHeaders(NextResponse.next());
+  }
+
   const { pathname } = req.nextUrl;
   if (isPublicPath(pathname) || hasValidPreviewAccess(req)) {
-    const res = NextResponse.next();
-    res.headers.set("X-Frame-Options", "DENY");
-    res.headers.set("X-Content-Type-Options", "nosniff");
-    res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
-    res.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
-    return res;
+    return withSecurityHeaders(NextResponse.next());
   }
 
   const token = req.cookies.get(getSessionCookieName())?.value;
   const claims = token ? await verifySessionToken(token) : null;
   if (claims) {
-    const res = NextResponse.next();
-    res.headers.set("X-Frame-Options", "DENY");
-    res.headers.set("X-Content-Type-Options", "nosniff");
-    res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
-    res.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
-    return res;
+    return withSecurityHeaders(NextResponse.next());
   }
 
   if (pathname.startsWith("/api/")) {
-    const res = NextResponse.json({ error: "Unauthorized." }, { status: 401 });
-    res.headers.set("X-Frame-Options", "DENY");
-    res.headers.set("X-Content-Type-Options", "nosniff");
-    res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
-    res.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
-    return res;
+    return withSecurityHeaders(NextResponse.json({ error: "Unauthorized." }, { status: 401 }));
   }
 
   const loginUrl = req.nextUrl.clone();
   loginUrl.pathname = "/login";
   loginUrl.searchParams.set("next", pathname);
-  const res = NextResponse.redirect(loginUrl);
-  res.headers.set("X-Frame-Options", "DENY");
-  res.headers.set("X-Content-Type-Options", "nosniff");
-  res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
-  res.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
-  return res;
+  return withSecurityHeaders(NextResponse.redirect(loginUrl));
 }
 
 export const config = {

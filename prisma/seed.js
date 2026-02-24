@@ -4,6 +4,7 @@
 const fs = require("fs");
 const path = require("path");
 const { PrismaClient } = require("@prisma/client");
+const bcrypt = require("bcryptjs");
 
 function parseWordsTsv(raw) {
   const lines = raw
@@ -249,11 +250,193 @@ async function seedGeneratedWordbooks(prisma) {
   );
 }
 
+function isLocalDebugSeedEnabled() {
+  const flag = (process.env.SEED_LOCAL_DEBUG ?? "").toLowerCase();
+  return flag === "1" || flag === "true" || flag === "yes";
+}
+
+function isLocalDatabaseUrl() {
+  const raw = process.env.DATABASE_URL ?? "";
+  if (!raw) return false;
+
+  try {
+    const normalized = raw.startsWith("postgres://") ? raw.replace("postgres://", "postgresql://") : raw;
+    const parsed = new URL(normalized);
+    const host = parsed.hostname.toLowerCase();
+    return host === "localhost" || host === "127.0.0.1" || host === "::1";
+  } catch {
+    return false;
+  }
+}
+
+async function refreshWordbookScore(prisma, wordbookId, itemCount) {
+  const [downloadCount, ratingAgg] = await Promise.all([
+    prisma.wordbookDownload.count({ where: { wordbookId } }),
+    prisma.wordbookRating.aggregate({
+      where: { wordbookId },
+      _count: { id: true },
+      _avg: { rating: true }
+    })
+  ]);
+
+  const ratingCount = ratingAgg._count.id ?? 0;
+  const ratingAvg = ratingAgg._avg.rating ?? 0;
+  const rankScore = downloadCount * 3 + ratingAvg * 20 + ratingCount * 2 + itemCount * 0.01;
+
+  await prisma.wordbook.update({
+    where: { id: wordbookId },
+    data: {
+      downloadCount,
+      ratingCount,
+      ratingAvg,
+      rankScore,
+      rankScoreUpdatedAt: new Date()
+    }
+  });
+}
+
+async function seedLocalDebugFixtures(prisma) {
+  if (process.env.NODE_ENV === "production") {
+    console.log("[seed] local-debug skip: production mode");
+    return;
+  }
+  if (!isLocalDebugSeedEnabled()) {
+    console.log("[seed] local-debug skip: set SEED_LOCAL_DEBUG=1 to enable");
+    return;
+  }
+  if (!isLocalDatabaseUrl() && process.env.ALLOW_NONLOCAL_DEBUG_SEED !== "1") {
+    console.log("[seed] local-debug skip: DATABASE_URL is not local (set ALLOW_NONLOCAL_DEBUG_SEED=1 to override)");
+    return;
+  }
+
+  const debugEmail = process.env.LOCAL_DEBUG_EMAIL ?? "debug@local.oingapp";
+  const debugPassword = process.env.LOCAL_DEBUG_PASSWORD ?? "debug1234!";
+  const reviewerEmail = "reviewer@local.oingapp";
+  const debugHash = await bcrypt.hash(debugPassword, 12);
+
+  const [debugUser, reviewer] = await Promise.all([
+    prisma.user.upsert({
+      where: { email: debugEmail },
+      update: { passwordHash: debugHash, plan: "PRO", proUntil: null, isAdmin: true },
+      create: {
+        email: debugEmail,
+        passwordHash: debugHash,
+        plan: "PRO",
+        proUntil: null,
+        isAdmin: true
+      },
+      select: { id: true }
+    }),
+    prisma.user.upsert({
+      where: { email: reviewerEmail },
+      update: { passwordHash: "seed-reviewer-disabled-login", plan: "FREE" },
+      create: {
+        email: reviewerEmail,
+        passwordHash: "seed-reviewer-disabled-login",
+        plan: "FREE"
+      },
+      select: { id: true }
+    })
+  ]);
+
+  const marketWordbooks = await prisma.wordbook.findMany({
+    where: { isPublic: true, hiddenByAdmin: false },
+    select: { id: true, title: true, _count: { select: { items: true } } },
+    orderBy: [{ rankScore: "desc" }, { createdAt: "desc" }],
+    take: 12
+  });
+
+  let downloadSeeded = 0;
+  let ratingSeeded = 0;
+
+  for (let i = 0; i < marketWordbooks.length; i += 1) {
+    const wb = marketWordbooks[i];
+
+    const shouldDownloadByDebug = i < 8;
+    const shouldDownloadByReviewer = i < 5;
+
+    if (shouldDownloadByDebug) {
+      await prisma.wordbookDownload.upsert({
+        where: { userId_wordbookId: { userId: debugUser.id, wordbookId: wb.id } },
+        update: {
+          syncedAt: new Date(),
+          snapshotItemCount: wb._count.items
+        },
+        create: {
+          userId: debugUser.id,
+          wordbookId: wb.id,
+          downloadedVersion: 1,
+          snapshotItemCount: wb._count.items
+        }
+      });
+      downloadSeeded += 1;
+    }
+
+    if (shouldDownloadByReviewer) {
+      await prisma.wordbookDownload.upsert({
+        where: { userId_wordbookId: { userId: reviewer.id, wordbookId: wb.id } },
+        update: {
+          syncedAt: new Date(),
+          snapshotItemCount: wb._count.items
+        },
+        create: {
+          userId: reviewer.id,
+          wordbookId: wb.id,
+          downloadedVersion: 1,
+          snapshotItemCount: wb._count.items
+        }
+      });
+      downloadSeeded += 1;
+    }
+
+    const ratingByDebug = Math.max(3, 5 - Math.floor(i / 3));
+    await prisma.wordbookRating.upsert({
+      where: { userId_wordbookId: { userId: debugUser.id, wordbookId: wb.id } },
+      update: {
+        rating: ratingByDebug,
+        review: i < 4 ? `Local debug review (${i + 1}) for market sort/review checks` : null
+      },
+      create: {
+        userId: debugUser.id,
+        wordbookId: wb.id,
+        rating: ratingByDebug,
+        review: i < 4 ? `Local debug review (${i + 1}) for market sort/review checks` : null
+      }
+    });
+    ratingSeeded += 1;
+
+    if (i < 6) {
+      const ratingByReviewer = Math.max(2, 5 - Math.floor(i / 2));
+      await prisma.wordbookRating.upsert({
+        where: { userId_wordbookId: { userId: reviewer.id, wordbookId: wb.id } },
+        update: {
+          rating: ratingByReviewer,
+          review: i < 3 ? `Sample reviewer feedback (${i + 1})` : null
+        },
+        create: {
+          userId: reviewer.id,
+          wordbookId: wb.id,
+          rating: ratingByReviewer,
+          review: i < 3 ? `Sample reviewer feedback (${i + 1})` : null
+        }
+      });
+      ratingSeeded += 1;
+    }
+
+    await refreshWordbookScore(prisma, wb.id, wb._count.items);
+  }
+
+  console.log(
+    `[seed] local-debug done: user=${debugEmail}, password=${debugPassword}, downloads=${downloadSeeded}, ratings=${ratingSeeded}, books=${marketWordbooks.length}`
+  );
+}
+
 async function main() {
   const prisma = new PrismaClient();
   try {
     await seedWordsIfEmpty(prisma);
     await seedGeneratedWordbooks(prisma);
+    await seedLocalDebugFixtures(prisma);
   } finally {
     await prisma.$disconnect();
   }

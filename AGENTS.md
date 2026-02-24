@@ -27,6 +27,16 @@ For implementation tasks that change behavior or code:
   - CI workflow files and related docs (`README.md`, `AGENTS.md`)
 - When updating the pattern, keep it stable/reusable (avoid one-off command variants), and document why it changed.
 
+## Local Market Debug Policy (Persistent)
+
+- For local market/wordbook debugging, always use the fixed setup/dev scripts:
+  - `npm run local:market:setup`
+  - `npm run local:market:dev`
+- Do not use plain `npm run dev` for market-debug tasks unless local DB environment is explicitly configured in the current shell.
+- Goal: avoid accidental use of production/remote `DATABASE_URL` from `.env` during local debugging.
+- Reference doc:
+  - `docs/local-debug-wordbook-market.md`
+
 ## Encoding Guardrail (UTF-8)
 
 - All source/code/config/docs files must be saved as `UTF-8` (without BOM).

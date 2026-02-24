@@ -1,7 +1,8 @@
-﻿import Link from "next/link";
-import { cookies } from "next/headers";
+import Link from "next/link";
+import { cookies, headers } from "next/headers";
 
 import { getUserFromRequestCookies } from "@/lib/authServer";
+import { isLocalDebugBypassEnabledByHostHeader } from "@/lib/localDebug";
 import { canAccessWordbookForStudy } from "@/lib/wordbookAccess";
 import { WordbookQuizClient } from "../quiz/quizClient";
 
@@ -27,13 +28,22 @@ export default async function WordbookQuizMeaningPage(props: { params: Promise<{
 
   const user = await getUserFromRequestCookies(await cookies());
   if (!user) {
+    const hostHeader = (await headers()).get("host");
+    const localDebugEnabled = isLocalDebugBypassEnabledByHostHeader(hostHeader);
     return (
       <section className="space-y-4">
         <h1 className="text-2xl font-black tracking-tight text-slate-900">단어장 퀴즈</h1>
         <p className="text-sm text-slate-600">로그인이 필요합니다.</p>
-        <Link href={{ pathname: "/login", query: { next: `/wordbooks/${id}/quiz-meaning` } }} className="text-sm font-semibold text-blue-700 hover:underline">
-          로그인
-        </Link>
+        <div className="flex flex-wrap gap-3">
+          <Link href={{ pathname: "/login", query: { next: `/wordbooks/${id}/quiz-meaning` } }} className="text-sm font-semibold text-blue-700 hover:underline">
+            로그인
+          </Link>
+          {localDebugEnabled ? (
+            <Link href={{ pathname: "/api/auth/local-debug-login", query: { next: `/wordbooks/${id}/quiz-meaning` } }} className="text-sm font-semibold text-blue-700 hover:underline">
+              로컬 디버그 로그인
+            </Link>
+          ) : null}
+        </div>
       </section>
     );
   }

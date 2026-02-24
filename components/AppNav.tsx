@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
@@ -27,6 +27,9 @@ export function AppNav({ isLoggedIn }: { isLoggedIn: boolean }) {
   const nextPath = pathname === "/login" ? loginNextPath : pathWithQuery;
   const isActive = (href: string) => {
     if (href === "/") return pathname === "/";
+    if (href === "/wordbooks") {
+      return pathname === "/wordbooks" || /^\/wordbooks\/\d+/.test(pathname);
+    }
     return pathname === href || pathname.startsWith(`${href}/`);
   };
 

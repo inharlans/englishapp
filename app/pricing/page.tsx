@@ -7,6 +7,10 @@ import { getBusinessInfo } from "@/lib/businessInfo";
 import { FREE_DOWNLOAD_WORD_LIMIT, getUserDownloadedWordCount } from "@/lib/planLimits";
 import { getPortOneConfig } from "@/lib/payments";
 
+function planLabel(plan: "FREE" | "PRO"): string {
+  return plan === "FREE" ? "무료" : "프로";
+}
+
 export default async function PricingPage(props: { searchParams: Promise<{ payment?: string }> }) {
   const sp = await props.searchParams;
   const user = await getUserFromRequestCookies(await cookies());
@@ -32,7 +36,7 @@ export default async function PricingPage(props: { searchParams: Promise<{ payme
               {user.plan === "FREE" && typeof downloadWordsUsed === "number" ? (
                 <>
                   {" "}
-                  - 다운로드 사용량 {" "}
+                  · 다운로드 사용량{" "}
                   <span className="font-semibold">
                     {downloadWordsUsed}/{FREE_DOWNLOAD_WORD_LIMIT}단어
                   </span>
@@ -66,7 +70,7 @@ export default async function PricingPage(props: { searchParams: Promise<{ payme
 
       {sp.payment === "success" ? (
         <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900" role="status" aria-live="polite">
-          결제가 완료되었습니다. 결제 상태는 자동으로 반영됩니다.
+          결제가 완료되었습니다. 결제 상태는 자동 반영됩니다.
         </div>
       ) : null}
 
@@ -105,13 +109,9 @@ export default async function PricingPage(props: { searchParams: Promise<{ payme
           </ul>
           <PricingActions plan={user?.plan ?? null} paymentEnabled={paymentEnabled} isLoggedIn={Boolean(user)} />
           <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700">
-            결제 및 구독 상태는 PortOne 웹훅으로 자동 반영됩니다. 이상 시 관리자에게 문의해 주세요.
+            결제 및 구독 상태는 PortOne 웹훅으로 자동 반영됩니다. 이상 시 고객센터로 문의해 주세요.
           </div>
         </div>
-      </div>
-
-      <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700">
-        무료 다운로드 누적 한도에 도달하면 PRO로 업그레이드해 계속 다운로드할 수 있습니다.
       </div>
 
       <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
@@ -120,27 +120,21 @@ export default async function PricingPage(props: { searchParams: Promise<{ payme
           <li>FREE: 단어장 생성 1개, 다운로드 누적 {FREE_DOWNLOAD_WORD_LIMIT}단어, 비공개 업로드 불가</li>
           <li>PRO: 단어장 생성/다운로드 무제한, 공개/비공개 선택 가능</li>
           <li>PRO에서 FREE로 변경되면 기존 비공개 단어장은 자동 삭제되지 않지만 잠금 상태가 됩니다.</li>
-          <li>잠금 상태에서는 학습/수정이 불가하며 공개 전환 또는 PRO 복구 후 다시 사용할 수 있습니다.</li>
+          <li>잠금 상태에서는 학습/수정이 불가하며, 공개 전환 또는 PRO 복구 후 다시 사용할 수 있습니다.</li>
         </ul>
       </div>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700">
-        <p className="font-semibold text-slate-900">상품/결제/환불 안내</p>
+        <p className="font-semibold text-slate-900">상품/환불 정보</p>
         <ul className="mt-2 list-disc space-y-1 pl-5">
           <li>상품명: Oing PRO 구독권(디지털 서비스)</li>
           <li>결제금액: 월 2,900원 / 연 29,000원 (부가세 포함)</li>
           <li>제공방식: 결제 즉시 계정 권한(PRO) 활성화, 물리 배송 없음</li>
-          <li>해지방법: 결제사 고객센터 또는 구독 관리에서 해지할 수 있습니다.</li>
-          <li>해지정책: 이미 결제된 기간은 사용 가능하며, 다음 결제일부터 자동 청구가 중단됩니다.</li>
+          <li>해지정책: 구독 해지 시 다음 결제일부터 자동 청구 중단</li>
           <li>환불정책: 전자상거래법 및 결제사 정책에 따라 처리(고객센터 접수 후 검토)</li>
-          <li>
-            고객센터: {supportEmail} / {supportPhone}
-            {business.supportHours ? ` (${business.supportHours})` : ""}
-          </li>
+          <li>고객센터: {supportEmail} / {supportPhone}{business.supportHours ? ` (${business.supportHours})` : ""}</li>
         </ul>
       </section>
     </section>
   );
 }
-
-const planLabel = (plan: "FREE" | "PRO") => (plan === "FREE" ? "무료" : "프로");
