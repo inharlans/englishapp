@@ -1,7 +1,7 @@
 FROM node:20-bookworm-slim AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm ci --ignore-scripts
 
 FROM node:20-bookworm-slim AS builder
 WORKDIR /app
@@ -12,7 +12,7 @@ RUN npm run build
 FROM node:20-bookworm-slim AS prod-deps
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev
+RUN npm ci --omit=dev --ignore-scripts
 
 FROM node:20-bookworm-slim AS runner
 WORKDIR /app
@@ -27,4 +27,3 @@ COPY package.json ./
 
 EXPOSE 3000
 CMD ["npm", "run", "start:railway"]
-
