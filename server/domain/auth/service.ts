@@ -14,6 +14,11 @@ import { AuthRepository } from "@/server/domain/auth/repository";
 export class AuthService {
   constructor(private readonly repo = new AuthRepository()) {}
 
+  async isPasswordLoginAllowedInCurrentEnv(email: string): Promise<boolean> {
+    if (process.env.NODE_ENV !== "production") return true;
+    return this.repo.isAdminEmail(email.trim().toLowerCase());
+  }
+
   async login(input: LoginInput): Promise<LoginSuccess | null> {
     const email = input.email.trim().toLowerCase();
     const user = await this.repo.findLoginUserByEmail(email);
@@ -78,4 +83,3 @@ export class AuthService {
     };
   }
 }
-

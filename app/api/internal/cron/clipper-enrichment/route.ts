@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { assertInternalCronRequest } from "@/lib/internalCronSecurity";
 import { recordApiMetricFromStart } from "@/lib/observability";
 import { InternalService } from "@/server/domain/internal/service";
 
@@ -7,6 +8,17 @@ const internalService = new InternalService();
 
 export async function POST(req: NextRequest) {
   const startedAt = Date.now();
+  const denied = assertInternalCronRequest(req);
+  if (denied) {
+    await recordApiMetricFromStart({
+      route: "/api/internal/cron/clipper-enrichment",
+      method: "POST",
+      status: denied.status,
+      startedAt
+    });
+    return denied;
+  }
+
   const result = await internalService.runClipperEnrichmentCron(req.headers.get("authorization"));
   await recordApiMetricFromStart({
     route: "/api/internal/cron/clipper-enrichment",
@@ -19,4 +31,3 @@ export async function POST(req: NextRequest) {
   }
   return NextResponse.json(result.payload, { status: result.status });
 }
-

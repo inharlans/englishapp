@@ -12,6 +12,7 @@
     "verify": "npm run lint && npm run typecheck && npm run test",
     "verify:ci": "npm run verify",
     "test:e2e": "node tests/e2e/http-smoke.mjs",
+    "test:e2e:clipper": "node tests/e2e/clipper-flow.mjs",
     "test:e2e:ui": "node tests/e2e/ui-flow.mjs",
     "test:e2e:local": "powershell -ExecutionPolicy Bypass -File scripts/dev/dev-and-test.ps1 -Suite all",
     "test:e2e:local:smoke": "powershell -ExecutionPolicy Bypass -File scripts/dev/dev-and-test.ps1 -Suite smoke",

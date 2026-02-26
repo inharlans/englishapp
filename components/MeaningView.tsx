@@ -7,29 +7,6 @@ type MeaningEntry = {
 };
 
 const POS_LABELS: Record<string, string> = {
-  명: "명사",
-  동: "동사",
-  형: "형용사",
-  부: "부사",
-  대: "대명사",
-  전: "전치사",
-  접: "접속사",
-  감: "감탄사",
-  조: "조동사",
-  관: "관형사",
-  수: "수사",
-  명사: "명사",
-  동사: "동사",
-  형용사: "형용사",
-  부사: "부사",
-  대명사: "대명사",
-  전치사: "전치사",
-  접속사: "접속사",
-  감탄사: "감탄사",
-  조동사: "조동사",
-  관형사: "관형사",
-  관사: "관형사",
-  수사: "수사",
   noun: "명사",
   verb: "동사",
   adjective: "형용사",
@@ -40,7 +17,19 @@ const POS_LABELS: Record<string, string> = {
   interjection: "감탄사",
   auxiliary: "조동사",
   article: "관형사",
-  numeral: "수사"
+  numeral: "수사",
+  명사: "명사",
+  동사: "동사",
+  형용사: "형용사",
+  부사: "부사",
+  대명사: "대명사",
+  전치사: "전치사",
+  접속사: "접속사",
+  감탄사: "감탄사",
+  조동사: "조동사",
+  관형사: "관형사",
+  수사: "수사",
+  관사: "관형사"
 };
 
 function normalizeTag(raw: string): string | null {
@@ -48,54 +37,28 @@ function normalizeTag(raw: string): string | null {
   return POS_LABELS[key] ?? null;
 }
 
-function normalizeMeaning(value: string): string {
+function normalizeMeaningText(value: string): string {
   return value
-    .replace(
-      /(?<=[가-힣A-Za-z)])(명사|동사|형용사|부사|대명사|전치사|접속사|감탄사|조동사|관형사|관사|수사)(?=[가-힣A-Za-z])/g,
-      ", $1"
-    )
-    .replace(/\(\s*명사\s*\)/g, "(명)")
-    .replace(/\(\s*동사\s*\)/g, "(동)")
-    .replace(/\(\s*형용사\s*\)/g, "(형)")
-    .replace(/\(\s*부사\s*\)/g, "(부)")
-    .replace(/\(\s*대명사\s*\)/g, "(대)")
-    .replace(/\(\s*전치사\s*\)/g, "(전)")
-    .replace(/\(\s*접속사\s*\)/g, "(접)")
-    .replace(/\(\s*감탄사\s*\)/g, "(감)")
-    .replace(/\(\s*조동사\s*\)/g, "(조)")
-    .replace(/\(\s*관사\s*\)/g, "(관)")
-    .replace(/\(\s*수사\s*\)/g, "(수)")
-    .replace(/(^|[\s,])명사(?=[^\s,])/g, "$1(명)")
-    .replace(/(^|[\s,])동사(?=[^\s,])/g, "$1(동)")
-    .replace(/(^|[\s,])형용사(?=[^\s,])/g, "$1(형)")
-    .replace(/(^|[\s,])부사(?=[^\s,])/g, "$1(부)")
-    .replace(/(^|[\s,])대명사(?=[^\s,])/g, "$1(대)")
-    .replace(/(^|[\s,])전치사(?=[^\s,])/g, "$1(전)")
-    .replace(/(^|[\s,])접속사(?=[^\s,])/g, "$1(접)")
-    .replace(/(^|[\s,])감탄사(?=[^\s,])/g, "$1(감)")
-    .replace(/(^|[\s,])조동사(?=[^\s,])/g, "$1(조)")
-    .replace(/(^|[\s,])관형사(?=[^\s,])/g, "$1(관)")
-    .replace(/(^|[\s,])관사(?=[^\s,])/g, "$1(관)")
-    .replace(/(^|[\s,])수사(?=[^\s,])/g, "$1(수)")
-    .replace(/\)\(/g, ") ")
     .replace(/\s+/g, " ")
+    .replace(/[|/]/g, ", ")
+    .replace(/；|;/g, ", ")
+    .replace(/\s*,\s*/g, ", ")
+    .replace(/\(\s*/g, "(")
+    .replace(/\s*\)/g, ")")
     .trim();
 }
 
-function splitByDelimiters(text: string): string[] {
+function splitByDelimiter(text: string): string[] {
   return text
-    .split(/[;,/|\n]/g)
-    .map((part) =>
-      part
-        .replace(/^[-•·\s]+/g, "")
-        .replace(/^\.\.\./, "")
-        .trim()
-    )
+    .split(/[,\n]/g)
+    .map((part) => part.replace(/^[-•·\s]+/g, "").trim())
     .filter(Boolean);
 }
 
 function parseMeaningEntries(value: string): MeaningEntry[] {
-  const normalized = normalizeMeaning(value);
+  const normalized = normalizeMeaningText(value);
+  if (!normalized) return [];
+
   const out: MeaningEntry[] = [];
   const regex = /\(([^)]+)\)|([^()]+)/g;
   let currentTag: string | null = null;
@@ -103,24 +66,30 @@ function parseMeaningEntries(value: string): MeaningEntry[] {
 
   while ((match = regex.exec(normalized)) !== null) {
     if (match[1]) {
-      const tagLabel = normalizeTag(match[1]);
-      if (tagLabel) {
-        currentTag = tagLabel;
-      }
+      const tag = normalizeTag(match[1]);
+      if (tag) currentTag = tag;
       continue;
     }
-
     if (!match[2]) continue;
-    const parts = splitByDelimiters(match[2]);
-    for (const part of parts) {
+
+    for (const part of splitByDelimiter(match[2])) {
+      // If the part starts with a POS word without spacing, separate it.
+      const leadingPos = part.match(/^(명사|동사|형용사|부사|대명사|전치사|접속사|감탄사|조동사|관형사|수사)(.+)$/);
+      if (leadingPos) {
+        const parsedTag = normalizeTag(leadingPos[1]);
+        if (parsedTag) {
+          out.push({ tag: parsedTag, text: leadingPos[2].trim() });
+          continue;
+        }
+      }
       out.push({ tag: currentTag, text: part });
     }
   }
 
-  // Deduplicate while preserving order.
-  const seen = new Set<string>();
   const deduped: MeaningEntry[] = [];
+  const seen = new Set<string>();
   for (const entry of out) {
+    if (!entry.text) continue;
     const key = `${entry.tag ?? "none"}:${entry.text.toLowerCase()}`;
     if (seen.has(key)) continue;
     seen.add(key);
@@ -131,19 +100,18 @@ function parseMeaningEntries(value: string): MeaningEntry[] {
 
 function groupByTag(entries: MeaningEntry[]) {
   const groups: Array<{ key: string; label: string; items: string[] }> = [];
-  const byKey = new Map<string, { key: string; label: string; items: string[] }>();
+  const map = new Map<string, { key: string; label: string; items: string[] }>();
 
   for (const entry of entries) {
     const key = entry.tag ?? "none";
     const label = entry.tag ?? "기타";
-    if (!byKey.has(key)) {
+    if (!map.has(key)) {
       const group = { key, label, items: [] as string[] };
-      byKey.set(key, group);
+      map.set(key, group);
       groups.push(group);
     }
-    byKey.get(key)!.items.push(entry.text);
+    map.get(key)!.items.push(entry.text);
   }
-
   return groups;
 }
 
@@ -156,7 +124,7 @@ export function MeaningView({
   className?: string;
   mode?: MeaningViewMode;
 }) {
-  const safeValue = sanitizeUserText(value, "의미 데이터 점검 중입니다");
+  const safeValue = sanitizeUserText(value, "뜻 데이터가 비어 있습니다.");
   const entries = parseMeaningEntries(safeValue);
 
   if (entries.length === 0) {

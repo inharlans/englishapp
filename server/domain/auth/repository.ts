@@ -7,6 +7,14 @@ import type {
 } from "@/server/domain/auth/contracts";
 
 export class AuthRepository {
+  async isAdminEmail(email: string): Promise<boolean> {
+    const user = await prisma.user.findUnique({
+      where: { email },
+      select: { isAdmin: true }
+    });
+    return user?.isAdmin === true;
+  }
+
   async findLoginUserByEmail(email: string): Promise<LoginUser | null> {
     const user = await prisma.user.findUnique({
       where: { email },
@@ -37,4 +45,3 @@ export class AuthRepository {
     });
   }
 }
-

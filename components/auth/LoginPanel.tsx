@@ -7,7 +7,7 @@ import { loginWithEmail } from "@/lib/api/auth";
 export function LoginPanel({
   nextPath = "/wordbooks",
   title = "로그인",
-  subtitle = "계속하려면 로그인해 주세요.",
+  subtitle = "앱과 API를 사용하려면 로그인하세요.",
   oauthError
 }: {
   nextPath?: string;
@@ -19,6 +19,7 @@ export function LoginPanel({
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const isProduction = process.env.NODE_ENV === "production";
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,54 +41,11 @@ export function LoginPanel({
       <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-900">{title}</h1>
       <p className="mt-2 text-sm text-slate-600">{subtitle}</p>
 
-      <form onSubmit={onSubmit} className="mt-6 space-y-3">
-        <label className="block">
-          <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">이메일</span>
-          <input
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            type="email"
-            className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-            autoComplete="email"
-            required
-            disabled={loading}
-          />
-        </label>
-
-        <label className="block">
-          <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">비밀번호</span>
-          <input
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            type="password"
-            className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-            autoComplete="current-password"
-            required
-            disabled={loading}
-          />
-        </label>
-
-        <button
-          type="submit"
-          disabled={loading}
-          aria-busy={loading}
-          className="ui-btn-accent w-full px-4 py-2.5 text-sm transition disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {loading ? "로그인 중..." : "로그인"}
-        </button>
-
-        {error ? (
-          <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700" role="alert">
-            {error}
-          </p>
-        ) : null}
-
-        {oauthError ? (
-          <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700" role="alert">
-            {oauthError}
-          </p>
-        ) : null}
-      </form>
+      {isProduction ? (
+        <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-800">
+          일반 사용자는 아래 간편 로그인(OAuth)을 사용하세요.
+        </div>
+      ) : null}
 
       <div className="mt-5">
         <div className="mb-3 flex items-center gap-2">
@@ -131,6 +89,60 @@ export function LoginPanel({
           </a>
         </div>
       </div>
+
+      <details className="mt-5 rounded-xl border border-slate-200 bg-slate-50/70 p-3">
+        <summary className="cursor-pointer text-sm font-semibold text-slate-700">
+          비밀번호 로그인 (관리자/개발용)
+        </summary>
+        <form onSubmit={onSubmit} className="mt-3 space-y-3">
+          <label className="block">
+            <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">이메일</span>
+            <input
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              type="email"
+              className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              autoComplete="email"
+              required
+              disabled={loading}
+            />
+          </label>
+
+          <label className="block">
+            <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">비밀번호</span>
+            <input
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              type="password"
+              className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              autoComplete="current-password"
+              required
+              disabled={loading}
+            />
+          </label>
+
+          <button
+            type="submit"
+            disabled={loading}
+            aria-busy={loading}
+            className="ui-btn-accent w-full px-4 py-2.5 text-sm transition disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {loading ? "로그인 중..." : "로그인"}
+          </button>
+        </form>
+      </details>
+
+      {error ? (
+        <p className="mt-3 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700" role="alert">
+          {error}
+        </p>
+      ) : null}
+
+      {oauthError ? (
+        <p className="mt-3 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700" role="alert">
+          {oauthError}
+        </p>
+      ) : null}
     </section>
   );
 }

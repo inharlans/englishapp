@@ -693,3 +693,8 @@ Railway 기준:
 - `visibleParts` 생성 시 반복 선형 탐색(`find`)을 O(1) 조회로 전환
 - 상세 문서: `docs/service-audit-2026-02-21-loop/ITERATION_102.md`
 
+
+## Auth Policy (Production)
+- OAuth-first login is enforced for regular users.
+- `/api/auth/login` is blocked for non-admin users with `403` and `code: PASSWORD_LOGIN_DISABLED`.
+- Local/development keeps password login for debugging and operations.

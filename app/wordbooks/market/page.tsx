@@ -1,9 +1,7 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import { cookies } from "next/headers";
 
 import { DownloadButton } from "@/components/wordbooks/DownloadButton";
-import { BlockOwnerButton } from "@/components/wordbooks/BlockOwnerButton";
-import { ReportWordbookButton } from "@/components/wordbooks/ReportWordbookButton";
 import { MarketRatingReviews } from "@/components/wordbooks/MarketRatingReviews";
 import { EmptyStateCard } from "@/components/ui/EmptyStateCard";
 import { getUserFromRequestCookies } from "@/lib/authServer";
@@ -375,7 +373,7 @@ export default async function MarketPage(props: {
                         createdAt: wb.createdAt,
                         hasDescription: !!description,
                         isRecommended: sort === "top" && page === 0
-                      }).map((badge) => (
+                      }).slice(0, 2).map((badge) => (
                         <span
                           key={badge}
                           className="rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-800"
@@ -420,10 +418,9 @@ export default async function MarketPage(props: {
                       </Link>
                     ) : null}
                     {user && wb.owner.id !== user.id ? (
-                      <div className="mt-2 flex flex-wrap items-start gap-2" aria-label={`${wb.title} 신고/차단 동작`}>
-                        <BlockOwnerButton wordbookId={wb.id} />
-                        <ReportWordbookButton wordbookId={wb.id} hideHint />
-                      </div>
+                      <p className="mt-2 text-[11px] text-slate-500">
+                        신고/차단은 상세 페이지에서 가능합니다.
+                      </p>
                     ) : null}
                   </div>
                 </div>

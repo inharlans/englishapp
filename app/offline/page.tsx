@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -138,15 +138,22 @@ export default function OfflineLibraryPage() {
           <Link href={{ pathname: "/wordbooks" }} className="ui-btn-secondary px-4 py-2 text-sm">
             뒤로
           </Link>
-          <button
-            type="button"
-            onClick={() => void reload({ announce: true })}
-            disabled={busy}
-            aria-busy={loading}
-            className="ui-btn-secondary px-4 py-2 text-sm"
-          >
-            {loading ? "불러오는 중" : "새로고침"}
-          </button>
+          {!loading ? (
+            <button
+              type="button"
+              onClick={() => void reload({ announce: true })}
+              disabled={busy}
+              aria-busy={loading}
+              className="ui-btn-secondary px-4 py-2 text-sm"
+            >
+              새로고침
+            </button>
+          ) : (
+            <span
+              aria-hidden="true"
+              className="inline-block h-9 w-24 animate-pulse rounded-xl border border-slate-200 bg-slate-100"
+            />
+          )}
         </div>
       </header>
 
@@ -207,9 +214,19 @@ export default function OfflineLibraryPage() {
       </div>
 
       {loading ? (
-        <p className="text-sm text-slate-600" role="status" aria-live="polite">
-          불러오는 중...
-        </p>
+        <div className="space-y-3" role="status" aria-live="polite">
+          <p className="text-sm text-slate-600">오프라인 라이브러리 불러오는 중...</p>
+          <div className="grid gap-3 md:grid-cols-2" aria-hidden="true">
+            {[0, 1].map((idx) => (
+              <div key={idx} className="rounded-2xl border border-slate-200 bg-white p-4">
+                <div className="h-5 w-2/3 animate-pulse rounded bg-slate-100" />
+                <div className="mt-2 h-4 w-1/2 animate-pulse rounded bg-slate-100" />
+                <div className="mt-2 h-4 w-1/3 animate-pulse rounded bg-slate-100" />
+                <div className="mt-4 h-8 w-24 animate-pulse rounded bg-slate-100" />
+              </div>
+            ))}
+          </div>
+        </div>
       ) : null}
       {error ? (
         <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700" role="alert">

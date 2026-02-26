@@ -1,9 +1,9 @@
-﻿import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 import { checkRateLimit, getClientIpFromHeaders } from "@/lib/rateLimit";
 import { captureAppError, recordApiMetric } from "@/lib/observability";
 import { parseJsonWithSchema } from "@/lib/validation";
-import { toUnauthorizedMessage } from "@/server/domain/auth/mapper";
+import { toPasswordLoginDisabledMessage, toUnauthorizedMessage } from "@/server/domain/auth/mapper";
 import { AuthService } from "@/server/domain/auth/service";
 import { z } from "zod";
 
@@ -39,6 +39,27 @@ export async function POST(req: NextRequest) {
   try {
     const parsed = await parseJsonWithSchema(req, loginSchema);
     if (!parsed.ok) return parsed.response;
+
+    const passwordLoginAllowed = await authService.isPasswordLoginAllowedInCurrentEnv(parsed.data.email);
+    if (!passwordLoginAllowed) {
+      await captureAppError({
+        level: "warn",
+        route: "/api/auth/login",
+        message: "password_login_disabled_attempt",
+        context: {
+          code: "PASSWORD_LOGIN_DISABLED",
+          ip
+        }
+      });
+      const res = NextResponse.json(toPasswordLoginDisabledMessage(), { status: 403 });
+      await recordApiMetric({
+        route: "/api/auth/login",
+        method: "POST",
+        status: 403,
+        latencyMs: Date.now() - startedAt
+      });
+      return res;
+    }
 
     const result = await authService.login(parsed.data);
     if (!result) {
