@@ -43,17 +43,39 @@ const filesPath = join(cacheDir, "edited-files.log");
 if (filePath) appendFileSync(filesPath, `${now}:${filePath}\n`, "utf8");
 
 const reposPath = join(cacheDir, "affected-repos.txt");
-const relative = filePath
-  ? filePath.replace(projectDir.replace(/\\/g, "/"), "").replace(/^[/\\]/, "")
-  : "";
-const first = relative.split(/[\\/]/)[0] || "";
-const known = new Set(["app", "components", "lib", "server", "scripts", "tests", "prisma", "docs", ".claude"]);
-if (known.has(first)) {
+const commandsPath = join(cacheDir, "commands.txt");
+
+function toRelativePath(inputPath) {
+  return inputPath.replace(projectDir.replace(/\\/g, "/"), "").replace(/^[/\\]/, "");
+}
+
+function detectScope(inputPath) {
+  const relative = toRelativePath(inputPath);
+  const normalized = relative.replace(/\\/g, "/");
+  if (!normalized) return "";
+  if (normalized === "middleware.ts" || normalized.startsWith("app/") || normalized.startsWith("components/")) {
+    return "app";
+  }
+  if (normalized.startsWith("server/")) return "server";
+  if (normalized.startsWith("lib/")) return "lib";
+  return "";
+}
+
+const scope = filePath ? detectScope(filePath) : "";
+if (scope) {
   const existing = existsSync(reposPath) ? readFileSync(reposPath, "utf8").split(/\r?\n/).filter(Boolean) : [];
-  if (!existing.includes(first)) {
-    existing.push(first);
+  if (!existing.includes(scope)) {
+    existing.push(scope);
     writeFileSync(reposPath, `${existing.join("\n")}\n`, "utf8");
   }
+
+  const commands = existsSync(commandsPath)
+    ? readFileSync(commandsPath, "utf8").split(/\r?\n/).filter(Boolean)
+    : [];
+  const nextCommands = new Set(commands);
+  nextCommands.add(`${scope}:tsc:npm run typecheck`);
+  nextCommands.add(`${scope}:build:npm run build`);
+  writeFileSync(commandsPath, `${[...nextCommands].sort().join("\n")}\n`, "utf8");
 }
 
 process.exit(0);
