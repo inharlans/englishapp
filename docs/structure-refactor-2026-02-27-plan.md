@@ -84,6 +84,13 @@
 2. 라우트 단순화
    - 라우트는 요청 검증/레이트리밋/인증/서비스 결과 응답만 담당
 
+## 범위 (Phase 10)
+1. 결제 라우트 공통 가드/메트릭 패턴 추출
+   - 추가: `lib/api/mutation-route.ts`
+   - 확장: `lib/api/metric-response.ts`
+2. 결제 API 라우트 단순화
+   - 대상: `/api/payments/checkout`, `/api/payments/confirm`, `/api/payments/portal`
+
 ## 비범위 (Phase 1 제외)
 - 라우트의 비즈니스 로직 자체 재설계
 - 서비스/리포지토리 계층의 대규모 인터페이스 변경

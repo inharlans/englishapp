@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { recordApiMetric } from "@/lib/observability";
+import { recordApiMetric, recordApiMetricFromStart } from "@/lib/observability";
 
 export async function jsonWithMetric(params: {
   route: string;
@@ -23,4 +23,21 @@ export async function jsonWithMetric(params: {
     userId: params.userId
   });
   return res;
+}
+
+export async function returnWithMetric(params: {
+  response: NextResponse;
+  route: string;
+  method: string;
+  startedAt: number;
+  userId?: number;
+}) {
+  await recordApiMetricFromStart({
+    route: params.route,
+    method: params.method,
+    status: params.response.status,
+    startedAt: params.startedAt,
+    userId: params.userId
+  });
+  return params.response;
 }

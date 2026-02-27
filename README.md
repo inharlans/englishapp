@@ -2,6 +2,7 @@
 
 ## 최근 업데이트 (2026-02-24)
 
+- API 구조 리팩터링 10차로 결제 라우트 공통 가드/메트릭 패턴을 헬퍼(`lib/api/mutation-route.ts`, `lib/api/metric-response.ts`)로 통합해 `checkout/confirm/portal` 라우트를 단순화했습니다.
 - API 구조 리팩터링 9차로 `publish/import/export` 오케스트레이션을 `server/domain/wordbook/content-service.ts`로 이관해 라우트 계층을 더 얇게 정리했습니다.
 - API 구조 리팩터링 8차로 `/api/wordbooks/[id]/sync-download` 오케스트레이션을 `server/domain/wordbook/sync-download-service.ts`로 이관해 라우트 책임을 축소했습니다.
 - API 구조 리팩터링 7차로 `/api/wordbooks/[id]/download` 오케스트레이션을 `server/domain/wordbook/download-service.ts`로 이관하고, 메트릭 응답 헬퍼(`lib/api/metric-response.ts`)를 도입했습니다.

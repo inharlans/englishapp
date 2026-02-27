@@ -88,3 +88,13 @@
   - [x] `app/api/wordbooks/[id]/export/route.ts`
 - [x] 검증 실행
   - [x] `npm run codex:workflow:check`
+
+## Phase 10
+- [x] 결제 라우트 공통 가드 헬퍼 추가 (`lib/api/mutation-route.ts`)
+- [x] 메트릭 응답 헬퍼 확장 (`lib/api/metric-response.ts`)
+- [x] 결제 라우트 단순화
+  - [x] `app/api/payments/checkout/route.ts`
+  - [x] `app/api/payments/confirm/route.ts`
+  - [x] `app/api/payments/portal/route.ts`
+- [x] 검증 실행
+  - [x] `npm run codex:workflow:check`
