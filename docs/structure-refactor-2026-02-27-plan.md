@@ -91,6 +91,12 @@
 2. 결제 API 라우트 단순화
    - 대상: `/api/payments/checkout`, `/api/payments/confirm`, `/api/payments/portal`
 
+## 범위 (Phase 11)
+1. 관리자 라우트 공통 응답 패턴 추출
+   - 추가: `lib/api/service-response.ts`
+2. 관리자 라우트 인증/응답 단순화
+   - 대상: `/api/admin/reports`, `/api/admin/reports/[id]`, `/api/admin/metrics`, `/api/admin/users`, `/api/admin/users/[id]/plan`, `/api/admin/wordbooks/recompute-rank`
+
 ## 비범위 (Phase 1 제외)
 - 라우트의 비즈니스 로직 자체 재설계
 - 서비스/리포지토리 계층의 대규모 인터페이스 변경

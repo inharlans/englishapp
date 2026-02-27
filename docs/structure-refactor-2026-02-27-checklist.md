@@ -98,3 +98,15 @@
   - [x] `app/api/payments/portal/route.ts`
 - [x] 검증 실행
   - [x] `npm run codex:workflow:check`
+
+## Phase 11
+- [x] 관리자 서비스 응답 헬퍼 추가 (`lib/api/service-response.ts`)
+- [x] 관리자 라우트 단순화
+  - [x] `app/api/admin/reports/route.ts`
+  - [x] `app/api/admin/reports/[id]/route.ts`
+  - [x] `app/api/admin/metrics/route.ts`
+  - [x] `app/api/admin/users/route.ts`
+  - [x] `app/api/admin/users/[id]/plan/route.ts`
+  - [x] `app/api/admin/wordbooks/recompute-rank/route.ts`
+- [x] 검증 실행
+  - [x] `npm run codex:workflow:check`

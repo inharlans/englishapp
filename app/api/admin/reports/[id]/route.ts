@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { getUserFromRequestCookies } from "@/lib/authServer";
-import { parsePositiveIntParam } from "@/lib/api/route-helpers";
+import { parsePositiveIntParam, requireUserFromRequest } from "@/lib/api/route-helpers";
+import { serviceResultToJson } from "@/lib/api/service-response";
 import { hashIpForAudit } from "@/lib/ipHash";
 import { getClientIpFromHeaders } from "@/lib/rateLimit";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
@@ -27,16 +27,14 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   const parsedBody = await parseJsonWithSchema(req, moderateReportSchema);
   if (!parsedBody.ok) return parsedBody.response;
 
-  const user = await getUserFromRequestCookies(req.cookies);
-  const result = await adminService.moderateReport(user, {
+  const auth = await requireUserFromRequest(req);
+  if (!auth.ok) return auth.response;
+
+  const result = await adminService.moderateReport(auth.user, {
     reportId,
     action: parsedBody.data.action,
     note: parsedBody.data.note?.trim() || null,
     reviewerIpHash: hashIpForAudit(getClientIpFromHeaders(req.headers))
   });
-
-  if (!result.ok) {
-    return NextResponse.json({ error: result.error }, { status: result.status });
-  }
-  return NextResponse.json(result.payload, { status: result.status });
+  return serviceResultToJson(result);
 }

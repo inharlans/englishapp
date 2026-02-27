@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 
-import { getUserFromRequestCookies } from "@/lib/authServer";
+import { requireUserFromRequest } from "@/lib/api/route-helpers";
+import { serviceResultToJson } from "@/lib/api/service-response";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
 import { AdminService } from "@/server/domain/admin/service";
 
@@ -10,11 +11,9 @@ export async function POST(req: NextRequest) {
   const badReq = assertTrustedMutationRequest(req);
   if (badReq) return badReq;
 
-  const user = await getUserFromRequestCookies(req.cookies);
-  const result = await adminService.recomputeWordbookRank(user);
-  if (!result.ok) {
-    return NextResponse.json({ error: result.error }, { status: result.status });
-  }
-  return NextResponse.json(result.payload, { status: result.status });
-}
+  const auth = await requireUserFromRequest(req);
+  if (!auth.ok) return auth.response;
 
+  const result = await adminService.recomputeWordbookRank(auth.user);
+  return serviceResultToJson(result);
+}
