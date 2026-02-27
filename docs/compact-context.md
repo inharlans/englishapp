@@ -49,15 +49,15 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `b79f3caf3a09`
-- HEAD: `b5f1d31` Unify internal cron routes with shared wrapper
+- Source hash: `cd885902af33`
+- HEAD: `b4cca77` Automate compact context sync and drift checks
 
 ### Scope Digests
 - api-routes: 61 files, `68f26bf43f5f`
 - api-helpers: 17 files, `fb3db92838d7`
 - domain-services: 29 files, `faacb1d03759`
-- automation-policy: 75 files, `dd06936ca976`
-- tracking-docs: 3 files, `92c9c6c4cfec`
+- automation-policy: 80 files, `528b52043c9a`
+- tracking-docs: 7 files, `c6a491da7c99`
 
 ### Legacy Route Migration Status
 - base: `app/api/`, total: 53, migrated: 39, remaining: 14
@@ -95,6 +95,10 @@
   - [ok] `.claude/skills/`
   - [ok] `.claude/tsc-cache/`
 - Refactor tracking and docs
+  - [ok] `docs/ai-nightly-instructions.md`
+  - [ok] `docs/ai-nightly-runbook.md`
+  - [ok] `docs/ai-nightly-ralph-lite-plan.md`
+  - [ok] `docs/ai-nightly-ralph-lite-checklist.md`
   - [ok] `docs/structure-refactor-2026-02-27-plan.md`
   - [ok] `docs/structure-refactor-2026-02-27-checklist.md`
   - [ok] `docs/OPERATIONS.md`

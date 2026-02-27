@@ -28,6 +28,10 @@
     {
       "title": "Refactor tracking and docs",
       "paths": [
+        "docs/ai-nightly-instructions.md",
+        "docs/ai-nightly-runbook.md",
+        "docs/ai-nightly-ralph-lite-plan.md",
+        "docs/ai-nightly-ralph-lite-checklist.md",
         "docs/structure-refactor-2026-02-27-plan.md",
         "docs/structure-refactor-2026-02-27-checklist.md",
         "docs/OPERATIONS.md",
@@ -111,6 +115,10 @@
     {
       "name": "tracking-docs",
       "patterns": [
+        "docs/ai-nightly-instructions.md",
+        "docs/ai-nightly-runbook.md",
+        "docs/ai-nightly-ralph-lite-plan.md",
+        "docs/ai-nightly-ralph-lite-checklist.md",
         "docs/structure-refactor-2026-02-27-plan.md",
         "docs/structure-refactor-2026-02-27-checklist.md",
         "README.md"
