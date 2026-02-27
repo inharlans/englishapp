@@ -60,3 +60,9 @@
 - [x] `/api/wordbooks/[id]/study` 라우트에서 DB/캐시 처리 제거
 - [x] 검증 실행
   - [x] `npm run codex:workflow:check`
+
+## Phase 6
+- [x] 학습 결과 기록 서비스 추가 (`server/domain/wordbook/study-item-service.ts`)
+- [x] `/api/wordbooks/[id]/study/items/[itemId]` 라우트 단순화
+- [x] 검증 실행
+  - [x] `npm run codex:workflow:check`

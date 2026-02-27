@@ -2,6 +2,7 @@
 
 ## 최근 업데이트 (2026-02-24)
 
+- API 구조 리팩터링 6차로 `/api/wordbooks/[id]/study/items/[itemId]`의 학습 결과 기록 오케스트레이션을 `server/domain/wordbook/study-item-service.ts`로 이관했습니다.
 - API 구조 리팩터링 5차로 `/api/wordbooks/[id]/study`의 DB/캐시 오케스트레이션을 `server/domain/wordbook/study-service.ts`로 이관했습니다.
 - API 구조 리팩터링 4차로 `/api/wordbooks/[id]/study`의 쿼리 빌더 로직을 `lib/api/wordbook-study-query.ts`로 분리해 라우트 책임을 축소했습니다.
 - API 구조 리팩터링 3차로 잔여 라우트들의 로컬 `parseId`를 제거하고, 인증 반복 로직을 공통 헬퍼(`requireUserFromRequest`)로 정리했습니다.
