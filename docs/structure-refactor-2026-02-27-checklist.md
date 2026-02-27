@@ -47,3 +47,10 @@
   - [x] `app/api/wordbooks/[id]/study/route.ts`
 - [x] 검증 실행
   - [x] `npm run codex:workflow:check`
+
+## Phase 4
+- [x] 쿼리 빌더 분리 파일 추가 (`lib/api/wordbook-study-query.ts`)
+- [x] 대형 라우트에서 빌더 로직 이관
+  - [x] `app/api/wordbooks/[id]/study/route.ts`
+- [ ] 검증 실행
+  - [x] `npm run codex:workflow:check`

@@ -41,6 +41,13 @@
    - `/api/words/[id]`
 2. 잔여 인증 반복 로직을 공통 헬퍼(`requireUserFromRequest`)로 통일
 
+## 범위 (Phase 4)
+1. 대형 라우트 쿼리 빌더 분리
+   - 대상: `/api/wordbooks/[id]/study`
+   - 추출: 필터 where 빌더, part-stats SQL 빌더
+2. 라우트 파일 책임 축소
+   - 라우트는 입력 파싱/권한 확인/응답 매핑 중심 유지
+
 ## 비범위 (Phase 1 제외)
 - 라우트의 비즈니스 로직 자체 재설계
 - 서비스/리포지토리 계층의 대규모 인터페이스 변경
