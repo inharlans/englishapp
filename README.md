@@ -2,6 +2,7 @@
 
 ## 최근 업데이트 (2026-02-24)
 
+- API 구조 리팩터링 7차로 `/api/wordbooks/[id]/download` 오케스트레이션을 `server/domain/wordbook/download-service.ts`로 이관하고, 메트릭 응답 헬퍼(`lib/api/metric-response.ts`)를 도입했습니다.
 - API 구조 리팩터링 6차로 `/api/wordbooks/[id]/study/items/[itemId]`의 학습 결과 기록 오케스트레이션을 `server/domain/wordbook/study-item-service.ts`로 이관했습니다.
 - API 구조 리팩터링 5차로 `/api/wordbooks/[id]/study`의 DB/캐시 오케스트레이션을 `server/domain/wordbook/study-service.ts`로 이관했습니다.
 - API 구조 리팩터링 4차로 `/api/wordbooks/[id]/study`의 쿼리 빌더 로직을 `lib/api/wordbook-study-query.ts`로 분리해 라우트 책임을 축소했습니다.

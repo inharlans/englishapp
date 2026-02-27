@@ -62,6 +62,14 @@
 2. 라우트 단순화
    - 라우트는 요청 검증/접근 제어/서비스 결과 응답만 담당
 
+## 범위 (Phase 7)
+1. 다운로드 오케스트레이션 서비스 이관
+   - 대상: `/api/wordbooks/[id]/download`
+   - 추가: `server/domain/wordbook/download-service.ts`
+2. 메트릭 응답 헬퍼 도입
+   - 추가: `lib/api/metric-response.ts`
+   - 라우트에서 중복 `recordApiMetric + NextResponse.json` 패턴 제거
+
 ## 비범위 (Phase 1 제외)
 - 라우트의 비즈니스 로직 자체 재설계
 - 서비스/리포지토리 계층의 대규모 인터페이스 변경

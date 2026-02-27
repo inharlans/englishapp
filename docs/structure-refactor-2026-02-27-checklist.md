@@ -66,3 +66,10 @@
 - [x] `/api/wordbooks/[id]/study/items/[itemId]` 라우트 단순화
 - [x] 검증 실행
   - [x] `npm run codex:workflow:check`
+
+## Phase 7
+- [x] 다운로드 서비스 추가 (`server/domain/wordbook/download-service.ts`)
+- [x] 메트릭 응답 헬퍼 추가 (`lib/api/metric-response.ts`)
+- [x] `/api/wordbooks/[id]/download` 라우트 단순화
+- [x] 검증 실행
+  - [x] `npm run codex:workflow:check`
