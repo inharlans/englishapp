@@ -1,6 +1,6 @@
-﻿import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-import { getUserFromRequestCookies } from "@/lib/authServer";
+import { parsePositiveIntParam, requireUserFromRequest } from "@/lib/api/route-helpers";
 import { checkRateLimit, getClientIpFromHeaders } from "@/lib/rateLimit";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
 import { parseJsonWithSchema } from "@/lib/validation";
@@ -13,12 +13,6 @@ const reportBodySchema = z.object({
 });
 
 const feedbackService = new WordbookFeedbackService();
-
-function parseId(raw: string): number | null {
-  const n = Number(raw);
-  if (!Number.isFinite(n) || n <= 0) return null;
-  return Math.floor(n);
-}
 
 export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const badReq = assertTrustedMutationRequest(req);
@@ -38,22 +32,20 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   }
 
   const { id: idRaw } = await ctx.params;
-  const wordbookId = parseId(idRaw);
+  const wordbookId = parsePositiveIntParam(idRaw);
   if (!wordbookId) {
     return NextResponse.json({ error: "Invalid id." }, { status: 400 });
   }
 
-  const user = await getUserFromRequestCookies(req.cookies);
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
-  }
+  const auth = await requireUserFromRequest(req);
+  if (!auth.ok) return auth.response;
 
   const parsedBody = await parseJsonWithSchema(req, reportBodySchema);
   if (!parsedBody.ok) return parsedBody.response;
 
   const result = await feedbackService.reportWordbook({
     wordbookId,
-    reporterId: user.id,
+    reporterId: auth.user.id,
     reason: parsedBody.data.reason,
     detail: parsedBody.data.detail?.trim() || null
   });

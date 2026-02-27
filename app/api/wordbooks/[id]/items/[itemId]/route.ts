@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { getUserFromRequestCookies } from "@/lib/authServer";
+import { parsePositiveIntParam, requireUserFromRequest } from "@/lib/api/route-helpers";
 import { normalizeTermForKey } from "@/lib/clipper";
 import { prisma } from "@/lib/prisma";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
@@ -22,12 +22,6 @@ const patchItemSchema = z
   })
   .refine((value) => Object.keys(value).length > 0, "At least one field is required.");
 
-function parseId(raw: string): number | null {
-  const n = Number(raw);
-  if (!Number.isFinite(n) || n <= 0) return null;
-  return Math.floor(n);
-}
-
 export async function PATCH(
   req: NextRequest,
   ctx: { params: Promise<{ id: string; itemId: string }> }
@@ -36,16 +30,15 @@ export async function PATCH(
   if (badReq) return badReq;
 
   const { id: idRaw, itemId: itemIdRaw } = await ctx.params;
-  const wordbookId = parseId(idRaw);
-  const itemId = parseId(itemIdRaw);
+  const wordbookId = parsePositiveIntParam(idRaw);
+  const itemId = parsePositiveIntParam(itemIdRaw);
   if (!wordbookId || !itemId) {
     return NextResponse.json({ error: "Invalid id." }, { status: 400 });
   }
 
-  const user = await getUserFromRequestCookies(req.cookies);
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
-  }
+  const auth = await requireUserFromRequest(req);
+  if (!auth.ok) return auth.response;
+  const user = auth.user;
 
   const wordbook = await prisma.wordbook.findUnique({
     where: { id: wordbookId },
@@ -148,16 +141,15 @@ export async function DELETE(
   if (badReq) return badReq;
 
   const { id: idRaw, itemId: itemIdRaw } = await ctx.params;
-  const wordbookId = parseId(idRaw);
-  const itemId = parseId(itemIdRaw);
+  const wordbookId = parsePositiveIntParam(idRaw);
+  const itemId = parsePositiveIntParam(itemIdRaw);
   if (!wordbookId || !itemId) {
     return NextResponse.json({ error: "Invalid id." }, { status: 400 });
   }
 
-  const user = await getUserFromRequestCookies(req.cookies);
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
-  }
+  const auth = await requireUserFromRequest(req);
+  if (!auth.ok) return auth.response;
+  const user = auth.user;
 
   const wordbook = await prisma.wordbook.findUnique({
     where: { id: wordbookId },

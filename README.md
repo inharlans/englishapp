@@ -2,6 +2,7 @@
 
 ## 최근 업데이트 (2026-02-24)
 
+- API 라우트 구조 정리를 시작해 공통 헬퍼(`lib/api/route-helpers.ts`)를 추가했고, 일부 단어장 변경 라우트에서 ID 파싱/인증 가드를 재사용하도록 통일했습니다.
 - 운영 문서 정리를 진행해 참조되지 않는 아이디어 초안 문서(`docs/ui-ideas`, `docs/ux-ideas`)를 아카이브 대상에서 제거했습니다.
 - 운영 문서 정리를 추가 진행해 미참조 감사/제안 문서 묶음(`docs/service-audit-2026-02-19-round2`, `docs/quiz-audit-2026-02-20`, `docs/site-improvement-proposals-2026-02-19`)을 제거했습니다.
 - 운영 로그인 정책을 고정했습니다. `NODE_ENV=production`에서 비관리자 비밀번호 로그인은 `403(PASSWORD_LOGIN_DISABLED)`으로 차단되며, 회귀 테스트(`app/api/auth/login/route.test.ts`)를 추가했습니다.
