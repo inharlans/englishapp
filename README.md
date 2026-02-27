@@ -2,6 +2,7 @@
 
 ## 최근 업데이트 (2026-02-24)
 
+- OpenCode Browser에서 MCP가 비어 보일 때 바로 점검할 수 있도록 4단계 1분 체크리스트 문서를 추가했습니다(`docs/mcp-1minute-checklist-2026-02-28.md`).
 - 운영 배포 서버(`https://www.oingapp.com`) 점검을 반영해 홈 히어로 배지 문구 오타(`영영사` -> `영어`)를 수정하고, 요금제 페이지 정책 링크 문구를 `서비스 이용약관`으로 통일했으며, 메타 타이틀을 `오잉앱`으로 정리했습니다.
 - MCP 도입 우선순위/최소 권한 원칙/운영 프로필을 정리한 운영 정책 문서를 추가했습니다(`docs/mcp-access-policy-2026-02-28.md`).
 - Ralph-Lite 야간 자동화 실행 스크립트를 추가했습니다. `ai:nightly:start/cycle/loop/report`로 야간 브랜치 작업, 게이트 검증, 아침 리포트 생성을 표준화했고 운영 지시서/런북(`docs/ai-nightly-instructions.md`, `docs/ai-nightly-runbook.md`)을 함께 문서화했습니다.

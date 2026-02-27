@@ -49,15 +49,15 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `d9bdb24fc47f`
-- HEAD: `4c80d5c` Make nightly report auto-switch to tracked branch
+- Source hash: `a12f66489a9d`
+- HEAD: `7a71d2f` Fix deployed copy labels and add MCP access policy
 
 ### Scope Digests
 - api-routes: 61 files, `68f26bf43f5f`
 - api-helpers: 17 files, `fb3db92838d7`
 - domain-services: 29 files, `faacb1d03759`
-- automation-policy: 80 files, `9e69d511d7b1`
-- tracking-docs: 8 files, `84b0ff0554ba`
+- automation-policy: 80 files, `d4ba01b17b2f`
+- tracking-docs: 9 files, `84d61dff28b9`
 
 ### Legacy Route Migration Status
 - base: `app/api/`, total: 53, migrated: 39, remaining: 14
@@ -95,6 +95,7 @@
   - [ok] `.claude/skills/`
   - [ok] `.claude/tsc-cache/`
 - Refactor tracking and docs
+  - [ok] `docs/mcp-1minute-checklist-2026-02-28.md`
   - [ok] `docs/mcp-access-policy-2026-02-28.md`
   - [ok] `docs/ai-nightly-instructions.md`
   - [ok] `docs/ai-nightly-runbook.md`

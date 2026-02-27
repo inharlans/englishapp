@@ -28,6 +28,7 @@
     {
       "title": "Refactor tracking and docs",
       "paths": [
+        "docs/mcp-1minute-checklist-2026-02-28.md",
         "docs/mcp-access-policy-2026-02-28.md",
         "docs/ai-nightly-instructions.md",
         "docs/ai-nightly-runbook.md",
@@ -116,6 +117,7 @@
     {
       "name": "tracking-docs",
       "patterns": [
+        "docs/mcp-1minute-checklist-2026-02-28.md",
         "docs/mcp-access-policy-2026-02-28.md",
         "docs/ai-nightly-instructions.md",
         "docs/ai-nightly-runbook.md",
