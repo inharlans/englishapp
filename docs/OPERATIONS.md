@@ -88,3 +88,16 @@ curl -X POST "https://<your-domain>/api/internal/cron/plan-expire" \
 1. GitHub Actions에서 `Scheduled Internal Cron Jobs` 수동 실행
 2. 워크플로 로그에서 성공 여부 확인
 3. `/api/admin/metrics`에서 `/api/internal/cron/*` 지표 증가 확인
+
+## 8) 로그인 정책 모니터링 (PASSWORD_LOGIN_DISABLED)
+
+- 정책 요약:
+  - `NODE_ENV=production`에서는 비관리자 이메일의 비밀번호 로그인을 차단합니다.
+  - 차단 응답: `403`, `code: PASSWORD_LOGIN_DISABLED`
+  - 운영 로그 이벤트: `password_login_disabled_attempt`
+- 기본 알림 임계치(권장):
+  - 최근 10분 동안 `password_login_disabled_attempt`가 20건 이상이면 경고
+  - 최근 10분 동안 50건 이상이면 긴급
+- 점검 포인트:
+  - OAuth 공급자 장애가 없는데 차단 이벤트가 급증하면 로그인 안내 문구/진입 경로를 점검
+  - 관리자가 비밀번호 로그인을 사용해야 하는 환경이면 admin 계정 이메일 설정을 재확인

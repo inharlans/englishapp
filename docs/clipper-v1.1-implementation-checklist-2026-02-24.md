@@ -1,5 +1,10 @@
 # 클리퍼 v1.1 구현 체크리스트 (2026-02-24)
 
+## 최신 상태 스냅샷 (2026-02-27)
+- 현재 코드 기준으로 사용자 설정 API, 클리퍼 저장 API, 내부 크론 경로, Gemini enrichment 기본 플로우는 동작 중입니다.
+- 남은 체크박스는 "미구현"만 의미하지 않고, 문서 체크 업데이트가 반영되지 않은 항목이 포함되어 있습니다.
+- 운영 시 필수 환경변수는 `.env.production.example`을 기준으로 설정합니다.
+
 ## 목표
 - `/api/clipper/add`는 즉시 저장만 수행하고 `enrichmentStatus=QUEUED`를 반환한다.
 - Gemini 배치 워커가 비동기로 `meaningKo/partOfSpeech/exampleSentenceKo`를 채운다.

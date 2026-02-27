@@ -71,6 +71,9 @@ function hasUtf8Bom(buf) {
 
 function validateFile(relPath) {
   const absPath = path.join(root, relPath);
+  if (!fs.existsSync(absPath)) {
+    return null;
+  }
   const buf = fs.readFileSync(absPath);
 
   if (hasUtf16Bom(buf)) {
