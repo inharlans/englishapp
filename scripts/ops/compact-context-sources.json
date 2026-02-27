@@ -1,0 +1,135 @@
+{
+  "docPath": "docs/compact-context.md",
+  "groups": [
+    {
+      "title": "Root / ops context",
+      "paths": [
+        "README.md",
+        "AGENTS.md",
+        "package.json",
+        "nixpacks.toml",
+        "railway.json",
+        ".env.example",
+        ".env.production.example",
+        ".env.development.example"
+      ]
+    },
+    {
+      "title": "Claude hooks/config",
+      "paths": [
+        ".claude/hooks/post-tool-use-tracker.mjs",
+        ".claude/hooks/trigger-build-resolver.mjs",
+        ".claude/hooks/tsc-check.mjs",
+        ".claude/settings.json",
+        ".claude/skills/",
+        ".claude/tsc-cache/"
+      ]
+    },
+    {
+      "title": "Refactor tracking and docs",
+      "paths": [
+        "docs/structure-refactor-2026-02-27-plan.md",
+        "docs/structure-refactor-2026-02-27-checklist.md",
+        "docs/OPERATIONS.md",
+        "docs/TODO_2026-02-26_auth-login-policy-followup.md",
+        "docs/clipper-v1.1-implementation-checklist-2026-02-24.md"
+      ]
+    },
+    {
+      "title": "Shared API helper layer",
+      "paths": [
+        "lib/api/route-helpers.ts",
+        "lib/api/wordbook-guards.ts",
+        "lib/api/wordbook-study-query.ts",
+        "lib/api/metric-response.ts",
+        "lib/api/mutation-route.ts",
+        "lib/api/service-response.ts",
+        "lib/api/internal-cron-route.ts"
+      ]
+    },
+    {
+      "title": "Domain services",
+      "paths": [
+        "server/domain/wordbook/study-service.ts",
+        "server/domain/wordbook/study-item-service.ts",
+        "server/domain/wordbook/download-service.ts",
+        "server/domain/wordbook/sync-download-service.ts",
+        "server/domain/wordbook/content-service.ts",
+        "server/domain/clipper/service.ts",
+        "server/domain/internal/service.ts",
+        "server/domain/payments/service.ts"
+      ]
+    },
+    {
+      "title": "Refactored API route areas",
+      "paths": [
+        "app/api/wordbooks/",
+        "app/api/payments/",
+        "app/api/admin/",
+        "app/api/clipper/add/route.ts",
+        "app/api/users/me/clipper-settings/route.ts",
+        "app/api/internal/cron/"
+      ]
+    },
+    {
+      "title": "Validation tooling touched",
+      "paths": [
+        "scripts/ops/validate-text-encoding.js"
+      ]
+    }
+  ],
+  "contentScopes": [
+    {
+      "name": "api-routes",
+      "patterns": [
+        "app/api/"
+      ]
+    },
+    {
+      "name": "api-helpers",
+      "patterns": [
+        "lib/api/"
+      ]
+    },
+    {
+      "name": "domain-services",
+      "patterns": [
+        "server/domain/"
+      ]
+    },
+    {
+      "name": "automation-policy",
+      "patterns": [
+        ".claude/",
+        ".codex/",
+        ".githooks/",
+        "scripts/ops/",
+        "AGENTS.md",
+        "package.json"
+      ]
+    },
+    {
+      "name": "tracking-docs",
+      "patterns": [
+        "docs/structure-refactor-2026-02-27-plan.md",
+        "docs/structure-refactor-2026-02-27-checklist.md",
+        "README.md"
+      ]
+    }
+  ],
+  "routeStatus": {
+    "basePath": "app/api/",
+    "migratedImportPrefixes": [
+      "@/lib/api/",
+      "@/server/domain/"
+    ],
+    "migratedIdentifiers": [
+      "requireUserFromRequest",
+      "parsePositiveIntParam",
+      "runMutationRoute",
+      "returnWithMetric",
+      "toServiceErrorResponse",
+      "buildInternalCronRoute"
+    ]
+  }
+}

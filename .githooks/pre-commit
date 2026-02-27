@@ -1,4 +1,15 @@
 #!/usr/bin/env sh
 set -eu
 
+COMPACT_DOC="docs/compact-context.md"
+
+npm run compact:sync
+
+if git diff --quiet -- "$COMPACT_DOC"; then
+  :
+else
+  git add "$COMPACT_DOC"
+  printf '%s\n' "pre-commit: staged updated $COMPACT_DOC"
+fi
+
 npm run codex:precommit

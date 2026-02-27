@@ -50,7 +50,7 @@ function getPlan(changedFiles) {
 
   if (!hasRelevant) return { hasRelevant: false, steps: [] };
 
-  const steps = ["hooks:validate"];
+  const steps = ["compact:check", "hooks:validate"];
   if (hasCode) steps.push("verify");
   steps.push("ai:review:gate");
 

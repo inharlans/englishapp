@@ -1,0 +1,129 @@
+# Compact Context (Managed)
+
+## Goal
+
+- Continue stabilizing and standardizing the `englishapp` repo's Claude/Codex automation + API architecture in a hook-enabled CLI workflow.
+- Complete the API structure refactor toward thin route handlers that delegate business logic to shared `lib/api` helpers and `server/domain/*` services.
+- Keep quality gates continuously green (`codex:workflow:check`, lint, typecheck, tests), while updating tracking docs and pushing phased commits to `origin/main`.
+
+## Instructions
+
+- Work in the real repository: `C:\\dev\\englishapp` (not `_tmp_advanced_harness_window`).
+- Treat hooks as active and required in this environment; implement hook-first behavior (not old no-hook fallback patterns).
+- Follow actual repo topology (single app with `app/server/lib`) rather than monorepo assumptions.
+- Continue execution without unnecessary pause when user says "그래".
+- Keep refactor tracking docs updated as changes are made:
+  - `docs/structure-refactor-2026-02-27-plan.md`
+  - `docs/structure-refactor-2026-02-27-checklist.md`
+- After each meaningful batch, run `npm run codex:workflow:check` and keep all checks passing.
+- Commit and push each completed phase to `origin/main`; use temporary author/committer env vars because global git identity is unset.
+
+## Discoveries
+
+- Initial hook failures were caused by missing `jq`; resolved by installing `jq` via winget and ensuring PATH visibility.
+- Correct target repo confirmed as `C:\\dev\\englishapp`.
+- Hook/build tracking needed adaptation to single-app scoped changes (`app/server/lib`).
+- `codex:workflow:check` is strict and must pass for each phase.
+- `scripts/ops/validate-text-encoding.js` needed a guard to skip deleted/missing docs references to avoid false failures.
+- A metric helper integration caused payment route test failures; fixed by aligning with expected `recordApiMetricFromStart` via `returnWithMetric`.
+- Route-local `parseId` usage was standardized by replacing ad hoc helpers with shared parsing helpers.
+
+## Accomplished
+
+- Claude/Codex hook and automation alignment completed for this repo:
+  - Updated hook scripts and trigger resolution behavior for scoped file changes.
+  - Verified hook scenarios after changes.
+- Synced and cleaned `.claude` docs/config from reference material; removed stale/nonessential artifacts.
+- Auth policy hardening:
+  - Added regression test coverage for production password-login disable behavior.
+  - Updated operations/follow-up docs.
+- Multi-phase API refactor progressed substantially:
+  - Added/expanded shared helper layer (`route-helpers`, mutation wrappers, service-response adapters, metric wrappers, internal-cron wrapper, wordbook guards/query utilities).
+  - Moved orchestration/business logic into domain services (wordbook, clipper, internal cron, payments).
+  - Refactored many routes (Wordbook/Admin/Payments/Clipper/Internal Cron) to thin-route style.
+- Refactor tracking docs were maintained during the phases.
+- Phases were run through `npm run codex:workflow:check`, then committed and pushed.
+- Latest explicitly noted commit: `b5f1d31` ("Unify internal cron routes with shared wrapper").
+- Current status: no explicit in-progress diff was handed off; next work is to continue migrating remaining legacy routes to the same thin-route/shared-wrapper pattern and keep docs/checklist in sync.
+
+<!-- compact:auto:start -->
+## Auto Synced Snapshot
+
+- Source hash: `b79f3caf3a09`
+- HEAD: `b5f1d31` Unify internal cron routes with shared wrapper
+
+### Scope Digests
+- api-routes: 61 files, `68f26bf43f5f`
+- api-helpers: 17 files, `fb3db92838d7`
+- domain-services: 29 files, `faacb1d03759`
+- automation-policy: 75 files, `dd06936ca976`
+- tracking-docs: 3 files, `92c9c6c4cfec`
+
+### Legacy Route Migration Status
+- base: `app/api/`, total: 53, migrated: 39, remaining: 14
+- remaining files:
+  - `app/api/auth/google/callback/route.ts`
+  - `app/api/auth/google/route.ts`
+  - `app/api/auth/kakao/callback/route.ts`
+  - `app/api/auth/kakao/route.ts`
+  - `app/api/auth/local-debug-login/route.ts`
+  - `app/api/auth/naver/callback/route.ts`
+  - `app/api/auth/naver/route.ts`
+  - `app/api/blocked-owners/route.ts`
+  - `app/api/internal/e2e/login/route.ts`
+  - `app/api/translate/route.ts`
+  - `app/api/users/me/daily-goal/route.ts`
+  - `app/api/wordbooks/downloaded/route.ts`
+  - `app/api/words/import/route.ts`
+  - `app/api/words/route.ts`
+
+### Relevant Paths
+- Root / ops context
+  - [ok] `README.md`
+  - [ok] `AGENTS.md`
+  - [ok] `package.json`
+  - [ok] `nixpacks.toml`
+  - [ok] `railway.json`
+  - [ok] `.env.example`
+  - [ok] `.env.production.example`
+  - [ok] `.env.development.example`
+- Claude hooks/config
+  - [ok] `.claude/hooks/post-tool-use-tracker.mjs`
+  - [ok] `.claude/hooks/trigger-build-resolver.mjs`
+  - [ok] `.claude/hooks/tsc-check.mjs`
+  - [ok] `.claude/settings.json`
+  - [ok] `.claude/skills/`
+  - [ok] `.claude/tsc-cache/`
+- Refactor tracking and docs
+  - [ok] `docs/structure-refactor-2026-02-27-plan.md`
+  - [ok] `docs/structure-refactor-2026-02-27-checklist.md`
+  - [ok] `docs/OPERATIONS.md`
+  - [ok] `docs/TODO_2026-02-26_auth-login-policy-followup.md`
+  - [ok] `docs/clipper-v1.1-implementation-checklist-2026-02-24.md`
+- Shared API helper layer
+  - [ok] `lib/api/route-helpers.ts`
+  - [ok] `lib/api/wordbook-guards.ts`
+  - [ok] `lib/api/wordbook-study-query.ts`
+  - [ok] `lib/api/metric-response.ts`
+  - [ok] `lib/api/mutation-route.ts`
+  - [ok] `lib/api/service-response.ts`
+  - [ok] `lib/api/internal-cron-route.ts`
+- Domain services
+  - [ok] `server/domain/wordbook/study-service.ts`
+  - [ok] `server/domain/wordbook/study-item-service.ts`
+  - [ok] `server/domain/wordbook/download-service.ts`
+  - [ok] `server/domain/wordbook/sync-download-service.ts`
+  - [ok] `server/domain/wordbook/content-service.ts`
+  - [ok] `server/domain/clipper/service.ts`
+  - [ok] `server/domain/internal/service.ts`
+  - [ok] `server/domain/payments/service.ts`
+- Refactored API route areas
+  - [ok] `app/api/wordbooks/`
+  - [ok] `app/api/payments/`
+  - [ok] `app/api/admin/`
+  - [ok] `app/api/clipper/add/route.ts`
+  - [ok] `app/api/users/me/clipper-settings/route.ts`
+  - [ok] `app/api/internal/cron/`
+- Validation tooling touched
+  - [ok] `scripts/ops/validate-text-encoding.js`
+<!-- compact:auto:end -->

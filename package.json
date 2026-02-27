@@ -20,6 +20,8 @@
     "mcp:cycle": "node scripts/ops/mcp-cycle.js",
     "ops:readiness": "node scripts/ops/ops-readiness.js",
     "completion:report": "node scripts/ops/write-completion-report.js",
+    "compact:sync": "node scripts/ops/sync-compact-context.js",
+    "compact:check": "node scripts/ops/check-compact-context.js",
     "hooks:validate": "node scripts/ops/validate-hook-chains.js && node scripts/ops/validate-text-encoding.js",
     "ai:review:gate": "node scripts/ops/ai-review-gate.js",
     "codex:workflow:check": "node scripts/ops/codex-workflow-guard.js",
