@@ -73,3 +73,9 @@
 - [x] `/api/wordbooks/[id]/download` 라우트 단순화
 - [x] 검증 실행
   - [x] `npm run codex:workflow:check`
+
+## Phase 8
+- [x] 동기화 다운로드 서비스 추가 (`server/domain/wordbook/sync-download-service.ts`)
+- [x] `/api/wordbooks/[id]/sync-download` 라우트 단순화
+- [x] 검증 실행
+  - [x] `npm run codex:workflow:check`
