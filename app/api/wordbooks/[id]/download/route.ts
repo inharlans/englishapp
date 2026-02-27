@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { getUserFromRequestCookies } from "@/lib/authServer";
+import { parsePositiveIntParam, requireUserFromRequest } from "@/lib/api/route-helpers";
 import { FREE_DOWNLOAD_WORD_LIMIT } from "@/lib/planLimits";
 import { recordApiMetric } from "@/lib/observability";
 import { prisma } from "@/lib/prisma";
@@ -8,12 +8,6 @@ import { checkRateLimit, getClientIpFromHeaders } from "@/lib/rateLimit";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
 import { isActiveProPlan } from "@/lib/userPlan";
 import { refreshWordbookRankScore } from "@/lib/wordbookRanking";
-
-function parseId(raw: string): number | null {
-  const n = Number(raw);
-  if (!Number.isFinite(n) || n <= 0) return null;
-  return Math.floor(n);
-}
 
 export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const startedAt = Date.now();
@@ -41,7 +35,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   }
 
   const { id: idRaw } = await ctx.params;
-  const id = parseId(idRaw);
+  const id = parsePositiveIntParam(idRaw);
   if (!id) {
     const res = NextResponse.json({ error: "Invalid id." }, { status: 400 });
     await recordApiMetric({
@@ -53,9 +47,9 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     return res;
   }
 
-  const user = await getUserFromRequestCookies(req.cookies);
-  if (!user) {
-    const res = NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  const auth = await requireUserFromRequest(req);
+  if (!auth.ok) {
+    const res = auth.response;
     await recordApiMetric({
       route: "/api/wordbooks/[id]/download",
       method: "POST",
@@ -64,6 +58,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     });
     return res;
   }
+  const user = auth.user;
 
   const result = await prisma.$transaction(async (tx) => {
     const wordbook = await tx.wordbook.findUnique({

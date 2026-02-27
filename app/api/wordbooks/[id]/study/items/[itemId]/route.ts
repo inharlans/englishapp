@@ -1,7 +1,7 @@
 import { LastResult } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
-import { getUserFromRequestCookies } from "@/lib/authServer";
+import { parsePositiveIntParam, requireUserFromRequest } from "@/lib/api/route-helpers";
 import { prisma } from "@/lib/prisma";
 import { checkRateLimit, getClientIpFromHeaders } from "@/lib/rateLimit";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
@@ -9,12 +9,6 @@ import { invalidateStudyPartStatsCacheForWordbook } from "@/lib/studyPartStatsCa
 import { parseJsonWithSchema } from "@/lib/validation";
 import { canAccessWordbookForStudy } from "@/lib/wordbookAccess";
 import { z } from "zod";
-
-function parseId(raw: string): number | null {
-  const n = Number(raw);
-  if (!Number.isFinite(n) || n <= 0) return null;
-  return Math.floor(n);
-}
 
 const studyItemBodySchema = z.object({
   result: z.enum(["CORRECT", "WRONG", "RESET"])
@@ -58,16 +52,15 @@ export async function POST(
   }
 
   const { id: idRaw, itemId: itemIdRaw } = await ctx.params;
-  const wordbookId = parseId(idRaw);
-  const itemId = parseId(itemIdRaw);
+  const wordbookId = parsePositiveIntParam(idRaw);
+  const itemId = parsePositiveIntParam(itemIdRaw);
   if (!wordbookId || !itemId) {
     return NextResponse.json({ error: "Invalid id." }, { status: 400 });
   }
 
-  const user = await getUserFromRequestCookies(req.cookies);
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
-  }
+  const auth = await requireUserFromRequest(req);
+  if (!auth.ok) return auth.response;
+  const user = auth.user;
 
   const allowed = await canAccessWordbookForStudy({ userId: user.id, wordbookId });
   if (!allowed) {
@@ -144,4 +137,3 @@ export async function POST(
   const studyState = await syncWordbookStudyState(user.id, wordbookId);
   return NextResponse.json({ ok: true, itemState, studyState }, { status: 200 });
 }
-

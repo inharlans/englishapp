@@ -1,6 +1,6 @@
-﻿import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-import { getUserFromRequestCookies } from "@/lib/authServer";
+import { parsePositiveIntParam, requireUserFromRequest } from "@/lib/api/route-helpers";
 import { prisma } from "@/lib/prisma";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
 import { getEffectivePlan } from "@/lib/userPlan";
@@ -12,26 +12,19 @@ const publishSchema = z.object({
   isPublic: z.boolean()
 });
 
-function parseId(raw: string): number | null {
-  const n = Number(raw);
-  if (!Number.isFinite(n) || n <= 0) return null;
-  return Math.floor(n);
-}
-
 export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const badReq = assertTrustedMutationRequest(req);
   if (badReq) return badReq;
 
   const { id: idRaw } = await ctx.params;
-  const id = parseId(idRaw);
+  const id = parsePositiveIntParam(idRaw);
   if (!id) {
     return NextResponse.json({ error: "Invalid id." }, { status: 400 });
   }
 
-  const user = await getUserFromRequestCookies(req.cookies);
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
-  }
+  const auth = await requireUserFromRequest(req);
+  if (!auth.ok) return auth.response;
+  const user = auth.user;
 
   const parsedBody = await parseJsonWithSchema(req, publishSchema);
   if (!parsedBody.ok) return parsedBody.response;

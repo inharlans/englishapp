@@ -1,16 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { getUserFromRequestCookies } from "@/lib/authServer";
+import { parsePositiveIntParam } from "@/lib/api/route-helpers";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
 import { parseJsonWithSchema } from "@/lib/validation";
 import { AdminService } from "@/server/domain/admin/service";
 import { z } from "zod";
-
-function parseId(raw: string): number | null {
-  const n = Number(raw);
-  if (!Number.isFinite(n) || n <= 0) return null;
-  return Math.floor(n);
-}
 
 function parsePlan(raw: unknown): "FREE" | "PRO" | null {
   if (raw === "FREE" || raw === "PRO") return raw;
@@ -33,7 +28,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   if (badReq) return badReq;
 
   const { id: idRaw } = await ctx.params;
-  const userId = parseId(idRaw);
+  const userId = parsePositiveIntParam(idRaw);
   if (!userId) return NextResponse.json({ error: "Invalid id." }, { status: 400 });
 
   const parsedBody = await parseJsonWithSchema(req, updatePlanSchema);
@@ -65,4 +60,3 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   }
   return NextResponse.json(result.payload, { status: result.status });
 }
-
