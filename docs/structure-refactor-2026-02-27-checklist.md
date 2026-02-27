@@ -52,5 +52,11 @@
 - [x] 쿼리 빌더 분리 파일 추가 (`lib/api/wordbook-study-query.ts`)
 - [x] 대형 라우트에서 빌더 로직 이관
   - [x] `app/api/wordbooks/[id]/study/route.ts`
-- [ ] 검증 실행
+- [x] 검증 실행
+  - [x] `npm run codex:workflow:check`
+
+## Phase 5
+- [x] 학습 조회 서비스 추가 (`server/domain/wordbook/study-service.ts`)
+- [x] `/api/wordbooks/[id]/study` 라우트에서 DB/캐시 처리 제거
+- [x] 검증 실행
   - [x] `npm run codex:workflow:check`
