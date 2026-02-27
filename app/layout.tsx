@@ -1,4 +1,4 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import { Manrope, Noto_Sans_KR } from "next/font/google";
 import { cookies } from "next/headers";
 
@@ -13,7 +13,7 @@ import { getBusinessInfo, isBusinessInfoComplete } from "@/lib/businessInfo";
 const appBaseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
 export const metadata: Metadata = {
-  title: "englishapp",
+  title: "오잉앱",
   description: "영어 단어 학습과 다운로드 단어장을 제공하는 학습 플랫폼입니다.",
   metadataBase: new URL(appBaseUrl),
   icons: {
@@ -96,4 +96,3 @@ export default async function RootLayout({
     </html>
   );
 }
-

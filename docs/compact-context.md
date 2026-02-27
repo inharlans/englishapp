@@ -49,15 +49,15 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `75e26b2c9993`
-- HEAD: `06b9559` Add Ralph-Lite nightly automation scripts and runbook
+- Source hash: `d9bdb24fc47f`
+- HEAD: `4c80d5c` Make nightly report auto-switch to tracked branch
 
 ### Scope Digests
 - api-routes: 61 files, `68f26bf43f5f`
 - api-helpers: 17 files, `fb3db92838d7`
 - domain-services: 29 files, `faacb1d03759`
-- automation-policy: 80 files, `040151ba5b7b`
-- tracking-docs: 7 files, `c6a491da7c99`
+- automation-policy: 80 files, `9e69d511d7b1`
+- tracking-docs: 8 files, `84b0ff0554ba`
 
 ### Legacy Route Migration Status
 - base: `app/api/`, total: 53, migrated: 39, remaining: 14
@@ -95,6 +95,7 @@
   - [ok] `.claude/skills/`
   - [ok] `.claude/tsc-cache/`
 - Refactor tracking and docs
+  - [ok] `docs/mcp-access-policy-2026-02-28.md`
   - [ok] `docs/ai-nightly-instructions.md`
   - [ok] `docs/ai-nightly-runbook.md`
   - [ok] `docs/ai-nightly-ralph-lite-plan.md`

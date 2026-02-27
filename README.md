@@ -2,6 +2,8 @@
 
 ## 최근 업데이트 (2026-02-24)
 
+- 운영 배포 서버(`https://www.oingapp.com`) 점검을 반영해 홈 히어로 배지 문구 오타(`영영사` -> `영어`)를 수정하고, 요금제 페이지 정책 링크 문구를 `서비스 이용약관`으로 통일했으며, 메타 타이틀을 `오잉앱`으로 정리했습니다.
+- MCP 도입 우선순위/최소 권한 원칙/운영 프로필을 정리한 운영 정책 문서를 추가했습니다(`docs/mcp-access-policy-2026-02-28.md`).
 - Ralph-Lite 야간 자동화 실행 스크립트를 추가했습니다. `ai:nightly:start/cycle/loop/report`로 야간 브랜치 작업, 게이트 검증, 아침 리포트 생성을 표준화했고 운영 지시서/런북(`docs/ai-nightly-instructions.md`, `docs/ai-nightly-runbook.md`)을 함께 문서화했습니다.
 - 야간 자동화 운영을 위한 Ralph-Lite 계획서/체크리스트 문서를 추가했습니다(`docs/ai-nightly-ralph-lite-plan.md`, `docs/ai-nightly-ralph-lite-checklist.md`). PR 자동 생성 없이 야간 브랜치 결과를 아침에 수동 검토/검증 후 반영하는 절차를 고정했습니다.
 - `/compact` 요약을 문서로 고정 참조할 수 있도록 `docs/compact-context.md` 자동 동기화 체계를 추가했습니다. `npm run compact:sync`로 스냅샷을 갱신하고, `npm run compact:check`로 구조/내용 변경 미반영 상태를 게이트에서 차단합니다.

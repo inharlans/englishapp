@@ -17,7 +17,7 @@ export default async function HomePage() {
         <div className="relative space-y-7">
           <header className="home-reveal-up [animation-delay:60ms]">
             <p className="inline-flex rounded-full border border-blue-200 bg-white/80 px-3 py-1 text-[11px] font-extrabold uppercase tracking-[0.18em] text-blue-700">
-              영영사 학습 보드
+              영어 학습 보드
             </p>
             <h1 className="mt-4 text-4xl font-black leading-[1.05] tracking-tight text-slate-950 sm:text-5xl">
               오늘의 학습 루틴을
