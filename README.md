@@ -2,6 +2,7 @@
 
 ## 최근 업데이트 (2026-02-24)
 
+- 운영 문서 정리를 진행해 참조되지 않는 아이디어 초안 문서(`docs/ui-ideas`, `docs/ux-ideas`)를 아카이브 대상에서 제거했습니다.
 - 운영 로그인 정책을 고정했습니다. `NODE_ENV=production`에서 비관리자 비밀번호 로그인은 `403(PASSWORD_LOGIN_DISABLED)`으로 차단되며, 회귀 테스트(`app/api/auth/login/route.test.ts`)를 추가했습니다.
 - 운영/개발 환경 분리 템플릿을 추가했습니다(`.env.production.example`, `.env.development.example`). 미들웨어 보호 경로와 일치하도록 `PREVIEW_ACCESS_TOKEN` 키를 환경 템플릿에 반영했습니다.
 - PDF/웹 텍스트 선택을 단어장으로 보내는 클리퍼 경로를 추가했습니다.
