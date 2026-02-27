@@ -1,22 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { getUserFromRequestCookies } from "@/lib/authServer";
+import { parsePositiveIntParam, requireUserFromRequest } from "@/lib/api/route-helpers";
+import { getWordbookEditPlanGuardError, requireOwnedWordbook } from "@/lib/api/wordbook-guards";
 import { normalizeTermForKey } from "@/lib/clipper";
 import { parseWordbookText } from "@/lib/wordbookIo";
 import { prisma } from "@/lib/prisma";
 import { checkRateLimit, getClientIpFromHeaders } from "@/lib/rateLimit";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
 import { parseJsonWithSchema } from "@/lib/validation";
-import { isPrivateWordbookLockedForFree } from "@/lib/wordbookAccess";
 import { bumpWordbookVersion } from "@/lib/wordbookVersion";
-import { getEffectivePlan } from "@/lib/userPlan";
 import { z } from "zod";
-
-function parseId(raw: string): number | null {
-  const n = Number(raw);
-  if (!Number.isFinite(n) || n <= 0) return null;
-  return Math.floor(n);
-}
 
 const importWordbookSchema = z.object({
   rawText: z.string().min(1).max(1_000_000),
@@ -43,32 +36,19 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   }
 
   const { id: idRaw } = await ctx.params;
-  const wordbookId = parseId(idRaw);
+  const wordbookId = parsePositiveIntParam(idRaw);
   if (!wordbookId) {
     return NextResponse.json({ error: "Invalid id." }, { status: 400 });
   }
 
-  const user = await getUserFromRequestCookies(req.cookies);
-  if (!user) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  const auth = await requireUserFromRequest(req);
+  if (!auth.ok) return auth.response;
+  const user = auth.user;
 
-  const wordbook = await prisma.wordbook.findUnique({
-    where: { id: wordbookId },
-    select: { id: true, ownerId: true, isPublic: true }
-  });
-  if (!wordbook) return NextResponse.json({ error: "Not found." }, { status: 404 });
-  if (wordbook.ownerId !== user.id) return NextResponse.json({ error: "Forbidden." }, { status: 403 });
-  if (
-    isPrivateWordbookLockedForFree({
-      plan: getEffectivePlan({ plan: user.plan, proUntil: user.proUntil }),
-      isOwner: true,
-      isPublic: wordbook.isPublic
-    })
-  ) {
-    return NextResponse.json(
-      { error: "무료 요금제에서는 비공개 단어장을 수정할 수 없습니다. 공개 전환 또는 업그레이드가 필요합니다." },
-      { status: 403 }
-    );
-  }
+  const owned = await requireOwnedWordbook(user, wordbookId);
+  if (!owned.ok) return owned.response;
+  const editGuard = getWordbookEditPlanGuardError(user, owned.wordbook);
+  if (editGuard) return editGuard;
 
   const parsedBody = await parseJsonWithSchema(req, importWordbookSchema);
   if (!parsedBody.ok) return parsedBody.response;

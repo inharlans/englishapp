@@ -2,6 +2,7 @@
 
 ## 최근 업데이트 (2026-02-24)
 
+- API 구조 리팩터링 2차로 단어장 소유권/요금제 수정 가드를 공통 헬퍼(`lib/api/wordbook-guards.ts`)로 추출하고 관련 라우트에 적용했습니다.
 - API 구조 리팩터링 계획/체크리스트를 문서화했습니다(`docs/structure-refactor-2026-02-27-plan.md`, `docs/structure-refactor-2026-02-27-checklist.md`).
 - 2차 라우트 정리로 `download/publish/sync-download/study-items` 및 일부 admin 라우트까지 공통 파라미터 파싱 헬퍼를 확장 적용했습니다.
 - API 라우트 구조 정리를 시작해 공통 헬퍼(`lib/api/route-helpers.ts`)를 추가했고, 일부 단어장 변경 라우트에서 ID 파싱/인증 가드를 재사용하도록 통일했습니다.

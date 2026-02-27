@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { parsePositiveIntParam, requireUserFromRequest } from "@/lib/api/route-helpers";
+import { requireOwnedWordbook } from "@/lib/api/wordbook-guards";
 import { prisma } from "@/lib/prisma";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
 import { getEffectivePlan } from "@/lib/userPlan";
@@ -38,16 +39,8 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     );
   }
 
-  const existing = await prisma.wordbook.findUnique({
-    where: { id },
-    select: { ownerId: true }
-  });
-  if (!existing) {
-    return NextResponse.json({ error: "Not found." }, { status: 404 });
-  }
-  if (existing.ownerId !== user.id) {
-    return NextResponse.json({ error: "Forbidden." }, { status: 403 });
-  }
+  const owned = await requireOwnedWordbook(user, id);
+  if (!owned.ok) return owned.response;
 
   if (body.isPublic) {
     const itemCount = await prisma.wordbookItem.count({ where: { wordbookId: id } });

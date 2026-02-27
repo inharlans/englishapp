@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { parsePositiveIntParam, requireUserFromRequest } from "@/lib/api/route-helpers";
+import { getWordbookEditPlanGuardError, requireOwnedWordbook } from "@/lib/api/wordbook-guards";
 import { normalizeTermForKey } from "@/lib/clipper";
 import { prisma } from "@/lib/prisma";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
 import { isBrokenUserText } from "@/lib/textQuality";
 import { parseJsonWithSchema } from "@/lib/validation";
-import { isPrivateWordbookLockedForFree } from "@/lib/wordbookAccess";
 import { bumpWordbookVersion } from "@/lib/wordbookVersion";
-import { getEffectivePlan } from "@/lib/userPlan";
 import { z } from "zod";
 
 const newItemSchema = z.object({
@@ -37,28 +36,10 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   if (!auth.ok) return auth.response;
   const user = auth.user;
 
-  const wordbook = await prisma.wordbook.findUnique({
-    where: { id },
-    select: { ownerId: true, isPublic: true }
-  });
-  if (!wordbook) {
-    return NextResponse.json({ error: "Not found." }, { status: 404 });
-  }
-  if (wordbook.ownerId !== user.id) {
-    return NextResponse.json({ error: "Forbidden." }, { status: 403 });
-  }
-  if (
-    isPrivateWordbookLockedForFree({
-      plan: getEffectivePlan({ plan: user.plan, proUntil: user.proUntil }),
-      isOwner: true,
-      isPublic: wordbook.isPublic
-    })
-  ) {
-    return NextResponse.json(
-      { error: "무료 요금제에서는 비공개 단어장을 수정할 수 없습니다. 공개 전환 또는 업그레이드가 필요합니다." },
-      { status: 403 }
-    );
-  }
+  const owned = await requireOwnedWordbook(user, id);
+  if (!owned.ok) return owned.response;
+  const editGuard = getWordbookEditPlanGuardError(user, owned.wordbook);
+  if (editGuard) return editGuard;
 
   const parsedBody = await parseJsonWithSchema(req, addItemsSchema);
   if (!parsedBody.ok) return parsedBody.response;

@@ -16,7 +16,19 @@
    - `/api/wordbooks/[id]/study/items/[itemId]`
 3. 관리자 파라미터 파싱 일관화
    - `/api/admin/users/[id]/plan`
-   - `/api/admin/reports/[id]`
+    - `/api/admin/reports/[id]`
+
+## 범위 (Phase 2)
+1. 단어장 소유권/요금제 수정 가드 공통화
+   - `requireOwnedWordbook`
+   - `getWordbookEditPlanGuardError`
+2. 중복 가드 로직을 단어장 변경 라우트에 적용
+   - `/api/wordbooks/[id]/items`
+   - `/api/wordbooks/[id]/items/[itemId]`
+   - `/api/wordbooks/[id]/import`
+   - `/api/wordbooks/[id]/publish`
+3. 파라미터/인증 헬퍼 확장 적용
+   - `/api/wordbooks/[id]/export`
 
 ## 비범위 (Phase 1 제외)
 - 라우트의 비즈니스 로직 자체 재설계
