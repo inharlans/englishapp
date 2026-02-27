@@ -79,3 +79,12 @@
 - [x] `/api/wordbooks/[id]/sync-download` 라우트 단순화
 - [x] 검증 실행
   - [x] `npm run codex:workflow:check`
+
+## Phase 9
+- [x] 단어장 콘텐츠 서비스 추가 (`server/domain/wordbook/content-service.ts`)
+- [x] 라우트 단순화
+  - [x] `app/api/wordbooks/[id]/publish/route.ts`
+  - [x] `app/api/wordbooks/[id]/import/route.ts`
+  - [x] `app/api/wordbooks/[id]/export/route.ts`
+- [x] 검증 실행
+  - [x] `npm run codex:workflow:check`

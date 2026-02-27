@@ -77,6 +77,13 @@
 2. 라우트 단순화
    - 라우트는 요청 검증/인증/서비스 결과 응답만 담당
 
+## 범위 (Phase 9)
+1. 단어장 콘텐츠 서비스 이관
+   - 대상: `/api/wordbooks/[id]/publish`, `/api/wordbooks/[id]/import`, `/api/wordbooks/[id]/export`
+   - 추가: `server/domain/wordbook/content-service.ts`
+2. 라우트 단순화
+   - 라우트는 요청 검증/레이트리밋/인증/서비스 결과 응답만 담당
+
 ## 비범위 (Phase 1 제외)
 - 라우트의 비즈니스 로직 자체 재설계
 - 서비스/리포지토리 계층의 대규모 인터페이스 변경
