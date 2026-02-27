@@ -97,6 +97,13 @@
 2. 관리자 라우트 인증/응답 단순화
    - 대상: `/api/admin/reports`, `/api/admin/reports/[id]`, `/api/admin/metrics`, `/api/admin/users`, `/api/admin/users/[id]/plan`, `/api/admin/wordbooks/recompute-rank`
 
+## 범위 (Phase 12)
+1. 클리퍼 도메인 서비스 이관
+   - 추가: `server/domain/clipper/service.ts`
+   - 대상: `/api/clipper/add`, `/api/users/me/clipper-settings`
+2. 내부 클론 클리퍼 경로 응답/메트릭 패턴 통일
+   - 대상: `/api/internal/cron/clipper-enrichment`
+
 ## 비범위 (Phase 1 제외)
 - 라우트의 비즈니스 로직 자체 재설계
 - 서비스/리포지토리 계층의 대규모 인터페이스 변경

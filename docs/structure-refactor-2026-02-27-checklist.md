@@ -110,3 +110,13 @@
   - [x] `app/api/admin/wordbooks/recompute-rank/route.ts`
 - [x] 검증 실행
   - [x] `npm run codex:workflow:check`
+
+## Phase 12
+- [x] 클리퍼 도메인 서비스 추가 (`server/domain/clipper/service.ts`)
+- [x] 클리퍼 라우트 단순화
+  - [x] `app/api/clipper/add/route.ts`
+  - [x] `app/api/users/me/clipper-settings/route.ts`
+- [x] 내부 클론 클리퍼 경로 응답/메트릭 패턴 통일
+  - [x] `app/api/internal/cron/clipper-enrichment/route.ts`
+- [x] 검증 실행
+  - [x] `npm run codex:workflow:check`

@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 
+import { returnWithMetric } from "@/lib/api/metric-response";
 import { assertInternalCronRequest } from "@/lib/internalCronSecurity";
-import { recordApiMetricFromStart } from "@/lib/observability";
+import { serviceResultToJson } from "@/lib/api/service-response";
 import { InternalService } from "@/server/domain/internal/service";
 
 const internalService = new InternalService();
@@ -10,24 +11,19 @@ export async function POST(req: NextRequest) {
   const startedAt = Date.now();
   const denied = assertInternalCronRequest(req);
   if (denied) {
-    await recordApiMetricFromStart({
+    return returnWithMetric({
+      response: denied,
       route: "/api/internal/cron/clipper-enrichment",
       method: "POST",
-      status: denied.status,
       startedAt
     });
-    return denied;
   }
 
   const result = await internalService.runClipperEnrichmentCron(req.headers.get("authorization"));
-  await recordApiMetricFromStart({
+  return returnWithMetric({
+    response: serviceResultToJson(result),
     route: "/api/internal/cron/clipper-enrichment",
     method: "POST",
-    status: result.status,
     startedAt
   });
-  if (!result.ok) {
-    return NextResponse.json({ error: result.error }, { status: result.status });
-  }
-  return NextResponse.json(result.payload, { status: result.status });
 }
