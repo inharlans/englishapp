@@ -3,6 +3,7 @@
 ## 최근 업데이트 (2026-02-24)
 
 - 운영 문서 정리를 진행해 참조되지 않는 아이디어 초안 문서(`docs/ui-ideas`, `docs/ux-ideas`)를 아카이브 대상에서 제거했습니다.
+- 운영 문서 정리를 추가 진행해 미참조 감사/제안 문서 묶음(`docs/service-audit-2026-02-19-round2`, `docs/quiz-audit-2026-02-20`, `docs/site-improvement-proposals-2026-02-19`)을 제거했습니다.
 - 운영 로그인 정책을 고정했습니다. `NODE_ENV=production`에서 비관리자 비밀번호 로그인은 `403(PASSWORD_LOGIN_DISABLED)`으로 차단되며, 회귀 테스트(`app/api/auth/login/route.test.ts`)를 추가했습니다.
 - 운영/개발 환경 분리 템플릿을 추가했습니다(`.env.production.example`, `.env.development.example`). 미들웨어 보호 경로와 일치하도록 `PREVIEW_ACCESS_TOKEN` 키를 환경 템플릿에 반영했습니다.
 - PDF/웹 텍스트 선택을 단어장으로 보내는 클리퍼 경로를 추가했습니다.
@@ -425,7 +426,6 @@ Railway 기준:
 
 - 반복 점검 운영 프로토콜: `docs/REPEAT_AUDIT_LOOP_PROTOCOL.md`
 - 운영/점검/인수인계 문서: `docs/`
-- Round 2 계획 문서: `docs/service-audit-2026-02-19-round2/`
 - 2026-02-21 루프 점검 문서: `docs/service-audit-2026-02-21-loop/`
 
 ### 2026-02-22 Iteration 53
