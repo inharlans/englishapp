@@ -2,6 +2,7 @@
 
 ## 최근 업데이트 (2026-02-24)
 
+- API 구조 리팩터링 13차로 내부 cron 라우트 공통 래퍼(`lib/api/internal-cron-route.ts`)를 도입해 `clipper-enrichment/plan-expire/wordbook-rank` 경로의 인증/메트릭/응답 패턴을 통일했습니다.
 - API 구조 리팩터링 12차로 클리퍼 저장/설정 로직을 `server/domain/clipper/service.ts`로 이관하고, 내부 클론 클리퍼 경로 응답/메트릭 패턴도 공통 헬퍼로 정리했습니다.
 - API 구조 리팩터링 11차로 관리자 라우트의 인증/응답 패턴을 `service-response` 헬퍼로 통일해 `admin` API 계층 중복 코드를 정리했습니다.
 - API 구조 리팩터링 10차로 결제 라우트 공통 가드/메트릭 패턴을 헬퍼(`lib/api/mutation-route.ts`, `lib/api/metric-response.ts`)로 통합해 `checkout/confirm/portal` 라우트를 단순화했습니다.

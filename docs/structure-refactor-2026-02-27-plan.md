@@ -104,6 +104,12 @@
 2. 내부 클론 클리퍼 경로 응답/메트릭 패턴 통일
    - 대상: `/api/internal/cron/clipper-enrichment`
 
+## 범위 (Phase 13)
+1. 내부 cron 라우트 공통 래퍼 도입
+   - 추가: `lib/api/internal-cron-route.ts`
+2. 내부 cron 라우트 단순화
+   - 대상: `/api/internal/cron/clipper-enrichment`, `/api/internal/cron/plan-expire`, `/api/internal/cron/wordbook-rank`
+
 ## 비범위 (Phase 1 제외)
 - 라우트의 비즈니스 로직 자체 재설계
 - 서비스/리포지토리 계층의 대규모 인터페이스 변경

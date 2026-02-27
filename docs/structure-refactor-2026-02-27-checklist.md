@@ -120,3 +120,12 @@
   - [x] `app/api/internal/cron/clipper-enrichment/route.ts`
 - [x] 검증 실행
   - [x] `npm run codex:workflow:check`
+
+## Phase 13
+- [x] 내부 cron 라우트 공통 래퍼 추가 (`lib/api/internal-cron-route.ts`)
+- [x] 내부 cron 라우트 단순화
+  - [x] `app/api/internal/cron/clipper-enrichment/route.ts`
+  - [x] `app/api/internal/cron/plan-expire/route.ts`
+  - [x] `app/api/internal/cron/wordbook-rank/route.ts`
+- [x] 검증 실행
+  - [x] `npm run codex:workflow:check`
