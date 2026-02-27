@@ -49,14 +49,14 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `cd885902af33`
-- HEAD: `b4cca77` Automate compact context sync and drift checks
+- Source hash: `75e26b2c9993`
+- HEAD: `06b9559` Add Ralph-Lite nightly automation scripts and runbook
 
 ### Scope Digests
 - api-routes: 61 files, `68f26bf43f5f`
 - api-helpers: 17 files, `fb3db92838d7`
 - domain-services: 29 files, `faacb1d03759`
-- automation-policy: 80 files, `528b52043c9a`
+- automation-policy: 80 files, `040151ba5b7b`
 - tracking-docs: 7 files, `c6a491da7c99`
 
 ### Legacy Route Migration Status

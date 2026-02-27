@@ -17,11 +17,19 @@ function main() {
   if (!state) {
     throw new Error("Missing nightly state. Run npm run ai:nightly:start first.");
   }
+  if (!state.branch) {
+    throw new Error("Nightly state is missing target branch.");
+  }
 
   const reportDir = path.join(root, "docs", "ai-operating-system-2026-02-22", "reports");
   fs.mkdirSync(reportDir, { recursive: true });
 
-  const branch = run("git", ["rev-parse", "--abbrev-ref", "HEAD"]);
+  const currentBranch = run("git", ["rev-parse", "--abbrev-ref", "HEAD"]);
+  const branch = state.branch;
+  if (currentBranch !== branch) {
+    run("git", ["checkout", branch], { inherit: true });
+  }
+
   const commitList = run("git", ["log", "--oneline", `main..${branch}`]);
   const diffStat = run("git", ["diff", "--stat", `main...${branch}`]);
   const gateStatus = state.lastResult || "unknown";
