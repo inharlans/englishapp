@@ -2,6 +2,7 @@
 
 ## 최근 업데이트 (2026-02-24)
 
+- API 구조 리팩터링 3차로 잔여 라우트들의 로컬 `parseId`를 제거하고, 인증 반복 로직을 공통 헬퍼(`requireUserFromRequest`)로 정리했습니다.
 - API 구조 리팩터링 2차로 단어장 소유권/요금제 수정 가드를 공통 헬퍼(`lib/api/wordbook-guards.ts`)로 추출하고 관련 라우트에 적용했습니다.
 - API 구조 리팩터링 계획/체크리스트를 문서화했습니다(`docs/structure-refactor-2026-02-27-plan.md`, `docs/structure-refactor-2026-02-27-checklist.md`).
 - 2차 라우트 정리로 `download/publish/sync-download/study-items` 및 일부 admin 라우트까지 공통 파라미터 파싱 헬퍼를 확장 적용했습니다.

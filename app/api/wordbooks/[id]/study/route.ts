@@ -1,7 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
-import { getUserFromRequestCookies } from "@/lib/authServer";
+import { parsePositiveIntParam, requireUserFromRequest } from "@/lib/api/route-helpers";
 import { prisma } from "@/lib/prisma";
 import {
   getStudyPartStatsFromCache,
@@ -11,12 +11,6 @@ import {
 import { canAccessWordbookForStudy } from "@/lib/wordbookAccess";
 
 type StudyView = "memorize" | "listCorrect" | "listWrong" | "listHalf";
-
-function parseId(raw: string): number | null {
-  const n = Number(raw);
-  if (!Number.isFinite(n) || n <= 0) return null;
-  return Math.floor(n);
-}
 
 function parseIntParam(raw: string | null, fallback: number, min: number, max: number): number {
   const n = Number(raw);
@@ -129,15 +123,14 @@ function buildMatchSql(input: {
 
 export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const { id: idRaw } = await ctx.params;
-  const wordbookId = parseId(idRaw);
+  const wordbookId = parsePositiveIntParam(idRaw);
   if (!wordbookId) {
     return NextResponse.json({ error: "Invalid id." }, { status: 400 });
   }
 
-  const user = await getUserFromRequestCookies(req.cookies);
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
-  }
+  const auth = await requireUserFromRequest(req);
+  if (!auth.ok) return auth.response;
+  const user = auth.user;
 
   const allowed = await canAccessWordbookForStudy({ userId: user.id, wordbookId });
   if (!allowed) {
@@ -299,4 +292,3 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
     { status: 200 }
   );
 }
-

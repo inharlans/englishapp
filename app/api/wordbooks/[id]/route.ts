@@ -1,6 +1,6 @@
-﻿import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-import { getUserFromRequestCookies } from "@/lib/authServer";
+import { parsePositiveIntParam, requireUserFromRequest } from "@/lib/api/route-helpers";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
 import { isBrokenUserText } from "@/lib/textQuality";
 import { parseJsonWithSchema } from "@/lib/validation";
@@ -18,25 +18,17 @@ const patchWordbookSchema = z
 
 const wordbookService = new WordbookService();
 
-function parseId(raw: string): number | null {
-  const n = Number(raw);
-  if (!Number.isFinite(n) || n <= 0) return null;
-  return Math.floor(n);
-}
-
 export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const { id: idRaw } = await ctx.params;
-  const id = parseId(idRaw);
+  const id = parsePositiveIntParam(idRaw);
   if (!id) {
     return NextResponse.json({ error: "Invalid id." }, { status: 400 });
   }
 
-  const user = await getUserFromRequestCookies(req.cookies);
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
-  }
+  const auth = await requireUserFromRequest(req);
+  if (!auth.ok) return auth.response;
 
-  const found = await wordbookService.getByIdForActor(user, id);
+  const found = await wordbookService.getByIdForActor(auth.user, id);
   if (!found.ok) {
     return NextResponse.json({ error: found.error }, { status: found.status });
   }
@@ -49,15 +41,14 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   if (badReq) return badReq;
 
   const { id: idRaw } = await ctx.params;
-  const id = parseId(idRaw);
+  const id = parsePositiveIntParam(idRaw);
   if (!id) {
     return NextResponse.json({ error: "Invalid id." }, { status: 400 });
   }
 
-  const user = await getUserFromRequestCookies(req.cookies);
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
-  }
+  const auth = await requireUserFromRequest(req);
+  if (!auth.ok) return auth.response;
+  const user = auth.user;
 
   const parsedBody = await parseJsonWithSchema(req, patchWordbookSchema);
   if (!parsedBody.ok) return parsedBody.response;
@@ -94,17 +85,15 @@ export async function DELETE(req: NextRequest, ctx: { params: Promise<{ id: stri
   if (badReq) return badReq;
 
   const { id: idRaw } = await ctx.params;
-  const id = parseId(idRaw);
+  const id = parsePositiveIntParam(idRaw);
   if (!id) {
     return NextResponse.json({ error: "Invalid id." }, { status: 400 });
   }
 
-  const user = await getUserFromRequestCookies(req.cookies);
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
-  }
+  const auth = await requireUserFromRequest(req);
+  if (!auth.ok) return auth.response;
 
-  const removed = await wordbookService.deleteMine(user, id);
+  const removed = await wordbookService.deleteMine(auth.user, id);
   if (!removed.ok) {
     return NextResponse.json({ error: removed.error }, { status: removed.status });
   }

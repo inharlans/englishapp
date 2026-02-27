@@ -1,17 +1,11 @@
-﻿import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-import { getUserFromRequestCookies } from "@/lib/authServer";
+import { parsePositiveIntParam, requireUserFromRequest } from "@/lib/api/route-helpers";
 import { checkRateLimit, getClientIpFromHeaders } from "@/lib/rateLimit";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
 import { WordbookModerationService } from "@/server/domain/wordbook/moderation-service";
 
 const moderationService = new WordbookModerationService();
-
-function parseId(raw: string): number | null {
-  const n = Number(raw);
-  if (!Number.isFinite(n) || n <= 0) return null;
-  return Math.floor(n);
-}
 
 export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const badReq = assertTrustedMutationRequest(req);
@@ -31,18 +25,16 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   }
 
   const { id: idRaw } = await ctx.params;
-  const wordbookId = parseId(idRaw);
+  const wordbookId = parsePositiveIntParam(idRaw);
   if (!wordbookId) {
     return NextResponse.json({ error: "Invalid id." }, { status: 400 });
   }
 
-  const user = await getUserFromRequestCookies(req.cookies);
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
-  }
+  const auth = await requireUserFromRequest(req);
+  if (!auth.ok) return auth.response;
 
   const result = await moderationService.blockOwner({
-    actorId: user.id,
+    actorId: auth.user.id,
     wordbookId
   });
 

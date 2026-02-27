@@ -1,18 +1,13 @@
-﻿import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
+import { parsePositiveIntParam } from "@/lib/api/route-helpers";
 import { WordbookFeedbackService } from "@/server/domain/wordbook/feedback-service";
 
 const feedbackService = new WordbookFeedbackService();
 
-function parseId(raw: string): number | null {
-  const n = Number(raw);
-  if (!Number.isFinite(n) || n <= 0) return null;
-  return Math.floor(n);
-}
-
 export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const { id: idRaw } = await ctx.params;
-  const id = parseId(idRaw);
+  const id = parsePositiveIntParam(idRaw);
   if (!id) {
     return NextResponse.json({ error: "Invalid id." }, { status: 400 });
   }

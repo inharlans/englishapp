@@ -29,3 +29,21 @@
   - [x] `app/api/wordbooks/[id]/export/route.ts`
 - [x] 검증 실행
   - [x] `npm run codex:workflow:check`
+
+## Phase 3
+- [x] 잔여 `parseId` 제거
+  - [x] `app/api/wordbooks/[id]/block/route.ts`
+  - [x] `app/api/wordbooks/[id]/quiz/route.ts`
+  - [x] `app/api/wordbooks/[id]/quiz/submit/route.ts`
+  - [x] `app/api/wordbooks/[id]/reviews/route.ts`
+  - [x] `app/api/wordbooks/[id]/route.ts`
+  - [x] `app/api/wordbooks/[id]/study/route.ts`
+  - [x] `app/api/words/[id]/route.ts`
+- [x] 인증 반복 로직 통일(`requireUserFromRequest`)
+  - [x] `app/api/wordbooks/[id]/block/route.ts`
+  - [x] `app/api/wordbooks/[id]/quiz/route.ts`
+  - [x] `app/api/wordbooks/[id]/quiz/submit/route.ts`
+  - [x] `app/api/wordbooks/[id]/route.ts`
+  - [x] `app/api/wordbooks/[id]/study/route.ts`
+- [x] 검증 실행
+  - [x] `npm run codex:workflow:check`

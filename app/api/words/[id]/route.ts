@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { parsePositiveIntParam } from "@/lib/api/route-helpers";
 import { prisma } from "@/lib/prisma";
 import { checkRateLimit, getClientIpFromHeaders } from "@/lib/rateLimit";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
@@ -9,12 +10,6 @@ import { z } from "zod";
 const updateWordSchema = z.object({
   ko: z.string().trim().min(1).max(1000)
 });
-
-function parseId(raw: string): number | null {
-  const value = Number(raw);
-  if (!Number.isFinite(value) || value <= 0) return null;
-  return Math.floor(value);
-}
 
 export async function PATCH(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   const badReq = assertTrustedMutationRequest(req);
@@ -35,7 +30,7 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
 
   try {
     const { id: rawId } = await context.params;
-    const id = parseId(rawId);
+    const id = parsePositiveIntParam(rawId);
     if (!id) {
       return NextResponse.json({ error: "Invalid word id." }, { status: 400 });
     }

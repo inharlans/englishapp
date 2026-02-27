@@ -30,6 +30,17 @@
 3. 파라미터/인증 헬퍼 확장 적용
    - `/api/wordbooks/[id]/export`
 
+## 범위 (Phase 3)
+1. 잔여 라우트의 로컬 `parseId` 제거
+   - `/api/wordbooks/[id]/block`
+   - `/api/wordbooks/[id]/quiz`
+   - `/api/wordbooks/[id]/quiz/submit`
+   - `/api/wordbooks/[id]/reviews`
+   - `/api/wordbooks/[id]`
+   - `/api/wordbooks/[id]/study`
+   - `/api/words/[id]`
+2. 잔여 인증 반복 로직을 공통 헬퍼(`requireUserFromRequest`)로 통일
+
 ## 비범위 (Phase 1 제외)
 - 라우트의 비즈니스 로직 자체 재설계
 - 서비스/리포지토리 계층의 대규모 인터페이스 변경
