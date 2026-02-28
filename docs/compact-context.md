@@ -49,18 +49,18 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `0bb01ab7d2fb`
-- HEAD: `a042e63` Optimize market/import paths and formalize legacy deprecation policy
+- Source hash: `95b404db95a9`
+- HEAD: `d8b70f2` Add endpoint perf capture instrumentation for bottleneck analysis
 
 ### Scope Digests
-- api-routes: 66 files, `b96b4f1dad24`
+- api-routes: 67 files, `401d6bc4c65a`
 - api-helpers: 17 files, `7d1e0ed6e296`
 - domain-services: 39 files, `88dcb53c24b3`
 - automation-policy: 90 files, `2eb6d0ac82ff`
-- tracking-docs: 10 files, `01d8392d7569`
+- tracking-docs: 10 files, `f212079971c0`
 
 ### Legacy Route Migration Status
-- base: `app/api/`, total: 54, migrated: 44, remaining: 10
+- base: `app/api/`, total: 55, migrated: 44, remaining: 11
 - remaining files:
   - `app/api/auth/google/callback/route.ts`
   - `app/api/auth/google/route.ts`
@@ -69,6 +69,7 @@
   - `app/api/auth/local-debug-login/route.ts`
   - `app/api/auth/naver/callback/route.ts`
   - `app/api/auth/naver/route.ts`
+  - `app/api/clipper/extension/route.ts`
   - `app/api/internal/e2e/login/route.ts`
   - `app/api/translate/route.ts`
   - `app/api/wordbooks/downloaded/route.ts`

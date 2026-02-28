@@ -96,6 +96,9 @@
 - 단어 중복 방지를 위해 단어장 단위 정규화 키(`normalizedTerm`)를 추가하고 유니크 인덱스로 레이스를 방어했습니다.
 - 학습 UI(암기/카드)에 `예문 보기` 인터랙션을 추가하고, AI 생성 예문은 배지로 구분해 표시합니다.
 - 브릿지 페이지(`/clipper/add`)와 크롬 확장 기본 골격(`extension/`)을 추가했습니다.
+- 웹에서 확장 ZIP을 바로 받을 수 있도록 `GET /api/clipper/extension`을 추가했습니다.
+- 확장 설치/테스트 안내 페이지(`/clipper/extension`)를 추가했습니다.
+- 확장 옵션 페이지(`extension/options.html`)를 추가해 `bridgeOrigin`을 환경별로 바꿀 수 있게 했습니다.
 - 클리퍼 enrichment 실패 사유를 reason 코드 단일 소스로 정리하고, 크론 응답에 `reasonCounts`를 포함해 실패 분포를 바로 확인할 수 있게 했습니다.
 - 내부 운영 메트릭 API(`/api/internal/ops/clipper-metrics`)를 추가해 backlog/지연/성공률/재시도/부분완료율/비용 추정치를 조회할 수 있게 했습니다.
 - 운영 메트릭은 기본 no-cache이며, 운영 부하 시 `CLIPPER_METRICS_CACHE_MODE=5m`(고정 5분) 또는 `CLIPPER_METRICS_CACHE_TTL_SECONDS=300` 이상(TTL 초 단위)으로 캐시를 켤 수 있습니다.
@@ -327,6 +330,11 @@ npm test
 npm run test:e2e
 npm run build
 ```
+
+클리퍼 확장 수동 설치(개발자 모드):
+- 설치 안내 페이지: `/clipper/extension`
+- ZIP 다운로드: `/api/clipper/extension`
+- 크롬 `chrome://extensions` > 개발자 모드 > 압축해제된 확장 프로그램 로드
 
 Windows Prisma 파일 잠금(EPERM rename) 트러블슈팅:
 - 증상: `npm run build` 중 Prisma 엔진 DLL rename에서 `EPERM` 경고가 간헐적으로 발생

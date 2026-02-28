@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Englishapp Clipper 설정</title>
+    <style>
+      :root {
+        color-scheme: light;
+      }
+      body {
+        margin: 0;
+        font-family: "Segoe UI", "Noto Sans KR", sans-serif;
+        background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+        color: #0f172a;
+      }
+      .wrap {
+        max-width: 680px;
+        margin: 24px auto;
+        background: rgba(255, 255, 255, 0.9);
+        border: 1px solid #cbd5e1;
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+      }
+      h1 {
+        margin: 0 0 10px;
+        font-size: 20px;
+      }
+      p {
+        margin: 0 0 14px;
+        line-height: 1.5;
+        color: #334155;
+      }
+      label {
+        display: block;
+        font-size: 13px;
+        font-weight: 700;
+        margin-bottom: 6px;
+      }
+      input {
+        width: 100%;
+        box-sizing: border-box;
+        border: 1px solid #94a3b8;
+        border-radius: 10px;
+        padding: 10px 12px;
+        font-size: 14px;
+      }
+      .row {
+        display: flex;
+        gap: 8px;
+        margin-top: 12px;
+      }
+      button {
+        border: none;
+        border-radius: 10px;
+        font-size: 13px;
+        font-weight: 700;
+        padding: 10px 12px;
+        cursor: pointer;
+      }
+      .primary {
+        background: #2563eb;
+        color: #fff;
+      }
+      .secondary {
+        background: #e2e8f0;
+        color: #0f172a;
+      }
+      .hint {
+        margin-top: 12px;
+        font-size: 12px;
+        color: #475569;
+      }
+      #status {
+        margin-top: 12px;
+        font-size: 13px;
+        font-weight: 700;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="wrap">
+      <h1>Englishapp PDF Clipper 설정</h1>
+      <p>
+        브릿지 주소를 지정하면 선택한 단어를 해당 환경의 <code>/clipper/add</code> 페이지로 보냅니다.
+      </p>
+      <label for="bridgeOrigin">브릿지 Origin</label>
+      <input id="bridgeOrigin" type="url" placeholder="https://www.oingapp.com" />
+      <div class="row">
+        <button id="saveBtn" class="primary" type="button">저장</button>
+        <button id="resetBtn" class="secondary" type="button">기본값으로 복원</button>
+      </div>
+      <p class="hint">
+        로컬 테스트 예시: <code>http://localhost:3000</code>
+      </p>
+      <div id="status" aria-live="polite"></div>
+    </main>
+    <script src="options.js"></script>
+  </body>
+</html>

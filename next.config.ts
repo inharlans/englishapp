@@ -1,7 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  typedRoutes: true
+  typedRoutes: true,
+  outputFileTracingIncludes: {
+    "/api/clipper/extension": ["./extension/**/*"]
+  }
 };
 
 export default nextConfig;
