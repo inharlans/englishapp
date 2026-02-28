@@ -5,7 +5,7 @@ import { loadEnvFile } from './load-env.mjs'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
-const rootDir = path.resolve(__dirname, '..')
+const rootDir = path.resolve(__dirname, '..', '..')
 const envPath = path.resolve(rootDir, '.env')
 loadEnvFile(envPath)
 const databaseUrl = typeof process.env.DATABASE_URL === 'string' ? process.env.DATABASE_URL.trim() : ''

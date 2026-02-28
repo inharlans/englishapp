@@ -14,6 +14,27 @@
 - `npm run build`가 Windows에서 Prisma 엔진 DLL 파일 잠금으로 중단되는 환경에서 멈추지 않고, 기존 생성된 Prisma 클라이언트를 이용해 빌드를 계속 진행하도록 빌드 스크립트를 보강했습니다.
 - 클리퍼 텍스트 유틸(`lib/clipper.ts`)의 정규화/필터링 동작을 검증하는 단위 테스트를 추가해 핵심 입력 보정과 안전성 로직을 회귀 고정했습니다(`lib/clipper.test.ts`).
 
+## MCP 7개 연결 점검 체크리스트(2026-02-28 기준)
+
+- `opencode mcp list --print-logs` 결과에서 7개가 모두 `connected`인지 확인합니다.
+  - `chrome-devtools`, `github`, `postgres`, `sentry`, `prisma`, `playwright`, `context7`
+- 운영 환경 기준으로 아래 4개가 모두 존재하면 MCP 측 시작 실패 확률이 크게 줄어듭니다.
+  - `GITHUB_TOKEN`/`GH_TOKEN`/`GITHUB_PAT`/`GITHUB_AUTH_TOKEN`
+  - `SENTRY_ACCESS_TOKEN`
+  - `UPSTASH_CONTEXT7_API_KEY`
+  - `DATABASE_URL`
+- `github`가 실패하면 아래 2가지를 동시에 점검하세요.
+  - `opencode mcp list --print-logs` stderr에 `GitHub token is not set`이 보이면 GitHub 인증 토큰이 전달되지 않은 상태입니다.
+  - 우선 `gh auth login` 또는 `GITHUB_TOKEN`/`GH_TOKEN`/`GITHUB_PAT`/`GITHUB_AUTH_TOKEN` 중 하나를 세션 환경에 설정해 다시 확인하세요.
+- MCP별 필수/점검 환경변수(현재 레포 기준)
+  - `DATABASE_URL` (postgres)
+  - `SENTRY_ACCESS_TOKEN` (sentry)
+  - `UPSTASH_CONTEXT7_API_KEY` (context7)
+  - `GITHUB_TOKEN` 또는 `GH_TOKEN` 또는 `GITHUB_PAT` 또는 `GITHUB_AUTH_TOKEN` (github)
+  - `OPENAI_API_KEY`/`ANTHROPIC_API_KEY`는 sentry의 AI 검색 보조 기능 사용 시 선택값입니다.
+- 래퍼 스크립트 경로 문제로 env 미인식 이슈를 막기 위해 `scripts/ops/start-*-mcp.mjs`는 프로젝트 루트 `.env`를 기준으로 동작합니다.
+- `github`만 계속 실패하면 `gh` CLI의 존재 여부도 확인합니다(`gh --version`).
+
 ## 최근 업데이트 (2026-02-24)
 
 - OpenCode Browser에서 MCP 비어 있음 이슈를 더 빠르게 진단할 수 있도록 화면 기준 점검 문서를 추가했습니다(`docs/mcp-browser-screen-checkpoints-2026-02-28.md`).
