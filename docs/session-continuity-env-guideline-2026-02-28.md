@@ -13,14 +13,14 @@
 - 환경 변수 기준 점검
   - 로컬 점검: `.env.example`, `.env.development.example` 중심
   - 운영 기준: `README.md`의 운영 기준 목록 + 실제 배포값 비교
-  - MCP 래퍼 실행 전 확인: `DATABASE_URL`, `AUTH_SECRET`, `CRON_SECRET`, `GITHUB_TOKEN`/`GH_TOKEN`/`GITHUB_PAT`, `SENTRY_ACCESS_TOKEN`, `UPSTASH_CONTEXT7_API_KEY`
+  - MCP 래퍼 실행 전 확인: `DATABASE_URL`, `AUTH_SECRET`, `CRON_SECRET`, `GITHUB_TOKEN`/`GH_TOKEN`/`GITHUB_PAT`/`GITHUB_AUTH_TOKEN`, `SENTRY_ACCESS_TOKEN`, `UPSTASH_CONTEXT7_API_KEY`
 
 ## 2) 환경변수 운영 가이드(요약)
 
 - 핵심(항상 확인):
   - `DATABASE_URL`, `NEXT_PUBLIC_APP_URL`, `AUTH_SECRET`, `CRON_SECRET`, `AUTH_BOOTSTRAP_TOKEN`
 - MCP 연결용:
-  - `GITHUB_TOKEN` 또는 `GITHUB_PAT` 또는 `GH_TOKEN`
+  - `GITHUB_TOKEN` 또는 `GITHUB_PAT` 또는 `GH_TOKEN` 또는 `GITHUB_AUTH_TOKEN`(또는 `gh auth token` 준비)
   - `SENTRY_ACCESS_TOKEN`
   - `UPSTASH_CONTEXT7_API_KEY`
   - `DATABASE_URL`(postgres read-only 계정 권장)

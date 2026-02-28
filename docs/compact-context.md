@@ -49,8 +49,8 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `433dca285990`
-- HEAD: `47a9f72` docs: add login cache sync pass plan checklist
+- Source hash: `d0981d171dfd`
+- HEAD: `d42bb57` Fix MCP wrapper env resolution and token fallback
 
 ### Scope Digests
 - api-routes: 61 files, `68f26bf43f5f`
