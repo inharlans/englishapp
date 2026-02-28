@@ -49,15 +49,15 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `aa7a6101b6c0`
-- HEAD: `141d447` nightly: cycle 1 pass checks
+- Source hash: `fa095fa69b27`
+- HEAD: `f37d05d` Harden nightly workflow guard and completion state
 
 ### Scope Digests
 - api-routes: 61 files, `68f26bf43f5f`
 - api-helpers: 17 files, `fb3db92838d7`
 - domain-services: 29 files, `faacb1d03759`
-- automation-policy: 90 files, `f98a1e47593f`
-- tracking-docs: 10 files, `1eee34a017b2`
+- automation-policy: 90 files, `e8e41088e84b`
+- tracking-docs: 10 files, `b62fc7f7f2c1`
 
 ### Legacy Route Migration Status
 - base: `app/api/`, total: 53, migrated: 39, remaining: 14

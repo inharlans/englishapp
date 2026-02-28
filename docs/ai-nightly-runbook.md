@@ -7,10 +7,15 @@ npm run ai:nightly:start
 
 필요 시 환경변수 지정:
 - `NIGHTLY_BRANCH` (기본: `ai/nightly-YYYYMMDD`)
-- `NIGHTLY_MAX_CYCLES` (기본: `6`)
+- `NIGHTLY_MAX_CYCLES` (기본: `300`)
 - `NIGHTLY_MAX_CONSECUTIVE_FAILURES` (기본: `2`)
 - `NIGHTLY_MAX_CHANGED_FILES` (기본: `20`)
 - `NIGHTLY_MAX_CHANGED_LINES` (기본: `1000`)
+- `NIGHTLY_MAX_RUNTIME_MINUTES` (기본: `720`)
+
+보호 가드:
+- `NIGHTLY_MAX_CYCLES`는 최대 `300`으로 자동 보정된다.
+- `NIGHTLY_MAX_RUNTIME_MINUTES`는 최대 `720`으로 자동 보정된다.
 - `NIGHTLY_INTERVAL_SECONDS` (기본: `300`)
 - `NIGHTLY_AUTO_PUSH` (`1`이면 매 커밋 후 push)
 - `NIGHTLY_TASK_COMMAND` (사이클마다 실행할 추가 명령)

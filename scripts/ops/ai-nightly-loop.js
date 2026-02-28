@@ -33,9 +33,28 @@ function main() {
     if (before.cycleCount >= before.maxCycles) {
       before.status = "completed";
       before.updatedAt = nowIso();
+      before.lastResult = "completed-max-cycles";
+      before.lastError = null;
       writeState(before);
       console.log("ai-nightly-loop: stop (max cycles reached)");
       break;
+    }
+
+    const runtimeLimitMinutes = Number(before.maxRuntimeMinutes || 0);
+    if (runtimeLimitMinutes > 0 && before.startedAt) {
+      const startedMs = Date.parse(before.startedAt);
+      if (Number.isFinite(startedMs)) {
+        const elapsedMinutes = (Date.now() - startedMs) / 60000;
+        if (elapsedMinutes >= runtimeLimitMinutes) {
+          before.status = "completed";
+          before.updatedAt = nowIso();
+          before.lastResult = "completed-max-runtime";
+          before.lastError = null;
+          writeState(before);
+          console.log(`ai-nightly-loop: stop (max runtime reached: ${runtimeLimitMinutes}m)`);
+          break;
+        }
+      }
     }
 
     const code = runCycle();

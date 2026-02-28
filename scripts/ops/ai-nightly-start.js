@@ -9,12 +9,23 @@ const {
   writeState
 } = require("./ai-nightly-common");
 
+const MAX_CYCLES_HARD_LIMIT = 300;
+const MAX_RUNTIME_MINUTES_HARD_LIMIT = 720;
+
 function getDateToken() {
   const d = new Date();
   const yyyy = d.getFullYear();
   const mm = String(d.getMonth() + 1).padStart(2, "0");
   const dd = String(d.getDate()).padStart(2, "0");
   return `${yyyy}${mm}${dd}`;
+}
+
+function toBoundedPositiveInt(value, fallback, max) {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return fallback;
+  const int = Math.floor(num);
+  if (int < 1) return fallback;
+  return Math.min(int, max);
 }
 
 function main() {
@@ -34,6 +45,17 @@ function main() {
   runShell("npm run compact:sync", true);
 
   const prior = readState();
+  const maxCycles = toBoundedPositiveInt(
+    process.env.NIGHTLY_MAX_CYCLES || prior?.maxCycles || 300,
+    300,
+    MAX_CYCLES_HARD_LIMIT
+  );
+  const maxRuntimeMinutes = toBoundedPositiveInt(
+    process.env.NIGHTLY_MAX_RUNTIME_MINUTES || prior?.maxRuntimeMinutes || 720,
+    720,
+    MAX_RUNTIME_MINUTES_HARD_LIMIT
+  );
+
   const state = {
     version: 1,
     branch,
@@ -42,10 +64,11 @@ function main() {
     status: "active",
     cycleCount: 0,
     consecutiveFailures: 0,
-    maxCycles: Number(process.env.NIGHTLY_MAX_CYCLES || prior?.maxCycles || 6),
+    maxCycles,
     maxConsecutiveFailures: Number(process.env.NIGHTLY_MAX_CONSECUTIVE_FAILURES || prior?.maxConsecutiveFailures || 2),
     maxChangedFiles: Number(process.env.NIGHTLY_MAX_CHANGED_FILES || prior?.maxChangedFiles || 20),
     maxChangedLines: Number(process.env.NIGHTLY_MAX_CHANGED_LINES || prior?.maxChangedLines || 1000),
+    maxRuntimeMinutes,
     taskCommand: process.env.NIGHTLY_TASK_COMMAND || prior?.taskCommand || "",
     autoPush: String(process.env.NIGHTLY_AUTO_PUSH || prior?.autoPush || "0") === "1",
     intervalSeconds: Number(process.env.NIGHTLY_INTERVAL_SECONDS || prior?.intervalSeconds || 300),
