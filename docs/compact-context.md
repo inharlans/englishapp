@@ -49,15 +49,15 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `f8ccab858ffb`
-- HEAD: `c068c52` chore: harden MCP env wrappers and update ops docs
+- Source hash: `277514facf14`
+- HEAD: `0b3f735` docs: sync MCP runbook with latest production login check
 
 ### Scope Digests
 - api-routes: 61 files, `68f26bf43f5f`
 - api-helpers: 17 files, `fb3db92838d7`
 - domain-services: 29 files, `faacb1d03759`
 - automation-policy: 90 files, `5558f75f15c3`
-- tracking-docs: 10 files, `a9ca3ec0a613`
+- tracking-docs: 10 files, `7f3af3e4be04`
 
 ### Legacy Route Migration Status
 - base: `app/api/`, total: 53, migrated: 39, remaining: 14

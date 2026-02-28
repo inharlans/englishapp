@@ -9,6 +9,7 @@
 - `sentry`/`context7` MCP도 `%VAR%` 확장 의존성을 제거해, `.env` 또는 세션 환경값을 `start-*-mcp.mjs/.cmd` 래퍼가 직접 읽어 실행하도록 정리했습니다.
 - `github` MCP도 `start-github-mcp.mjs/.cmd` 래퍼로 전환해 GitHub 토큰을 런타임 환경에서 안전하게 주입하도록 정리했습니다.
 - 로그인 페이지 접근성 경고(입력 필드 `id`/`name` 누락) 대응으로 `components/auth/LoginPanel.tsx`의 이메일/비밀번호 필드 마크업을 보강했고, 운영 확인은 배포 반영 후 재측정이 필요합니다.
+- `세션 이어받기/운영 기준`을 위한 문서 체계를 정리해 새 세션에서도 동일 기준으로 작업을 이어갈 수 있도록 했습니다(`docs/session-continuity-env-guideline-2026-02-28.md`).
 - `npm run build`가 Windows에서 Prisma 엔진 DLL 파일 잠금으로 중단되는 환경에서 멈추지 않고, 기존 생성된 Prisma 클라이언트를 이용해 빌드를 계속 진행하도록 빌드 스크립트를 보강했습니다.
 - 클리퍼 텍스트 유틸(`lib/clipper.ts`)의 정규화/필터링 동작을 검증하는 단위 테스트를 추가해 핵심 입력 보정과 안전성 로직을 회귀 고정했습니다(`lib/clipper.test.ts`).
 
@@ -350,6 +351,12 @@ powershell -ExecutionPolicy Bypass -File scripts/ops/auto-loop-runner.ps1 -Inter
 - 플랫폼 자동 주입:
   - `PORT`
   - `NODE_ENV`(`production`)
+
+## 세션/운영 인수인계 문서
+
+- 작업 시작/종료 시 반드시 확인할 기준 문서: `docs/session-continuity-env-guideline-2026-02-28.md`
+- `/login` 운영 재측정 및 요청 템플릿: `docs/mcp-login-accessibility-prod-handoff-2026-02-28.md`
+- MCP 실행/배포 점검 런북: `docs/mcp-runbook.md`
 
 ## 결제 인수인계 상태 (2026-02-19 기준)
 
