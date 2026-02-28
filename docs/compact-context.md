@@ -49,8 +49,8 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `277514facf14`
-- HEAD: `0b3f735` docs: sync MCP runbook with latest production login check
+- Source hash: `a8d6eaea7505`
+- HEAD: `8ffa8c9` docs: link session continuity references in README
 
 ### Scope Digests
 - api-routes: 61 files, `68f26bf43f5f`
