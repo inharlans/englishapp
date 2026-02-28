@@ -61,8 +61,8 @@
 ## 재측정 결과 (즉시 재확인)
 
 - 측정 URL: `https://www.oingapp.com/login?_smoke=2`
-- 측정 시각(KST): `2026-02-28 19:32:31`
-  - 측정 버전: `page-7949e7fe4576be4c.js`
+- 측정 시각(KST): `2026-02-28 19:49:19`
+- 측정 버전: `page-7949e7fe4576be4c.js`
 - 측정 결과: `주의` (`id` 미포함, 경고 잔존 가능성)
 - 렌더 마크업:
   - `input#login-email` 미노출
@@ -84,6 +84,7 @@
   - 경고 문자열 흔적 유무
   - 다중 번들 후보가 있으면 모든 `app/login/page-*.js`를 검사해 요약/추적
 - 결과가 `pass`가 아니면 배포/캐시 동기화팀에 결과 JSON을 함께 전달할 것
+  - 기본 경로: `logs/ops/login-prod-accessibility-check.jsonl`
 
 ### 실행 예시
 
