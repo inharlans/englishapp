@@ -91,10 +91,21 @@
   - `POST /api/clipper/add`
   - `GET/PATCH /api/users/me/clipper-settings`
   - `POST /api/internal/cron/clipper-enrichment`
+  - `GET /api/internal/ops/clipper-metrics`
 - 클리퍼 저장은 즉시 `QUEUED` 상태로 저장하고, 배치 워커가 Gemini 기반 의미/품사/예문 해석을 비동기로 채웁니다.
 - 단어 중복 방지를 위해 단어장 단위 정규화 키(`normalizedTerm`)를 추가하고 유니크 인덱스로 레이스를 방어했습니다.
 - 학습 UI(암기/카드)에 `예문 보기` 인터랙션을 추가하고, AI 생성 예문은 배지로 구분해 표시합니다.
 - 브릿지 페이지(`/clipper/add`)와 크롬 확장 기본 골격(`extension/`)을 추가했습니다.
+- 클리퍼 enrichment 실패 사유를 reason 코드 단일 소스로 정리하고, 크론 응답에 `reasonCounts`를 포함해 실패 분포를 바로 확인할 수 있게 했습니다.
+- 내부 운영 메트릭 API(`/api/internal/ops/clipper-metrics`)를 추가해 backlog/지연/성공률/재시도/부분완료율/비용 추정치를 조회할 수 있게 했습니다.
+- 운영 메트릭은 기본 no-cache이며, 운영 부하 시 `CLIPPER_METRICS_CACHE_MODE=5m`(고정 5분) 또는 `CLIPPER_METRICS_CACHE_TTL_SECONDS=300` 이상(TTL 초 단위)으로 캐시를 켤 수 있습니다.
+- 메트릭 경보 정책을 코드 상수(`server/domain/internal/clipperAlertPolicy.ts`)로 관리하도록 추가해 임계치/윈도우/억제 규칙 drift를 방지했습니다.
+- 관리자 관측 화면에 클리퍼 운영 대시보드(백로그/대기시간 P95/성공률/토큰 추정/알림/Top failure)를 연결했습니다.
+- `/api/internal/ops/clipper-metrics` 응답 구조 회귀를 막기 위해 route 스냅샷 테스트(`app/api/internal/ops/clipper-metrics/route.test.ts`)를 추가했습니다.
+- 관리자 관측 화면에 시간대별 처리량(DONE/FAILED) 시계열 막대 차트를 추가해 window 전환(1h/24h/7d) 및 캐시 무시 갱신과 함께 추세를 바로 확인할 수 있게 했습니다.
+- 관리자 관측 화면에 실패 사유 TopN(상위 5개 + 기타) 가로 막대 차트를 추가하고, 실패 건수 기준 전 window 대비 증감 배지를 표시하도록 확장했습니다.
+- 관리자 관측 화면의 알림 목록에 `전체/WARN/CRITICAL` 필터 토글을 추가했습니다.
+- `/api/admin/metrics` route 테스트에 clipper 포함 응답 스냅샷을 추가해 admin 메트릭 응답 회귀를 감지하도록 보강했습니다.
 - 배포 안정화를 위해 `.dockerignore`를 추가해 Docker 빌드 컨텍스트 크기를 줄였습니다.
 - Railway Nixpacks 배포 기본 변수(`CLIPPER_LLM_PROVIDER`, `CLIPPER_LLM_MODEL`)를 `nixpacks.toml`에 명시했습니다.
 - Railway 배포 안정성을 위해 멀티스테이지 `Dockerfile` 기반 빌드로 전환했습니다(`railway.json` builder=`DOCKERFILE`).
@@ -317,6 +328,14 @@ npm run test:e2e
 npm run build
 ```
 
+Windows Prisma 파일 잠금(EPERM rename) 트러블슈팅:
+- 증상: `npm run build` 중 Prisma 엔진 DLL rename에서 `EPERM` 경고가 간헐적으로 발생
+- 원인: IDE/백신/인덱서가 `node_modules/.prisma` 파일을 잠그는 경우
+- 해결 순서:
+  1. IDE(특히 TS 서버) 또는 백신 실시간 감시 일시 해제/예외 추가
+  2. `node_modules/.prisma` 잠금 해제 후 재시도
+  3. 필요 시 `npm ci` 후 `npm run prisma:generate` 재실행
+
 로컬 E2E 고정 명령:
 ```bash
 npm run test:e2e:local
@@ -355,6 +374,8 @@ powershell -ExecutionPolicy Bypass -File scripts/ops/auto-loop-runner.ps1 -Inter
   - `CLIPPER_ENRICH_BATCH_SIZE`
   - `CLIPPER_ENRICH_MAX_WAIT_SECONDS`
   - `CLIPPER_ENRICH_MAX_ATTEMPTS`
+  - `CLIPPER_METRICS_CACHE_MODE`(선택, `5m`면 5분 캐시)
+  - `CLIPPER_METRICS_CACHE_TTL_SECONDS`(선택, `>=300`이면 해당 초 단위 TTL로 캐시)
   - `GOOGLE_TRANSLATE_API_KEY`(선택)
 
 - OAuth 로그인:

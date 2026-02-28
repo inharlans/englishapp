@@ -2,7 +2,27 @@ import { PartOfSpeech } from "@prisma/client";
 
 import { enrichWithGeminiBatch, translateWithGoogle, type EnrichmentResult } from "@/lib/clipperEnrichment";
 import { captureAppError } from "@/lib/observability";
-import type { InternalCronServiceResult } from "@/server/domain/internal/contracts";
+import {
+  CLIPPER_ALERT_POLICY_VERSION,
+  evaluateClipperAlerts
+} from "@/server/domain/internal/clipperAlertPolicy";
+import {
+  getCachedClipperMetrics,
+  getClipperMetricsCacheMode,
+  getClipperMetricsCacheTtlSec,
+  setCachedClipperMetrics
+} from "@/server/domain/internal/clipperMetricsCache";
+import type {
+  InternalCronServiceResult,
+  InternalMetricsResult,
+  InternalMetricsServiceResult
+} from "@/server/domain/internal/contracts";
+import {
+  createReasonCounts,
+  formatEnrichmentReason,
+  parseEnrichmentReason,
+  type EnrichmentReasonCode
+} from "@/server/domain/internal/enrichmentReason";
 import { InternalRepository } from "@/server/domain/internal/repository";
 
 function isAuthorized(authorizationHeader: string | null): boolean {
@@ -13,6 +33,216 @@ function isAuthorized(authorizationHeader: string | null): boolean {
 
 export class InternalService {
   constructor(private readonly repo = new InternalRepository()) {}
+
+  async getClipperMetrics(input: {
+    authorizationHeader: string | null;
+    window: "1h" | "24h" | "7d";
+    includeSeries: boolean;
+    refresh: boolean;
+    trustedInternal?: boolean;
+  }): Promise<InternalMetricsServiceResult> {
+    if (!input.trustedInternal && !isAuthorized(input.authorizationHeader)) {
+      return { ok: false, status: 403, error: "Forbidden." };
+    }
+
+    const hoursByWindow: Record<"1h" | "24h" | "7d", number> = {
+      "1h": 1,
+      "24h": 24,
+      "7d": 24 * 7
+    };
+    const hours = hoursByWindow[input.window];
+    if (!hours) {
+      return { ok: false, status: 400, error: "Invalid window." };
+    }
+
+    const cacheMode = getClipperMetricsCacheMode();
+    const cacheTtlSec = getClipperMetricsCacheTtlSec();
+    const cacheKey = `clipper-metrics:${input.window}:${input.includeSeries ? "series" : "no-series"}`;
+    if (!input.refresh && cacheTtlSec > 0) {
+      const cached = getCachedClipperMetrics<InternalMetricsResult["payload"]>(cacheKey);
+      if (cached) {
+        return {
+          ok: true,
+          status: 200,
+          payload: {
+            ...cached,
+            cache: {
+              mode: cacheMode,
+              hit: true,
+              ttlSec: cacheTtlSec
+            }
+          }
+        };
+      }
+    }
+
+    try {
+      const nowAt = new Date();
+      const windowEndHour = floorHour(nowAt);
+      const since = new Date(windowEndHour.getTime() - hours * 60 * 60 * 1000);
+      const previousSince = new Date(since.getTime() - hours * 60 * 60 * 1000);
+      const maxAttempts = Math.max(
+        1,
+        Number.parseInt(process.env.CLIPPER_ENRICH_MAX_ATTEMPTS ?? "3", 10) || 3
+      );
+
+      const [
+        backlog,
+        waitMs,
+        processMs,
+        completion,
+        failureReasons,
+        retry,
+        terminalFailed,
+        ux,
+        partialDoneRate,
+        cost,
+        cronCalls,
+        rateLimitFailed,
+        failedCurr,
+        failedPrev,
+        hourly
+      ] = await Promise.all([
+        this.repo.getClipperBacklogCounts(),
+        this.repo.getClipperWaitPercentiles(),
+        this.repo.getClipperProcessPercentiles({ since, end: windowEndHour }),
+        this.repo.getClipperCompletionStats({ since, end: windowEndHour }),
+        this.repo.getClipperFailureReasons({ since, end: windowEndHour }),
+        this.repo.getClipperRetryStats({ since, end: windowEndHour }),
+        this.repo.getClipperTerminalFailed({ maxAttempts, since, end: windowEndHour }),
+        this.repo.getClipperUxLatencyPercentile({ since, end: windowEndHour }),
+        this.repo.getClipperPartialDoneRate({ since, end: windowEndHour }),
+        this.repo.getClipperCostEstimate({ since, end: windowEndHour }),
+        this.repo.getClipperCronCallStats({ since, end: windowEndHour }),
+        this.repo.countClipperFailedByReasonSince({ since, end: windowEndHour, reasonCode: "RATE_LIMIT" }),
+        this.repo.countClipperFailedBetween({ start: since, end: windowEndHour }),
+        this.repo.countClipperFailedBetween({ start: previousSince, end: since }),
+        input.includeSeries
+          ? this.repo.getClipperHourlySeries({ since, end: windowEndHour })
+          : Promise.resolve([])
+      ]);
+
+      const normalizedReasonMap = new Map<string, number>();
+      for (const row of failureReasons) {
+        const normalizedCode = parseEnrichmentReason(row.reasonCode);
+        normalizedReasonMap.set(normalizedCode, (normalizedReasonMap.get(normalizedCode) ?? 0) + row.count);
+      }
+      const normalizedReasons = Array.from(normalizedReasonMap.entries())
+        .map(([code, count]) => ({ code, count }))
+        .sort((a, b) => b.count - a.count);
+      const topFailures = normalizedReasons.slice(0, 5);
+      const topFailuresOthersCount = normalizedReasons.slice(5).reduce((sum, row) => sum + row.count, 0);
+      const elapsedHours = Math.max(1 / 60, hours);
+      const throughputPerHour = Number((completion.doneCount / elapsedHours).toFixed(2));
+      const failedDelta = failedCurr - failedPrev;
+      const failedPct = failedPrev > 0 ? Number((failedDelta / failedPrev).toFixed(4)) : null;
+      const filledHourly = input.includeSeries
+        ? fillHourlyBuckets({
+            now: windowEndHour,
+            bucketHours: hours,
+            rows: hourly
+          })
+        : [];
+      const alerts = evaluateClipperAlerts({
+        queue: {
+          queued: backlog.queued,
+          processing: backlog.processing,
+          waitMs,
+          processMs,
+          throughputPerHour
+        },
+        quality: {
+          doneCount: completion.doneCount,
+          failedCount: completion.failedCount,
+          successRate: completion.successRate,
+          failureRate: completion.failureRate,
+          retryRate: retry.retryRate,
+          retrySuccessRate: retry.retrySuccessRate,
+          terminalFailed,
+          partialDoneRate
+        },
+        rateLimitFailed,
+        ux: {
+          doneLatencyMs: {
+            p95: ux.p95
+          }
+        }
+      });
+
+      const payload: InternalMetricsResult["payload"] = {
+        ok: true,
+        window: input.window,
+        generatedAt: new Date().toISOString(),
+        cache: {
+          mode: cacheMode,
+          hit: false,
+          ttlSec: cacheTtlSec
+        },
+        queue: {
+          queued: backlog.queued,
+          processing: backlog.processing,
+          waitMs,
+          processMs,
+          throughputPerHour
+        },
+        quality: {
+          doneCount: completion.doneCount,
+          failedCount: completion.failedCount,
+          successRate: completion.successRate,
+          failureRate: completion.failureRate,
+          retryRate: retry.retryRate,
+          retrySuccessRate: retry.retrySuccessRate,
+          terminalFailed,
+          partialDoneRate
+        },
+        failureReasons: normalizedReasons,
+        topFailures,
+        topFailuresOthersCount,
+        alerts,
+        cost: {
+          cronCallCount: cronCalls.calls,
+          charEstimate: cost.charEstimate,
+          tokenEstimate: cost.tokenEstimate
+        },
+        trend: {
+          metric: "failedCount",
+          curr: failedCurr,
+          prev: failedPrev,
+          delta: failedDelta,
+          pct: failedPct
+        },
+        policy: {
+          version: CLIPPER_ALERT_POLICY_VERSION
+        },
+        ux: {
+          doneLatencyMs: {
+            p95: ux.p95
+          }
+        },
+        series: {
+          hourly: filledHourly
+        }
+      };
+
+      if (cacheTtlSec > 0) {
+        setCachedClipperMetrics(cacheKey, payload, cacheTtlSec);
+      }
+
+      return {
+        ok: true,
+        status: 200,
+        payload
+      };
+    } catch (error) {
+      await captureAppError({
+        route: "/api/internal/ops/clipper-metrics",
+        message: "internal_clipper_metrics_failed",
+        stack: error instanceof Error ? error.stack : undefined,
+        context: { err: error instanceof Error ? error.message : String(error) }
+      });
+      return { ok: false, status: 500, error: "Clipper metrics load failed." };
+    }
+  }
 
   async runPlanExpireCron(authorizationHeader: string | null): Promise<InternalCronServiceResult> {
     if (!isAuthorized(authorizationHeader)) {
@@ -98,6 +328,18 @@ export class InternalService {
     );
 
     try {
+      const reasonCounts = createReasonCounts();
+      const incrementReason = (code: EnrichmentReasonCode) => {
+        reasonCounts[code] += 1;
+      };
+      const markFailedWithReason = async (input: { id: number; code: EnrichmentReasonCode; detail?: string }) => {
+        await this.repo.markClipperItemFailed({
+          id: input.id,
+          message: formatEnrichmentReason(input.code, input.detail)
+        });
+        incrementReason(input.code);
+      };
+
       const now = Date.now();
       const retriableFailed = await this.repo.listRetriableFailedClipperItems({
         maxAttempts,
@@ -131,6 +373,7 @@ export class InternalService {
             processedCount: 0,
             doneCount: 0,
             failedCount: 0,
+            reasonCounts,
             ranAt: new Date().toISOString()
           }
         };
@@ -140,7 +383,7 @@ export class InternalService {
       const idSet = new Set(processingItems.map((item) => item.id));
       const pendingFailed = claimedIds.filter((id) => !idSet.has(id));
       for (const id of pendingFailed) {
-        await this.repo.markClipperItemFailed({ id, message: "item_not_found_after_claim" });
+        await markFailedWithReason({ id, code: "ITEM_NOT_FOUND_AFTER_CLAIM" });
       }
 
       let geminiResults = new Map<number, EnrichmentResult>();
@@ -159,27 +402,37 @@ export class InternalService {
       } catch (error) {
         usedFallbackForBatchFailure = true;
         for (const item of processingItems) {
-          const meaningKo = await translateWithGoogle({ text: item.term, source: "en", target: "ko" });
-          const exampleSentenceKo = item.exampleSentenceEn
-            ? await translateWithGoogle({ text: item.exampleSentenceEn, source: "en", target: "ko" })
-            : null;
-          if (!meaningKo) {
-            await this.repo.markClipperItemFailed({
+          try {
+            const meaningKo = await translateWithGoogle({ text: item.term, source: "en", target: "ko" });
+            const exampleSentenceKo = item.exampleSentenceEn
+              ? await translateWithGoogle({ text: item.exampleSentenceEn, source: "en", target: "ko" })
+              : null;
+            if (!meaningKo) {
+              await markFailedWithReason({
+                id: item.id,
+                code: "GOOGLE_TRANSLATE_FALLBACK_EMPTY",
+                detail: "meaningKo_empty"
+              });
+              fallbackFailedCount += 1;
+              continue;
+            }
+            await this.repo.markClipperItemDone({
               id: item.id,
-              message: `gemini_batch_failed_fallback_failed:${error instanceof Error ? error.message : "unknown"}`
+              meaningKo,
+              partOfSpeech: PartOfSpeech.UNKNOWN,
+              exampleSentenceEn: item.exampleSentenceEn,
+              exampleSentenceKo,
+              exampleSource: item.exampleSentenceEn ? "SOURCE" : "NONE"
+            });
+            fallbackDoneCount += 1;
+          } catch (fallbackError) {
+            await markFailedWithReason({
+              id: item.id,
+              code: "BATCH_FALLBACK_FAILED",
+              detail: fallbackError instanceof Error ? fallbackError.message : String(fallbackError)
             });
             fallbackFailedCount += 1;
-            continue;
           }
-          await this.repo.markClipperItemDone({
-            id: item.id,
-            meaningKo,
-            partOfSpeech: PartOfSpeech.UNKNOWN,
-            exampleSentenceEn: item.exampleSentenceEn,
-            exampleSentenceKo,
-            exampleSource: item.exampleSentenceEn ? "SOURCE" : "NONE"
-          });
-          fallbackDoneCount += 1;
         }
       }
 
@@ -190,7 +443,7 @@ export class InternalService {
         for (const item of processingItems) {
           const output = geminiResults.get(item.id);
           if (!output) {
-            await this.repo.markClipperItemFailed({ id: item.id, message: "gemini_item_missing_or_invalid" });
+            await markFailedWithReason({ id: item.id, code: "ITEM_MISSING_OR_INVALID" });
             failedCount += 1;
             continue;
           }
@@ -219,6 +472,7 @@ export class InternalService {
           processedCount: processingItems.length,
           doneCount,
           failedCount,
+          reasonCounts,
           ranAt: new Date().toISOString()
         }
       };
@@ -232,6 +486,42 @@ export class InternalService {
       return { ok: false, status: 500, error: "Clipper enrichment cron failed." };
     }
   }
+}
+
+function floorHour(date: Date): Date {
+  const next = new Date(date);
+  next.setUTCMinutes(0, 0, 0);
+  return next;
+}
+
+function fillHourlyBuckets(input: {
+  now: Date;
+  bucketHours: number;
+  rows: Array<{ hour: string; doneCount: number; failedCount: number }>;
+}): Array<{ hour: string; doneCount: number; failedCount: number }> {
+  const sorted = [...input.rows].sort((a, b) => a.hour.localeCompare(b.hour));
+  const byHour = new Map<string, { doneCount: number; failedCount: number }>();
+  for (const row of sorted) {
+    byHour.set(floorHour(new Date(row.hour)).toISOString(), {
+      doneCount: row.doneCount,
+      failedCount: row.failedCount
+    });
+  }
+
+  const end = floorHour(input.now);
+  const bucketCount = Math.max(1, input.bucketHours);
+  const start = new Date(end.getTime() - bucketCount * 60 * 60 * 1000);
+  const out: Array<{ hour: string; doneCount: number; failedCount: number }> = [];
+  for (let ts = start.getTime(); ts < end.getTime(); ts += 60 * 60 * 1000) {
+    const hourIso = new Date(ts).toISOString();
+    const row = byHour.get(hourIso);
+    out.push({
+      hour: hourIso,
+      doneCount: row?.doneCount ?? 0,
+      failedCount: row?.failedCount ?? 0
+    });
+  }
+  return out;
 }
 
 function pickEligibleQueuedIds(input: {

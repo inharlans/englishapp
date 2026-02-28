@@ -69,6 +69,49 @@ export type AdminQuizQualitySummary = {
   disputableWrongRate: number;
 };
 
+export type AdminClipperAlert = {
+  level: "warn" | "critical";
+  key: string;
+  message: string;
+  value: number;
+  warn: number;
+  critical: number;
+  window: string;
+};
+
+export type AdminClipperMetrics = {
+  ok: true;
+  window: "1h" | "24h" | "7d";
+  generatedAt: string;
+  cache: { mode: "no-cache" | "ttl-5m"; hit: boolean; ttlSec: number };
+  queue: {
+    queued: number;
+    processing: number;
+    waitMs: { p50: number; p95: number };
+    processMs: { p50: number; p95: number };
+    throughputPerHour: number;
+  };
+  quality: {
+    doneCount: number;
+    failedCount: number;
+    successRate: number;
+    failureRate: number;
+    retryRate: number;
+    retrySuccessRate: number;
+    terminalFailed: number;
+    partialDoneRate: number;
+  };
+  failureReasons: Array<{ code: string; count: number }>;
+  topFailures: Array<{ code: string; count: number }>;
+  topFailuresOthersCount: number;
+  alerts: AdminClipperAlert[];
+  cost: { cronCallCount: number; charEstimate: number; tokenEstimate: number };
+  trend: { metric: "failedCount"; curr: number; prev: number; delta: number; pct: number | null };
+  policy: { version: string };
+  ux: { doneLatencyMs: { p95: number } };
+  series: { hourly: Array<{ hour: string; doneCount: number; failedCount: number }> };
+};
+
 export async function getAdminUsers(): Promise<AdminUserRow[]> {
   const res = await apiFetch("/api/admin/users");
   const json = await parseApiResponse<{ users?: AdminUserRow[] }>(res, "Failed to load users.", "admin.users.list");
@@ -89,24 +132,34 @@ export async function getAdminReports(): Promise<AdminReportRow[]> {
   }));
 }
 
-export async function getAdminMetrics(): Promise<{
+export async function getAdminMetrics(input?: {
+  clipperWindow?: "1h" | "24h" | "7d";
+  clipperRefresh?: boolean;
+}): Promise<{
   routeStats: AdminRouteMetricRow[];
   recentErrors: AdminErrorMetricRow[];
   slo: AdminSloSummary | null;
   quizQuality: AdminQuizQualitySummary | null;
+  clipper: AdminClipperMetrics | null;
 }> {
-  const res = await apiFetch("/api/admin/metrics");
+  const params = new URLSearchParams();
+  if (input?.clipperWindow) params.set("clipperWindow", input.clipperWindow);
+  if (input?.clipperRefresh) params.set("clipperRefresh", "true");
+  const query = params.toString();
+  const res = await apiFetch(`/api/admin/metrics${query ? `?${query}` : ""}`);
   const json = await parseApiResponse<{
     routeStats?: AdminRouteMetricRow[];
     recentErrors?: AdminErrorMetricRow[];
     slo?: AdminSloSummary;
     quizQuality?: AdminQuizQualitySummary;
+    clipper?: AdminClipperMetrics | null;
   }>(res, "Failed to load metrics.", "admin.metrics.get");
   return {
     routeStats: json.routeStats ?? [],
     recentErrors: json.recentErrors ?? [],
     slo: json.slo ?? null,
-    quizQuality: json.quizQuality ?? null
+    quizQuality: json.quizQuality ?? null,
+    clipper: json.clipper ?? null
   };
 }
 

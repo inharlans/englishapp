@@ -7,6 +7,7 @@ import type {
   UpdateUserPlanInput
 } from "@/server/domain/admin/contracts";
 import { AdminRepository } from "@/server/domain/admin/repository";
+import { InternalService } from "@/server/domain/internal/service";
 
 function requireAdmin(actor: AdminActor | null): AdminServiceResult<never> | null {
   if (!actor) return { ok: false, status: 401, error: "Unauthorized." };
@@ -15,9 +16,15 @@ function requireAdmin(actor: AdminActor | null): AdminServiceResult<never> | nul
 }
 
 export class AdminService {
-  constructor(private readonly repo = new AdminRepository()) {}
+  constructor(
+    private readonly repo = new AdminRepository(),
+    private readonly internalService = new InternalService()
+  ) {}
 
-  async getMetrics(actor: AdminActor | null): Promise<AdminServiceResult<AdminMetricsPayload>> {
+  async getMetrics(
+    actor: AdminActor | null,
+    options?: { clipperWindow?: "1h" | "24h" | "7d"; clipperRefresh?: boolean }
+  ): Promise<AdminServiceResult<AdminMetricsPayload>> {
     const guard = requireAdmin(actor);
     if (guard) return guard;
 
@@ -98,6 +105,16 @@ export class AdminService {
     const quizWrongCount = quizDiagnostics.length;
     const disputableWrongRate = quizWrongCount > 0 ? (disputableWrongCount / quizWrongCount) * 100 : 0;
 
+    const clipperWindow = options?.clipperWindow ?? "24h";
+    const clipperResult = await this.internalService.getClipperMetrics({
+      authorizationHeader: null,
+      trustedInternal: true,
+      window: clipperWindow,
+      includeSeries: true,
+      refresh: options?.clipperRefresh ?? false
+    });
+    const clipper = clipperResult.ok ? clipperResult.payload : null;
+
     return {
       ok: true,
       status: 200,
@@ -126,7 +143,8 @@ export class AdminService {
         recentErrors: recentErrors.map((e) => ({
           ...e,
           createdAt: e.createdAt.toISOString()
-        }))
+        })),
+        clipper
       }
     };
   }

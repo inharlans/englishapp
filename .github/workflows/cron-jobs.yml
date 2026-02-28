@@ -29,6 +29,8 @@ jobs:
           set -euo pipefail
           url="${{ secrets.APP_BASE_URL }}/api/internal/cron/plan-expire"
           status=$(curl --silent --show-error --location \
+            --connect-timeout 10 \
+            --max-time 90 \
             --request POST "$url" \
             --header "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
             --header "Content-Type: application/json" \
@@ -45,6 +47,8 @@ jobs:
           set -euo pipefail
           url="${{ secrets.APP_BASE_URL }}/api/internal/cron/wordbook-rank"
           status=$(curl --silent --show-error --location \
+            --connect-timeout 10 \
+            --max-time 90 \
             --request POST "$url" \
             --header "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
             --header "Content-Type: application/json" \
@@ -54,5 +58,23 @@ jobs:
           cat /tmp/cron-wordbook-rank-body.txt || true
           if [ "$status" -lt 200 ] || [ "$status" -ge 300 ]; then
             echo "wordbook-rank failed (status=$status)"
+            exit 1
+          fi
+      - name: Run clipper-enrichment cron
+        run: |
+          set -euo pipefail
+          url="${{ secrets.APP_BASE_URL }}/api/internal/cron/clipper-enrichment"
+          status=$(curl --silent --show-error --location \
+            --connect-timeout 10 \
+            --max-time 600 \
+            --request POST "$url" \
+            --header "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            --header "Content-Type: application/json" \
+            --output /tmp/cron-clipper-enrichment-body.txt \
+            --write-out "%{http_code}")
+          echo "clipper-enrichment status=$status url=$url"
+          cat /tmp/cron-clipper-enrichment-body.txt || true
+          if [ "$status" -lt 200 ] || [ "$status" -ge 300 ]; then
+            echo "clipper-enrichment failed (status=$status)"
             exit 1
           fi

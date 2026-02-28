@@ -1,0 +1,134 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`GET /api/admin/metrics > returns stable snapshot when clipper payload exists 1`] = `
+{
+  "clipper": {
+    "alerts": [
+      {
+        "critical": 0.9,
+        "key": "success_rate",
+        "level": "warn",
+        "message": "성공률이(가) 경고 임계치 이하입니다.",
+        "value": 0.9677,
+        "warn": 0.97,
+        "window": "30m",
+      },
+    ],
+    "cache": {
+      "hit": false,
+      "mode": "no-cache",
+      "ttlSec": 0,
+    },
+    "cost": {
+      "charEstimate": 140000,
+      "cronCallCount": 26,
+      "tokenEstimate": 35000,
+    },
+    "failureReasons": [
+      {
+        "code": "RATE_LIMIT",
+        "count": 7,
+      },
+      {
+        "code": "PARSE_ERROR",
+        "count": 5,
+      },
+      {
+        "code": "TIMEOUT",
+        "count": 3,
+      },
+    ],
+    "generatedAt": "2026-03-01T01:00:00.000Z",
+    "ok": true,
+    "policy": {
+      "version": "2026-03-01.v1",
+    },
+    "quality": {
+      "doneCount": 540,
+      "failedCount": 18,
+      "failureRate": 0.0323,
+      "partialDoneRate": 0.11,
+      "retryRate": 0.2,
+      "retrySuccessRate": 0.71,
+      "successRate": 0.9677,
+      "terminalFailed": 4,
+    },
+    "queue": {
+      "processMs": {
+        "p50": 3400,
+        "p95": 19000,
+      },
+      "processing": 3,
+      "queued": 21,
+      "throughputPerHour": 22.5,
+      "waitMs": {
+        "p50": 30000,
+        "p95": 120000,
+      },
+    },
+    "series": {
+      "hourly": [
+        {
+          "doneCount": 22,
+          "failedCount": 1,
+          "hour": "2026-03-01T00:00:00.000Z",
+        },
+      ],
+    },
+    "topFailures": [
+      {
+        "code": "RATE_LIMIT",
+        "count": 7,
+      },
+      {
+        "code": "PARSE_ERROR",
+        "count": 5,
+      },
+      {
+        "code": "TIMEOUT",
+        "count": 3,
+      },
+    ],
+    "topFailuresOthersCount": 2,
+    "trend": {
+      "curr": 18,
+      "delta": 6,
+      "metric": "failedCount",
+      "pct": 0.5,
+      "prev": 12,
+    },
+    "ux": {
+      "doneLatencyMs": {
+        "p95": 260000,
+      },
+    },
+    "window": "24h",
+  },
+  "quizQuality": {
+    "disputableWrongCount": 0,
+    "disputableWrongRate": 0,
+    "wrongAnswers": 0,
+  },
+  "recentErrors": [],
+  "routeStats": [
+    {
+      "avgLatencyMs": 211,
+      "p95LatencyMs": 420,
+      "route": "/api/internal/cron/clipper-enrichment",
+      "status4xx": 0,
+      "status5xx": 1,
+      "total": 33,
+    },
+  ],
+  "since": "2026-03-01T00:00:00.000Z",
+  "slo": {
+    "apiSuccessRate": 99.9,
+    "apiSuccessTarget": 99.5,
+    "coreP95LatencyMs": 120,
+    "coreP95LatencyTargetMs": 500,
+    "cronSuccessRate": 99.1,
+    "cronSuccessTarget": 99,
+    "violations": [],
+  },
+}
+`;

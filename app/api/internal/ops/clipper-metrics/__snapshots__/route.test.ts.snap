@@ -1,0 +1,169 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`GET /api/internal/ops/clipper-metrics > returns stable snapshot for empty metrics payload 1`] = `
+{
+  "alerts": [],
+  "cache": {
+    "hit": false,
+    "mode": "no-cache",
+    "ttlSec": 0,
+  },
+  "cost": {
+    "charEstimate": 0,
+    "cronCallCount": 0,
+    "tokenEstimate": 0,
+  },
+  "failureReasons": [],
+  "generatedAt": "2026-03-01T00:00:00.000Z",
+  "ok": true,
+  "policy": {
+    "version": "2026-03-01.v1",
+  },
+  "quality": {
+    "doneCount": 0,
+    "failedCount": 0,
+    "failureRate": 0,
+    "partialDoneRate": 0,
+    "retryRate": 0,
+    "retrySuccessRate": 0,
+    "successRate": 0,
+    "terminalFailed": 0,
+  },
+  "queue": {
+    "processMs": {
+      "p50": 0,
+      "p95": 0,
+    },
+    "processing": 0,
+    "queued": 0,
+    "throughputPerHour": 0,
+    "waitMs": {
+      "p50": 0,
+      "p95": 0,
+    },
+  },
+  "series": {
+    "hourly": [],
+  },
+  "topFailures": [],
+  "topFailuresOthersCount": 0,
+  "trend": {
+    "curr": 0,
+    "delta": 0,
+    "metric": "failedCount",
+    "pct": null,
+    "prev": 0,
+  },
+  "ux": {
+    "doneLatencyMs": {
+      "p95": 0,
+    },
+  },
+  "window": "24h",
+}
+`;
+
+exports[`GET /api/internal/ops/clipper-metrics > returns stable snapshot for populated metrics payload 1`] = `
+{
+  "alerts": [
+    {
+      "critical": 0.9,
+      "key": "success_rate",
+      "level": "warn",
+      "message": "성공률이(가) 경고 임계치 이하입니다.",
+      "value": 0.9677,
+      "warn": 0.97,
+      "window": "30m",
+    },
+  ],
+  "cache": {
+    "hit": true,
+    "mode": "ttl-5m",
+    "ttlSec": 300,
+  },
+  "cost": {
+    "charEstimate": 140000,
+    "cronCallCount": 22,
+    "tokenEstimate": 35000,
+  },
+  "failureReasons": [
+    {
+      "code": "RATE_LIMIT",
+      "count": 7,
+    },
+    {
+      "code": "PARSE_ERROR",
+      "count": 5,
+    },
+    {
+      "code": "TIMEOUT",
+      "count": 3,
+    },
+  ],
+  "generatedAt": "2026-03-01T00:10:00.000Z",
+  "ok": true,
+  "policy": {
+    "version": "2026-03-01.v1",
+  },
+  "quality": {
+    "doneCount": 540,
+    "failedCount": 18,
+    "failureRate": 0.0323,
+    "partialDoneRate": 0.12,
+    "retryRate": 0.21,
+    "retrySuccessRate": 0.7,
+    "successRate": 0.9677,
+    "terminalFailed": 4,
+  },
+  "queue": {
+    "processMs": {
+      "p50": 4100,
+      "p95": 28000,
+    },
+    "processing": 12,
+    "queued": 120,
+    "throughputPerHour": 88.5,
+    "waitMs": {
+      "p50": 32000,
+      "p95": 190000,
+    },
+  },
+  "series": {
+    "hourly": [
+      {
+        "doneCount": 88,
+        "failedCount": 2,
+        "hour": "2026-03-01T00:00:00.000Z",
+      },
+    ],
+  },
+  "topFailures": [
+    {
+      "code": "RATE_LIMIT",
+      "count": 7,
+    },
+    {
+      "code": "PARSE_ERROR",
+      "count": 5,
+    },
+    {
+      "code": "TIMEOUT",
+      "count": 3,
+    },
+  ],
+  "topFailuresOthersCount": 0,
+  "trend": {
+    "curr": 18,
+    "delta": 6,
+    "metric": "failedCount",
+    "pct": 0.5,
+    "prev": 12,
+  },
+  "ux": {
+    "doneLatencyMs": {
+      "p95": 260000,
+    },
+  },
+  "window": "1h",
+}
+`;

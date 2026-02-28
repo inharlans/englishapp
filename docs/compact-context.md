@@ -49,18 +49,18 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `65b321902066`
-- HEAD: `140b93f` Refactor API/page data boundaries and harden encoding guardrails
+- Source hash: `0bb01ab7d2fb`
+- HEAD: `a042e63` Optimize market/import paths and formalize legacy deprecation policy
 
 ### Scope Digests
-- api-routes: 61 files, `0b429171bb8c`
-- api-helpers: 17 files, `9bd3ce5c793e`
-- domain-services: 36 files, `df2dbc3bb95f`
+- api-routes: 66 files, `b96b4f1dad24`
+- api-helpers: 17 files, `7d1e0ed6e296`
+- domain-services: 39 files, `88dcb53c24b3`
 - automation-policy: 90 files, `2eb6d0ac82ff`
-- tracking-docs: 10 files, `a2b6e16b761a`
+- tracking-docs: 10 files, `01d8392d7569`
 
 ### Legacy Route Migration Status
-- base: `app/api/`, total: 53, migrated: 43, remaining: 10
+- base: `app/api/`, total: 54, migrated: 44, remaining: 10
 - remaining files:
   - `app/api/auth/google/callback/route.ts`
   - `app/api/auth/google/route.ts`

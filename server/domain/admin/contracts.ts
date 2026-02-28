@@ -1,4 +1,5 @@
 import type { WordbookReportStatus } from "@prisma/client";
+import type { InternalMetricsResult } from "@/server/domain/internal/contracts";
 
 export interface AdminActor {
   id: number;
@@ -40,6 +41,7 @@ export interface AdminMetricsPayload {
     context: unknown;
     createdAt: string;
   }>;
+  clipper: InternalMetricsResult["payload"] | null;
 }
 
 export interface ModerateReportInput {
