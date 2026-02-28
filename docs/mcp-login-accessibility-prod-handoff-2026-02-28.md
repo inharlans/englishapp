@@ -61,7 +61,7 @@
 ## 재측정 결과 (즉시 재확인)
 
 - 측정 URL: `https://www.oingapp.com/login?_smoke=2`
-- 측정 시각(KST): `2026-02-28 19:49:19`
+- 측정 시각(KST): `2026-02-28 19:49:19` (이전)
 - 측정 버전: `page-7949e7fe4576be4c.js`
 - 측정 결과: `주의` (`id` 미포함, 경고 잔존 가능성)
 - 렌더 마크업:
@@ -74,6 +74,25 @@
 - 권고:
   - 배포 라인/CDN 캐시 반영이 완료되기 전까지는 운영 사용자 체감 개선은 제한됨
   - 캐시 purge 대상 정리된 항목 기준으로 배포팀 재요청 필요
+
+## 재측정 결과 (연속 3회 즉시 재점검, 2026-02-28 20:56)
+
+- URL: `https://www.oingapp.com/login?_smoke=2`
+- 측정 횟수: 3회 (약 2초 간격)
+- 로그 경로: `logs/ops/login-prod-accessibility-check.jsonl`
+- 공통 노출 번들: `/_next/static/chunks/app/login/page-7949e7fe4576be4c.js`
+- 판정: 모두 `warn`
+- 공통 진단:
+  - `input#login-email` 미노출
+  - `input#login-password` 미노출
+  - `name="email"` PASS
+  - `name="password"` PASS
+  - 경고 문자열 미탐지
+- 추가 이슈:
+  - 2차 점검에서 `login chunk` 1회 `502 Bad Gateway`(CDN/캐시 응답 불안정) 발생
+- 판단:
+  - 동일 해시 반복 + `id` 미포함 상태 지속
+  - 운영 배포 반영/캐시 동기화 미완료로 보이며, `재요청(동일 해시 반복 노출)` 필요
 
 ## 재측정 자동화 명령
 

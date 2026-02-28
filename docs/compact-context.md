@@ -49,8 +49,8 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `d0981d171dfd`
-- HEAD: `d42bb57` Fix MCP wrapper env resolution and token fallback
+- Source hash: `12b7887750fe`
+- HEAD: `35af9c6` Update session continuity token checklist
 
 ### Scope Digests
 - api-routes: 61 files, `68f26bf43f5f`
