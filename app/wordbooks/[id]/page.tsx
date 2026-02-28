@@ -1,8 +1,7 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import { cookies } from "next/headers";
 
 import { getUserFromRequestCookies } from "@/lib/authServer";
-import { prisma } from "@/lib/prisma";
 import { AddItemsForm } from "@/components/wordbooks/AddItemsForm";
 import { DeleteWordbookButton } from "@/components/wordbooks/DeleteWordbookButton";
 import { DownloadButton } from "@/components/wordbooks/DownloadButton";
@@ -17,13 +16,15 @@ import { WordbookMetaEditor } from "@/components/wordbooks/WordbookMetaEditor";
 import { WordbookStudyTabs } from "@/components/wordbooks/WordbookStudyTabs";
 import { SyncDownloadButton } from "@/components/wordbooks/SyncDownloadButton";
 import { ResumeStudyButton } from "@/components/wordbooks/ResumeStudyButton";
-import { FREE_DOWNLOAD_WORD_LIMIT, getUserDownloadedWordCount } from "@/lib/planLimits";
-import { aggregateVersionLogs } from "@/lib/wordbookVersion";
+import { FREE_DOWNLOAD_WORD_LIMIT } from "@/lib/planLimits";
 import { StarRating } from "@/components/wordbooks/StarRating";
 import { PendingWordbookItemsRetryBanner } from "@/components/wordbooks/PendingWordbookItemsRetryBanner";
 import { isPrivateWordbookLockedForFree } from "@/lib/wordbookAccess";
 import { maskEmailAddress } from "@/lib/textQuality";
 import { splitWordbookDescription } from "@/lib/wordbookPresentation";
+import { WordbookPageQueryService } from "@/server/domain/wordbook/page-query-service";
+
+const wordbookPageQueryService = new WordbookPageQueryService();
 
 function parseId(raw: string): number | null {
   const n = Number(raw);
@@ -77,27 +78,13 @@ export default async function WordbookDetailPage(props: {
 
   const user = await getUserFromRequestCookies(await cookies());
 
-  const wordbook = await prisma.wordbook.findUnique({
-    where: { id },
-    select: {
-      id: true,
-      ownerId: true,
-      title: true,
-      description: true,
-      fromLang: true,
-      toLang: true,
-      isPublic: true,
-      hiddenByAdmin: true,
-      downloadCount: true,
-      ratingAvg: true,
-      ratingCount: true,
-      contentVersion: true,
-      createdAt: true,
-      updatedAt: true,
-      owner: { select: { email: true } },
-      _count: { select: { items: true } }
-    }
+  const detailData = await wordbookPageQueryService.getWordbookDetailPageData({
+    wordbookId: id,
+    userId: user?.id ?? null,
+    page,
+    take
   });
+  const wordbook = detailData?.wordbook ?? null;
 
   if (!wordbook) {
     return (
@@ -114,23 +101,9 @@ export default async function WordbookDetailPage(props: {
   }
 
   const totalItemCount = wordbook._count.items;
-  const pageCount = Math.max(1, Math.ceil(totalItemCount / take));
-  const currentPage = Math.min(page, pageCount - 1);
-  const pagedItems = await prisma.wordbookItem.findMany({
-    where: { wordbookId: id },
-    orderBy: [{ position: "asc" }, { id: "asc" }],
-    skip: currentPage * take,
-    take,
-    select: {
-      id: true,
-      term: true,
-      meaning: true,
-      pronunciation: true,
-      example: true,
-      exampleMeaning: true,
-      position: true
-    }
-  });
+  const pageCount = detailData?.pageCount ?? 1;
+  const currentPage = detailData?.currentPage ?? 0;
+  const pagedItems: NonNullable<typeof detailData>["pagedItems"] = detailData?.pagedItems ?? [];
 
   const isOwner = user ? wordbook.ownerId === user.id : false;
   if ((!wordbook.isPublic || wordbook.hiddenByAdmin) && !isOwner) {
@@ -147,19 +120,9 @@ export default async function WordbookDetailPage(props: {
     );
   }
 
-  const [downloadRow, ratingRow, downloadedWordCount] = user
-    ? await Promise.all([
-        prisma.wordbookDownload.findUnique({
-          where: { userId_wordbookId: { userId: user.id, wordbookId: id } },
-          select: { createdAt: true, downloadedVersion: true, snapshotItemCount: true, syncedAt: true }
-        }),
-        prisma.wordbookRating.findUnique({
-          where: { userId_wordbookId: { userId: user.id, wordbookId: id } },
-          select: { rating: true, review: true }
-        }),
-        getUserDownloadedWordCount(user.id)
-      ])
-    : [null, null, 0];
+  const downloadRow = detailData?.downloadRow ?? null;
+  const ratingRow = detailData?.ratingRow ?? null;
+  const downloadedWordCount = detailData?.downloadedWordCount ?? 0;
 
   const downloadedAt = downloadRow?.createdAt ?? null;
   const downloadedVersion = downloadRow?.downloadedVersion ?? null;
@@ -183,15 +146,7 @@ export default async function WordbookDetailPage(props: {
     });
   const canWriteReview = !!user && (isOwner || !!downloadedAt);
 
-  const versionSummary =
-    downloadedVersion && wordbook.contentVersion > downloadedVersion
-      ? aggregateVersionLogs(
-          await prisma.wordbookVersionLog.findMany({
-            where: { wordbookId: id, version: { gt: downloadedVersion } },
-            select: { addedCount: true, updatedCount: true, deletedCount: true }
-          })
-        )
-      : { addedCount: 0, updatedCount: 0, deletedCount: 0 };
+  const versionSummary = detailData?.versionSummary ?? { addedCount: 0, updatedCount: 0, deletedCount: 0 };
   const backHref = isOwner || downloadedAt ? "/wordbooks" : "/wordbooks/market";
 
   return (
@@ -472,6 +427,3 @@ export default async function WordbookDetailPage(props: {
     </section>
   );
 }
-
-
-

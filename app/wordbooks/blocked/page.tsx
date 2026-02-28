@@ -1,10 +1,12 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import { cookies } from "next/headers";
 
 import { getUserFromRequestCookies } from "@/lib/authServer";
-import { prisma } from "@/lib/prisma";
 import { maskEmailAddress } from "@/lib/textQuality";
+import { UserService } from "@/server/domain/user/service";
 import { UnblockOwnerButton } from "./unblockOwnerButton";
+
+const userService = new UserService();
 
 export default async function BlockedOwnersPage() {
   const formatDateKst = (date: Date) =>
@@ -28,15 +30,7 @@ export default async function BlockedOwnersPage() {
     );
   }
 
-  const blocks = await prisma.blockedOwner.findMany({
-    where: { userId: user.id },
-    orderBy: { createdAt: "desc" },
-    select: {
-      ownerId: true,
-      createdAt: true,
-      owner: { select: { email: true } }
-    }
-  });
+  const { blocks } = await userService.listBlockedOwners(user.id);
 
   return (
     <section className="space-y-5">
@@ -72,5 +66,4 @@ export default async function BlockedOwnersPage() {
     </section>
   );
 }
-
 

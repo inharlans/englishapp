@@ -1,5 +1,6 @@
-﻿import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
+import { errorJson } from "@/lib/api/service-response";
 import { captureAppError, recordApiMetricFromStart } from "@/lib/observability";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
 import { AuthService } from "@/server/domain/auth/service";
@@ -57,6 +58,10 @@ export async function POST(req: NextRequest) {
       status: 500,
       startedAt
     });
-    return NextResponse.json({ error: "Logout failed." }, { status: 500 });
+    return errorJson({
+      status: 500,
+      code: "AUTH_LOGOUT_FAILED",
+      message: "Logout failed."
+    });
   }
 }

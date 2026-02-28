@@ -1,4 +1,4 @@
-﻿type VersionDelta = {
+type VersionDelta = {
   addedCount?: number;
   updatedCount?: number;
   deletedCount?: number;

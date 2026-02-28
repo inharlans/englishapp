@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { importWordsRaw } from "@/lib/api/words";
 

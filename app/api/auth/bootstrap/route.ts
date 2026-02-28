@@ -1,5 +1,6 @@
-﻿import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
+import { errorJson } from "@/lib/api/service-response";
 import { checkRateLimit, getClientIpFromHeaders } from "@/lib/rateLimit";
 import { parseJsonWithSchema } from "@/lib/validation";
 import { AuthService } from "@/server/domain/auth/service";
@@ -20,23 +21,30 @@ export async function POST(req: NextRequest) {
     windowMs: 60_000
   });
   if (!limit.ok) {
-    return NextResponse.json(
-      { error: "Too many requests." },
-      { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } }
-    );
+    return errorJson({
+      status: 429,
+      code: "RATE_LIMITED",
+      message: "Too many requests.",
+      headers: { "Retry-After": String(limit.retryAfterSeconds) }
+    });
   }
 
   const token = process.env.AUTH_BOOTSTRAP_TOKEN;
   if (!token) {
-    return NextResponse.json(
-      { error: "Bootstrap disabled (missing AUTH_BOOTSTRAP_TOKEN)." },
-      { status: 403 }
-    );
+    return errorJson({
+      status: 403,
+      code: "BOOTSTRAP_DISABLED",
+      message: "Bootstrap disabled (missing AUTH_BOOTSTRAP_TOKEN)."
+    });
   }
 
   const provided = req.headers.get("x-bootstrap-token") ?? "";
   if (provided !== token) {
-    return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+    return errorJson({
+      status: 403,
+      code: "BOOTSTRAP_FORBIDDEN",
+      message: "Forbidden."
+    });
   }
 
   const parsed = await parseJsonWithSchema(req, bootstrapSchema);
@@ -44,7 +52,11 @@ export async function POST(req: NextRequest) {
 
   const result = await authService.bootstrap(parsed.data);
   if (!result) {
-    return NextResponse.json({ error: "Bootstrap already completed." }, { status: 409 });
+    return errorJson({
+      status: 409,
+      code: "BOOTSTRAP_ALREADY_COMPLETED",
+      message: "Bootstrap already completed."
+    });
   }
 
   return NextResponse.json(result);

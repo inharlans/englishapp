@@ -1,4 +1,4 @@
-﻿import { apiFetch } from "@/lib/clientApi";
+import { apiFetch } from "@/lib/clientApi";
 
 import { parseApiResponse } from "@/lib/api/base";
 

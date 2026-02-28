@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { blockWordbookOwner } from "@/lib/api/wordbook";
 

@@ -1,4 +1,4 @@
-﻿# Wordbook Create UX Checklist
+# Wordbook Create UX Checklist
 
 - [x] 상단 포맷 가이드 패널 추가 (TSV/CSV 예시, 복사, 템플릿 다운로드)
 - [x] 생성 메타(title/description/direction) + 제출 조건(title && valid>=1)

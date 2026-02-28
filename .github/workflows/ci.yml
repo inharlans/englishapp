@@ -36,6 +36,7 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
+      - run: TEXT_ENCODING_VALIDATE_ALL=1 npm run hooks:validate
       - run: npm run prisma:generate
       - run: npm run prisma:deploy
       - run: npm run verify:ci

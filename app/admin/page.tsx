@@ -1,9 +1,10 @@
 import { cookies } from "next/headers";
 
 import { getUserFromRequestCookies } from "@/lib/authServer";
-import { prisma } from "@/lib/prisma";
-import { maskEmailAddress } from "@/lib/textQuality";
+import { AdminPageQueryService } from "@/server/domain/admin/page-query-service";
 import { AdminUsersClient } from "./usersClient";
+
+const adminPageQueryService = new AdminPageQueryService();
 
 export default async function AdminPage() {
   const user = await getUserFromRequestCookies(await cookies());
@@ -15,19 +16,9 @@ export default async function AdminPage() {
     );
   }
 
-  const users = await prisma.user.findMany({
-    orderBy: { id: "asc" },
-    select: { id: true, email: true, isAdmin: true, plan: true, proUntil: true, createdAt: true }
-  });
+  const users = await adminPageQueryService.listUsersForPage();
 
   return (
-    <AdminUsersClient
-      initialUsers={users.map((u) => ({
-        ...u,
-        email: maskEmailAddress(u.email),
-        proUntil: u.proUntil ? u.proUntil.toISOString() : null,
-        createdAt: u.createdAt.toISOString()
-      }))}
-    />
+    <AdminUsersClient initialUsers={users} />
   );
 }

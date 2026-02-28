@@ -3,6 +3,8 @@ set -eu
 
 COMPACT_DOC="docs/compact-context.md"
 
+npm run hooks:validate
+
 npm run compact:sync
 
 if git diff --quiet -- "$COMPACT_DOC"; then

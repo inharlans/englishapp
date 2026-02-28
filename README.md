@@ -2,6 +2,15 @@
 
 ## 최근 업데이트 (2026-02-28)
 
+- 인증/운영 API 응답 표준화를 위해 공통 에러 응답 헬퍼를 추가하고(`lib/api/service-response.ts`), `code/message/error`를 함께 반환하도록 정리해 클라이언트 분기 안정성을 높였습니다.
+- 인증 라우트(`auth/bootstrap|login|logout|me`)의 주요 실패 응답에 고정 에러 코드(`RATE_LIMITED`, `BOOTSTRAP_*`, `AUTH_*`)를 부여했습니다.
+- `blocked-owners`/`wordbooks` 라우트 인증 분기를 `requireUserFromRequest` 기반으로 통일해 인증 보일러플레이트를 줄였습니다.
+- `users/me/daily-goal`, `blocked-owners`, `words`, `words/[id]`, `words/import` 라우트의 직접 Prisma 접근을 도메인 서비스(`server/domain/user/*`, `server/domain/words/*`) 경유로 이관해 라우트 계층 책임을 축소했습니다.
+- 서버 페이지(`app/wordbooks`, `app/wordbooks/market`, `app/wordbooks/blocked`, `app/wordbooks/[id]`, `app/admin`)의 직접 Prisma 접근을 제거하고 조회 로직을 페이지 쿼리 서비스(`server/domain/wordbook/page-query-service.ts`, `server/domain/admin/page-query-service.ts`)로 이관했습니다.
+- 저장소 전체 tracked 파일의 UTF-8 BOM을 제거해 인코딩 정책(UTF-8 without BOM)을 일치시켰고, 이후 재유입은 pre-commit/CI 가드레일에서 즉시 차단되도록 정리했습니다.
+- 인코딩 가드레일을 강화해 `hooks:validate`가 변경된 tracked/untracked 텍스트 파일의 UTF-8(BOM 없음) 위반을 더 정확히 차단하고, 실패 시 복구 가이드를 함께 출력하도록 보강했습니다(`scripts/ops/validate-text-encoding.js`).
+- pre-commit/CI 모두에서 `hooks:validate`를 명시 실행하도록 연결해(BOM/인코딩/훅 체인) 로컬-원격 검증 일관성을 높였습니다(`.githooks/pre-commit`, `.github/workflows/ci.yml`).
+- `.gitattributes`에 `*.ps1`/`*.cmd`/`*.bat`/`*.env` EOL 정책을 명시해 운영체제별 line ending 드리프트 위험을 줄였습니다.
 - `ai:review:gate`의 Windows 실행 호환성을 보강해 `codex` 실행 탐지가 안정적으로 동작하도록 수정했습니다(`scripts/ops/ai-review-gate.js`).
 - Git 훅 경로 설치 스크립트(`npm run codex:hooks:install`)를 재검증해 `.githooks/pre-commit` 자동 연결 기준을 확인했습니다.
 - Claude skill/agent 문서의 훅 경로와 캐시 경로를 현재 구현(`.mjs`, `.claude/tsc-cache`) 기준으로 정리해 운영 문서 드리프트를 줄였습니다.

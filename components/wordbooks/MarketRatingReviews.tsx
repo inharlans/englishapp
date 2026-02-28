@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { fetchWordbookReviews } from "@/lib/api/wordbook";
 

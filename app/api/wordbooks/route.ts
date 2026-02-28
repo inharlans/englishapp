@@ -1,6 +1,7 @@
-﻿import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-import { getUserFromRequestCookies } from "@/lib/authServer";
+import { requireUserFromRequest } from "@/lib/api/route-helpers";
+import { errorJson } from "@/lib/api/service-response";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
 import { parseJsonWithSchema } from "@/lib/validation";
 import { isBrokenUserText } from "@/lib/textQuality";
@@ -17,12 +18,10 @@ const createWordbookSchema = z.object({
 const wordbookService = new WordbookService();
 
 export async function GET(req: NextRequest) {
-  const user = await getUserFromRequestCookies(req.cookies);
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
-  }
+  const auth = await requireUserFromRequest(req);
+  if (!auth.ok) return auth.response;
 
-  const wordbooks = await wordbookService.listMine(user);
+  const wordbooks = await wordbookService.listMine(auth.user);
   return NextResponse.json({ wordbooks }, { status: 200 });
 }
 
@@ -30,10 +29,8 @@ export async function POST(req: NextRequest) {
   const badReq = assertTrustedMutationRequest(req);
   if (badReq) return badReq;
 
-  const user = await getUserFromRequestCookies(req.cookies);
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
-  }
+  const auth = await requireUserFromRequest(req);
+  if (!auth.ok) return auth.response;
 
   const parsedBody = await parseJsonWithSchema(req, createWordbookSchema);
   if (!parsedBody.ok) return parsedBody.response;
@@ -44,10 +41,14 @@ export async function POST(req: NextRequest) {
   const description = parsedBody.data.description ? parsedBody.data.description.trim() : null;
 
   if (description && isBrokenUserText(description)) {
-    return NextResponse.json({ error: "설명 텍스트가 올바르지 않습니다." }, { status: 400 });
+    return errorJson({
+      status: 400,
+      code: "INVALID_DESCRIPTION_TEXT",
+      message: "설명 텍스트가 올바르지 않습니다."
+    });
   }
 
-  const created = await wordbookService.createMine(user, {
+  const created = await wordbookService.createMine(auth.user, {
     title,
     description,
     fromLang,
@@ -55,7 +56,11 @@ export async function POST(req: NextRequest) {
   });
 
   if (!created.ok) {
-    return NextResponse.json({ error: created.error }, { status: created.status });
+    return errorJson({
+      status: created.status,
+      code: "WORDBOOK_CREATE_FAILED",
+      message: created.error
+    });
   }
 
   return NextResponse.json({ wordbook: created.wordbook }, { status: 201 });

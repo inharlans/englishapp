@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { syncDownloadedWordbook } from "@/lib/api/wordbook";
 import { useRouter } from "next/navigation";

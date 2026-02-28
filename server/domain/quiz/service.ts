@@ -1,4 +1,4 @@
-﻿import { Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 
 import { ensureQuizProgressTable, getQuizProgressByWordId, upsertQuizProgress } from "@/lib/quizProgress";
 import { prisma } from "@/lib/prisma";

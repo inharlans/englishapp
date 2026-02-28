@@ -1,4 +1,4 @@
-﻿import { isPrivateWordbookLockedForFree } from "@/lib/wordbookAccess";
+import { isPrivateWordbookLockedForFree } from "@/lib/wordbookAccess";
 import { shouldHideWordbookFromMarket } from "@/lib/wordbookPolicy";
 import { splitWordbookDescription } from "@/lib/wordbookPresentation";
 import { computeWordbookRankScore } from "@/lib/wordbookRanking";

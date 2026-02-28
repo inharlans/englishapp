@@ -1,4 +1,4 @@
-﻿import type { Route } from "next";
+import type { Route } from "next";
 import { redirect } from "next/navigation";
 
 function parseId(raw: string): number | null {

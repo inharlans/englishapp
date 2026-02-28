@@ -1,5 +1,6 @@
-﻿import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
+import { errorJson } from "@/lib/api/service-response";
 import { getCsrfCookieName, issueCsrfToken } from "@/lib/csrf";
 import { captureAppError, recordApiMetricFromStart } from "@/lib/observability";
 import { toAuthMeResponse } from "@/server/domain/auth/mapper";
@@ -55,6 +56,10 @@ export async function GET(req: NextRequest) {
       status: 500,
       startedAt
     });
-    return NextResponse.json({ error: "Failed to load current user." }, { status: 500 });
+    return errorJson({
+      status: 500,
+      code: "AUTH_ME_FAILED",
+      message: "Failed to load current user."
+    });
   }
 }

@@ -1,4 +1,4 @@
-﻿# Codex Runtime Transition Plan (2026-02-23)
+# Codex Runtime Transition Plan (2026-02-23)
 
 Date: 2026-02-23  
 Project: `englishapp`  

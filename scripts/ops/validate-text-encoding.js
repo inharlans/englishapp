@@ -36,20 +36,39 @@ function listTrackedFiles() {
 }
 
 function listChangedFiles() {
-  const out = spawnSync("git", ["status", "--porcelain"], { cwd: root, encoding: "utf8" });
+  const out = spawnSync("git", ["status", "--porcelain", "-z"], {
+    cwd: root,
+    encoding: "utf8"
+  });
   if (out.status !== 0) {
-    throw new Error(`git status --porcelain failed: ${out.stderr || out.stdout}`);
+    throw new Error(`git status --porcelain -z failed: ${out.stderr || out.stdout}`);
   }
+
   const files = [];
-  for (const rawLine of out.stdout.split(/\r?\n/)) {
-    const line = rawLine.trimEnd();
-    if (!line) continue;
-    const payload = line.slice(3);
-    const renamed = payload.includes(" -> ");
-    const target = renamed ? payload.split(" -> ").at(-1) : payload;
-    if (target) files.push(target.trim());
+  const parts = out.stdout.split("\0").filter(Boolean);
+  for (let i = 0; i < parts.length; i += 1) {
+    const entry = parts[i];
+    if (entry.length < 4) continue;
+    const status = entry.slice(0, 2);
+    const file = entry.slice(3);
+
+    if (status[0] === "R" || status[1] === "R") {
+      const renamedTo = parts[i + 1];
+      if (renamedTo) {
+        files.push(renamedTo);
+        i += 1;
+      }
+      continue;
+    }
+
+    if (file) files.push(file);
   }
+
   return files;
+}
+
+function quotePathForShell(relPath) {
+  return `"${relPath.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
 }
 
 function isTextTarget(relPath) {
@@ -99,15 +118,22 @@ function validateFile(relPath) {
 }
 
 function main() {
+  const validateAll = process.argv.includes("--all") || process.env.TEXT_ENCODING_VALIDATE_ALL === "1";
   const changed = new Set(listChangedFiles());
   const tracked = listTrackedFiles();
-  for (const file of tracked) {
-    if (changed.has(file)) continue;
-  }
 
   const candidates = new Set();
-  for (const file of tracked) {
-    if (changed.has(file)) candidates.add(file);
+  if (validateAll) {
+    for (const file of tracked) candidates.add(file);
+  } else {
+    for (const file of tracked) {
+      if (changed.has(file)) candidates.add(file);
+    }
+    for (const file of changed) {
+      if (fs.existsSync(path.join(root, file))) {
+        candidates.add(file);
+      }
+    }
   }
   if (fs.existsSync(path.join(root, ".env"))) candidates.add(".env");
 
@@ -122,6 +148,21 @@ function main() {
   if (failures.length > 0) {
     console.error("text-encoding-validation: FAIL");
     for (const fail of failures) console.error(`- ${fail}`);
+    console.error("");
+    console.error("How to fix:");
+    console.error("1) Re-save the file as UTF-8 without BOM.");
+    console.error("2) Ensure the file is plain text (no UTF-16/NUL bytes).");
+    console.error("3) Re-run: npm run hooks:validate");
+    console.error("");
+    const failedPaths = failures
+      .map((line) => line.split(": ").at(-1) || "")
+      .filter(Boolean);
+    if (failedPaths.length > 0) {
+      console.error("Quick verify commands:");
+      const joined = failedPaths.map(quotePathForShell).join(" ");
+      console.error(`- PowerShell: Get-Content -Encoding Byte ${joined} | Out-Null`);
+      console.error(`- Node: npm run encoding:validate`);
+    }
     process.exit(1);
   }
 

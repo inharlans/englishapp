@@ -1,19 +1,20 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import { cookies } from "next/headers";
 
 import { getUserFromRequestCookies } from "@/lib/authServer";
-import { prisma } from "@/lib/prisma";
-import { LastResult } from "@prisma/client";
 import { StarRating } from "@/components/wordbooks/StarRating";
 import { OfflineSaveButton } from "@/components/wordbooks/OfflineSaveButton";
 import { SyncDownloadButton } from "@/components/wordbooks/SyncDownloadButton";
 import { PostDownloadOnboardingBanner } from "@/components/wordbooks/PostDownloadOnboardingBanner";
 import { LearningDashboardHeader } from "@/components/wordbooks/LearningDashboardHeader";
-import { FREE_DOWNLOAD_WORD_LIMIT, getUserDownloadedWordCount } from "@/lib/planLimits";
+import { FREE_DOWNLOAD_WORD_LIMIT } from "@/lib/planLimits";
 import { aggregateVersionLogs } from "@/lib/wordbookVersion";
 import { EmptyStateCard } from "@/components/ui/EmptyStateCard";
 import { splitWordbookDescription } from "@/lib/wordbookPresentation";
 import { maskEmailAddress } from "@/lib/textQuality";
+import { WordbookPageQueryService } from "@/server/domain/wordbook/page-query-service";
+
+const wordbookPageQueryService = new WordbookPageQueryService();
 
 function formatDateKst(date: Date): string {
   return new Intl.DateTimeFormat("ko-KR", {
@@ -39,85 +40,14 @@ export default async function WordbooksPage() {
     );
   }
 
-  const now = new Date();
-  const dayStart = new Date(now);
-  dayStart.setHours(0, 0, 0, 0);
-  const dayEnd = new Date(dayStart);
-  dayEnd.setDate(dayEnd.getDate() + 1);
-
-  const [mine, downloaded, downloadedWordCount, todayCorrect] = await Promise.all([
-    prisma.wordbook.findMany({
-      where: { ownerId: user.id },
-      orderBy: { updatedAt: "desc" },
-      select: {
-        id: true,
-        title: true,
-        description: true,
-        isPublic: true,
-        downloadCount: true,
-        ratingAvg: true,
-        ratingCount: true,
-        updatedAt: true,
-        _count: { select: { items: true } }
-      }
-    }),
-    prisma.wordbookDownload.findMany({
-      where: { userId: user.id },
-      orderBy: { createdAt: "desc" },
-      select: {
-        createdAt: true,
-        downloadedVersion: true,
-        snapshotItemCount: true,
-        syncedAt: true,
-        wordbook: {
-          select: {
-            id: true,
-            title: true,
-            description: true,
-            isPublic: true,
-            downloadCount: true,
-            ratingAvg: true,
-            ratingCount: true,
-            contentVersion: true,
-            owner: { select: { email: true } },
-            updatedAt: true,
-            _count: { select: { items: true } }
-          }
-        }
-      }
-    }),
-    getUserDownloadedWordCount(user.id),
-    prisma.wordbookStudyItemState.count({
-      where: {
-        userId: user.id,
-        lastResult: LastResult.CORRECT,
-        updatedAt: {
-          gte: dayStart,
-          lt: dayEnd
-        }
-      }
-    })
-  ]);
-
-  const downloadedWordbookIds = downloaded.map((d) => d.wordbook.id);
-  const minVersions = new Map<number, number>();
-  for (const d of downloaded) {
-    const prev = minVersions.get(d.wordbook.id);
-    if (prev === undefined || d.downloadedVersion < prev) {
-      minVersions.set(d.wordbook.id, d.downloadedVersion);
-    }
-  }
-
-  const logs = downloadedWordbookIds.length
-    ? await prisma.wordbookVersionLog.findMany({
-        where: {
-          wordbookId: { in: downloadedWordbookIds },
-          version: { gt: Math.min(...Array.from(minVersions.values())) }
-        },
-        select: { wordbookId: true, version: true, addedCount: true, updatedCount: true, deletedCount: true }
-      })
-    : [];
-
+  const {
+    mine,
+    downloaded,
+    downloadedWordCount,
+    todayCorrect,
+    downloadedWordbookIds,
+    logs
+  } = await wordbookPageQueryService.getLibraryPageData(user.id);
   const downloadedVersionByWordbook = new Map<number, number>();
   for (const d of downloaded) {
     downloadedVersionByWordbook.set(d.wordbook.id, d.downloadedVersion);
@@ -441,4 +371,3 @@ export default async function WordbooksPage() {
     </section>
   );
 }
-

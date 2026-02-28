@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { fetchWordbookQuizQuestion, submitWordbookQuizAnswer, type QuizItem, type QuizMode } from "@/lib/api/quiz";
 

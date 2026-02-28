@@ -1,4 +1,4 @@
-﻿# Folder Structure Refactor Checklist (Session Handoff Ready)
+# Folder Structure Refactor Checklist (Session Handoff Ready)
 
 Date: 2026-02-22
 

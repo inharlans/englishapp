@@ -1,4 +1,4 @@
-﻿# TASK: Wordbook Create UX (Paste/Upload/Manual + Preview/Validation)  FINAL
+# TASK: Wordbook Create UX (Paste/Upload/Manual + Preview/Validation)  FINAL
 
 ## DO NOT
 - Do not change overall layout/frames.

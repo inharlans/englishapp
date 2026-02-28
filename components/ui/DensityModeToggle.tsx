@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import type { DensityMode } from "@/components/ui/useDensityMode";
 

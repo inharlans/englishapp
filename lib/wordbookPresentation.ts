@@ -1,4 +1,4 @@
-﻿import { isBrokenUserText } from "@/lib/textQuality";
+import { isBrokenUserText } from "@/lib/textQuality";
 
 export function splitWordbookDescription(raw: string | null | undefined): {
   displayDescription: string | null;

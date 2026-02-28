@@ -49,18 +49,18 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `f2efc2f93240`
-- HEAD: `00362a9` Raise nightly cycle default with safety caps
+- Source hash: `7d97f2139765`
+- HEAD: `86c9231` Stabilize workflow checks and switch DevTools MCP to Edge CDP
 
 ### Scope Digests
-- api-routes: 61 files, `68f26bf43f5f`
-- api-helpers: 17 files, `fb3db92838d7`
-- domain-services: 29 files, `faacb1d03759`
-- automation-policy: 90 files, `e8e41088e84b`
-- tracking-docs: 10 files, `b62fc7f7f2c1`
+- api-routes: 61 files, `720005b3b391`
+- api-helpers: 17 files, `9bd3ce5c793e`
+- domain-services: 36 files, `d764ab4ae739`
+- automation-policy: 90 files, `c16f882c1d80`
+- tracking-docs: 10 files, `0efa64f982d9`
 
 ### Legacy Route Migration Status
-- base: `app/api/`, total: 53, migrated: 39, remaining: 14
+- base: `app/api/`, total: 53, migrated: 43, remaining: 10
 - remaining files:
   - `app/api/auth/google/callback/route.ts`
   - `app/api/auth/google/route.ts`
@@ -69,13 +69,9 @@
   - `app/api/auth/local-debug-login/route.ts`
   - `app/api/auth/naver/callback/route.ts`
   - `app/api/auth/naver/route.ts`
-  - `app/api/blocked-owners/route.ts`
   - `app/api/internal/e2e/login/route.ts`
   - `app/api/translate/route.ts`
-  - `app/api/users/me/daily-goal/route.ts`
   - `app/api/wordbooks/downloaded/route.ts`
-  - `app/api/words/import/route.ts`
-  - `app/api/words/route.ts`
 
 ### Relevant Paths
 - Root / ops context

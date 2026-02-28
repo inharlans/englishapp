@@ -1,4 +1,4 @@
-﻿param(
+param(
   [ValidateSet("smoke", "ui", "all")]
   [string]$Suite = "all",
   [string]$BindHost = "127.0.0.1",

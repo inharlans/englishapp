@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { importWordbookItems } from "@/lib/api/wordbook";
 

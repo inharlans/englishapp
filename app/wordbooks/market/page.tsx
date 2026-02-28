@@ -5,14 +5,16 @@ import { DownloadButton } from "@/components/wordbooks/DownloadButton";
 import { MarketRatingReviews } from "@/components/wordbooks/MarketRatingReviews";
 import { EmptyStateCard } from "@/components/ui/EmptyStateCard";
 import { getUserFromRequestCookies } from "@/lib/authServer";
-import { FREE_DOWNLOAD_WORD_LIMIT, getUserDownloadedWordCount } from "@/lib/planLimits";
-import { prisma } from "@/lib/prisma";
-import { MARKET_MIN_ITEM_COUNT, shouldHideWordbookFromMarket } from "@/lib/wordbookPolicy";
+import { FREE_DOWNLOAD_WORD_LIMIT } from "@/lib/planLimits";
+import { MARKET_MIN_ITEM_COUNT } from "@/lib/wordbookPolicy";
 import { maskEmailAddress } from "@/lib/textQuality";
 import { deriveWordbookBadges, splitWordbookDescription } from "@/lib/wordbookPresentation";
+import { WordbookPageQueryService } from "@/server/domain/wordbook/page-query-service";
 
 type SortMode = "top" | "new" | "downloads";
 type SizeMode = "all" | "100-300" | "301-700" | "701+";
+
+const wordbookPageQueryService = new WordbookPageQueryService();
 
 function parseSort(raw: string | undefined): SortMode {
   if (raw === "new" || raw === "downloads" || raw === "top") return raw;
@@ -22,13 +24,6 @@ function parseSort(raw: string | undefined): SortMode {
 function parseSize(raw: string | undefined): SizeMode {
   if (raw === "100-300" || raw === "301-700" || raw === "701+" || raw === "all") return raw;
   return "all";
-}
-
-function matchesSize(itemCount: number, size: SizeMode): boolean {
-  if (size === "100-300") return itemCount >= 100 && itemCount <= 300;
-  if (size === "301-700") return itemCount >= 301 && itemCount <= 700;
-  if (size === "701+") return itemCount >= 701;
-  return true;
 }
 
 export default async function MarketPage(props: {
@@ -44,98 +39,15 @@ export default async function MarketPage(props: {
   const requestedPage = Math.max(Number(sp.page ?? "0") || 0, 0);
   const take = 30;
 
-  const blockedOwnerIds = user
-    ? (
-        await prisma.blockedOwner.findMany({
-          where: { userId: user.id },
-          select: { ownerId: true }
-        })
-      ).map((b) => b.ownerId)
-    : [];
-
-  const where = {
-    isPublic: true,
-    hiddenByAdmin: false,
-    ...(blockedOwnerIds.length > 0 ? { ownerId: { notIn: blockedOwnerIds } } : {}),
-    ...(q
-      ? {
-          OR: [
-            { title: { contains: q, mode: "insensitive" as const } },
-            { description: { contains: q, mode: "insensitive" as const } },
-            { owner: { email: { contains: q, mode: "insensitive" as const } } }
-          ]
-        }
-      : {})
-  };
-
-  const orderBy =
-    sort === "new"
-      ? [{ createdAt: "desc" as const }]
-      : sort === "downloads"
-        ? [{ downloadCount: "desc" as const }, { ratingAvg: "desc" as const }]
-        : [{ rankScore: "desc" as const }, { createdAt: "desc" as const }];
-
-  const candidates = await prisma.wordbook.findMany({
-    where,
-    orderBy,
-    select: {
-      id: true,
-      title: true,
-      description: true,
-      owner: { select: { email: true } },
-      _count: { select: { items: true } }
-    }
-  });
-  const eligibleIds = candidates
-    .filter(
-      (wb) =>
-        matchesSize(wb._count.items, size) &&
-        !shouldHideWordbookFromMarket({
-          title: wb.title,
-          description: wb.description,
-          ownerEmail: wb.owner.email,
-          itemCount: wb._count.items
-        })
-    )
-    .map((wb) => wb.id);
-  const total = eligibleIds.length;
-  const maxPage = Math.max(Math.ceil(total / take) - 1, 0);
-  const page = Math.min(requestedPage, maxPage);
-  const pageIds = eligibleIds.slice(page * take, page * take + take);
-
-  const [wordbooksUnordered, myDownloads, myDownloadedWordCount] = await Promise.all([
-    pageIds.length > 0
-      ? prisma.wordbook.findMany({
-          where: { id: { in: pageIds } },
-          select: {
-            id: true,
-            title: true,
-            description: true,
-            fromLang: true,
-            toLang: true,
-            downloadCount: true,
-            ratingAvg: true,
-            ratingCount: true,
-            createdAt: true,
-            owner: { select: { id: true, email: true } },
-            _count: { select: { items: true } }
-          }
-        })
-      : Promise.resolve([]),
-    user
-      ? prisma.wordbookDownload.findMany({
-          where: { userId: user.id },
-          select: { wordbookId: true }
-        })
-      : Promise.resolve([]),
-    user ? getUserDownloadedWordCount(user.id) : Promise.resolve(0)
-  ]);
-  const byId = new Map(wordbooksUnordered.map((wb) => [wb.id, wb] as const));
-  const wordbooks = pageIds
-    .map((id) => byId.get(id))
-    .filter((wb): wb is NonNullable<typeof wb> => wb !== undefined);
-
-  const downloadedIds = new Set(myDownloads.map((d) => d.wordbookId));
+  const { total, maxPage, page, wordbooks, downloadedIds, myDownloadedWordCount } =
+    await wordbookPageQueryService.getMarketPageData({
+      userId: user?.id ?? null,
+      q,
+      sort,
+      size,
+      requestedPage,
+      take
+    });
   const beginnerPicks =
     page === 0
       ? wordbooks
@@ -471,5 +383,3 @@ export default async function MarketPage(props: {
     </section>
   );
 }
-
-

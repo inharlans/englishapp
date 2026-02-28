@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { errorJson } from "@/lib/api/service-response";
 import { checkRateLimit, getClientIpFromHeaders } from "@/lib/rateLimit";
 import { captureAppError, recordApiMetric } from "@/lib/observability";
 import { parseJsonWithSchema } from "@/lib/validation";
@@ -23,10 +24,12 @@ export async function POST(req: NextRequest) {
     windowMs: 60_000
   });
   if (!limit.ok) {
-    const res = NextResponse.json(
-      { error: "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요." },
-      { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } }
-    );
+    const res = errorJson({
+      status: 429,
+      code: "RATE_LIMITED",
+      message: "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.",
+      headers: { "Retry-After": String(limit.retryAfterSeconds) }
+    });
     await recordApiMetric({
       route: "/api/auth/login",
       method: "POST",
@@ -106,10 +109,11 @@ export async function POST(req: NextRequest) {
       stack: error instanceof Error ? error.stack : undefined,
       context: { err: error instanceof Error ? error.message : String(error) }
     });
-    const res = NextResponse.json(
-      { error: error instanceof Error ? error.message : "로그인 처리에 실패했습니다." },
-      { status: 400 }
-    );
+    const res = errorJson({
+      status: 400,
+      code: "AUTH_LOGIN_FAILED",
+      message: error instanceof Error ? error.message : "로그인 처리에 실패했습니다."
+    });
     await recordApiMetric({
       route: "/api/auth/login",
       method: "POST",
