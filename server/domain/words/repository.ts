@@ -1,4 +1,4 @@
-import { LastResult, PrismaClient } from "@prisma/client";
+import { LastResult, Prisma, PrismaClient } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
 
@@ -83,15 +83,23 @@ export class WordsRepository {
     return states.map((state) => state.wordId);
   }
 
-  async listAllWordEn() {
-    return prisma.word.findMany({ select: { en: true } });
+  async listExistingNormalizedEn(normalizedEns: string[]) {
+    if (normalizedEns.length === 0) return [];
+    const rows = await prisma.$queryRaw<Array<{ normalized: string }>>`
+      SELECT DISTINCT lower(trim(regexp_replace(replace(replace(w."en", '-', ' '), '_', ' '), '\\s+', ' ', 'g'))) AS normalized
+      FROM "Word" w
+      WHERE lower(trim(regexp_replace(replace(replace(w."en", '-', ' '), '_', ' '), '\\s+', ' ', 'g'))) IN (${Prisma.join(normalizedEns)})
+    `;
+    return rows.map((row) => row.normalized);
   }
 
-  async createWord(row: { en: string; ko: string }) {
-    return prisma.word.create({
-      data: row,
-      select: { en: true }
+  async createWordsBulk(rows: Array<{ en: string; ko: string }>): Promise<number> {
+    if (rows.length === 0) return 0;
+    const result = await prisma.word.createMany({
+      data: rows,
+      skipDuplicates: true
     });
+    return result.count;
   }
 
   async updateWordKo(id: number, ko: string) {

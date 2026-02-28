@@ -49,15 +49,15 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `7d97f2139765`
-- HEAD: `86c9231` Stabilize workflow checks and switch DevTools MCP to Edge CDP
+- Source hash: `65b321902066`
+- HEAD: `140b93f` Refactor API/page data boundaries and harden encoding guardrails
 
 ### Scope Digests
-- api-routes: 61 files, `720005b3b391`
+- api-routes: 61 files, `0b429171bb8c`
 - api-helpers: 17 files, `9bd3ce5c793e`
-- domain-services: 36 files, `d764ab4ae739`
-- automation-policy: 90 files, `c16f882c1d80`
-- tracking-docs: 10 files, `0efa64f982d9`
+- domain-services: 36 files, `df2dbc3bb95f`
+- automation-policy: 90 files, `2eb6d0ac82ff`
+- tracking-docs: 10 files, `a2b6e16b761a`
 
 ### Legacy Route Migration Status
 - base: `app/api/`, total: 53, migrated: 43, remaining: 10

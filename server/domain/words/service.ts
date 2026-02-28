@@ -8,6 +8,7 @@ import { WordsRepository } from "@/server/domain/words/repository";
 import { LastResult } from "@prisma/client";
 
 const DEFAULT_BATCH = 1;
+const IMPORT_CHUNK_SIZE = 500;
 
 function parseMode(rawMode: string | null): ApiMode {
   const mode = rawMode ?? "memorize";
@@ -235,19 +236,40 @@ export class WordsService {
       };
     }
 
-    const existing = await this.repo.listAllWordEn();
-    const existingNormalized = new Set(existing.map((word) => normalizeEn(word.en)));
-
-    let importedCount = 0;
+    const uniqueByNormalized = new Map<string, { en: string; ko: string }>();
     let skippedCount = 0;
     for (const row of parsed.rows) {
-      if (existingNormalized.has(normalizeEn(row.en))) {
+      const normalizedEn = normalizeEn(row.en);
+      if (uniqueByNormalized.has(normalizedEn)) {
         skippedCount += 1;
         continue;
       }
-      const created = await this.repo.createWord({ en: row.en, ko: row.ko });
-      existingNormalized.add(normalizeEn(created.en));
-      importedCount += 1;
+      uniqueByNormalized.set(normalizedEn, { en: row.en, ko: row.ko });
+    }
+
+    const normalizedCandidates = Array.from(uniqueByNormalized.keys());
+    const existingNormalized = new Set<string>();
+    for (let i = 0; i < normalizedCandidates.length; i += IMPORT_CHUNK_SIZE) {
+      const chunk = normalizedCandidates.slice(i, i + IMPORT_CHUNK_SIZE);
+      const existingChunk = await this.repo.listExistingNormalizedEn(chunk);
+      for (const normalizedEn of existingChunk) existingNormalized.add(normalizedEn);
+    }
+
+    const createRows: Array<{ en: string; ko: string }> = [];
+    for (const [normalizedEn, row] of uniqueByNormalized.entries()) {
+      if (existingNormalized.has(normalizedEn)) {
+        skippedCount += 1;
+        continue;
+      }
+      createRows.push(row);
+    }
+
+    let importedCount = 0;
+    for (let i = 0; i < createRows.length; i += IMPORT_CHUNK_SIZE) {
+      const chunk = createRows.slice(i, i + IMPORT_CHUNK_SIZE);
+      const createdCount = await this.repo.createWordsBulk(chunk);
+      importedCount += createdCount;
+      skippedCount += chunk.length - createdCount;
     }
 
     return { importedCount, skippedCount, delimiter: parsed.delimiter };

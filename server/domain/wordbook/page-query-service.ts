@@ -164,8 +164,6 @@ export class WordbookPageQueryService {
           matchesSize(wordbook._count.items, input.size) &&
           !shouldHideWordbookFromMarket({
             title: wordbook.title,
-            description: wordbook.description,
-            ownerEmail: wordbook.owner.email,
             itemCount: wordbook._count.items
           })
       )

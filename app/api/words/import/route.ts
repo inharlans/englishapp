@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { errorJson } from "@/lib/api/service-response";
+import {
+  LEGACY_ROUTE_POLICIES,
+  recordLegacyRouteAccess,
+  withLegacyDeprecationHeaders
+} from "@/lib/legacy-compat";
 import { checkRateLimit, getClientIpFromHeaders } from "@/lib/rateLimit";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
 import { parseJsonWithSchema } from "@/lib/validation";
@@ -12,10 +17,19 @@ const importRequestSchema = z.object({
 });
 
 const wordsService = new WordsService();
+const legacyPolicy = LEGACY_ROUTE_POLICIES.apiWordsImport;
 
 export async function POST(req: NextRequest) {
+  recordLegacyRouteAccess({
+    policy: legacyPolicy,
+    method: req.method,
+    requestPath: new URL(req.url).pathname
+  });
+
   const badReq = assertTrustedMutationRequest(req);
-  if (badReq) return badReq;
+  if (badReq) {
+    return withLegacyDeprecationHeaders(badReq, legacyPolicy);
+  }
 
   const ip = getClientIpFromHeaders(req.headers);
   const limit = await checkRateLimit({
@@ -24,24 +38,30 @@ export async function POST(req: NextRequest) {
     windowMs: 60_000
   });
   if (!limit.ok) {
-    return errorJson({
-      status: 429,
-      code: "RATE_LIMITED",
-      message: "Too many requests.",
-      headers: { "Retry-After": String(limit.retryAfterSeconds) }
-    });
+    return withLegacyDeprecationHeaders(
+      errorJson({
+        status: 429,
+        code: "RATE_LIMITED",
+        message: "Too many requests.",
+        headers: { "Retry-After": String(limit.retryAfterSeconds) }
+      }),
+      legacyPolicy
+    );
   }
 
   try {
     const parsedBody = await parseJsonWithSchema(req, importRequestSchema);
-    if (!parsedBody.ok) return parsedBody.response;
+    if (!parsedBody.ok) return withLegacyDeprecationHeaders(parsedBody.response, legacyPolicy);
     const result = await wordsService.importWords(parsedBody.data.rawText);
-    return NextResponse.json(result);
+    return withLegacyDeprecationHeaders(NextResponse.json(result), legacyPolicy);
   } catch (error) {
-    return errorJson({
-      status: 400,
-      code: "WORDS_IMPORT_FAILED",
-      message: error instanceof Error ? error.message : "Unexpected error during word import."
-    });
+    return withLegacyDeprecationHeaders(
+      errorJson({
+        status: 400,
+        code: "WORDS_IMPORT_FAILED",
+        message: error instanceof Error ? error.message : "Unexpected error during word import."
+      }),
+      legacyPolicy
+    );
   }
 }

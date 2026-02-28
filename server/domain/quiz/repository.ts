@@ -23,6 +23,25 @@ export class QuizRepository {
     partEndExclusive: number;
     filterSql: Prisma.Sql;
   }): Promise<QuizItemRow | null> {
+    const countRows = await prisma.$queryRaw<Array<{ count: number }>>(
+      Prisma.sql`
+        SELECT COUNT(*)::int AS count
+        FROM "WordbookItem" wi
+        LEFT JOIN "WordbookStudyItemState" ws
+          ON ws."itemId" = wi."id"
+         AND ws."wordbookId" = wi."wordbookId"
+         AND ws."userId" = ${input.userId}
+        WHERE wi."wordbookId" = ${input.wordbookId}
+          AND wi."position" >= ${input.partStart}
+          AND wi."position" < ${input.partEndExclusive}
+          AND (${input.filterSql})
+      `
+    );
+
+    const count = countRows[0]?.count ?? 0;
+    if (count <= 0) return null;
+
+    const offset = Math.floor(Math.random() * count);
     const rows = await prisma.$queryRaw<QuizItemRow[]>(
       Prisma.sql`
         SELECT
@@ -40,7 +59,8 @@ export class QuizRepository {
           AND wi."position" >= ${input.partStart}
           AND wi."position" < ${input.partEndExclusive}
           AND (${input.filterSql})
-        ORDER BY random()
+        ORDER BY wi."position" ASC, wi."id" ASC
+        OFFSET ${offset}
         LIMIT 1
       `
     );

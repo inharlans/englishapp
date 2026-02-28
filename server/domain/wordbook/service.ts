@@ -1,5 +1,4 @@
 import { isPrivateWordbookLockedForFree } from "@/lib/wordbookAccess";
-import { shouldHideWordbookFromMarket } from "@/lib/wordbookPolicy";
 import { splitWordbookDescription } from "@/lib/wordbookPresentation";
 import { computeWordbookRankScore } from "@/lib/wordbookRanking";
 import { getEffectivePlan } from "@/lib/userPlan";
@@ -47,33 +46,15 @@ export class WordbookService {
 
   async listMarket(actor: WordbookActor | null, query: Omit<MarketQuery, "blockedOwnerIds">) {
     const blockedOwnerIds = actor ? await this.repo.findBlockedOwnerIds(actor.id) : [];
-    const candidates = await this.repo.findMarketCandidates({ ...query, blockedOwnerIds });
-
-    const eligibleIds = candidates
-      .filter(
-        (wb) =>
-          !shouldHideWordbookFromMarket({
-            title: wb.title,
-            description: wb.description,
-            ownerEmail: wb.owner.email,
-            itemCount: wb._count.items
-          })
-      )
-      .map((wb) => wb.id);
-
-    const total = eligibleIds.length;
-    const pageIds = eligibleIds.slice(query.page * query.take, query.page * query.take + query.take);
-    const unordered = await this.repo.findMarketPageByIds(pageIds);
-    const byId = new Map(unordered.map((wb) => [wb.id, wb] as const));
-    const wordbooks = pageIds.map((id) => byId.get(id)).filter((v): v is NonNullable<typeof v> => v !== undefined);
+    const pageResult = await this.repo.findMarketPage({ ...query, blockedOwnerIds });
 
     return {
-      total,
+      total: pageResult.total,
       page: query.page,
       take: query.take,
       sort: query.sort,
       q: query.q,
-      wordbooks: wordbooks.map((wb) => {
+      wordbooks: pageResult.wordbooks.map((wb) => {
         const desc = splitWordbookDescription(wb.description);
         return { ...wb, displayDescription: desc.displayDescription, internalSource: desc.internalSource };
       })

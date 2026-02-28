@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { getUserFromRequestCookies } from "@/lib/authServer";
+import {
+  LEGACY_ROUTE_POLICIES,
+  recordLegacyRouteAccess,
+  withLegacyDeprecationHeaders
+} from "@/lib/legacy-compat";
 import { checkRateLimit, getClientIpFromHeaders } from "@/lib/rateLimit";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
 import { parseJsonWithSchema, zPositiveInt } from "@/lib/validation";
@@ -15,10 +20,19 @@ const submitBodySchema = z.object({
 });
 
 const quizService = new QuizService();
+const legacyPolicy = LEGACY_ROUTE_POLICIES.apiQuizSubmit;
 
 export async function POST(req: NextRequest) {
+  recordLegacyRouteAccess({
+    policy: legacyPolicy,
+    method: req.method,
+    requestPath: new URL(req.url).pathname
+  });
+
   const badReq = assertTrustedMutationRequest(req);
-  if (badReq) return badReq;
+  if (badReq) {
+    return withLegacyDeprecationHeaders(badReq, legacyPolicy);
+  }
 
   const ip = getClientIpFromHeaders(req.headers);
   const limit = await checkRateLimit({
@@ -27,20 +41,25 @@ export async function POST(req: NextRequest) {
     windowMs: 60_000
   });
   if (!limit.ok) {
-    return NextResponse.json(
-      { error: "Too many requests." },
-      { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } }
+    return withLegacyDeprecationHeaders(
+      NextResponse.json(
+        { error: "Too many requests." },
+        { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } }
+      ),
+      legacyPolicy
     );
   }
 
   try {
     const user = await getUserFromRequestCookies(req.cookies);
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+      return withLegacyDeprecationHeaders(
+        NextResponse.json({ error: "Unauthorized." }, { status: 401 }),
+        legacyPolicy
+      );
     }
-
     const parsedBody = await parseJsonWithSchema(req, submitBodySchema);
-    if (!parsedBody.ok) return parsedBody.response;
+    if (!parsedBody.ok) return withLegacyDeprecationHeaders(parsedBody.response, legacyPolicy);
 
     const result = await quizService.submitLegacyQuizAnswer(user, {
       wordId: parsedBody.data.wordId,
@@ -50,16 +69,22 @@ export async function POST(req: NextRequest) {
     });
 
     if (!result.ok) {
-      return NextResponse.json({ error: result.error }, { status: result.status });
+      return withLegacyDeprecationHeaders(
+        NextResponse.json({ error: result.error }, { status: result.status }),
+        legacyPolicy
+      );
     }
 
-    return NextResponse.json(result.payload, { status: 200 });
+    return withLegacyDeprecationHeaders(NextResponse.json(result.payload, { status: 200 }), legacyPolicy);
   } catch (error) {
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Unexpected error during quiz submission."
-      },
-      { status: 400 }
+    return withLegacyDeprecationHeaders(
+      NextResponse.json(
+        {
+          error: error instanceof Error ? error.message : "Unexpected error during quiz submission."
+        },
+        { status: 400 }
+      ),
+      legacyPolicy
     );
   }
 }

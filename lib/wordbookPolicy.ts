@@ -1,6 +1,6 @@
 export const MARKET_MIN_ITEM_COUNT = 100;
 
-const MARKET_BLOCK_KEYWORDS_IN_TITLE = [
+export const MARKET_BLOCK_KEYWORDS_IN_TITLE = [
   "e2e",
   "smoke",
   "fixture",
@@ -12,8 +12,6 @@ const MARKET_BLOCK_KEYWORDS_IN_TITLE = [
 
 export function shouldHideWordbookFromMarket(input: {
   title: string;
-  description: string | null;
-  ownerEmail: string;
   itemCount: number;
 }): boolean {
   if (input.itemCount < MARKET_MIN_ITEM_COUNT) return true;

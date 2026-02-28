@@ -1,4 +1,7 @@
+import { Prisma } from "@prisma/client";
+
 import { prisma } from "@/lib/prisma";
+import { MARKET_BLOCK_KEYWORDS_IN_TITLE, MARKET_MIN_ITEM_COUNT } from "@/lib/wordbookPolicy";
 import { bumpWordbookVersion } from "@/lib/wordbookVersion";
 import type {
   CreateWordbookInput,
@@ -199,59 +202,6 @@ export class WordbookRepository {
     return rows.map((v) => v.ownerId);
   }
 
-  async findMarketCandidates(query: MarketQuery) {
-    return prisma.wordbook.findMany({
-      where: {
-        isPublic: true,
-        hiddenByAdmin: false,
-        ...(query.blockedOwnerIds.length > 0 ? { ownerId: { notIn: query.blockedOwnerIds } } : {}),
-        ...(query.q
-          ? {
-              OR: [
-                { title: { contains: query.q, mode: "insensitive" as const } },
-                { description: { contains: query.q, mode: "insensitive" as const } }
-              ]
-            }
-          : {})
-      },
-      orderBy:
-        query.sort === "new"
-          ? [{ createdAt: "desc" as const }]
-          : query.sort === "downloads"
-            ? [{ downloadCount: "desc" as const }, { ratingAvg: "desc" as const }]
-            : [{ rankScore: "desc" as const }, { createdAt: "desc" as const }],
-      select: {
-        id: true,
-        title: true,
-        description: true,
-        owner: { select: { email: true } },
-        _count: { select: { items: true } }
-      }
-    });
-  }
-
-  async findMarketPageByIds(ids: number[]) {
-    if (ids.length === 0) return [];
-    return prisma.wordbook.findMany({
-      where: { id: { in: ids } },
-      select: {
-        id: true,
-        title: true,
-        description: true,
-        fromLang: true,
-        toLang: true,
-        isPublic: true,
-        downloadCount: true,
-        ratingAvg: true,
-        ratingCount: true,
-        createdAt: true,
-        updatedAt: true,
-        owner: { select: { id: true, email: true } },
-        _count: { select: { items: true } }
-      }
-    });
-  }
-
   async listReviews(wordbookId: number, take: number) {
     return prisma.wordbookRating.findMany({
       where: {
@@ -303,6 +253,137 @@ export class WordbookRepository {
       data: params,
       select: { id: true, status: true, createdAt: true }
     });
+  }
+
+  async findMarketPage(query: MarketQuery): Promise<{
+    total: number;
+    wordbooks: Array<{
+      id: number;
+      title: string;
+      description: string | null;
+      fromLang: string;
+      toLang: string;
+      isPublic: boolean;
+      downloadCount: number;
+      ratingAvg: number;
+      ratingCount: number;
+      createdAt: Date;
+      updatedAt: Date;
+      owner: { id: number; email: string };
+      _count: { items: number };
+    }>;
+  }> {
+    const offset = query.page * query.take;
+    const search = query.q.trim();
+
+    const blockedSql =
+      query.blockedOwnerIds.length > 0
+        ? Prisma.sql`AND wb."ownerId" NOT IN (${Prisma.join(query.blockedOwnerIds)})`
+        : Prisma.empty;
+
+    const searchSql =
+      search.length > 0
+        ? Prisma.sql`AND (wb."title" ILIKE ${`%${search}%`} OR coalesce(wb."description", '') ILIKE ${`%${search}%`})`
+        : Prisma.empty;
+
+    const blockedTitleClauses = MARKET_BLOCK_KEYWORDS_IN_TITLE.map(
+      (kw) => Prisma.sql`lower(wb."title") LIKE ${`%${kw}%`}`
+    );
+    const blockedTitleSql =
+      blockedTitleClauses.length > 0 ? Prisma.join(blockedTitleClauses, " OR ") : Prisma.sql`FALSE`;
+
+    const orderBySql =
+      query.sort === "new"
+        ? Prisma.sql`wb."createdAt" DESC`
+        : query.sort === "downloads"
+          ? Prisma.sql`wb."downloadCount" DESC, wb."ratingAvg" DESC`
+          : Prisma.sql`wb."rankScore" DESC, wb."createdAt" DESC`;
+
+    const countRows = await prisma.$queryRaw<Array<{ total: number }>>(Prisma.sql`
+      SELECT COUNT(*)::int AS total
+      FROM "Wordbook" wb
+      JOIN LATERAL (
+        SELECT COUNT(*)::int AS item_count
+        FROM "WordbookItem" wi
+        WHERE wi."wordbookId" = wb."id"
+      ) item_counter ON true
+      WHERE wb."isPublic" = true
+        AND wb."hiddenByAdmin" = false
+        AND item_counter.item_count >= ${MARKET_MIN_ITEM_COUNT}
+        ${searchSql}
+        ${blockedSql}
+        AND NOT (${blockedTitleSql})
+    `);
+
+    const rows = await prisma.$queryRaw<
+      Array<{
+        id: number;
+        title: string;
+        description: string | null;
+        fromLang: string;
+        toLang: string;
+        isPublic: boolean;
+        downloadCount: number;
+        ratingAvg: number;
+        ratingCount: number;
+        createdAt: Date;
+        updatedAt: Date;
+        ownerId: number;
+        ownerEmail: string;
+        itemCount: number;
+      }>
+    >(Prisma.sql`
+      SELECT
+        wb."id" AS id,
+        wb."title" AS title,
+        wb."description" AS description,
+        wb."fromLang" AS "fromLang",
+        wb."toLang" AS "toLang",
+        wb."isPublic" AS "isPublic",
+        wb."downloadCount" AS "downloadCount",
+        wb."ratingAvg" AS "ratingAvg",
+        wb."ratingCount" AS "ratingCount",
+        wb."createdAt" AS "createdAt",
+        wb."updatedAt" AS "updatedAt",
+        u."id" AS "ownerId",
+        u."email" AS "ownerEmail",
+        item_counter.item_count AS "itemCount"
+      FROM "Wordbook" wb
+      JOIN "User" u ON u."id" = wb."ownerId"
+      JOIN LATERAL (
+        SELECT COUNT(*)::int AS item_count
+        FROM "WordbookItem" wi
+        WHERE wi."wordbookId" = wb."id"
+      ) item_counter ON true
+      WHERE wb."isPublic" = true
+        AND wb."hiddenByAdmin" = false
+        AND item_counter.item_count >= ${MARKET_MIN_ITEM_COUNT}
+        ${searchSql}
+        ${blockedSql}
+        AND NOT (${blockedTitleSql})
+      ORDER BY ${orderBySql}
+      OFFSET ${offset}
+      LIMIT ${query.take}
+    `);
+
+    return {
+      total: countRows[0]?.total ?? 0,
+      wordbooks: rows.map((row) => ({
+        id: row.id,
+        title: row.title,
+        description: row.description,
+        fromLang: row.fromLang,
+        toLang: row.toLang,
+        isPublic: row.isPublic,
+        downloadCount: row.downloadCount,
+        ratingAvg: row.ratingAvg,
+        ratingCount: row.ratingCount,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+        owner: { id: row.ownerId, email: row.ownerEmail },
+        _count: { items: row.itemCount }
+      }))
+    };
   }
 
   async upsertBlockedOwner(userId: number, ownerId: number): Promise<void> {

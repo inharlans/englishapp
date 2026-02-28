@@ -3,6 +3,13 @@
 ## 최근 업데이트 (2026-02-28)
 
 - 인증/운영 API 응답 표준화를 위해 공통 에러 응답 헬퍼를 추가하고(`lib/api/service-response.ts`), `code/message/error`를 함께 반환하도록 정리해 클라이언트 분기 안정성을 높였습니다.
+- 레거시 경로 격리/폐기 정책을 문서화하고(`docs/legacy-route-deprecation-policy-2026-03-01.md`), 정책 요약 페이지(`/legacy-policy`)를 추가해 대체 경로/유지기간/제거 예정일을 단일 기준으로 관리하도록 정리했습니다.
+- 레거시 API(`api/quiz/submit`, `api/words*`)에 `Deprecation`/`Sunset`/`X-Legacy-*` 헤더를 부여하고 JSON 로그 이벤트(`legacy_route_access`)를 남겨 폐기 전 호출량 관측을 가능하게 했습니다.
+- 레거시 페이지(`quiz-word`, `quiz-meaning`, `list-correct`, `list-wrong`, `list-half`)는 `redirect("/wordbooks")` 기반의 307 리다이렉트 경로로 유지하고, API 레거시 경로 호출량은 `legacy_route_access` 이벤트로 추적하도록 정리했습니다.
+- PR-5 성능 최적화 1차로 단어 import를 chunk 기반 dedupe/bulk insert로 전환해 대량 입력 처리 병목을 줄였습니다(`server/domain/words/service.ts`, `server/domain/words/repository.ts`).
+- 퀴즈 문항 랜덤 선택은 `ORDER BY random()` 대신 `count + offset` 방식으로 변경해(part 범위 최대 200 기준) 대형 단어장에서도 랜덤 조회 비용을 안정화했습니다(`server/domain/quiz/repository.ts`).
+- 마켓 조회는 정책 필터를 DB 조회 단계로 내려 total/page 조회를 직접 계산하도록 재구성해 라우트 계층의 후보 전량 로딩/재조회 비용을 줄였습니다(`server/domain/wordbook/service.ts`, `server/domain/wordbook/repository.ts`).
+- 리팩터링 플레이북에 PR/커밋 추적 규칙, BOM 0건 재현 명령, compact-context 트리거 대응, 계층 경계/에러코드 규칙, 인코딩 full-scan 운영 정책을 고정했습니다(`docs/refactor-execution-playbook-2026-03-01.md`).
 - 인증 라우트(`auth/bootstrap|login|logout|me`)의 주요 실패 응답에 고정 에러 코드(`RATE_LIMITED`, `BOOTSTRAP_*`, `AUTH_*`)를 부여했습니다.
 - `blocked-owners`/`wordbooks` 라우트 인증 분기를 `requireUserFromRequest` 기반으로 통일해 인증 보일러플레이트를 줄였습니다.
 - `users/me/daily-goal`, `blocked-owners`, `words`, `words/[id]`, `words/import` 라우트의 직접 Prisma 접근을 도메인 서비스(`server/domain/user/*`, `server/domain/words/*`) 경유로 이관해 라우트 계층 책임을 축소했습니다.

@@ -164,7 +164,7 @@
 **정책표 필수 항목**
 - 대상 경로
 - 대체 경로
-- 처리 방식 (`200 + deprecation`, `301`, `302`)
+- 처리 방식 (`200 + deprecation`, `301`, `307`)
 - 유지 기간
 - 제거 예정일
 - fallback 문서 URL
@@ -188,17 +188,43 @@
 **공통 원칙**
 - 구현 전 KPI 정의, 구현 후 동일 조건으로 측정
 - SQL/로직 변경 전 golden test 먼저 작성
+- 측정은 `production build + start` 모드에서만 수행 (`npm run build && npm run start`)
+- 측정은 single-request serial mode, `concurrency=1` 기준으로 수행
+- 측정 로그에 `node -v`, DB URL 파라미터(`connection_limit`, `pgbouncer`), 마이그레이션 상태를 함께 기록
+- p95 계산은 샘플 N=20 기준 정렬 후 `ceil(0.95*N)`번째 값(19번째)을 사용
+
+**실행 순서(고정)**
+1. P2-3 단어 import
+2. P2-2 퀴즈 랜덤 선택
+3. P2-1 마켓 조회
+
+**리버트 트리거**
+- KPI 미달
+- `EXPLAIN (ANALYZE)` 상 rows scanned 급증/풀스캔 유입
+- 변경 복잡도 급증으로 유지보수 리스크가 높아진 경우
 
 #### P2-1 마켓 조회
-- KPI 예시: p95 `<= 300ms`
+- KPI: p95 `<= 300ms`
+- KPI: DB query count `<= 2`
+- KPI: rows scanned 상한 (`q` 없음 `<= 1200`, `q` 있음 `<= 5000`)
 - 대상: `server/domain/wordbook/service.ts`, `server/domain/wordbook/repository.ts`
 
+**설계 원칙**
+- 정책 필터는 DB로 내릴 수 있는 항목부터 우선 이관
+- `total`은 UX 요구가 페이지 유무 중심이면 `hasNextPage` 전환을 우선 검토
+- 정확 `total`은 필요한 화면(예: admin/백오피스)에서만 유지
+
 #### P2-2 퀴즈 랜덤 선택
-- KPI 예시: p95 `<= 200ms`
+- KPI: p95 `<= 200ms`
+- 랜덤성 KPI: 10버킷 분포 기준 `max |p-e| <= 10%` (`10~15% WARN`, `>15% FAIL`)
+- 랜덤성 측정: 1000회 샘플링, 기본 버킷은 id range 10분할
+- 유효성 기준: effective candidate 수가 200 미만이면 WARN-only로 처리
 - 대상: `server/domain/quiz/repository.ts`
 
 #### P2-3 단어 import
-- KPI 예시: 1k rows 처리시간 `50% 이상 개선`
+- KPI: 1k rows 처리시간 `50% 이상 개선`
+- 보조 측정: 5k/10k 입력에서도 처리시간 증가율 추적
+- 무결성 원칙: 중복 기준은 `normalizeEn` 결과(공백/대소문자 정규화)로 고정
 - 대상: `app/api/words/import/route.ts` 또는 도메인 이관 후 `server/domain/words/*`
 
 **완료 기준**
@@ -222,3 +248,35 @@
 - PR 하나에는 한 가지 리스크 축만 넣는다.
 - 대량 변경 PR은 반드시 로직 변경 PR과 분리한다.
 - 롤백 경로(되돌릴 커밋 단위)를 PR 본문에 명시한다.
+
+## 추적성/운영 고정 규칙
+
+### 실행 단위 표기
+- 실행 리포트에는 반드시 `Execution Unit`을 기록한다.
+  - `single-branch/single-PR` 또는 `multi-PR` 중 하나만 선택
+- `multi-PR`인 경우 PR 번호/제목/URL 표를 남긴다.
+- 커밋 해시는 배포/리버트 기준으로 분리 기록한다.
+
+### BOM 0건 재현 근거
+- BOM 0건 검증 명령을 실행 로그에 포함한다.
+  - `node scripts/ops/validate-text-encoding.js --all`
+
+### compact-context 운영 규칙
+- 트리거: `npm run codex:workflow:check`에서 `compact-context-check: FAIL`
+- 조치: `npm run compact:sync` 후 `npm run codex:workflow:check` 재실행
+- CI/로컬 모두 동일 트리거로 처리한다.
+
+### 계층 경계 불변 규칙
+- Route: 파싱/검증/권한 체크 + usecase 호출 + 응답 변환만 수행
+- Service(Use case): 정책/비즈니스 로직 + 트랜잭션 경계 담당
+- Repository: DB 접근/매핑만 담당, 도메인 정책 로직 금지
+
+### Stable Error Code 규칙
+- 형식: 영문 대문자 스네이크 케이스 (`AUTH_UNAUTHORIZED`)
+- 도메인 prefix 사용 (`AUTH_`, `WORDS_`, `PAYMENTS_` 등)
+- `status`는 다대일 허용, `code`는 도메인 내 유니크/안정 필드로 유지
+
+### 인코딩 스캔 정책
+- 로컬 기본: changed-only 검증
+- CI 기본: changed-only + `TEXT_ENCODING_VALIDATE_ALL=1` full scan
+- 레포 규모가 커지면 nightly full scan 분리 정책을 적용한다.
