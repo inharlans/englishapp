@@ -12,7 +12,7 @@
 - postgres(read)는 실행 시 `.env`의 `DATABASE_URL`을 먼저 읽고 없으면 즉시 실패 처리함 (`scripts/ops/start-postgres-mcp.cmd` + `start-postgres-mcp.mjs`)
 - 로컬 우선 원천 설정은 `opencode.json` 기준이며, 토큰은 환경변수로만 주입한다.
 - `DATABASE_URL`이 세션 환경 또는 `.env`에 존재하면 postgres(read)도 동일 플로우에서 연결 검증 가능
-- `sentry`/`context7`는 `.env`/세션 환경값을 읽는 래퍼(`start-sentry-mcp.cmd`, `start-context7-mcp.cmd`)로 실행한다.
+- `github`/`sentry`/`context7`는 `.env`/세션 환경값을 읽는 래퍼(`start-github-mcp.cmd`, `start-sentry-mcp.cmd`, `start-context7-mcp.cmd`)로 실행한다.
 - 특이사항: 실서비스 탐색 중 치명적 콘솔/네트워크 오류(4xx/5xx)는 미탐지, 접근성 경고 1건 확인
 - `실행 환경` 기준: 로그인 페이지 경고는 코드 반영 후에도 운영 페이지에서 동일 경고가 재현되어, 배포 반영/캐시 동기화를 추가 확인 필요
 

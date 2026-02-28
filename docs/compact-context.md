@@ -49,15 +49,15 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `692a3bbd8191`
-- HEAD: `8c22841` add clipper utility regression tests
+- Source hash: `6915e11d1af5`
+- HEAD: `d71bed5` chore: wrap sentry and context7 MCP launchers with env loader
 
 ### Scope Digests
 - api-routes: 61 files, `68f26bf43f5f`
 - api-helpers: 17 files, `fb3db92838d7`
 - domain-services: 29 files, `faacb1d03759`
-- automation-policy: 80 files, `8ba5bed06c2c`
-- tracking-docs: 10 files, `12451ab0a196`
+- automation-policy: 90 files, `5558f75f15c3`
+- tracking-docs: 10 files, `a9ca3ec0a613`
 
 ### Legacy Route Migration Status
 - base: `app/api/`, total: 53, migrated: 39, remaining: 14

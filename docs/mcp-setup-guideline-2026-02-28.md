@@ -27,7 +27,8 @@ opencode mcp list
 ## 2) 로컬에서 CMD/Powershell로 바로 시작하기
 
 - 공통 원칙: `opencode.json`은 로컬 우선값이므로, 프로젝트 루트에서 실행해야 한다.
-- 핵심 포인트: `postgres`/`sentry`/`context7` MCP는 `.env` 또는 세션 env 값을 런타임에 읽는 래퍼로 동작한다.
+- 핵심 포인트: `github`/`postgres`/`sentry`/`context7` MCP는 `.env` 또는 세션 env 값을 런타임에 읽는 래퍼로 동작한다.
+  - `github`: `scripts/ops/start-github-mcp.cmd`
   - `postgres`: `scripts/ops/start-postgres-mcp.cmd`
   - `sentry`: `scripts/ops/start-sentry-mcp.cmd`
   - `context7`: `scripts/ops/start-context7-mcp.cmd`
@@ -38,6 +39,7 @@ opencode mcp list
 Set-Location "C:\dev\englishapp"
 
 # 민감 값은 실제 값으로 치환해서 사용
+# GitHub 토큰은 `GITHUB_TOKEN`, `GITHUB_PAT`, `GH_TOKEN` 중 하나만 설정해도 됩니다.
 $env:GITHUB_TOKEN = "YOUR_GITHUB_TOKEN"
 $env:SENTRY_ACCESS_TOKEN = "YOUR_SENTRY_TOKEN"
 $env:UPSTASH_CONTEXT7_API_KEY = "YOUR_CONTEXT7_API_KEY"
@@ -54,6 +56,7 @@ opencode mcp list --print-logs
 cd /d C:\dev\englishapp
 
 rem 민감 값은 실제 값으로 치환해서 사용
+rem GitHub 토큰은 `GITHUB_TOKEN`, `GITHUB_PAT`, `GH_TOKEN` 중 하나만 설정해도 됩니다.
 set GITHUB_TOKEN=YOUR_GITHUB_TOKEN
 set SENTRY_ACCESS_TOKEN=YOUR_SENTRY_TOKEN
 set UPSTASH_CONTEXT7_API_KEY=YOUR_CONTEXT7_API_KEY

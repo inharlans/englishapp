@@ -8,7 +8,7 @@
     },
     "github": {
       "type": "local",
-      "command": ["cmd", "/c", "npx", "-y", "@modelcontextprotocol/server-github@latest"],
+      "command": ["cmd", "/c", "scripts\\ops\\start-github-mcp.cmd"],
       "enabled": true
     },
     "postgres": {

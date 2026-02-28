@@ -19,6 +19,7 @@
     "test:e2e:local:ui": "powershell -ExecutionPolicy Bypass -File scripts/dev/dev-and-test.ps1 -Suite ui",
     "mcp:cycle": "node scripts/ops/mcp-cycle.js",
     "ops:readiness": "node scripts/ops/ops-readiness.js",
+    "ops:prod-login-check": "node scripts/ops/check-login-prod-accessibility.js",
     "completion:report": "node scripts/ops/write-completion-report.js",
     "compact:sync": "node scripts/ops/sync-compact-context.js",
     "compact:check": "node scripts/ops/check-compact-context.js",

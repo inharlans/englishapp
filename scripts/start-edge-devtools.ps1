@@ -26,8 +26,7 @@ $cmd = "msedge.exe --remote-debugging-port=9333 --user-data-dir=`"$userDataDir`"
 Start-Process -FilePath $edgeExe -ArgumentList $arguments | Out-Null
 
 Write-Host 'Edge MCP용 디버깅 프로필이 시작되었습니다.'
-Write-Host '실행 후 아래 주소에서 디버깅 엔드포인트 확인:'
-Write-Host 'http://127.0.0.1:9333/json'
+Write-Host '실행 후 아래 주소에서 디버깅 엔드포인트 확인: http://127.0.0.1:9333/json 확인'
 Write-Host ''
 Write-Host '실행 커맨드:'
 Write-Host $cmd

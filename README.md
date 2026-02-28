@@ -7,6 +7,7 @@
 - postgres MCP는 `.env`의 `DATABASE_URL`을 자동 로드해 실행되도록 `scripts/ops/start-postgres-mcp.mjs`/`.cmd`를 함께 구성했습니다.
 - `DATABASE_URL` 파싱을 보강해 공백/주석/인용부호가 섞인 `.env` 값도 안전하게 처리하고, 빈 값은 즉시 실패로 안내하도록 정리했습니다.
 - `sentry`/`context7` MCP도 `%VAR%` 확장 의존성을 제거해, `.env` 또는 세션 환경값을 `start-*-mcp.mjs/.cmd` 래퍼가 직접 읽어 실행하도록 정리했습니다.
+- `github` MCP도 `start-github-mcp.mjs/.cmd` 래퍼로 전환해 GitHub 토큰을 런타임 환경에서 안전하게 주입하도록 정리했습니다.
 - 로그인 페이지 접근성 경고(입력 필드 `id`/`name` 누락) 대응으로 `components/auth/LoginPanel.tsx`의 이메일/비밀번호 필드 마크업을 보강했고, 운영 확인은 배포 반영 후 재측정이 필요합니다.
 - `npm run build`가 Windows에서 Prisma 엔진 DLL 파일 잠금으로 중단되는 환경에서 멈추지 않고, 기존 생성된 Prisma 클라이언트를 이용해 빌드를 계속 진행하도록 빌드 스크립트를 보강했습니다.
 - 클리퍼 텍스트 유틸(`lib/clipper.ts`)의 정규화/필터링 동작을 검증하는 단위 테스트를 추가해 핵심 입력 보정과 안전성 로직을 회귀 고정했습니다(`lib/clipper.test.ts`).
@@ -292,30 +293,63 @@ powershell -ExecutionPolicy Bypass -File scripts/ops/auto-loop-runner.ps1 -Inter
 powershell -ExecutionPolicy Bypass -File scripts/ops/auto-loop-runner.ps1 -IntervalMinutes 5 -CycleCommand "npm run typecheck && npm test" -TimeoutMinutes 8 -MaxConsecutiveFailures 2 -LogPath ".\auto-loop.log"
 ```
 
-## 필수 환경 변수(대표)
+## 환경 변수(운영 기준)
 
-- `DATABASE_URL`
-- `AUTH_SECRET`
-- `AUTH_BOOTSTRAP_TOKEN`
-- `CRON_SECRET`
+- 필수(핵심):
+  - `DATABASE_URL`
+  - `NEXT_PUBLIC_APP_URL`
+  - `AUTH_SECRET`
+  - `CRON_SECRET`
+  - `AUTH_BOOTSTRAP_TOKEN`
 
-PortOne 결제 연동:
-- `PORTONE_API_SECRET`
-- `PORTONE_WEBHOOK_SECRET`
-- `PORTONE_STORE_ID`
-- `PORTONE_CHANNEL_KEY`
-- `PORTONE_PRICE_MONTHLY_KRW`
-- `PORTONE_PRICE_YEARLY_KRW`
+- Clipper / LLM:
+  - `GEMINI_API_KEY`
+  - `CLIPPER_LLM_PROVIDER`
+  - `CLIPPER_LLM_MODEL`
+  - `CLIPPER_ENRICH_BATCH_SIZE`
+  - `CLIPPER_ENRICH_MAX_WAIT_SECONDS`
+  - `CLIPPER_ENRICH_MAX_ATTEMPTS`
+  - `GOOGLE_TRANSLATE_API_KEY`(선택)
 
-전자결제 심사용 사업자/고객센터 노출:
-- `COMPANY_LEGAL_NAME`
-- `COMPANY_REPRESENTATIVE`
-- `COMPANY_BUSINESS_NUMBER`
-- `COMPANY_MAIL_ORDER_NUMBER`
-- `COMPANY_ADDRESS`
-- `COMPANY_SUPPORT_EMAIL`
-- `COMPANY_SUPPORT_PHONE`
-- `COMPANY_SUPPORT_HOURS`
+- OAuth 로그인:
+  - `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`/`GOOGLE_REDIRECT_URI`
+  - `NAVER_CLIENT_ID`/`NAVER_CLIENT_SECRET`/`NAVER_REDIRECT_URI`
+  - `KAKAO_CLIENT_ID`/`KAKAO_CLIENT_SECRET`/`KAKAO_REDIRECT_URI`
+
+- PortOne:
+  - `PORTONE_API_SECRET`
+  - `PORTONE_WEBHOOK_SECRET`
+  - `PORTONE_STORE_ID`
+  - `PORTONE_CHANNEL_KEY`
+  - `PORTONE_PRICE_MONTHLY_KRW`
+  - `PORTONE_PRICE_YEARLY_KRW`
+  - `PORTONE_BILLING_PHONE`
+
+- 사업자/고객센터 노출:
+  - `COMPANY_LEGAL_NAME`
+  - `COMPANY_REPRESENTATIVE`
+  - `COMPANY_BUSINESS_NUMBER`
+  - `COMPANY_MAIL_ORDER_NUMBER`
+  - `COMPANY_ADDRESS`
+  - `COMPANY_SUPPORT_EMAIL`
+  - `COMPANY_SUPPORT_PHONE`
+  - `COMPANY_SUPPORT_HOURS`
+
+- 보안/운영 보조(선택):
+  - `INTERNAL_CRON_ALLOWED_IPS`
+  - `PREVIEW_ACCESS_TOKEN`
+  - `UPSTASH_REDIS_REST_URL`
+  - `UPSTASH_REDIS_REST_TOKEN`
+  - 운영에서 필요 시: `LOCAL_AUTH_BYPASS`, `SEED_LOCAL_DEBUG`, `ALLOW_NONLOCAL_DEBUG_SEED`, `LOCAL_DEBUG_EMAIL`, `LOCAL_DEBUG_PASSWORD`(권장: production에서는 미사용)
+
+- 내부 테스트(E2E, 필요 시):
+  - `E2E_SECRET`
+  - `INTERNAL_E2E_ALLOWED_IPS`
+  - `E2E_TEST_EMAIL`
+
+- 플랫폼 자동 주입:
+  - `PORT`
+  - `NODE_ENV`(`production`)
 
 ## 결제 인수인계 상태 (2026-02-19 기준)
 
