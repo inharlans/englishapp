@@ -49,15 +49,15 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `311eae32c938`
-- HEAD: `c89c15c` chore(docs): record continuous prod login recheck warning status
+- Source hash: `6b428e481f2d`
+- HEAD: `f59e3ab` Fix MCP wrapper env loading path and document checklist
 
 ### Scope Digests
 - api-routes: 61 files, `68f26bf43f5f`
 - api-helpers: 17 files, `fb3db92838d7`
 - domain-services: 29 files, `faacb1d03759`
-- automation-policy: 90 files, `6c5764939a23`
-- tracking-docs: 10 files, `a52a7013df46`
+- automation-policy: 90 files, `4bb0ca6471cd`
+- tracking-docs: 10 files, `5f60fbc5d9a3`
 
 ### Legacy Route Migration Status
 - base: `app/api/`, total: 53, migrated: 39, remaining: 14
