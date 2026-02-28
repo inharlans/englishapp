@@ -49,14 +49,14 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `662e5f2be823`
-- HEAD: `ef3cc92` Sync compact context snapshot
+- Source hash: `8c8684bee187`
+- HEAD: `694790f` Improve GitHub MCP token fallback wiring
 
 ### Scope Digests
 - api-routes: 61 files, `68f26bf43f5f`
 - api-helpers: 17 files, `fb3db92838d7`
 - domain-services: 29 files, `faacb1d03759`
-- automation-policy: 90 files, `57c4cb182ee2`
+- automation-policy: 90 files, `15e7bef31af2`
 - tracking-docs: 10 files, `5f60fbc5d9a3`
 
 ### Legacy Route Migration Status
