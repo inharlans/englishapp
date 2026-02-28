@@ -49,8 +49,8 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `fa095fa69b27`
-- HEAD: `f37d05d` Harden nightly workflow guard and completion state
+- Source hash: `f2efc2f93240`
+- HEAD: `00362a9` Raise nightly cycle default with safety caps
 
 ### Scope Digests
 - api-routes: 61 files, `68f26bf43f5f`

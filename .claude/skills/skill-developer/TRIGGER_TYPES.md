@@ -283,12 +283,12 @@ useState|useEffect              # React hooks
 **Test keyword/intent triggers:**
 ```bash
 echo '{"session_id":"test","prompt":"your test prompt"}' | \
-  npx tsx .claude/hooks/skill-activation-prompt.ts
+  node .claude/hooks/skill-activation-prompt.mjs
 ```
 
 **Test file path/content triggers:**
 ```bash
-cat <<'EOF' | npx tsx .claude/hooks/skill-verification-guard.ts
+cat <<'EOF' | node .claude/hooks/post-tool-use-tracker.mjs
 {
   "session_id": "test",
   "tool_name": "Edit",

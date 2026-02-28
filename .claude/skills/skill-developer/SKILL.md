@@ -1,6 +1,6 @@
 ---
 name: skill-developer
-description: Create and manage Claude Code skills following Anthropic best practices. Use when creating new skills, modifying skill-rules.json, understanding trigger patterns, working with hooks, debugging skill activation, or implementing progressive disclosure. Covers skill structure, YAML frontmatter, trigger types (keywords, intent patterns, file paths, content patterns), enforcement levels (block, suggest, warn), hook mechanisms (UserPromptSubmit, PreToolUse), session tracking, and the 500-line rule.
+description: Create and manage Claude Code skills following Anthropic best practices. Use when creating new skills, modifying skill-rules.json, understanding trigger patterns, working with hooks, debugging skill activation, or implementing progressive disclosure. Covers skill structure, YAML frontmatter, trigger types (keywords, intent patterns, file paths, content patterns), enforcement levels (block, suggest, warn), hook mechanisms (UserPromptSubmit, PostToolUse, Stop), session tracking, and the 500-line rule.
 ---
 
 # Skill Developer Guide
@@ -27,23 +27,25 @@ Automatically activates when you mention:
 
 ## System Overview
 
-### Two-Hook Architecture
+### Current Hook Architecture
 
 **1. UserPromptSubmit Hook** (Proactive Suggestions)
-- **File**: `.claude/hooks/skill-activation-prompt.ts`
+- **File**: `.claude/hooks/skill-activation-prompt.mjs`
 - **Trigger**: BEFORE Claude sees user's prompt
 - **Purpose**: Suggest relevant skills based on keywords + intent patterns
 - **Method**: Injects formatted reminder as context (stdout → Claude's input)
 - **Use Cases**: Topic-based skills, implicit work detection
 
-**2. Stop Hook - Error Handling Reminder** (Gentle Reminders)
-- **File**: `.claude/hooks/error-handling-reminder.ts`
-- **Trigger**: AFTER Claude finishes responding
-- **Purpose**: Gentle reminder to self-assess error handling in code written
-- **Method**: Analyzes edited files for risky patterns, displays reminder if needed
-- **Use Cases**: Error handling awareness without blocking friction
+**2. PostToolUse Hook** (Edit Tracking)
+- **File**: `.claude/hooks/post-tool-use-tracker.mjs`
+- **Trigger**: AFTER file-changing tools run
+- **Purpose**: Track touched files and infer required verification scope
+- **Method**: Writes cache metadata under `.claude/tsc-cache/{session}`
 
-**Philosophy Change (2025-10-27):** We moved away from blocking PreToolUse for Sentry/error handling. Instead, use gentle post-response reminders that don't block workflow but maintain code quality awareness.
+**3. Stop Hooks** (Verification Reminders)
+- **Files**: `.claude/hooks/tsc-check.mjs`, `.claude/hooks/trigger-build-resolver.mjs`
+- **Trigger**: AFTER Claude finishes responding
+- **Purpose**: Run typecheck/build safety checks in fail-open mode
 
 ### Configuration File
 
@@ -162,12 +164,12 @@ See [SKILL_RULES_REFERENCE.md](SKILL_RULES_REFERENCE.md) for complete schema.
 **Test UserPromptSubmit:**
 ```bash
 echo '{"session_id":"test","prompt":"your test prompt"}' | \
-  npx tsx .claude/hooks/skill-activation-prompt.ts
+  node .claude/hooks/skill-activation-prompt.mjs
 ```
 
-**Test PreToolUse:**
+**Test PostToolUse:**
 ```bash
-cat <<'EOF' | npx tsx .claude/hooks/skill-verification-guard.ts
+cat <<'EOF' | node .claude/hooks/post-tool-use-tracker.mjs
 {"session_id":"test","tool_name":"Edit","tool_input":{"file_path":"test.ts"}}
 EOF
 ```
@@ -255,7 +257,7 @@ import { PrismaService } from './prisma';
 
 **Global disable:**
 ```bash
-export SKIP_SKILL_GUARDRAILS=true  # Disables ALL PreToolUse blocks
+export SKIP_SKILL_GUARDRAILS=true  # Optional local guardrail override
 ```
 
 **Skill-specific:**
@@ -314,7 +316,7 @@ Complete skill-rules.json schema:
 ### [HOOK_MECHANISMS.md](HOOK_MECHANISMS.md)
 Deep dive into hook internals:
 - UserPromptSubmit flow (detailed)
-- PreToolUse flow (detailed)
+- PostToolUse flow (detailed)
 - Exit code behavior table (CRITICAL)
 - Session state management
 - Performance considerations
@@ -322,7 +324,7 @@ Deep dive into hook internals:
 ### [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
 Comprehensive debugging guide:
 - Skill not triggering (UserPromptSubmit)
-- PreToolUse not blocking
+- PostToolUse tracking not updating
 - False positives (too many triggers)
 - Hook not executing at all
 - Performance issues
@@ -351,7 +353,7 @@ Future enhancements and ideas:
 
 1. Create `.claude/skills/{name}/SKILL.md` with frontmatter
 2. Add entry to `.claude/skills/skill-rules.json`
-3. Test with `npx tsx` commands
+3. Test with `node` commands
 4. Refine patterns based on testing
 5. Keep SKILL.md under 500 lines
 
@@ -391,10 +393,10 @@ See [TRIGGER_TYPES.md](TRIGGER_TYPES.md) for complete details.
 Test hooks manually:
 ```bash
 # UserPromptSubmit
-echo '{"prompt":"test"}' | npx tsx .claude/hooks/skill-activation-prompt.ts
+echo '{"prompt":"test"}' | node .claude/hooks/skill-activation-prompt.mjs
 
-# PreToolUse
-cat <<'EOF' | npx tsx .claude/hooks/skill-verification-guard.ts
+# PostToolUse
+cat <<'EOF' | node .claude/hooks/post-tool-use-tracker.mjs
 {"tool_name":"Edit","tool_input":{"file_path":"test.ts"}}
 EOF
 ```
@@ -411,8 +413,10 @@ See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for complete debugging guide.
 - `.claude/settings.json` - Hook registration
 
 **Hooks:**
-- `.claude/hooks/skill-activation-prompt.ts` - UserPromptSubmit
-- `.claude/hooks/error-handling-reminder.ts` - Stop event (gentle reminders)
+- `.claude/hooks/skill-activation-prompt.mjs` - UserPromptSubmit
+- `.claude/hooks/post-tool-use-tracker.mjs` - PostToolUse tracker
+- `.claude/hooks/tsc-check.mjs` - Stop typecheck
+- `.claude/hooks/trigger-build-resolver.mjs` - Stop build resolver
 
 **All Skills:**
 - `.claude/skills/*/SKILL.md` - Skill content files

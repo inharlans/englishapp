@@ -2,6 +2,11 @@
 
 ## 최근 업데이트 (2026-02-28)
 
+- `ai:review:gate`의 Windows 실행 호환성을 보강해 `codex` 실행 탐지가 안정적으로 동작하도록 수정했습니다(`scripts/ops/ai-review-gate.js`).
+- Git 훅 경로 설치 스크립트(`npm run codex:hooks:install`)를 재검증해 `.githooks/pre-commit` 자동 연결 기준을 확인했습니다.
+- Claude skill/agent 문서의 훅 경로와 캐시 경로를 현재 구현(`.mjs`, `.claude/tsc-cache`) 기준으로 정리해 운영 문서 드리프트를 줄였습니다.
+- `chrome-devtools` MCP 실행 구성을 정리해 브라우저 디버깅 엔드포인트 설정을 운영 기준으로 일관화했습니다(`opencode.json`).
+- `chrome-devtools` MCP를 Edge CDP(`http://127.0.0.1:9333`) 기준으로 고정해, Chrome 설치 없이 `scripts/start-edge-devtools.ps1` 실행 후 바로 연결할 수 있게 정리했습니다(`opencode.json`, `.codex/config.toml`, `docs/edge-devtools-cdp-template.md`).
 - `chrome-devtools MCP` 운영 점검 절차를 `docs/mcp-runbook.md`에 정리하고, Edge 실행 헬퍼(`scripts/start-edge-devtools.ps1`)를 추가해 A~E 점검 루틴을 정기적으로 재사용할 수 있게 했습니다.
 - MCP 로컬 구성(`opencode.json`)을 `chrome-devtools` 외 MCP들과 실제 연결 가능한 상태로 정리하고, `postgres`는 환경 변수 기반 실행 래퍼(`scripts/ops/start-postgres-mcp.cmd`)로 전환해 실제 접속 시 환경주입 이슈를 방지했습니다.
 - postgres MCP는 `.env`의 `DATABASE_URL`을 자동 로드해 실행되도록 `scripts/ops/start-postgres-mcp.mjs`/`.cmd`를 함께 구성했습니다.

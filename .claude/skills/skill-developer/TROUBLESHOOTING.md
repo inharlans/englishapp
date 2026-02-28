@@ -6,7 +6,7 @@ Complete debugging guide for skill activation problems.
 
 - [Skill Not Triggering](#skill-not-triggering)
   - [UserPromptSubmit Not Suggesting](#userpromptsubmit-not-suggesting)
-  - [PreToolUse Not Blocking](#pretooluse-not-blocking)
+  - [PostToolUse Not Recording](#posttooluse-not-recording)
 - [False Positives](#false-positives)
 - [Hook Not Executing](#hook-not-executing)
 - [Performance Issues](#performance-issues)
@@ -106,14 +106,14 @@ Test the hook manually:
 
 ```bash
 echo '{"session_id":"debug","prompt":"your test prompt here"}' | \
-  npx tsx .claude/hooks/skill-activation-prompt.ts
+  node .claude/hooks/skill-activation-prompt.mjs
 ```
 
 Expected: Your skill should appear in the output.
 
 ---
 
-### PreToolUse Not Blocking
+### PostToolUse Not Recording
 
 **Symptoms:** Edit a file that should trigger a guardrail, but no block occurs.
 
@@ -234,7 +234,7 @@ unset SKIP_DB_VERIFICATION
 Test the hook manually:
 
 ```bash
-cat <<'EOF' | npx tsx .claude/hooks/skill-verification-guard.ts 2>&1
+cat <<'EOF' | node .claude/hooks/post-tool-use-tracker.mjs 2>&1
 {
   "session_id": "debug",
   "tool_name": "Edit",
@@ -245,8 +245,7 @@ echo "Exit code: $?"
 ```
 
 Expected:
-- Exit code 2 + stderr message if should block
-- Exit code 0 + no output if should allow
+- Exit code 0 and cache files updated under `.claude/tsc-cache/{session_id}`
 
 ---
 
@@ -358,7 +357,7 @@ This makes it advisory instead of blocking.
 **Check `.claude/settings.json`:**
 ```bash
 cat .claude/settings.json | jq '.hooks.UserPromptSubmit'
-cat .claude/settings.json | jq '.hooks.PreToolUse'
+cat .claude/settings.json | jq '.hooks.PostToolUse'
 ```
 
 Expected: Hook entries present
@@ -372,7 +371,7 @@ Expected: Hook entries present
         "hooks": [
           {
             "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/skill-activation-prompt.sh"
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/skill-activation-prompt.mjs\""
           }
         ]
       }
@@ -381,57 +380,32 @@ Expected: Hook entries present
 }
 ```
 
-### 2. Bash Wrapper Not Executable
+### 2. Hook Script Path Wrong
 
 **Check:**
 ```bash
-ls -l .claude/hooks/*.sh
+ls .claude/hooks/*.mjs
 ```
 
-Expected: `-rwxr-xr-x` (executable)
+Expected: required hook files exist
 
-**Fix:**
-```bash
-chmod +x .claude/hooks/*.sh
-```
-
-### 3. Incorrect Shebang
+### 3. Node Not Available
 
 **Check:**
 ```bash
-head -1 .claude/hooks/skill-activation-prompt.sh
+node --version
 ```
 
-Expected: `#!/bin/bash`
-
-**Fix:** Add correct shebang to first line
-
-### 4. npx/tsx Not Available
+### 4. TypeScript/JavaScript Syntax Error
 
 **Check:**
 ```bash
-npx tsx --version
-```
-
-Expected: Version number
-
-**Fix:** Install dependencies:
-```bash
-cd .claude/hooks
-npm install
-```
-
-### 5. TypeScript Compilation Error
-
-**Check:**
-```bash
-cd .claude/hooks
-npx tsc --noEmit skill-activation-prompt.ts
+node --check .claude/hooks/skill-activation-prompt.mjs
 ```
 
 Expected: No output (no errors)
 
-**Fix:** Correct TypeScript syntax errors
+**Fix:** Correct JavaScript syntax errors
 
 ---
 
@@ -494,17 +468,17 @@ Content pattern matching reads entire file - slow for large files.
 
 ```bash
 # UserPromptSubmit
-time echo '{"prompt":"test"}' | npx tsx .claude/hooks/skill-activation-prompt.ts
+time echo '{"prompt":"test"}' | node .claude/hooks/skill-activation-prompt.mjs
 
-# PreToolUse
-time cat <<'EOF' | npx tsx .claude/hooks/skill-verification-guard.ts
+# PostToolUse
+time cat <<'EOF' | node .claude/hooks/post-tool-use-tracker.mjs
 {"tool_name":"Edit","tool_input":{"file_path":"test.ts"}}
 EOF
 ```
 
 **Target metrics:**
 - UserPromptSubmit: < 100ms
-- PreToolUse: < 200ms
+- PostToolUse: < 200ms
 
 ---
 

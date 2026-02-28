@@ -13,8 +13,15 @@ function run(command, args, input, shell = false) {
   });
 }
 
+function runCodex(args, input = null) {
+  if (process.platform === "win32") {
+    return run("cmd", ["/c", "codex", ...args], input);
+  }
+  return run("codex", args, input);
+}
+
 function canRunCodex() {
-  const probe = run("codex", ["--version"], null);
+  const probe = runCodex(["--version"]);
   return (probe.status ?? 1) === 0;
 }
 
@@ -40,7 +47,7 @@ function runReviewOnDiff(diffText) {
     "END STAGED DIFF"
   ].join("\n");
 
-  const res = run("codex", ["exec", "-"], prompt);
+  const res = runCodex(["exec", "-"], prompt);
 
   const stdout = res.stdout || "";
   const stderr = res.stderr || "";

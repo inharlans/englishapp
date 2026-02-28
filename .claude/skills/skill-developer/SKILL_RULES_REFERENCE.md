@@ -72,10 +72,10 @@ interface SkillRule {
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `type` | string | Yes | "guardrail" (enforced) or "domain" (advisory) |
-| `enforcement` | string | Yes | "block" (PreToolUse), "suggest" (UserPromptSubmit), or "warn" |
+| `enforcement` | string | Yes | "block" (guardrail policy), "suggest" (UserPromptSubmit), or "warn" |
 | `priority` | string | Yes | "critical", "high", "medium", or "low" |
 | `promptTriggers` | object | Optional | Triggers for UserPromptSubmit hook |
-| `fileTriggers` | object | Optional | Triggers for PreToolUse hook |
+| `fileTriggers` | object | Optional | File/content-based guardrail triggers (if guardrail hooks are enabled) |
 | `blockMessage` | string | Optional* | Required if enforcement="block". Use `{file_path}` placeholder |
 | `skipConditions` | object | Optional | Escape hatches and session tracking |
 

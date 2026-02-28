@@ -3,7 +3,7 @@
   "mcp": {
     "chrome-devtools": {
       "type": "local",
-      "command": ["cmd", "/c", "npx", "-y", "chrome-devtools-mcp@latest","--browser-url=http://127.0.0.1:9333"],
+      "command": ["cmd", "/c", "npx", "-y", "chrome-devtools-mcp@latest", "--browser-url=http://127.0.0.1:9333"],
       "enabled": true
     },
     "github": {

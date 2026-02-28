@@ -1,11 +1,11 @@
 # Hook Mechanisms - Deep Dive
 
-Technical deep dive into how the UserPromptSubmit and PreToolUse hooks work.
+Technical deep dive into how the UserPromptSubmit, PostToolUse, and Stop hooks work.
 
 ## Table of Contents
 
 - [UserPromptSubmit Hook Flow](#userpromptsubmit-hook-flow)
-- [PreToolUse Hook Flow](#pretooluse-hook-flow)
+- [PostToolUse Hook Flow](#posttooluse-hook-flow)
 - [Exit Code Behavior (CRITICAL)](#exit-code-behavior-critical)
 - [Session State Management](#session-state-management)
 - [Performance Considerations](#performance-considerations)
@@ -21,9 +21,9 @@ User submits prompt
     ↓
 .claude/settings.json registers hook
     ↓
-skill-activation-prompt.sh executes
+skill-activation-prompt.mjs executes
     ↓
-npx tsx skill-activation-prompt.ts
+node skill-activation-prompt.mjs
     ↓
 Hook reads stdin (JSON with prompt)
     ↓
@@ -79,54 +79,37 @@ Claude sees this output as additional context before processing the user's promp
 
 ---
 
-## PreToolUse Hook Flow
+## PostToolUse Hook Flow
 
 ### Execution Sequence
 
 ```
-Claude calls Edit/Write tool
+Claude executes a file-changing tool
     ↓
-.claude/settings.json registers hook (matcher: Edit|Write)
+.claude/settings.json registers hook (matcher includes Edit/Write/apply_patch/Bash)
     ↓
-skill-verification-guard.sh executes
+post-tool-use-tracker.mjs executes
     ↓
-npx tsx skill-verification-guard.ts
+node post-tool-use-tracker.mjs
     ↓
 Hook reads stdin (JSON with tool_name, tool_input)
     ↓
-Loads skill-rules.json
+Determines edited file path and scope
     ↓
-Checks file path patterns (glob matching)
+Writes tool usage logs under `.claude/tsc-cache/{session_id}`
     ↓
-Reads file for content patterns (if file exists)
+Updates `affected-repos.txt` and `commands.txt`
     ↓
-Checks session state (was skill already used?)
-    ↓
-Checks skip conditions (file markers, env vars)
-    ↓
-IF MATCHED AND NOT SKIPPED:
-  Update session state (mark skill as enforced)
-  Output block message to stderr
-  Exit with code 2 (BLOCK)
-ELSE:
-  Exit with code 0 (ALLOW)
-    ↓
-IF BLOCKED:
-  stderr → Claude sees message
-  Edit/Write tool does NOT execute
-  Claude must use skill and retry
-IF ALLOWED:
-  Tool executes normally
+Exit with code 0 (non-blocking tracker)
 ```
 
 ### Key Points
 
-- **Exit code 2**: BLOCK (stderr → Claude)
-- **Exit code 0**: ALLOW
-- **Timing**: Runs BEFORE tool execution
-- **Session tracking**: Prevents repeated blocks in same session
+- **Exit code 0**: Allow (tracking only)
+- **Timing**: Runs AFTER tool execution
+- **Session tracking**: Groups edits by session in `.claude/tsc-cache/{session_id}`
 - **Fail open**: On errors, allows operation (don't break workflow)
-- **Purpose**: Enforce critical guardrails
+- **Purpose**: Record affected scope for Stop hooks
 
 ### Input Format
 
@@ -136,7 +119,7 @@ IF ALLOWED:
   "transcript_path": "/path/to/transcript.json",
   "cwd": "/root/git/your-project",
   "permission_mode": "normal",
-  "hook_event_name": "PreToolUse",
+  "hook_event_name": "PostToolUse",
   "tool_name": "Edit",
   "tool_input": {
     "file_path": "/root/git/your-project/form/src/services/user.ts",
@@ -146,24 +129,18 @@ IF ALLOWED:
 }
 ```
 
-### Output Format (to stderr when blocked)
+### Output Format
 
 ```
-⚠️ BLOCKED - Database Operation Detected
-
-📋 REQUIRED ACTION:
-1. Use Skill tool: 'database-verification'
-2. Verify ALL table and column names against schema
-3. Check database structure with DESCRIBE commands
-4. Then retry this edit
-
-Reason: Prevent column name errors in Prisma queries
-File: form/src/services/user.ts
-
-💡 TIP: Add '// @skip-validation' comment to skip future checks
+No user-facing output on success.
+Artifacts are written to cache files:
+- `tool-usage.log`
+- `edited-files.log`
+- `affected-repos.txt`
+- `commands.txt`
 ```
 
-Claude receives this message and understands it needs to use the skill before retrying the edit.
+Later Stop hooks consume this metadata to decide which verification commands to run.
 
 ---
 
@@ -174,19 +151,18 @@ Claude receives this message and understands it needs to use the skill before re
 | Exit Code | stdout | stderr | Tool Execution | Claude Sees |
 |-----------|--------|--------|----------------|-------------|
 | 0 (UserPromptSubmit) | → Context | → User only | N/A | stdout content |
-| 0 (PreToolUse) | → User only | → User only | **Proceeds** | Nothing |
-| 2 (PreToolUse) | → User only | → **CLAUDE** | **BLOCKED** | stderr content |
-| Other | → User only | → User only | Blocked | Nothing |
+| 0 (PostToolUse) | → User only | → User only | **Already executed** | Nothing |
+| 0 (Stop hooks) | → User only | → User only | N/A | Nothing |
+| Other | → User only | → User only | Fail-open in current scripts | Nothing |
 
-### Why Exit Code 2 Matters
+### Current Behavior
 
-This is THE critical mechanism for enforcement:
+Current repo hooks are advisory/tracking oriented:
 
-1. **Only way** to send message to Claude from PreToolUse
-2. stderr content is "fed back to Claude automatically"
-3. Claude sees the block message and understands what to do
-4. Tool execution is prevented
-5. Critical for enforcement of guardrails
+1. UserPromptSubmit prints suggested skills to stdout.
+2. PostToolUse records touched scopes and recommended checks.
+3. Stop hooks run typecheck/build checks in fail-open mode.
+4. No blocking PreToolUse guard script is wired in `.claude/settings.json`.
 
 ### Example Conversation Flow
 
@@ -196,64 +172,52 @@ User: "Add a new user service with Prisma"
 Claude: "I'll create the user service..."
     [Attempts to Edit form/src/services/user.ts]
 
-PreToolUse Hook: [Exit code 2]
-    stderr: "⚠️ BLOCKED - Use database-verification"
+PostToolUse Hook: [Exit code 0]
+    Cache updated: .claude/tsc-cache/{session_id}/commands.txt
 
-Claude sees error, responds:
-    "I need to verify the database schema first."
-    [Uses Skill tool: database-verification]
-    [Verifies column names]
-    [Retries Edit - now allowed (session tracking)]
+Stop Hooks:
+    Run npm run typecheck
+    Run npm run build (if relevant scope)
 ```
 
 ---
 
-## Session State Management
+## Session Cache Management
 
 ### Purpose
 
-Prevent repeated nagging in the same session - once Claude uses a skill, don't block again.
+Keep per-session records of edited files and affected scope for verification commands.
 
 ### State File Location
 
-`.claude/hooks/state/skills-used-{session_id}.json`
+`.claude/tsc-cache/{session_id}/`
 
 ### State File Structure
 
 ```json
-{
-  "skills_used": [
-    "database-verification",
-    "error-tracking"
-  ],
-  "files_verified": []
-}
+tool-usage.log
+edited-files.log
+affected-repos.txt
+commands.txt
 ```
 
 ### How It Works
 
-1. **First edit** of file with Prisma:
-   - Hook blocks with exit code 2
-   - Updates session state: adds "database-verification" to skills_used
-   - Claude sees message, uses skill
+1. **After file edit**:
+   - PostToolUse writes event to session cache
+   - Scope detector updates `affected-repos.txt`
+   - Recommended commands are written to `commands.txt`
 
-2. **Second edit** (same session):
-   - Hook checks session state
-   - Finds "database-verification" in skills_used
-   - Exits with code 0 (allow)
-   - No message to Claude
+2. **On Stop**:
+   - Stop hooks consume cache metadata
+   - Typecheck/build are executed in fail-open mode
 
 3. **Different session**:
-   - New session ID = new state file
-   - Hook blocks again
+   - New session ID creates a fresh cache directory
 
 ### Limitation
 
-The hook cannot detect when the skill is *actually* invoked - it just blocks once per session per skill. This means:
-
-- If Claude doesn't use the skill but makes a different edit, it won't block again
-- Trust that Claude follows the instruction
-- Future enhancement: detect actual Skill tool usage
+The current cache model tracks edited scope, not explicit skill-tool invocation.
 
 ---
 
@@ -262,7 +226,7 @@ The hook cannot detect when the skill is *actually* invoked - it just blocks onc
 ### Target Metrics
 
 - **UserPromptSubmit**: < 100ms
-- **PreToolUse**: < 200ms
+- **PostToolUse**: < 200ms
 
 ### Performance Bottlenecks
 
@@ -270,18 +234,12 @@ The hook cannot detect when the skill is *actually* invoked - it just blocks onc
    - Future: Cache in memory
    - Future: Watch for changes, reload only when needed
 
-2. **Reading file content** (PreToolUse)
-   - Only when contentPatterns configured
-   - Only if file exists
-   - Can be slow for large files
+2. **Cache file writes** (PostToolUse)
+   - Multiple append/write operations per tool event
+   - Depends on filesystem latency
 
-3. **Glob matching** (PreToolUse)
-   - Regex compilation for each pattern
-   - Future: Compile once, cache
-
-4. **Regex matching** (Both hooks)
+3. **Regex matching** (UserPromptSubmit)
    - Intent patterns (UserPromptSubmit)
-   - Content patterns (PreToolUse)
    - Future: Lazy compile, cache compiled regexes
 
 ### Optimization Strategies
@@ -290,12 +248,9 @@ The hook cannot detect when the skill is *actually* invoked - it just blocks onc
 - Use more specific patterns (fewer to check)
 - Combine similar patterns where possible
 
-**File path patterns:**
-- More specific = fewer files to check
-- Example: `form/src/services/**` better than `form/**`
-
-**Content patterns:**
-- Only add when truly necessary
+**File path/scope mapping:**
+- Keep scope rules narrow and deterministic for PostToolUse
+- Update mappings when repository structure changes
 - Simpler regex = faster matching
 
 ---
