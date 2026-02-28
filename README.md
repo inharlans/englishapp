@@ -43,6 +43,8 @@
 - MCP 도입 우선순위/최소 권한 원칙/운영 프로필을 정리한 운영 정책 문서를 추가했습니다(`docs/mcp-access-policy-2026-02-28.md`).
 - Ralph-Lite 야간 자동화 실행 스크립트를 추가했습니다. `ai:nightly:start/cycle/loop/report`로 야간 브랜치 작업, 게이트 검증, 아침 리포트 생성을 표준화했고 운영 지시서/런북(`docs/ai-nightly-instructions.md`, `docs/ai-nightly-runbook.md`)을 함께 문서화했습니다.
 - 야간 자동화 운영을 위한 Ralph-Lite 계획서/체크리스트 문서를 추가했습니다(`docs/ai-nightly-ralph-lite-plan.md`, `docs/ai-nightly-ralph-lite-checklist.md`). PR 자동 생성 없이 야간 브랜치 결과를 아침에 수동 검토/검증 후 반영하는 절차를 고정했습니다.
+- `codex:workflow:check`가 untracked 파일도 변경 대상으로 감지하도록 보강했습니다. 야간 리포트처럼 새로 생성된 문서가 있어도 `SKIP`되지 않고 게이트가 실행됩니다.
+- Ralph-Lite 루프가 `maxCycles` 도달 시 상태 파일(`.loop/nightly-state.json`)을 `completed`로 확정 저장하도록 보강해, 종료 사유를 상태값으로 바로 확인할 수 있게 했습니다.
 - `/compact` 요약을 문서로 고정 참조할 수 있도록 `docs/compact-context.md` 자동 동기화 체계를 추가했습니다. `npm run compact:sync`로 스냅샷을 갱신하고, `npm run compact:check`로 구조/내용 변경 미반영 상태를 게이트에서 차단합니다.
 - pre-commit에서 `compact:sync`를 자동 실행하고 `docs/compact-context.md` 변경분을 자동 스테이징하도록 연결했으며, 자동 스냅샷에 `Legacy Route Migration Status`(총 라우트/이관 완료/잔여 목록)를 포함하도록 확장했습니다.
 - API 구조 리팩터링 13차로 내부 cron 라우트 공통 래퍼(`lib/api/internal-cron-route.ts`)를 도입해 `clipper-enrichment/plan-expire/wordbook-rank` 경로의 인증/메트릭/응답 패턴을 통일했습니다.

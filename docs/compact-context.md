@@ -49,15 +49,15 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `7efb997a84b9`
-- HEAD: `53b9ff1` Harden GitHub MCP token normalization and compatibility
+- Source hash: `aa7a6101b6c0`
+- HEAD: `141d447` nightly: cycle 1 pass checks
 
 ### Scope Digests
 - api-routes: 61 files, `68f26bf43f5f`
 - api-helpers: 17 files, `fb3db92838d7`
 - domain-services: 29 files, `faacb1d03759`
-- automation-policy: 90 files, `15e7bef31af2`
-- tracking-docs: 10 files, `5f60fbc5d9a3`
+- automation-policy: 90 files, `f98a1e47593f`
+- tracking-docs: 10 files, `1eee34a017b2`
 
 ### Legacy Route Migration Status
 - base: `app/api/`, total: 53, migrated: 39, remaining: 14

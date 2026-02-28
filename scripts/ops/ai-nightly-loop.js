@@ -2,7 +2,7 @@
 /* eslint-disable no-console */
 const { spawnSync } = require("node:child_process");
 const path = require("node:path");
-const { nowIso, readState, root } = require("./ai-nightly-common");
+const { nowIso, readState, root, writeState } = require("./ai-nightly-common");
 
 function sleep(seconds) {
   if (seconds <= 0) return;
@@ -31,6 +31,9 @@ function main() {
       break;
     }
     if (before.cycleCount >= before.maxCycles) {
+      before.status = "completed";
+      before.updatedAt = nowIso();
+      writeState(before);
       console.log("ai-nightly-loop: stop (max cycles reached)");
       break;
     }

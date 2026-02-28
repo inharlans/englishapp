@@ -34,7 +34,8 @@ function run(command, args) {
 function collectChangedFiles() {
   const staged = run("git", ["diff", "--cached", "--name-only"]);
   const unstaged = run("git", ["diff", "--name-only"]);
-  return [...new Set([...staged, ...unstaged])];
+  const untracked = run("git", ["ls-files", "--others", "--exclude-standard"]);
+  return [...new Set([...staged, ...unstaged, ...untracked])];
 }
 
 function matches(file, patterns) {
