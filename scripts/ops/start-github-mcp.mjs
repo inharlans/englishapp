@@ -19,18 +19,23 @@ const accessToken =
         ? process.env.GITHUB_PAT
         : typeof process.env.GITHUB_AUTH_TOKEN === 'string' && process.env.GITHUB_AUTH_TOKEN.trim()
           ? process.env.GITHUB_AUTH_TOKEN
-          : (() => {
-            try {
-              const raw = execSync('gh auth token', { encoding: 'utf8' })
-              return raw?.trim() || ''
-            } catch {
-              return ''
-            }
-          })()
+          : typeof process.env.GITHUB_PERSONAL_ACCESS_TOKEN === 'string' &&
+              process.env.GITHUB_PERSONAL_ACCESS_TOKEN.trim()
+            ? process.env.GITHUB_PERSONAL_ACCESS_TOKEN
+            : (() => {
+              try {
+                const raw = execSync('gh auth token', { encoding: 'utf8' })
+                return raw?.trim() || ''
+              } catch {
+                return ''
+              }
+            })()
 
 if (!accessToken) {
   console.error('[github-mcp] GitHub token is not set.')
-  console.error('[github-mcp] Set one of GITHUB_TOKEN / GH_TOKEN / GITHUB_PAT / GITHUB_AUTH_TOKEN in environment, .env file, or `gh auth login` before starting OpenCode MCP.')
+  console.error(
+    '[github-mcp] Set one of GITHUB_TOKEN / GH_TOKEN / GITHUB_PAT / GITHUB_AUTH_TOKEN / GITHUB_PERSONAL_ACCESS_TOKEN in environment, .env file, or `gh auth login` before starting OpenCode MCP.'
+  )
   process.exit(1)
 }
 
@@ -38,6 +43,8 @@ if (/\s/.test(accessToken)) {
   console.error('[github-mcp] GitHub token contains spaces after trimming; this looks invalid.')
   process.exit(1)
 }
+
+process.env.GITHUB_TOKEN = accessToken
 
 const command = process.platform === 'win32' ? 'cmd' : 'npx'
 const args = process.platform === 'win32'
