@@ -2,6 +2,13 @@
 
 ## 최근 업데이트 (2026-02-28)
 
+- `chrome-devtools MCP` 운영 점검 절차를 `docs/mcp-runbook.md`에 정리하고, Edge 실행 헬퍼(`scripts/start-edge-devtools.ps1`)를 추가해 A~E 점검 루틴을 정기적으로 재사용할 수 있게 했습니다.
+- MCP 로컬 구성(`opencode.json`)을 `chrome-devtools` 외 MCP들과 실제 연결 가능한 상태로 정리하고, `postgres`는 환경 변수 기반 실행 래퍼(`scripts/ops/start-postgres-mcp.cmd`)로 전환해 실제 접속 시 환경주입 이슈를 방지했습니다.
+- postgres MCP는 `.env`의 `DATABASE_URL`을 자동 로드해 실행되도록 `scripts/ops/start-postgres-mcp.mjs`/`.cmd`를 함께 구성했습니다.
+- `DATABASE_URL` 파싱을 보강해 공백/주석/인용부호가 섞인 `.env` 값도 안전하게 처리하고, 빈 값은 즉시 실패로 안내하도록 정리했습니다.
+- `sentry`/`context7` MCP도 `%VAR%` 확장 의존성을 제거해, `.env` 또는 세션 환경값을 `start-*-mcp.mjs/.cmd` 래퍼가 직접 읽어 실행하도록 정리했습니다.
+- 로그인 페이지 접근성 경고(입력 필드 `id`/`name` 누락) 대응으로 `components/auth/LoginPanel.tsx`의 이메일/비밀번호 필드 마크업을 보강했고, 운영 확인은 배포 반영 후 재측정이 필요합니다.
+- `npm run build`가 Windows에서 Prisma 엔진 DLL 파일 잠금으로 중단되는 환경에서 멈추지 않고, 기존 생성된 Prisma 클라이언트를 이용해 빌드를 계속 진행하도록 빌드 스크립트를 보강했습니다.
 - 클리퍼 텍스트 유틸(`lib/clipper.ts`)의 정규화/필터링 동작을 검증하는 단위 테스트를 추가해 핵심 입력 보정과 안전성 로직을 회귀 고정했습니다(`lib/clipper.test.ts`).
 
 ## 최근 업데이트 (2026-02-24)

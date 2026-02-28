@@ -1,0 +1,40 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "chrome-devtools": {
+      "type": "local",
+      "command": ["cmd", "/c", "npx", "-y", "chrome-devtools-mcp@latest","--browser-url=http://127.0.0.1:9333"],
+      "enabled": true
+    },
+    "github": {
+      "type": "local",
+      "command": ["cmd", "/c", "npx", "-y", "@modelcontextprotocol/server-github@latest"],
+      "enabled": true
+    },
+    "postgres": {
+      "type": "local",
+      "command": ["cmd", "/c", "scripts\\ops\\start-postgres-mcp.cmd"],
+      "enabled": true
+    },
+    "sentry": {
+      "type": "local",
+      "command": ["cmd", "/c", "scripts\\ops\\start-sentry-mcp.cmd"],
+      "enabled": true
+    },
+    "prisma": {
+      "type": "local",
+      "command": ["cmd", "/c", "npx", "-y", "prisma", "mcp"],
+      "enabled": true
+    },
+    "playwright": {
+      "type": "local",
+      "command": ["cmd", "/c", "npx", "-y", "@playwright/mcp@latest"],
+      "enabled": true
+    },
+    "context7": {
+      "type": "local",
+      "command": ["cmd", "/c", "scripts\\ops\\start-context7-mcp.cmd"],
+      "enabled": true
+    }
+  }
+}

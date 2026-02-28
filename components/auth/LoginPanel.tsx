@@ -95,9 +95,11 @@ export function LoginPanel({
           비밀번호 로그인 (관리자/개발용)
         </summary>
         <form onSubmit={onSubmit} className="mt-3 space-y-3">
-          <label className="block">
+          <label className="block" htmlFor="login-email">
             <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">이메일</span>
             <input
+              id="login-email"
+              name="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               type="email"
@@ -108,9 +110,11 @@ export function LoginPanel({
             />
           </label>
 
-          <label className="block">
+          <label className="block" htmlFor="login-password">
             <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">비밀번호</span>
             <input
+              id="login-password"
+              name="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               type="password"
