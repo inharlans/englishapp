@@ -99,6 +99,11 @@
 - 웹에서 확장 ZIP을 바로 받을 수 있도록 `GET /api/clipper/extension`을 추가했습니다.
 - 확장 설치/테스트 안내 페이지(`/clipper/extension`)를 추가했습니다.
 - 확장 옵션 페이지(`extension/options.html`)를 추가해 `bridgeOrigin`을 환경별로 바꿀 수 있게 했습니다.
+- 퀴즈 문제 선택 로직을 다중 `COUNT+OFFSET` 반복에서 단일 우선순위 선택 쿼리로 바꿔 요청당 DB 왕복 수를 줄였습니다.
+- 단어 import 중복 검사 경로에 정규화 표현식 인덱스를 추가하고 조회를 단일 질의로 정리해 전수 스캔 비용을 줄였습니다.
+- 마켓 목록 조회를 단일 집계/페이지 쿼리로 정리해 중복 카운트 쿼리 비용을 줄였습니다.
+- API 메트릭 저장을 비동기 처리로 바꿔 응답 경로의 관측 오버헤드를 완화했습니다.
+- pre-commit 워크플로우 변경 감지를 staged 파일 기준으로 제한해 불필요한 풀 검증 실행을 줄였습니다.
 - 클리퍼 enrichment 실패 사유를 reason 코드 단일 소스로 정리하고, 크론 응답에 `reasonCounts`를 포함해 실패 분포를 바로 확인할 수 있게 했습니다.
 - 내부 운영 메트릭 API(`/api/internal/ops/clipper-metrics`)를 추가해 backlog/지연/성공률/재시도/부분완료율/비용 추정치를 조회할 수 있게 했습니다.
 - 운영 메트릭은 기본 no-cache이며, 운영 부하 시 `CLIPPER_METRICS_CACHE_MODE=5m`(고정 5분) 또는 `CLIPPER_METRICS_CACHE_TTL_SECONDS=300` 이상(TTL 초 단위)으로 캐시를 켤 수 있습니다.
@@ -335,6 +340,26 @@ npm run build
 - 설치 안내 페이지: `/clipper/extension`
 - ZIP 다운로드: `/api/clipper/extension`
 - 크롬 `chrome://extensions` > 개발자 모드 > 압축해제된 확장 프로그램 로드
+
+클리퍼 확장 ZIP 빌드:
+```bash
+npm run extension:zip
+```
+
+클리퍼 확장 E2E (웹 -> 확장 -> 브릿지 -> API):
+```bash
+npm run test:e2e:clipper:extension
+```
+
+로그인을 직접 도와주며 화면에서 테스트하려면:
+```bash
+E2E_MANUAL_LOGIN=1 npm run test:e2e:clipper:extension
+```
+
+PowerShell에서는 아래처럼 실행:
+```powershell
+$env:E2E_MANUAL_LOGIN='1'; npm run test:e2e:clipper:extension
+```
 
 Windows Prisma 파일 잠금(EPERM rename) 트러블슈팅:
 - 증상: `npm run build` 중 Prisma 엔진 DLL rename에서 `EPERM` 경고가 간헐적으로 발생

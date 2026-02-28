@@ -49,15 +49,15 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `95b404db95a9`
-- HEAD: `d8b70f2` Add endpoint perf capture instrumentation for bottleneck analysis
+- Source hash: `c44dc873e76a`
+- HEAD: `7143fb8` Enable downloadable clipper extension and install flow
 
 ### Scope Digests
 - api-routes: 67 files, `401d6bc4c65a`
 - api-helpers: 17 files, `7d1e0ed6e296`
 - domain-services: 39 files, `88dcb53c24b3`
-- automation-policy: 90 files, `2eb6d0ac82ff`
-- tracking-docs: 10 files, `f212079971c0`
+- automation-policy: 90 files, `a2935a0c019f`
+- tracking-docs: 10 files, `e7bbab2c04c6`
 
 ### Legacy Route Migration Status
 - base: `app/api/`, total: 55, migrated: 44, remaining: 11

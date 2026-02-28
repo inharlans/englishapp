@@ -56,6 +56,35 @@ export default function ClipperExtensionPage() {
           예) `http://localhost:3000`.
         </p>
       </article>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <article className="rounded-2xl border border-slate-200 bg-white p-5">
+          <h2 className="text-sm font-black uppercase tracking-[0.16em] text-slate-700">권한 안내</h2>
+          <ul className="mt-3 space-y-2 text-sm text-slate-700">
+            <li>- `activeTab`: 선택한 탭에서 드래그된 단어를 읽기 위해 사용합니다.</li>
+            <li>- `storage`: 브릿지 Origin(`bridgeOrigin`) 설정을 저장하기 위해 사용합니다.</li>
+            <li>- `&lt;all_urls&gt;`: PDF/웹 문서 전반에서 클리퍼 버튼을 띄우기 위해 사용합니다.</li>
+          </ul>
+        </article>
+
+        <article className="rounded-2xl border border-slate-200 bg-white p-5">
+          <h2 className="text-sm font-black uppercase tracking-[0.16em] text-slate-700">업데이트 방법</h2>
+          <ol className="mt-3 space-y-2 text-sm text-slate-700">
+            <li>1. 새 ZIP을 내려받아 같은 폴더에 압축 해제합니다.</li>
+            <li>2. `chrome://extensions`에서 기존 확장의 `새로고침`을 누릅니다.</li>
+            <li>3. 문제가 있으면 기존 확장을 제거 후 다시 로드합니다.</li>
+          </ol>
+        </article>
+      </div>
+
+      <article className="rounded-2xl border border-slate-200 bg-white p-5">
+        <h2 className="text-sm font-black uppercase tracking-[0.16em] text-slate-700">스크린샷 체크 포인트</h2>
+        <ul className="mt-3 space-y-2 text-sm text-slate-700">
+          <li>- 설치 화면: `chrome://extensions`의 개발자 모드 + 압축해제 로드 버튼</li>
+          <li>- 옵션 화면: `bridgeOrigin` 입력/저장 완료 메시지</li>
+          <li>- 동작 화면: 텍스트 드래그 후 `단어장에 추가` 플로팅 버튼</li>
+        </ul>
+      </article>
     </section>
   );
 }
