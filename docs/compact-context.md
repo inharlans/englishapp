@@ -49,15 +49,15 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `a18191333e61`
-- HEAD: `cd9f835` docs: record latest login recheck timestamp and log path
+- Source hash: `433dca285990`
+- HEAD: `47a9f72` docs: add login cache sync pass plan checklist
 
 ### Scope Digests
 - api-routes: 61 files, `68f26bf43f5f`
 - api-helpers: 17 files, `fb3db92838d7`
 - domain-services: 29 files, `faacb1d03759`
-- automation-policy: 90 files, `5558f75f15c3`
-- tracking-docs: 10 files, `7f3af3e4be04`
+- automation-policy: 90 files, `6c5764939a23`
+- tracking-docs: 10 files, `a52a7013df46`
 
 ### Legacy Route Migration Status
 - base: `app/api/`, total: 53, migrated: 39, remaining: 14

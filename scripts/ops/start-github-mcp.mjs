@@ -1,8 +1,11 @@
 import path from 'node:path'
-import { spawnSync } from 'node:child_process'
+import { fileURLToPath } from 'node:url'
+import { execSync, spawnSync } from 'node:child_process'
 import { loadEnvFile } from './load-env.mjs'
 
-const rootDir = process.cwd()
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+const rootDir = path.resolve(__dirname, '..')
 const envPath = path.resolve(rootDir, '.env')
 
 loadEnvFile(envPath)
@@ -14,11 +17,20 @@ const accessToken =
       ? process.env.GH_TOKEN
       : typeof process.env.GITHUB_PAT === 'string' && process.env.GITHUB_PAT.trim()
         ? process.env.GITHUB_PAT
-        : ''
+        : typeof process.env.GITHUB_AUTH_TOKEN === 'string' && process.env.GITHUB_AUTH_TOKEN.trim()
+          ? process.env.GITHUB_AUTH_TOKEN
+          : (() => {
+            try {
+              const raw = execSync('gh auth token', { encoding: 'utf8' })
+              return raw?.trim() || ''
+            } catch {
+              return ''
+            }
+          })()
 
 if (!accessToken) {
   console.error('[github-mcp] GitHub token is not set.')
-  console.error('[github-mcp] Set one of GITHUB_TOKEN / GH_TOKEN / GITHUB_PAT in environment or .env file before starting OpenCode MCP.')
+  console.error('[github-mcp] Set one of GITHUB_TOKEN / GH_TOKEN / GITHUB_PAT / GITHUB_AUTH_TOKEN in environment, .env file, or `gh auth login` before starting OpenCode MCP.')
   process.exit(1)
 }
 
