@@ -49,15 +49,15 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `a12f66489a9d`
-- HEAD: `7a71d2f` Fix deployed copy labels and add MCP access policy
+- Source hash: `75a72ce09183`
+- HEAD: `1d559c2` Add 4-step MCP quick troubleshooting checklist
 
 ### Scope Digests
 - api-routes: 61 files, `68f26bf43f5f`
 - api-helpers: 17 files, `fb3db92838d7`
 - domain-services: 29 files, `faacb1d03759`
-- automation-policy: 80 files, `d4ba01b17b2f`
-- tracking-docs: 9 files, `84d61dff28b9`
+- automation-policy: 80 files, `253f836f5ec6`
+- tracking-docs: 10 files, `d46cf80bcc7a`
 
 ### Legacy Route Migration Status
 - base: `app/api/`, total: 53, migrated: 39, remaining: 14
@@ -95,6 +95,7 @@
   - [ok] `.claude/skills/`
   - [ok] `.claude/tsc-cache/`
 - Refactor tracking and docs
+  - [ok] `docs/mcp-browser-screen-checkpoints-2026-02-28.md`
   - [ok] `docs/mcp-1minute-checklist-2026-02-28.md`
   - [ok] `docs/mcp-access-policy-2026-02-28.md`
   - [ok] `docs/ai-nightly-instructions.md`
