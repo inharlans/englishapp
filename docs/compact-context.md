@@ -49,8 +49,8 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `8c8684bee187`
-- HEAD: `694790f` Improve GitHub MCP token fallback wiring
+- Source hash: `7efb997a84b9`
+- HEAD: `53b9ff1` Harden GitHub MCP token normalization and compatibility
 
 ### Scope Digests
 - api-routes: 61 files, `68f26bf43f5f`
