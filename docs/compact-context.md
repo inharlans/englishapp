@@ -49,8 +49,8 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `146a638c32e4`
-- HEAD: `2f1ac20` docs: refresh prod login recheck timestamp
+- Source hash: `a18191333e61`
+- HEAD: `cd9f835` docs: record latest login recheck timestamp and log path
 
 ### Scope Digests
 - api-routes: 61 files, `68f26bf43f5f`
