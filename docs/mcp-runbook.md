@@ -63,10 +63,10 @@
 - 초기 로드: `firstByte=249ms`, `domContentLoaded=418ms`, `load=418ms`
 - 최종 결론: `주의`
 - 주의: 로그인 경고는 코드 레이어에서 입력 id/name 보완이 적용된 상태이나, 실서비스 산출물 반영 전 상태라 재확인 단계 필요
-- 최신 재점검 결과:
-  - 실제 `/login` HTML에서 폼 입력이 `id/name` 없이 렌더되어 콘솔 경고가 그대로 유지됨
-  - 로컬 `.next/static/chunks/app/login/page-*.js`에서 현재 코드의 `login-email/login-password` 마크업이 포함된 새 번들 해시(`page-ffd3dd5d24441f80.js`)로 생성됨
-  - 실서비스는 기존 번들(`page-5796d505b27b8e43.js`)을 캐시/노출 중으로, 배포 반영 및 캐시 무효화가 필요
+- 최신 재점검 결과 (`npm run ops:prod-login-check`):
+  - `/login?_smoke=2`에서 노출되는 번들이 `/_next/static/chunks/app/login/page-7949e7fe4576be4c.js`로 확인됨
+  - 해당 번들에서 `name="email"`/`name="password"`는 문자열 상에서 확인되나 `id="login-email"`/`id="login-password"`는 미발견
+  - `A form field element should have an id or name attribute` 경고 텍스트는 번들 자체에서 미탐지이나, `id` 누락 이슈로 주의 상태는 유지
 
 ## 6) MCP 도입 실행(최소권한)
 - 도입 순서는 `github(read)` -> `postgres(read)` -> `sentry(read)` -> `prisma(read)` -> `playwright` -> `context7(필요 시)`로 고정한다.
@@ -186,7 +186,7 @@
 ## 7) 운영 반영 승인 요청 체크리스트
 - 목적: 코드 반영 후 실서비스 노출/캐시 동기화가 완료되었는지 운영 승인 이전에 선제 검증
 - 제출 항목(요약):
-  - 최근 커밋/빌드 산출물 해시: `page-ffd3dd5d24441f80.js`
+  - 최근 운영 노출 기준 번들: `/_next/static/chunks/app/login/page-7949e7fe4576be4c.js` (변경 시 즉시 갱신)
   - 의도된 DOM 변경: `/login` 비밀번호 로그인 폼의 `input#login-email`, `input#login-password`, `name` 속성 추가
 - 운영 요청 포맷(필수 포함):
   - `oingapp` 배포 브랜치 또는 패키지 배포 버전

@@ -49,8 +49,8 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `6915e11d1af5`
-- HEAD: `d71bed5` chore: wrap sentry and context7 MCP launchers with env loader
+- Source hash: `f8ccab858ffb`
+- HEAD: `c068c52` chore: harden MCP env wrappers and update ops docs
 
 ### Scope Digests
 - api-routes: 61 files, `68f26bf43f5f`
