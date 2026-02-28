@@ -75,10 +75,16 @@
 ## 최근 재점검 기록
 
 - 일시: `2026-02-28 20:56:32~20:56:39`
-- 대상 번들: `/_next/static/chunks/app/login/page-7949e7fe4576be4c.js` (동일 3회)
-- 판정: `warn`
-- 주요 항목: `input#login-email` 미노출, `input#login-password` 미노출
-- 예외: 2차 시도에서 청크 fetch 502 발생 (일시 오류), 1/3 결과는 정상 응답
+  - 대상 번들: `/_next/static/chunks/app/login/page-7949e7fe4576be4c.js` (동일 3회)
+  - 판정: `warn`
+  - 주요 항목: `input#login-email` 미노출, `input#login-password` 미노출
+  - 예외: 2차 시도에서 청크 fetch 502 발생 (일시 오류), 1/3 결과는 정상 응답
+
+- 일시: `2026-02-28 21:02:15~21:02:23`
+  - 대상 번들: `/_next/static/chunks/app/login/page-7949e7fe4576be4c.js` (동일 3회)
+  - 판정: `warn`
+  - 주요 항목: `input#login-email` 미노출, `input#login-password` 미노출
+  - 비고: 3회 연속 동일 로그(`warn`), `id` 누락 그대로
 
 ## 6) 참고 위치
 - 운영 핸드오버: `docs/mcp-login-accessibility-prod-handoff-2026-02-28.md`

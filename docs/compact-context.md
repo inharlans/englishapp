@@ -49,8 +49,8 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `12b7887750fe`
-- HEAD: `35af9c6` Update session continuity token checklist
+- Source hash: `311eae32c938`
+- HEAD: `c89c15c` chore(docs): record continuous prod login recheck warning status
 
 ### Scope Digests
 - api-routes: 61 files, `68f26bf43f5f`

@@ -94,6 +94,23 @@
   - 동일 해시 반복 + `id` 미포함 상태 지속
   - 운영 배포 반영/캐시 동기화 미완료로 보이며, `재요청(동일 해시 반복 노출)` 필요
 
+## 재측정 결과 (연속 3회 즉시 재점검, 2026-02-28 21:02)
+
+- URL: `https://www.oingapp.com/login?_smoke=2`
+- 측정 횟수: 3회 (약 2~3초 간격)
+- 로그 경로: `logs/ops/login-prod-accessibility-check.jsonl`
+- 공통 노출 번들: `/_next/static/chunks/app/login/page-7949e7fe4576be4c.js`
+- 판정: 모두 `warn`
+- 공통 진단:
+  - `input#login-email` 미노출
+  - `input#login-password` 미노출
+  - `name="email"` PASS
+  - `name="password"` PASS
+  - 경고 문자열 미탐지
+- 판단:
+  - 동일 해시 유지 및 `id` 미노출 상태가 3회 연속 재확인됨
+  - 운영 캐시 동기화 반영 미완료 정황 지속
+
 ## 재측정 자동화 명령
 
 - 실행 명령: `npm run ops:prod-login-check`

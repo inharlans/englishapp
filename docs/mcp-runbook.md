@@ -44,7 +44,7 @@
 - 네비 링크: PASS (4개 모두 DOM에서 탐지)
 - 콘솔: WARN (`A form field element should have an id or name attribute`) — 로컬 배포 브랜치 반영 전 확인 필요
 - 네트워크 실패: PASS (4xx/5xx 없음, 307 1건)
-  - 로그인 경고 재점검(운영 재측정): `/login?_smoke=2`에서 연속 재점검 3회 모두 `warn` 유지
+  - 로그인 경고 재점검(운영 재측정): `/login?_smoke=2`에서 연속 재점검 3회 모두 `warn` 유지(2026-02-28 21:02)
 
 ## 5) Ops Debug v1 (oingapp)
 - 대상 URL: `https://www.oingapp.com`
@@ -68,6 +68,7 @@
   - 해당 번들에서 `name="email"`/`name="password"`는 문자열 상에서 확인되나 `id="login-email"`/`id="login-password"`는 미발견
   - `A form field element should have an id or name attribute` 경고 텍스트는 번들 자체에서 미탐지이나, `id` 누락 이슈로 주의 상태는 유지
   - 2026-02-28 20:56:32~20:56:39 3회 연속 재측정에서 동일 번들(`page-7949e7fe4576be4c.js`) `warn` 유지
+  - 2026-02-28 21:02:15~21:02:23 3회 연속 재측정에서도 동일 번들(`page-7949e7fe4576be4c.js`) `warn` 유지
 
 ## 6) MCP 도입 실행(최소권한)
 - 도입 순서는 `github(read)` -> `postgres(read)` -> `sentry(read)` -> `prisma(read)` -> `playwright` -> `context7(필요 시)`로 고정한다.
