@@ -1,0 +1,62 @@
+name: clipper-e2e-optional
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "extension/**"
+      - "tests/e2e/clipper-extension-flow.mjs"
+      - ".github/workflows/clipper-e2e-optional.yml"
+
+jobs:
+  precheck:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      run_e2e: ${{ steps.result.outputs.run_e2e }}
+    steps:
+      - name: Default to skip
+        run: echo "run_e2e=false" >> "$GITHUB_OUTPUT"
+        id: result
+
+      - name: Enable run for manual dispatch with secret
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        env:
+          E2E_SECRET: ${{ secrets.E2E_SECRET }}
+        run: |
+          if [ -n "$E2E_SECRET" ]; then
+            echo "run_e2e=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  clipper-e2e:
+    needs: precheck
+    if: ${{ needs.precheck.outputs.run_e2e == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Run clipper extension E2E
+        env:
+          E2E_SECRET: ${{ secrets.E2E_SECRET }}
+        run: npm run test:e2e:clipper:extension
+
+  skip-without-secret:
+    needs: precheck
+    if: ${{ needs.precheck.outputs.run_e2e != 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Skip reason (no secret)
+        run: 'echo "Skipped: run only on workflow_dispatch with E2E_SECRET configured."'
