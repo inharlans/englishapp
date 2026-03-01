@@ -52,11 +52,11 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `a3f8cadb963a`
-- HEAD: `f6a352f` Ignore local market logs and clarify snapshot commit policy
+- Source hash: `e28a3ded8983`
+- HEAD: `9b15b57` Pin LF line endings for snapshot files
 
 ### Scope Digests
-- api-routes: 67 files, `fdaab0e9478e`
+- api-routes: 67 files, `401d6bc4c65a`
 - api-helpers: 17 files, `86a333ad403c`
 - domain-services: 39 files, `a8235083d74b`
 - automation-policy: 90 files, `ace0c18c1f60`

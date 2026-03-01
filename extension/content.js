@@ -1,9 +1,27 @@
 (() => {
   const BUTTON_ID = "englishapp-clipper-btn";
+  const BUTTON_DATA_ATTR = "data-englishapp-clipper";
+  const INJECTED_DATA_ATTR = "data-englishapp-clipper-injected";
+  const CLICKED_DATA_ATTR = "data-englishapp-clipper-clicked";
   const MIN_TERM_LEN = 2;
   const DEFAULT_BRIDGE_ORIGIN = "https://www.oingapp.com";
+  const IS_E2E_FIXTURE_PAGE = /^\/clipper\/extension-fixture\/?$/.test(location.pathname);
 
   let button = null;
+
+  if (IS_E2E_FIXTURE_PAGE) {
+    try {
+      document.documentElement?.setAttribute(INJECTED_DATA_ATTR, "1");
+    } catch {
+      // no-op
+    }
+
+    try {
+      console.log(JSON.stringify({ tag: "CLIPPER_E2E", step: "content_injected", ts: Date.now() }));
+    } catch {
+      // no-op
+    }
+  }
 
   function logClipper(step, extra = {}) {
     try {
@@ -100,6 +118,7 @@
     removeButton();
     button = document.createElement("button");
     button.id = BUTTON_ID;
+    button.setAttribute(BUTTON_DATA_ATTR, "button");
     button.type = "button";
     button.textContent = "단어장에 추가";
     button.className = "englishapp-clipper-btn";
@@ -132,7 +151,21 @@
 
     const exampleSentenceEn = inferExampleFromSelection(selection);
 
-    createButton(rect.right + window.scrollX + 8, rect.top + window.scrollY - 4, () => {
+    createButton(rect.right + window.scrollX + 8, rect.top + window.scrollY - 4, (event) => {
+      const clickEvent = event;
+      if (IS_E2E_FIXTURE_PAGE) {
+        try {
+          document.documentElement?.setAttribute(CLICKED_DATA_ATTR, String(Date.now()));
+        } catch {
+          // no-op
+        }
+      }
+      logClipper("button_click_handler_entered", {
+        isTrusted: clickEvent?.isTrusted ?? null,
+        button: clickEvent?.button ?? null,
+        clientX: clickEvent?.clientX ?? null,
+        clientY: clickEvent?.clientY ?? null
+      });
       const payload = {
         term,
         exampleSentenceEn,

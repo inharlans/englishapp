@@ -11,6 +11,8 @@ const HEADLESS = process.env.E2E_HEADLESS === "1";
 const MANUAL_LOGIN = process.env.E2E_MANUAL_LOGIN === "1";
 
 const FIXTURE_TITLE = `Clipper Ext E2E ${Date.now()} ${Math.random().toString(36).slice(2, 8)}`;
+const INJECTED_DATA_ATTR = "data-englishapp-clipper-injected";
+const CLICKED_DATA_ATTR = "data-englishapp-clipper-clicked";
 
 function assert(cond, msg) {
   if (!cond) throw new Error(msg);
@@ -240,25 +242,128 @@ async function configureBridgeOrigin(context, extensionId) {
   await options.close();
 }
 
-async function dumpBridgeDebug(context, page, consoleLogs, label) {
+async function readSelectionDebug(page) {
+  return await page.evaluate(() => {
+    const selection = window.getSelection();
+    if (!selection) {
+      return { exists: false, textLength: 0, textSample: "", rangeCount: 0, isCollapsed: true };
+    }
+    const text = selection.toString();
+    return {
+      exists: true,
+      textLength: text.length,
+      textSample: text.slice(0, 80),
+      rangeCount: selection.rangeCount,
+      isCollapsed: selection.isCollapsed
+    };
+  });
+}
+
+async function readButtonClickMarker(page) {
+  try {
+    return await page.evaluate((clickedDataAttr) => {
+      return document.documentElement?.getAttribute(clickedDataAttr) || null;
+    }, CLICKED_DATA_ATTR);
+  } catch {
+    return null;
+  }
+}
+
+async function readButtonHitTest(page, box) {
+  if (!box) return null;
+  const centerX = box.x + box.width / 2;
+  const centerY = box.y + box.height / 2;
+  try {
+    return await page.evaluate(({ x, y }) => {
+      const el = document.elementFromPoint(x, y);
+      if (!el) return null;
+      return {
+        tag: el.tagName,
+        id: el.id || null,
+        className: typeof el.className === "string" ? el.className : null,
+        text: (el.textContent || "").slice(0, 80)
+      };
+    }, { x: centerX, y: centerY });
+  } catch {
+    return null;
+  }
+}
+
+async function clickButtonWithFallbacks(page, addButton) {
+  const attempts = [];
+
+  const runAttempt = async (name, action) => {
+    try {
+      await action();
+      await page.waitForTimeout(150);
+      const marker = await readButtonClickMarker(page);
+      const success = Boolean(marker);
+      attempts.push({ name, ok: success, marker });
+      return { success, marker };
+    } catch (error) {
+      attempts.push({ name, ok: false, error: error instanceof Error ? error.message : String(error) });
+      return { success: false, marker: null };
+    }
+  };
+
+  let result = await runAttempt("locator.click", async () => {
+    await addButton.click();
+  });
+
+  if (!result.success) {
+    result = await runAttempt("locator.click.force", async () => {
+      await addButton.click({ force: true });
+    });
+  }
+
+  if (!result.success) {
+    result = await runAttempt("mouse.click.center", async () => {
+      const box = await addButton.boundingBox();
+      assert(box, "button has no bounding box");
+      await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+    });
+  }
+
+  return { marker: result.marker, attempts };
+}
+
+async function dumpBridgeDebug(context, page, consoleLogs, swLogs, label, preClickSelection, postClickSelection, clickAttempts, buttonBox, buttonHit) {
   const pageUrls = context.pages().map((candidate) => candidate.url());
   let marker = null;
+  let injected = null;
   try {
     marker = await page.evaluate(() => window.__CLIPPER_BRIDGE_OPENED__ || null);
   } catch {
     marker = null;
   }
+  try {
+    injected = await page.evaluate((injectedDataAttr) => {
+      return document.documentElement?.getAttribute(injectedDataAttr) || null;
+    }, INJECTED_DATA_ATTR);
+  } catch {
+    injected = null;
+  }
   const clipperLogs = consoleLogs
     .filter((entry) => entry.text.includes("CLIPPER_E2E"))
+    .slice(-60);
+  const clipperSwLogs = swLogs
+    .filter((entry) => entry.text.includes("CLIPPER_E2E_BG"))
     .slice(-60);
 
   console.error(`[e2e-extension][debug] ${label}`);
   console.error(`[e2e-extension][debug] pages=${JSON.stringify(pageUrls)}`);
   console.error(`[e2e-extension][debug] marker=${JSON.stringify(marker)}`);
+  console.error(`[e2e-extension][debug] injected=${JSON.stringify(injected)}`);
+  console.error(`[e2e-extension][debug] preClickSelection=${JSON.stringify(preClickSelection)}`);
+  console.error(`[e2e-extension][debug] postClickSelection=${JSON.stringify(postClickSelection)}`);
+  console.error(`[e2e-extension][debug] clickAttempts=${JSON.stringify(clickAttempts)}`);
+  console.error(`[e2e-extension][debug] buttonBox=${JSON.stringify(buttonBox)}`);
+  console.error(`[e2e-extension][debug] elementFromPoint=${JSON.stringify(buttonHit)}`);
   console.error(`[e2e-extension][debug] clipperLogs=${JSON.stringify(clipperLogs)}`);
+  console.error(`[e2e-extension][debug] clipperSwLogs=${JSON.stringify(clipperSwLogs)}`);
 }
 
-async function runFlow(context) {
+async function runFlow(context, swLogs) {
   const page = await context.newPage();
   const consoleLogs = [];
   page.on("console", (msg) => {
@@ -278,13 +383,25 @@ async function runFlow(context) {
   await page.mouse.move(endX, y, { steps: 8 });
   await page.mouse.up();
 
-  const addButton = page.locator("#englishapp-clipper-btn");
+  const addButton = page.locator('[data-englishapp-clipper="button"]');
   await addButton.waitFor({ timeout: 10000 });
+  await page.evaluate((clickedDataAttr) => {
+    document.documentElement?.removeAttribute(clickedDataAttr);
+  }, CLICKED_DATA_ATTR);
+  const buttonBox = await addButton.boundingBox();
+  assert(buttonBox, "clipper add button has no bounding box");
+  const buttonHit = await readButtonHitTest(page, buttonBox);
+  const preClickSelection = await readSelectionDebug(page);
+  const injected = await page.evaluate((injectedDataAttr) => {
+    return document.documentElement?.getAttribute(injectedDataAttr) || null;
+  }, INJECTED_DATA_ATTR);
+  assert(injected === "1", "content script was not injected");
 
   const openBridgePattern = new RegExp(`${BASE_URL.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}/clipper/add\\?payload=`);
   const pagesBeforeClick = new Set(context.pages());
   const openedPagePromise = context.waitForEvent("page", { timeout: 7000 }).catch(() => null);
-  await addButton.click();
+  const clickResult = await clickButtonWithFallbacks(page, addButton);
+  const postClickSelection = await readSelectionDebug(page);
   const [samePageNavigated, openedPage] = await Promise.all([
     page
       .waitForURL(openBridgePattern, { timeout: 5000 })
@@ -324,7 +441,18 @@ async function runFlow(context) {
       "bridge success message missing"
     );
   } catch (error) {
-    await dumpBridgeDebug(context, page, consoleLogs, "bridge_open_failed");
+    await dumpBridgeDebug(
+      context,
+      page,
+      consoleLogs,
+      swLogs,
+      "bridge_open_failed",
+      preClickSelection,
+      postClickSelection,
+      clickResult.attempts,
+      buttonBox,
+      buttonHit
+    );
     throw error;
   }
 }
@@ -350,9 +478,13 @@ async function main() {
   let shouldRestoreDefaultWordbook = false;
   let createdWordbookId = null;
   let restoreDefaultSucceeded = false;
+  const swLogs = [];
 
   try {
     const serviceWorker = context.serviceWorkers()[0] ?? (await context.waitForEvent("serviceworker"));
+    serviceWorker.on("console", (msg) => {
+      swLogs.push({ type: msg.type(), text: msg.text() });
+    });
     const extensionId = new URL(serviceWorker.url()).host;
 
     auth = await getE2eSession();
@@ -375,7 +507,7 @@ async function main() {
     }
 
     await configureBridgeOrigin(context, extensionId);
-    await runFlow(context);
+    await runFlow(context, swLogs);
     console.log("[e2e-extension] passed");
   } finally {
     if (auth && !MANUAL_LOGIN && shouldRestoreDefaultWordbook) {
