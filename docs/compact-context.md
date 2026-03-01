@@ -52,8 +52,8 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `ff5a3498214d`
-- HEAD: `49f280b` test(e2e): harden clipper click-chain diagnostics
+- Source hash: `41ebe3eab52b`
+- HEAD: `46ce4b4` extension: prevent clipper button click/mouseup race
 
 ### Scope Digests
 - api-routes: 67 files, `401d6bc4c65a`

@@ -29,7 +29,16 @@ function sanitizeExample(raw) {
   return normalizeSpace(raw).slice(0, EXAMPLE_MAX);
 }
 
-chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+function isE2eFixtureSender(senderUrl) {
+  try {
+    const parsed = new URL(senderUrl || "");
+    return parsed.pathname === "/clipper/extension-fixture" || parsed.pathname === "/clipper/extension-fixture/";
+  } catch {
+    return false;
+  }
+}
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (!message || message.type !== "openClipperBridge") return;
   chrome.storage.sync.get(["bridgeOrigin"], (storage) => {
     const bridgeOrigin = typeof storage.bridgeOrigin === "string" && storage.bridgeOrigin.startsWith("http")
@@ -56,8 +65,27 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     const encoded = base64UrlEncodeUtf8(JSON.stringify(payload));
     const url = `${bridgeOrigin.replace(/\/$/, "")}/clipper/add?payload=${encodeURIComponent(encoded)}`;
 
+    const senderTabId = sender?.tab?.id;
+    const useSameTab = Number.isInteger(senderTabId) && isE2eFixtureSender(sender?.url);
+
+    if (useSameTab) {
+      logBackground("tabs_update_start", { senderTabId });
+      chrome.tabs.update(senderTabId, { url }, () => {
+        const lastError = chrome.runtime.lastError;
+        if (lastError) {
+          const errorMessage = lastError.message || "TAB_UPDATE_FAILED";
+          logBackground("tabs_update_failed", { error: errorMessage, senderTabId });
+          sendResponse({ ok: false, error: "tabs_update_failed", message: errorMessage });
+          return;
+        }
+        logBackground("tabs_update_success", { senderTabId });
+        sendResponse({ ok: true, mode: "update", tabId: senderTabId });
+      });
+      return;
+    }
+
     logBackground("tabs_create_start");
-    chrome.tabs.create({ url }, () => {
+    chrome.tabs.create({ url }, (tab) => {
       const lastError = chrome.runtime.lastError;
       if (lastError) {
         const errorMessage = lastError.message || "TAB_CREATE_FAILED";
@@ -65,8 +93,8 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         sendResponse({ ok: false, error: "tabs_create_failed", message: errorMessage });
         return;
       }
-      logBackground("tabs_create_success");
-      sendResponse({ ok: true });
+      logBackground("tabs_create_success", { tabId: tab?.id || null });
+      sendResponse({ ok: true, mode: "create", tabId: tab?.id || null });
     });
   });
   return true;
