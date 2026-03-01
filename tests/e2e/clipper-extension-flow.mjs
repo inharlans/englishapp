@@ -440,7 +440,14 @@ async function runFlow(context, swLogs) {
           bodyPreview = null;
         }
         clipperAddResponseDebug = {
-          url: clipperAddResponse.url(),
+          url: (() => {
+            try {
+              const parsed = new URL(clipperAddResponse.url());
+              return `${parsed.origin}${parsed.pathname}`;
+            } catch {
+              return clipperAddResponse.url();
+            }
+          })(),
           status: clipperAddResponse.status(),
           bodyPreview
         };
@@ -496,7 +503,14 @@ async function runFlow(context, swLogs) {
         bodyPreview = null;
       }
       clipperAddResponseDebug = {
-        url: clipperAddResponse.url(),
+        url: (() => {
+          try {
+            const parsed = new URL(clipperAddResponse.url());
+            return `${parsed.origin}${parsed.pathname}`;
+          } catch {
+            return clipperAddResponse.url();
+          }
+        })(),
         status: clipperAddResponse.status(),
         bodyPreview
       };
