@@ -294,25 +294,30 @@ export class WordbookRepository {
 
     const orderBySql =
       query.sort === "new"
-        ? Prisma.sql`wb."createdAt" DESC`
+        ? Prisma.sql`cw."createdAt" DESC`
         : query.sort === "downloads"
-          ? Prisma.sql`wb."downloadCount" DESC, wb."ratingAvg" DESC`
-          : Prisma.sql`wb."rankScore" DESC, wb."createdAt" DESC`;
+          ? Prisma.sql`cw."downloadCount" DESC, cw."ratingAvg" DESC`
+          : Prisma.sql`cw."rankScore" DESC, cw."createdAt" DESC`;
 
     const countRows = await prisma.$queryRaw<Array<{ total: number }>>(Prisma.sql`
-      SELECT COUNT(*)::int AS total
-      FROM "Wordbook" wb
-      JOIN LATERAL (
-        SELECT COUNT(*)::int AS item_count
+      WITH candidate_wordbooks AS (
+        SELECT wb."id"
+        FROM "Wordbook" wb
+        WHERE wb."isPublic" = true
+          AND wb."hiddenByAdmin" = false
+          ${searchSql}
+          ${blockedSql}
+          AND NOT (${blockedTitleSql})
+      ), item_counter AS (
+        SELECT wi."wordbookId" AS wordbook_id, COUNT(*)::int AS item_count
         FROM "WordbookItem" wi
-        WHERE wi."wordbookId" = wb."id"
-      ) item_counter ON true
-      WHERE wb."isPublic" = true
-        AND wb."hiddenByAdmin" = false
-        AND item_counter.item_count >= ${MARKET_MIN_ITEM_COUNT}
-        ${searchSql}
-        ${blockedSql}
-        AND NOT (${blockedTitleSql})
+        JOIN candidate_wordbooks cw ON cw."id" = wi."wordbookId"
+        GROUP BY wi."wordbookId"
+      )
+      SELECT COUNT(*)::int AS total
+      FROM candidate_wordbooks cw
+      LEFT JOIN item_counter ON item_counter.wordbook_id = cw."id"
+      WHERE COALESCE(item_counter.item_count, 0) >= ${MARKET_MIN_ITEM_COUNT}
     `);
 
     const rows = await prisma.$queryRaw<
@@ -333,34 +338,52 @@ export class WordbookRepository {
         itemCount: number;
       }>
     >(Prisma.sql`
+      WITH candidate_wordbooks AS (
+        SELECT
+          wb."id" AS "id",
+          wb."title" AS "title",
+          wb."description" AS "description",
+          wb."fromLang" AS "fromLang",
+          wb."toLang" AS "toLang",
+          wb."isPublic" AS "isPublic",
+          wb."downloadCount" AS "downloadCount",
+          wb."ratingAvg" AS "ratingAvg",
+          wb."ratingCount" AS "ratingCount",
+          wb."createdAt" AS "createdAt",
+          wb."updatedAt" AS "updatedAt",
+          wb."rankScore" AS "rankScore",
+          wb."ownerId" AS "ownerId"
+        FROM "Wordbook" wb
+        WHERE wb."isPublic" = true
+          AND wb."hiddenByAdmin" = false
+          ${searchSql}
+          ${blockedSql}
+          AND NOT (${blockedTitleSql})
+      ), item_counter AS (
+        SELECT wi."wordbookId" AS wordbook_id, COUNT(*)::int AS item_count
+        FROM "WordbookItem" wi
+        JOIN candidate_wordbooks cw ON cw."id" = wi."wordbookId"
+        GROUP BY wi."wordbookId"
+      )
       SELECT
-        wb."id" AS id,
-        wb."title" AS title,
-        wb."description" AS description,
-        wb."fromLang" AS "fromLang",
-        wb."toLang" AS "toLang",
-        wb."isPublic" AS "isPublic",
-        wb."downloadCount" AS "downloadCount",
-        wb."ratingAvg" AS "ratingAvg",
-        wb."ratingCount" AS "ratingCount",
-        wb."createdAt" AS "createdAt",
-        wb."updatedAt" AS "updatedAt",
+        cw."id" AS id,
+        cw."title" AS title,
+        cw."description" AS description,
+        cw."fromLang" AS "fromLang",
+        cw."toLang" AS "toLang",
+        cw."isPublic" AS "isPublic",
+        cw."downloadCount" AS "downloadCount",
+        cw."ratingAvg" AS "ratingAvg",
+        cw."ratingCount" AS "ratingCount",
+        cw."createdAt" AS "createdAt",
+        cw."updatedAt" AS "updatedAt",
         u."id" AS "ownerId",
         u."email" AS "ownerEmail",
-        item_counter.item_count AS "itemCount"
-      FROM "Wordbook" wb
-      JOIN "User" u ON u."id" = wb."ownerId"
-      JOIN LATERAL (
-        SELECT COUNT(*)::int AS item_count
-        FROM "WordbookItem" wi
-        WHERE wi."wordbookId" = wb."id"
-      ) item_counter ON true
-      WHERE wb."isPublic" = true
-        AND wb."hiddenByAdmin" = false
-        AND item_counter.item_count >= ${MARKET_MIN_ITEM_COUNT}
-        ${searchSql}
-        ${blockedSql}
-        AND NOT (${blockedTitleSql})
+        COALESCE(item_counter.item_count, 0) AS "itemCount"
+      FROM candidate_wordbooks cw
+      JOIN "User" u ON u."id" = cw."ownerId"
+      LEFT JOIN item_counter ON item_counter.wordbook_id = cw."id"
+      WHERE COALESCE(item_counter.item_count, 0) >= ${MARKET_MIN_ITEM_COUNT}
       ORDER BY ${orderBySql}
       OFFSET ${offset}
       LIMIT ${query.take}

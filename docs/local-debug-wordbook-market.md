@@ -21,7 +21,7 @@ npm run local:market:setup
 This command does all of the following:
 
 - Starts local Prisma dev DB
-- Builds a stable local `DATABASE_URL` (`pgbouncer=true`)
+- Builds a stable local `DATABASE_URL` (`pgbouncer=true`, `connection_limit=8`, no `single_use_connections`)
 - Applies migrations
 - Seeds market-ready local fixtures
 - Prints debug login credentials

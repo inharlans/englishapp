@@ -24,6 +24,8 @@ $uri = [Uri]$rawDbUrl
 $query = [System.Web.HttpUtility]::ParseQueryString($uri.Query)
 $query["pgbouncer"] = "true"
 $query["sslmode"] = "disable"
+$query.Remove("single_use_connections")
+$query["connection_limit"] = "8"
 
 $builder = New-Object System.UriBuilder($uri)
 $builder.Query = $query.ToString()
@@ -33,7 +35,7 @@ $env:DATABASE_URL = $localDbUrl
 $env:LOCAL_DEBUG_EMAIL = $DebugEmail
 $env:LOCAL_DEBUG_PASSWORD = $DebugPassword
 
-Write-Host "[local-market-debug] DATABASE_URL set to $($builder.Host):$($builder.Port)"
+Write-Host "[local-market-debug] DATABASE_URL set to $($builder.Host):$($builder.Port) (pgbouncer=true, connection_limit=8)"
 Write-Host "[local-market-debug] applying migrations"
 npx prisma migrate deploy
 

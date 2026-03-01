@@ -49,15 +49,15 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `c44dc873e76a`
-- HEAD: `7143fb8` Enable downloadable clipper extension and install flow
+- Source hash: `2a15c418bec4`
+- HEAD: `efc8fb3` Optimize API latency paths and add extension delivery tooling
 
 ### Scope Digests
-- api-routes: 67 files, `401d6bc4c65a`
-- api-helpers: 17 files, `7d1e0ed6e296`
-- domain-services: 39 files, `88dcb53c24b3`
-- automation-policy: 90 files, `a2935a0c019f`
-- tracking-docs: 10 files, `e7bbab2c04c6`
+- api-routes: 67 files, `fdaab0e9478e`
+- api-helpers: 17 files, `4e9ad9256fed`
+- domain-services: 39 files, `a8235083d74b`
+- automation-policy: 90 files, `d7059fe9074e`
+- tracking-docs: 10 files, `7df6b43ce550`
 
 ### Legacy Route Migration Status
 - base: `app/api/`, total: 55, migrated: 44, remaining: 11

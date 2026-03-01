@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 
 import { execSync, spawn } from "node:child_process";
+import { mkdirSync, writeFileSync } from "node:fs";
+import path from "node:path";
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -34,6 +36,60 @@ function toStats(samples) {
     maxMs: sorted[sorted.length - 1],
     avgMs: Number(avg.toFixed(2))
   };
+}
+
+function parseArgs(argv) {
+  const defaults = {
+    runs: 30,
+    warmup: 5,
+    reportFile: ""
+  };
+  const next = { ...defaults };
+
+  for (let i = 0; i < argv.length; i += 1) {
+    const arg = argv[i];
+    if (arg === "--runs") {
+      next.runs = Number(argv[i + 1] ?? defaults.runs);
+      i += 1;
+      continue;
+    }
+    if (arg === "--warmup") {
+      next.warmup = Number(argv[i + 1] ?? defaults.warmup);
+      i += 1;
+      continue;
+    }
+    if (arg === "--report-file") {
+      next.reportFile = String(argv[i + 1] ?? "").trim();
+      i += 1;
+    }
+  }
+
+  if (!Number.isFinite(next.runs) || next.runs < 1) {
+    throw new Error(`Invalid --runs value: ${next.runs}`);
+  }
+  if (!Number.isFinite(next.warmup) || next.warmup < 0) {
+    throw new Error(`Invalid --warmup value: ${next.warmup}`);
+  }
+  return {
+    runs: Math.floor(next.runs),
+    warmup: Math.floor(next.warmup),
+    reportFile: next.reportFile
+  };
+}
+
+function makeTimestamp() {
+  return new Date().toISOString().replace(/[.:]/g, "-");
+}
+
+function defaultReportFile() {
+  return path.join(process.cwd(), "reports", "perf", `perf-endpoints-${makeTimestamp()}.json`);
+}
+
+function writeReportFile(filePath, data) {
+  const absolutePath = path.isAbsolute(filePath) ? filePath : path.join(process.cwd(), filePath);
+  mkdirSync(path.dirname(absolutePath), { recursive: true });
+  writeFileSync(absolutePath, `${JSON.stringify(data, null, 2)}\n`, "utf8");
+  return absolutePath;
 }
 
 function parseSetCookies(headers) {
@@ -97,9 +153,13 @@ async function waitReady(baseUrl) {
   throw new Error("Server did not become ready");
 }
 
-async function measure(label, fn, n = 3) {
+async function measure(label, fn, options) {
+  for (let i = 0; i < options.warmup; i += 1) {
+    await fn(i);
+  }
+
   const samples = [];
-  for (let i = 0; i < n; i += 1) {
+  for (let i = 0; i < options.runs; i += 1) {
     const startedAt = process.hrtime.bigint();
     await fn(i);
     const elapsedMs = Number(process.hrtime.bigint() - startedAt) / 1_000_000;
@@ -108,7 +168,7 @@ async function measure(label, fn, n = 3) {
   return { label, samples, ...toStats(samples) };
 }
 
-async function runScenario({ name, dbUrl, port }) {
+async function runScenario({ name, dbUrl, port, measureOptions }) {
   const baseUrl = `http://127.0.0.1:${port}`;
   const env = {
     ...process.env,
@@ -151,13 +211,13 @@ async function runScenario({ name, dbUrl, port }) {
 
     const market = await measure("market", async () => {
       await fetchJson(`${baseUrl}/api/wordbooks/market?sort=popular&page=0&take=30`);
-    });
+    }, measureOptions);
 
     const quiz = await measure("quiz", async () => {
       await fetchJson(`${baseUrl}/api/wordbooks/${best.id}/quiz?mode=MEANING&partSize=200&partIndex=1`, {
         headers: { cookie: auth.cookie }
       });
-    });
+    }, measureOptions);
 
     const importResult = await measure("import", async (i) => {
       await fetchJson(`${baseUrl}/api/words/import`, {
@@ -172,7 +232,7 @@ async function runScenario({ name, dbUrl, port }) {
         },
         body: JSON.stringify({ rawText: makeRawText(1000, `${name}_${Date.now()}_${i}`) })
       });
-    });
+    }, measureOptions);
 
     return {
       name,
@@ -188,6 +248,7 @@ async function runScenario({ name, dbUrl, port }) {
 }
 
 async function main() {
+  const options = parseArgs(process.argv.slice(2));
   const baseline = resolveDbUrl();
   const tuned = new URL(baseline.toString());
   tuned.searchParams.delete("single_use_connections");
@@ -199,27 +260,29 @@ async function main() {
   const baselineResult = await runScenario({
     name: "baseline",
     dbUrl: baseline.toString(),
-    port: 3061
+    port: 3061,
+    measureOptions: options
   });
 
   const tunedResult = await runScenario({
     name: "tuned",
     dbUrl: tuned.toString(),
-    port: 3062
+    port: 3062,
+    measureOptions: options
   });
 
+  const report = {
+    measuredAt: new Date().toISOString(),
+    options,
+    scenarios: [baselineResult, tunedResult]
+  };
+
+  const reportFilePath = writeReportFile(options.reportFile || defaultReportFile(), report);
+
   console.log("[perf] REPORT_JSON_START");
-  console.log(
-    JSON.stringify(
-      {
-        measuredAt: new Date().toISOString(),
-        scenarios: [baselineResult, tunedResult]
-      },
-      null,
-      2
-    )
-  );
+  console.log(JSON.stringify(report, null, 2));
   console.log("[perf] REPORT_JSON_END");
+  console.log(`[perf] report_file=${reportFilePath}`);
 }
 
 main().catch((error) => {

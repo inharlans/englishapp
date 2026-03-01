@@ -2,6 +2,24 @@ import { NextResponse } from "next/server";
 
 import { recordApiMetric, recordApiMetricFromStart } from "@/lib/observability";
 
+const METRIC_WRITE_TIMEOUT_MS = 60;
+
+async function waitForMetricWrite(task: Promise<unknown>): Promise<void> {
+  try {
+    let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
+    const timeoutPromise = new Promise((resolve) => {
+      timeoutHandle = setTimeout(resolve, METRIC_WRITE_TIMEOUT_MS);
+      timeoutHandle.unref?.();
+    });
+    await Promise.race([
+      task,
+      timeoutPromise
+    ]);
+    if (timeoutHandle !== undefined) clearTimeout(timeoutHandle);
+  } catch {
+  }
+}
+
 export async function jsonWithMetric(params: {
   route: string;
   method: string;
@@ -15,13 +33,15 @@ export async function jsonWithMetric(params: {
     status: params.status,
     headers: params.headers
   });
-  await recordApiMetric({
-    route: params.route,
-    method: params.method,
-    status: params.status,
-    latencyMs: Date.now() - params.startedAt,
-    userId: params.userId
-  });
+  await waitForMetricWrite(
+    recordApiMetric({
+      route: params.route,
+      method: params.method,
+      status: params.status,
+      latencyMs: Date.now() - params.startedAt,
+      userId: params.userId
+    })
+  );
   return res;
 }
 
@@ -32,12 +52,14 @@ export async function returnWithMetric(params: {
   startedAt: number;
   userId?: number;
 }) {
-  await recordApiMetricFromStart({
-    route: params.route,
-    method: params.method,
-    status: params.response.status,
-    startedAt: params.startedAt,
-    userId: params.userId
-  });
+  await waitForMetricWrite(
+    recordApiMetricFromStart({
+      route: params.route,
+      method: params.method,
+      status: params.response.status,
+      startedAt: params.startedAt,
+      userId: params.userId
+    })
+  );
   return params.response;
 }

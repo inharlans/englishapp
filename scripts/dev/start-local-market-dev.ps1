@@ -1,7 +1,8 @@
 param(
   [string]$ServerName = "englishapp-local",
   [string]$DebugEmail = "debug@local.oingapp",
-  [string]$DebugPassword = "debug1234!"
+  [string]$DebugPassword = "debug1234!",
+  [string]$E2eSecret = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -23,9 +24,15 @@ $uri = [Uri]$rawDbUrl
 $query = [System.Web.HttpUtility]::ParseQueryString($uri.Query)
 $query["pgbouncer"] = "true"
 $query["sslmode"] = "disable"
+$query.Remove("single_use_connections")
+$query["connection_limit"] = "8"
 $builder = New-Object System.UriBuilder($uri)
 $builder.Query = $query.ToString()
 $env:DATABASE_URL = $builder.Uri.AbsoluteUri
+if ($E2eSecret) {
+  $env:E2E_SECRET = $E2eSecret
+  Write-Host "[local-market-dev] E2E_SECRET configured for internal e2e login"
+}
 
 Write-Host "[local-market-dev] starting Next.js dev server with local DB"
 npm run dev
