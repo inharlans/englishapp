@@ -8,6 +8,7 @@
   const IS_E2E_FIXTURE_PAGE = /^\/clipper\/extension-fixture\/?$/.test(location.pathname);
 
   let button = null;
+  let isClickingClipperButton = false;
 
   if (IS_E2E_FIXTURE_PAGE) {
     try {
@@ -86,6 +87,16 @@
     }
   }
 
+  function isClipperButtonTarget(target) {
+    return target instanceof Element && Boolean(target.closest(`[${BUTTON_DATA_ATTR}="button"]`));
+  }
+
+  function releaseClipperClickGuard() {
+    setTimeout(() => {
+      isClickingClipperButton = false;
+    }, 0);
+  }
+
   function openBridgeInPage(payload) {
     const markOpened = (via) => {
       window.__CLIPPER_BRIDGE_OPENED__ = { via, ts: Date.now() };
@@ -124,12 +135,24 @@
     button.className = "englishapp-clipper-btn";
     button.style.left = `${x}px`;
     button.style.top = `${y}px`;
+    button.addEventListener("pointerdown", () => {
+      isClickingClipperButton = true;
+    }, { capture: true });
+    button.addEventListener("pointerup", releaseClipperClickGuard, { capture: true });
+    button.addEventListener("pointercancel", releaseClipperClickGuard, { capture: true });
     button.addEventListener("mousedown", (e) => e.preventDefault());
     button.addEventListener("click", onClick);
     document.body.appendChild(button);
   }
 
-  function onMouseUp() {
+  function onMouseUp(event) {
+    if (isClickingClipperButton && event.buttons === 0 && !isClipperButtonTarget(event.target)) {
+      isClickingClipperButton = false;
+    }
+    if (isClickingClipperButton || isClipperButtonTarget(event.target)) {
+      return;
+    }
+
     const selection = window.getSelection();
     if (!selection || selection.isCollapsed) {
       removeButton();
@@ -152,47 +175,53 @@
     const exampleSentenceEn = inferExampleFromSelection(selection);
 
     createButton(rect.right + window.scrollX + 8, rect.top + window.scrollY - 4, (event) => {
-      const clickEvent = event;
-      if (IS_E2E_FIXTURE_PAGE) {
-        try {
-          document.documentElement?.setAttribute(CLICKED_DATA_ATTR, String(Date.now()));
-        } catch {
-          // no-op
+      try {
+        const clickEvent = event;
+        if (IS_E2E_FIXTURE_PAGE) {
+          try {
+            document.documentElement?.setAttribute(CLICKED_DATA_ATTR, String(Date.now()));
+          } catch {
+            // no-op
+          }
         }
+        logClipper("button_click_handler_entered", {
+          isTrusted: clickEvent?.isTrusted ?? null,
+          button: clickEvent?.button ?? null,
+          clientX: clickEvent?.clientX ?? null,
+          clientY: clickEvent?.clientY ?? null
+        });
+        const payload = {
+          term,
+          exampleSentenceEn,
+          sourceUrl: location.href,
+          sourceTitle: document.title
+        };
+        logClipper("sendMessage_start", { termLength: term.length });
+        chrome.runtime.sendMessage({
+          type: "openClipperBridge",
+          payload
+        }, (response) => {
+          const sendError = chrome.runtime.lastError?.message || null;
+          logClipper("sendMessage_done", { lastError: sendError, responseOk: Boolean(response?.ok), responseError: response?.error || null });
+          if (sendError || !response?.ok) {
+            logClipper("sendMessage_fallback_triggered", { reason: sendError || response?.error || "unknown" });
+            openBridgeInPage(payload);
+          }
+        });
+        removeButton();
+        selection.removeAllRanges();
+      } finally {
+        releaseClipperClickGuard();
       }
-      logClipper("button_click_handler_entered", {
-        isTrusted: clickEvent?.isTrusted ?? null,
-        button: clickEvent?.button ?? null,
-        clientX: clickEvent?.clientX ?? null,
-        clientY: clickEvent?.clientY ?? null
-      });
-      const payload = {
-        term,
-        exampleSentenceEn,
-        sourceUrl: location.href,
-        sourceTitle: document.title
-      };
-      logClipper("sendMessage_start", { termLength: term.length });
-      chrome.runtime.sendMessage({
-        type: "openClipperBridge",
-        payload
-      }, (response) => {
-        const sendError = chrome.runtime.lastError?.message || null;
-        logClipper("sendMessage_done", { lastError: sendError, responseOk: Boolean(response?.ok), responseError: response?.error || null });
-        if (sendError || !response?.ok) {
-          logClipper("sendMessage_fallback_triggered", { reason: sendError || response?.error || "unknown" });
-          openBridgeInPage(payload);
-        }
-      });
-      removeButton();
-      selection.removeAllRanges();
     });
   }
 
+  document.addEventListener("pointerup", releaseClipperClickGuard, true);
+  document.addEventListener("pointercancel", releaseClipperClickGuard, true);
   document.addEventListener("mouseup", onMouseUp);
   document.addEventListener("scroll", removeButton, true);
   document.addEventListener("mousedown", (event) => {
-    if (button && event.target !== button) {
+    if (button && !isClipperButtonTarget(event.target)) {
       removeButton();
     }
   });

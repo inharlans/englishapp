@@ -52,8 +52,8 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `e28a3ded8983`
-- HEAD: `9b15b57` Pin LF line endings for snapshot files
+- Source hash: `ff5a3498214d`
+- HEAD: `49f280b` test(e2e): harden clipper click-chain diagnostics
 
 ### Scope Digests
 - api-routes: 67 files, `401d6bc4c65a`
