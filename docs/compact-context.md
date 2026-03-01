@@ -52,15 +52,15 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `b120413b5819`
-- HEAD: `cde9b75` feat(metrics): add client metric endpoint and CTA click tracking
+- Source hash: `5589b5df9ef8`
+- HEAD: `24554b0` fix(quiz): enforce 10-question requeue flow
 
 ### Scope Digests
 - api-routes: 68 files, `257938c88df6`
 - api-helpers: 17 files, `86a333ad403c`
-- domain-services: 39 files, `a8235083d74b`
+- domain-services: 39 files, `365ed8061dba`
 - automation-policy: 90 files, `ace0c18c1f60`
-- tracking-docs: 10 files, `4e1ff3202ee3`
+- tracking-docs: 10 files, `0128213e9ee5`
 
 ### Legacy Route Migration Status
 - base: `app/api/`, total: 56, migrated: 44, remaining: 12
