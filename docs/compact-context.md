@@ -52,18 +52,18 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `80f0772d87b8`
-- HEAD: `55bce19` feat(ads): add AdSense slots and minimal client metrics
+- Source hash: `0f559b003568`
+- HEAD: `4a3877f` fix(ad): inject adsense meta and server-driven ad props
 
 ### Scope Digests
-- api-routes: 68 files, `e3e76ebc8593`
+- api-routes: 76 files, `336945ff6014`
 - api-helpers: 17 files, `86a333ad403c`
-- domain-services: 39 files, `a8235083d74b`
+- domain-services: 40 files, `b642b6cca1b1`
 - automation-policy: 90 files, `ace0c18c1f60`
 - tracking-docs: 10 files, `184b151560bb`
 
 ### Legacy Route Migration Status
-- base: `app/api/`, total: 56, migrated: 44, remaining: 12
+- base: `app/api/`, total: 60, migrated: 48, remaining: 12
 - remaining files:
   - `app/api/auth/google/callback/route.ts`
   - `app/api/auth/google/route.ts`

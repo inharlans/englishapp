@@ -20,5 +20,17 @@
       "css": ["styles.css"],
       "run_at": "document_idle"
     }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["page-bridge.js"],
+      "matches": [
+        "https://www.oingapp.com/*",
+        "https://127.0.0.1/*",
+        "https://localhost/*",
+        "http://127.0.0.1/*",
+        "http://localhost/*"
+      ]
+    }
   ]
 }

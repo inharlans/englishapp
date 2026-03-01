@@ -1,13 +1,26 @@
 (() => {
   const BUTTON_ID = "englishapp-clipper-btn";
   const BUTTON_DATA_ATTR = "data-englishapp-clipper";
+  const TOAST_DATA_ATTR = "data-englishapp-clipper-toast";
+  const TOAST_UPDATED_AT_ATTR = "data-englishapp-clipper-toast-updated-at";
   const INJECTED_DATA_ATTR = "data-englishapp-clipper-injected";
   const CLICKED_DATA_ATTR = "data-englishapp-clipper-clicked";
+  const BRIDGE_REQ_TYPE = "OING_CLIPPER_SAVE_REQ";
+  const BRIDGE_ABORT_TYPE = "OING_CLIPPER_SAVE_ABORT";
+  const BRIDGE_PING_TYPE = "OING_CLIPPER_PING_REQ";
+  const BRIDGE_TIMEOUT_MS = 8000;
   const MIN_TERM_LEN = 2;
   const DEFAULT_BRIDGE_ORIGIN = "https://www.oingapp.com";
+  const ALLOWED_BRIDGE_HOSTS = new Set([
+    "www.oingapp.com",
+    "localhost",
+    "127.0.0.1"
+  ]);
   const IS_E2E_FIXTURE_PAGE = /^\/clipper\/extension-fixture\/?$/.test(location.pathname);
 
   let button = null;
+  let toastEl = null;
+  let toastTimer = null;
   let isClickingClipperButton = false;
 
   if (IS_E2E_FIXTURE_PAGE) {
@@ -87,6 +100,195 @@
     }
   }
 
+  function createOrUpdateToast(message, tone) {
+    if (!toastEl) {
+      toastEl = document.createElement("div");
+      toastEl.className = "englishapp-clipper-toast";
+      toastEl.setAttribute(TOAST_DATA_ATTR, "toast");
+      toastEl.setAttribute("role", "status");
+      toastEl.setAttribute("aria-live", "polite");
+      document.body.appendChild(toastEl);
+    }
+    toastEl.textContent = message;
+    toastEl.setAttribute(TOAST_UPDATED_AT_ATTR, String(Date.now()));
+    toastEl.classList.remove("is-success", "is-warn", "is-error", "is-visible");
+    toastEl.classList.add(`is-${tone}`, "is-visible");
+    if (toastTimer) {
+      clearTimeout(toastTimer);
+    }
+    toastTimer = setTimeout(() => {
+      if (!toastEl) return;
+      toastEl.classList.remove("is-visible");
+    }, 1600);
+  }
+
+  function showSaveResultToast(result) {
+    const statusCode = Number(result?.statusCode || 0);
+    const clipperStatus = result?.result?.status || result?.status;
+
+    if (clipperStatus === "duplicate") {
+      createOrUpdateToast("이미 단어장에 있는 단어입니다.", "warn");
+      return;
+    }
+
+    if (result?.ok && clipperStatus === "created") {
+      createOrUpdateToast("단어장에 저장되었습니다.", "success");
+      return;
+    }
+
+    if (statusCode === 401 || statusCode === 403) {
+      createOrUpdateToast("저장 실패: 로그인이 필요합니다.", "warn");
+      return;
+    }
+    if (statusCode === 422) {
+      createOrUpdateToast("저장 실패: 기본 단어장을 먼저 설정해 주세요.", "warn");
+      return;
+    }
+    if (result?.errorCode === "timeout") {
+      createOrUpdateToast("저장 실패: 시간 초과입니다. 다시 시도해 주세요.", "error");
+      return;
+    }
+    createOrUpdateToast("저장 실패: 네트워크 또는 서버 오류입니다.", "error");
+  }
+
+  function injectPageBridgeScript() {
+    return new Promise((resolve) => {
+      try {
+        const pingBridge = () => new Promise((pingResolve) => {
+          const pingOnce = () => new Promise((resolveOnce) => {
+            const requestId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+            const channel = new MessageChannel();
+            const timeout = setTimeout(() => {
+              try {
+                channel.port1.close();
+              } catch {
+                // no-op
+              }
+              resolveOnce(false);
+            }, 1200);
+            channel.port1.onmessage = (event) => {
+              const data = event.data || {};
+              if (data.requestId !== requestId) return;
+              clearTimeout(timeout);
+              try {
+                channel.port1.close();
+              } catch {
+                // no-op
+              }
+              resolveOnce(Boolean(data.ok));
+            };
+            channel.port1.start();
+            window.postMessage(
+              { type: BRIDGE_PING_TYPE, requestId },
+              window.location.origin,
+              [channel.port2]
+            );
+          });
+
+          void pingOnce().then((ok) => {
+            if (ok) {
+              pingResolve(true);
+              return;
+            }
+            setTimeout(() => {
+              void pingOnce().then(pingResolve);
+            }, 150);
+          });
+        });
+
+        const script = document.createElement("script");
+        script.dataset.oingClipperBridge = "1";
+        script.src = chrome.runtime.getURL("page-bridge.js");
+        script.onload = () => {
+          script.remove();
+          void pingBridge().then(resolve);
+        };
+        script.onerror = () => {
+          script.remove();
+          resolve(false);
+        };
+        (document.documentElement || document.head || document.body).appendChild(script);
+      } catch {
+        resolve(false);
+      }
+    });
+  }
+
+  function requestClipperSaveViaPage(payload) {
+    return new Promise((resolve) => {
+      const requestId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      const channel = new MessageChannel();
+      const timeout = setTimeout(() => {
+        window.postMessage(
+          {
+            type: BRIDGE_ABORT_TYPE,
+            requestId
+          },
+          window.location.origin
+        );
+        try {
+          channel.port1.close();
+        } catch {
+          // no-op
+        }
+        resolve({ ok: false, statusCode: 0, errorCode: "timeout" });
+      }, BRIDGE_TIMEOUT_MS);
+
+      channel.port1.onmessage = (event) => {
+        const data = event.data || {};
+        if (data.requestId !== requestId) return;
+        clearTimeout(timeout);
+        try {
+          channel.port1.close();
+        } catch {
+          // no-op
+        }
+        resolve(data);
+      };
+      channel.port1.start();
+
+      window.postMessage(
+        {
+          type: BRIDGE_REQ_TYPE,
+          requestId,
+          payload
+        },
+        window.location.origin,
+        [channel.port2]
+      );
+    });
+  }
+
+  function shouldUseLegacyBridgeFallback() {
+    try {
+      return window.localStorage.getItem("oing-clipper-legacy-fallback") === "1";
+    } catch {
+      return false;
+    }
+  }
+
+  function resolveBridgeOrigin(callback) {
+    chrome.storage.sync.get(["bridgeOrigin"], (storage) => {
+      const configured = typeof storage.bridgeOrigin === "string" && storage.bridgeOrigin.startsWith("http")
+        ? storage.bridgeOrigin
+        : DEFAULT_BRIDGE_ORIGIN;
+      try {
+        const parsed = new URL(configured);
+        const isAllowedHost = ALLOWED_BRIDGE_HOSTS.has(parsed.hostname);
+        const isHttps = parsed.protocol === "https:";
+        const isLocalHttp = parsed.protocol === "http:" && (parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1");
+        callback((isAllowedHost && (isHttps || isLocalHttp)) ? parsed.origin : DEFAULT_BRIDGE_ORIGIN);
+      } catch {
+        callback(DEFAULT_BRIDGE_ORIGIN);
+      }
+    });
+  }
+
+  function shouldAutoLegacyFallback(result) {
+    const statusCode = Number(result?.statusCode || 0);
+    return result?.errorCode === "timeout" || result?.errorCode === "network_error" || statusCode >= 500;
+  }
+
   function isClipperButtonTarget(target) {
     return target instanceof Element && Boolean(target.closest(`[${BUTTON_DATA_ATTR}="button"]`));
   }
@@ -117,10 +319,9 @@
         markOpened("window.open");
         logClipper("fallback_open_bridge_success", { via: "window.open" });
       } else {
-        markOpened("location.href");
-        logClipper("fallback_open_bridge_blocked", { via: "location.href" });
-        console.warn("[englishapp-clipper] bridge open blocked by popup policy");
-        location.href = url;
+        markOpened("location.assign");
+        logClipper("fallback_open_bridge_blocked", { via: "location.assign" });
+        location.assign(url);
       }
     });
   }
@@ -196,17 +397,43 @@
           sourceUrl: location.href,
           sourceTitle: document.title
         };
-        logClipper("sendMessage_start", { termLength: term.length });
-        chrome.runtime.sendMessage({
-          type: "openClipperBridge",
-          payload
-        }, (response) => {
-          const sendError = chrome.runtime.lastError?.message || null;
-          logClipper("sendMessage_done", { lastError: sendError, responseOk: Boolean(response?.ok), responseError: response?.error || null });
-          if (sendError || !response?.ok) {
-            logClipper("sendMessage_fallback_triggered", { reason: sendError || response?.error || "unknown" });
-            openBridgeInPage(payload);
+        resolveBridgeOrigin((bridgeOrigin) => {
+          let sameOrigin = false;
+          try {
+            sameOrigin = new URL(bridgeOrigin).origin === window.location.origin;
+          } catch {
+            sameOrigin = false;
           }
+
+          if (!sameOrigin) {
+            logClipper("legacy_fallback_triggered", { reason: "cross_origin_context", bridgeOrigin });
+            openBridgeInPage(payload);
+            return;
+          }
+
+          void injectPageBridgeScript().then((bridgeReady) => {
+            if (!bridgeReady) {
+              logClipper("save_bridge_injection_failed");
+              logClipper("legacy_fallback_triggered", { reason: "bridge_injection_failed" });
+              openBridgeInPage(payload);
+              return;
+            }
+
+            logClipper("save_request_start", { termLength: term.length });
+            void requestClipperSaveViaPage(payload).then((result) => {
+              logClipper("save_request_done", {
+                ok: Boolean(result?.ok),
+                statusCode: Number(result?.statusCode || 0),
+                resultStatus: result?.result?.status || result?.status || null,
+                errorCode: result?.errorCode || null
+              });
+              showSaveResultToast(result);
+              if (!result?.ok && (shouldAutoLegacyFallback(result) || shouldUseLegacyBridgeFallback())) {
+                logClipper("legacy_fallback_triggered", { reason: result?.errorCode || `status_${result?.statusCode || 0}` });
+                openBridgeInPage(payload);
+              }
+            });
+          });
         });
         removeButton();
         selection.removeAllRanges();
