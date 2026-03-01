@@ -52,8 +52,8 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `053c2920d76d`
-- HEAD: `89bcd67` fix(ad): inject adsense meta and server-driven ad props
+- Source hash: `03414eff7a7d`
+- HEAD: `d45bb92` ci(e2e): add optional clipper workflow and sync compact snapshot
 
 ### Scope Digests
 - api-routes: 68 files, `e3e76ebc8593`
