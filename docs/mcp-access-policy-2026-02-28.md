@@ -1,5 +1,7 @@
 # MCP Access Policy (2026-02-28)
 
+Back to [AGENTS.md](../AGENTS.md)
+
 ## 목적
 - `englishapp`에서 사용할 MCP를 최소 권한 원칙으로 운영한다.
 - 야간 Ralph-Lite 자동화와 수동 코드 검토 흐름에서 보안/안정성을 유지한다.

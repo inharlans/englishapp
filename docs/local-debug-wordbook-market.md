@@ -1,5 +1,7 @@
 # Local Debug: Wordbook Market
 
+Back to [AGENTS.md](../AGENTS.md)
+
 Use this flow when you need full local debugging for market and wordbook features.
 
 ## 1) Use a local DB

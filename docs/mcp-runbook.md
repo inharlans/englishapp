@@ -1,5 +1,7 @@
 # MCP 운영 Runbook (chrome-devtools 기준)
 
+Back to [AGENTS.md](../AGENTS.md)
+
 ## 1) 개요/목적
 - 실서비스 `https://www.oingapp.com` 브라우저 점검을 위해 chrome-devtools MCP를 기준으로 `Regression Smoke v1`/`Ops Debug v1`를 일관되게 수행한다.
 - 운영 원칙: 읽기 중심 점검, 비파괴 실행, 브랜치 기반 운영 반영(운영 리포트 후 수동 승인).

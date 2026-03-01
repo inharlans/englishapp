@@ -7,7 +7,7 @@
 ## Agent Work Rules
 - If task scope is unclear, run `$workflow-router` first (when available).
 - If `$workflow-router` is unavailable, follow:
-  - `docs/ai-operating-system-2026-02-22/39-codex-workflow-start-template.md`
+  - [Codex Workflow Start Template](docs/ai-operating-system-2026-02-22/39-codex-workflow-start-template.md)
 - Do not claim verification unless commands were actually executed.
 
 ## Finish Checklist (Default)
@@ -45,7 +45,7 @@ For implementation tasks that change behavior or code:
 - Do not use plain `npm run dev` for market-debug tasks unless local DB environment is explicitly configured in the current shell.
 - Goal: avoid accidental use of production/remote `DATABASE_URL` from `.env` during local debugging.
 - Reference doc:
-  - `docs/local-debug-wordbook-market.md`
+  - [Local Debug: Wordbook Market](docs/local-debug-wordbook-market.md)
 
 ## Encoding Guardrail (UTF-8)
 
@@ -102,7 +102,7 @@ For implementation tasks that change behavior or code:
 - Finish:
   - "Run `npm run codex:workflow:check` and summarize executed checks/results."
 - Standard template doc:
-  - `docs/ai-operating-system-2026-02-22/39-codex-workflow-start-template.md`
+  - [Codex Workflow Start Template](docs/ai-operating-system-2026-02-22/39-codex-workflow-start-template.md)
 
 ## Additional Repository Policies (Korean)
 
@@ -170,7 +170,16 @@ For implementation tasks that change behavior or code:
 - 운영 데이터 접근은 문서화된 절차만 사용한다.
 
 ### 상세 문서
-- 리팩터링/계층 경계: `docs/refactor-execution-playbook-2026-03-01.md`
-- MCP 권한/운영: `docs/mcp-access-policy-2026-02-28.md`, `docs/mcp-runbook.md`
-- 게이트/훅: `.githooks/pre-commit`, `scripts/ops/codex-workflow-guard.js`
-- 위험 명령 정책: `.codex/rules/default.rules`
+- 리팩터링/계층 경계: [리팩터링 실행 플레이북](docs/refactor-execution-playbook-2026-03-01.md)
+- MCP 권한/운영: [MCP Access Policy](docs/mcp-access-policy-2026-02-28.md), [MCP 운영 Runbook](docs/mcp-runbook.md)
+- 게이트/훅: [pre-commit hook](.githooks/pre-commit), [codex-workflow-guard](scripts/ops/codex-workflow-guard.js)
+- 위험 명령 정책: [default.rules](.codex/rules/default.rules)
+
+## Quick Routing Map
+- 범위가 애매함: `$workflow-router` -> [Codex Workflow Start Template](docs/ai-operating-system-2026-02-22/39-codex-workflow-start-template.md)
+- Backend/계층 경계 리팩터링: [리팩터링 실행 플레이북](docs/refactor-execution-playbook-2026-03-01.md)
+- 로컬 market/wordbook 디버깅: [Local Debug: Wordbook Market](docs/local-debug-wordbook-market.md)
+- MCP 권한 정책 확인: [MCP Access Policy](docs/mcp-access-policy-2026-02-28.md)
+- MCP 운영 점검/장애 대응: [MCP 운영 Runbook](docs/mcp-runbook.md)
+- 훅/게이트 실패 분석: [pre-commit hook](.githooks/pre-commit), [codex-workflow-guard](scripts/ops/codex-workflow-guard.js), [default.rules](.codex/rules/default.rules)
+- 문서 링크 규칙: repo-relative 링크를 우선 사용하고, 외부 URL은 필요한 경우에만 추가

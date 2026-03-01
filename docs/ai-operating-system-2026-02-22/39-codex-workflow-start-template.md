@@ -1,5 +1,7 @@
 # Codex Workflow Start Template (2026-02-23)
 
+Back to [AGENTS.md](../../AGENTS.md)
+
 ## Purpose
 Standardize task kickoff so Codex reproduces Claude-style routing/guardrail workflow consistently.
 
