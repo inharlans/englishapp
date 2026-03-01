@@ -1,6 +1,7 @@
 (() => {
   const BUTTON_ID = "englishapp-clipper-btn";
   const MIN_TERM_LEN = 2;
+  const DEFAULT_BRIDGE_ORIGIN = "https://www.oingapp.com";
 
   let button = null;
 
@@ -10,6 +11,13 @@
 
   function sanitizeTerm(raw) {
     return normalizeSpace(raw).replace(/^[\p{P}\p{S}]+|[\p{P}\p{S}]+$/gu, "").slice(0, 64);
+  }
+
+  function base64UrlEncodeUtf8(value) {
+    const utf8 = new TextEncoder().encode(value);
+    let binary = "";
+    for (const byte of utf8) binary += String.fromCharCode(byte);
+    return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
   }
 
   function inferExampleFromSelection(selection) {
@@ -52,6 +60,18 @@
     }
   }
 
+  function openBridgeInPage(payload) {
+    chrome.storage.sync.get(["bridgeOrigin"], (storage) => {
+      const bridgeOrigin = typeof storage.bridgeOrigin === "string" && storage.bridgeOrigin.startsWith("http")
+        ? storage.bridgeOrigin
+        : DEFAULT_BRIDGE_ORIGIN;
+      const encoded = base64UrlEncodeUtf8(JSON.stringify(payload));
+      const url = `${bridgeOrigin.replace(/\/$/, "")}/clipper/add?payload=${encodeURIComponent(encoded)}`;
+      const opened = window.open(url, "_blank", "noopener,noreferrer");
+      if (!opened) location.href = url;
+    });
+  }
+
   function createButton(x, y, onClick) {
     removeButton();
     button = document.createElement("button");
@@ -89,13 +109,19 @@
     const exampleSentenceEn = inferExampleFromSelection(selection);
 
     createButton(rect.right + window.scrollX + 8, rect.top + window.scrollY - 4, () => {
+      const payload = {
+        term,
+        exampleSentenceEn,
+        sourceUrl: location.href,
+        sourceTitle: document.title
+      };
       chrome.runtime.sendMessage({
         type: "openClipperBridge",
-        payload: {
-          term,
-          exampleSentenceEn,
-          sourceUrl: location.href,
-          sourceTitle: document.title
+        payload
+      }, (response) => {
+        const sendError = chrome.runtime.lastError;
+        if (sendError || !response?.ok) {
+          openBridgeInPage(payload);
         }
       });
       removeButton();

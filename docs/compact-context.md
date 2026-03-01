@@ -49,11 +49,11 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `211379861801`
-- HEAD: `c8218da` Refine perf workflow and harden clipper extension bridge flow
+- Source hash: `05106e118164`
+- HEAD: `1f8bc81` Fix extension E2E bridge tab race handling
 
 ### Scope Digests
-- api-routes: 67 files, `401d6bc4c65a`
+- api-routes: 67 files, `fdaab0e9478e`
 - api-helpers: 17 files, `7c68503533f0`
 - domain-services: 39 files, `a8235083d74b`
 - automation-policy: 90 files, `0b079e8b5384`

@@ -49,6 +49,11 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     const url = `${bridgeOrigin.replace(/\/$/, "")}/clipper/add?payload=${encodeURIComponent(encoded)}`;
 
     chrome.tabs.create({ url }, () => {
+      const lastError = chrome.runtime.lastError;
+      if (lastError) {
+        sendResponse({ ok: false, error: lastError.message || "TAB_CREATE_FAILED" });
+        return;
+      }
       sendResponse({ ok: true });
     });
   });

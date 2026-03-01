@@ -10,7 +10,7 @@ const EXTENSION_DIR = process.env.E2E_EXTENSION_DIR || path.resolve("extension")
 const HEADLESS = process.env.E2E_HEADLESS === "1";
 const MANUAL_LOGIN = process.env.E2E_MANUAL_LOGIN === "1";
 
-const FIXTURE_TITLE = `Clipper Ext E2E ${Date.now()}`;
+const FIXTURE_TITLE = `Clipper Ext E2E ${Date.now()} ${Math.random().toString(36).slice(2, 8)}`;
 
 function assert(cond, msg) {
   if (!cond) throw new Error(msg);
@@ -66,7 +66,60 @@ async function getE2eSession() {
   return { cookies, csrf, cookieHeader };
 }
 
+async function getCurrentDefaultWordbookId(auth) {
+  const { res, data } = await fetchJson(`${BASE_URL}/api/users/me/clipper-settings`, {
+    method: "GET",
+    headers: {
+      cookie: auth.cookieHeader
+    }
+  });
+  assert(res.ok, `clipper settings get failed: ${res.status} ${JSON.stringify(data)}`);
+  return typeof data.defaultWordbookId === "number" ? data.defaultWordbookId : null;
+}
+
+async function setDefaultWordbook(auth, wordbookId) {
+  const patch = await fetchJson(`${BASE_URL}/api/users/me/clipper-settings`, {
+    method: "PATCH",
+    headers: {
+      "content-type": "application/json",
+      cookie: auth.cookieHeader,
+      "x-csrf-token": auth.csrf,
+      origin: BASE_URL,
+      referer: `${BASE_URL}/wordbooks`
+    },
+    body: JSON.stringify({ defaultWordbookId: wordbookId })
+  });
+  assert(patch.res.ok, `clipper settings patch failed: ${patch.res.status} ${JSON.stringify(patch.data)}`);
+}
+
+async function deleteWordbook(auth, wordbookId) {
+  const removed = await fetchJson(`${BASE_URL}/api/wordbooks/${wordbookId}`, {
+    method: "DELETE",
+    headers: {
+      "content-type": "application/json",
+      cookie: auth.cookieHeader,
+      "x-csrf-token": auth.csrf,
+      origin: BASE_URL,
+      referer: `${BASE_URL}/wordbooks`
+    }
+  });
+  assert(removed.res.ok, `wordbook delete failed: ${removed.res.status} ${JSON.stringify(removed.data)}`);
+}
+
 async function ensureDefaultWordbook(auth) {
+  const listed = await fetchJson(`${BASE_URL}/api/wordbooks`, {
+    method: "GET",
+    headers: {
+      cookie: auth.cookieHeader
+    }
+  });
+  assert(listed.res.ok, `wordbook list failed: ${listed.res.status} ${JSON.stringify(listed.data)}`);
+  const found = (listed.data.wordbooks ?? []).find((wordbook) => wordbook?.title === FIXTURE_TITLE);
+  if (typeof found?.id === "number") {
+    await setDefaultWordbook(auth, found.id);
+    return { createdWordbookId: null };
+  }
+
   const { res, data } = await fetchJson(`${BASE_URL}/api/wordbooks`, {
     method: "POST",
     headers: {
@@ -83,22 +136,11 @@ async function ensureDefaultWordbook(auth) {
       toLang: "ko"
     })
   });
-  assert(res.ok, `wordbook create failed: ${res.status}`);
+  assert(res.ok, `wordbook create failed: ${res.status} ${JSON.stringify(data)}`);
   const wordbookId = data.wordbook?.id;
   assert(wordbookId, "wordbook id missing");
-
-  const patch = await fetchJson(`${BASE_URL}/api/users/me/clipper-settings`, {
-    method: "PATCH",
-    headers: {
-      "content-type": "application/json",
-      cookie: auth.cookieHeader,
-      "x-csrf-token": auth.csrf,
-      origin: BASE_URL,
-      referer: `${BASE_URL}/wordbooks`
-    },
-    body: JSON.stringify({ defaultWordbookId: wordbookId })
-  });
-  assert(patch.res.ok, `clipper settings patch failed: ${patch.res.status}`);
+  await setDefaultWordbook(auth, wordbookId);
+  return { createdWordbookId: wordbookId };
 }
 
 async function promptManualLogin(page) {
@@ -119,25 +161,40 @@ async function ensureDefaultWordbookFromBrowser(page) {
     const csrfEq = csrfCookie.indexOf("=");
     const csrf = csrfEq >= 0 ? csrfCookie.slice(csrfEq + 1) : "";
 
-    const createRes = await fetch("/api/wordbooks", {
-      method: "POST",
-      credentials: "include",
-      headers: {
-        "content-type": "application/json",
-        "x-csrf-token": csrf,
-        origin: window.location.origin,
-        referer: `${window.location.origin}/wordbooks`
-      },
-      body: JSON.stringify({
-        title: payload.title,
-        description: "Clipper extension e2e fixture",
-        fromLang: "en",
-        toLang: "ko"
-      })
+    const listedRes = await fetch("/api/wordbooks", {
+      method: "GET",
+      credentials: "include"
     });
-    const createJson = await createRes.json().catch(() => ({}));
-    if (!createRes.ok || !createJson.wordbook?.id) {
-      return { ok: false, step: "create", status: createRes.status };
+    const listedJson = await listedRes.json().catch(() => ({}));
+    if (!listedRes.ok) {
+      return { ok: false, step: "list", status: listedRes.status };
+    }
+    const existing = (listedJson.wordbooks ?? []).find((wordbook) => wordbook?.title === payload.title);
+    const existingId = typeof existing?.id === "number" ? existing.id : null;
+
+    let createdId = existingId;
+    if (!createdId) {
+      const createRes = await fetch("/api/wordbooks", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "content-type": "application/json",
+          "x-csrf-token": csrf,
+          origin: window.location.origin,
+          referer: `${window.location.origin}/wordbooks`
+        },
+        body: JSON.stringify({
+          title: payload.title,
+          description: "Clipper extension e2e fixture",
+          fromLang: "en",
+          toLang: "ko"
+        })
+      });
+      const createJson = await createRes.json().catch(() => ({}));
+      if (!createRes.ok || !createJson.wordbook?.id) {
+        return { ok: false, step: "create", status: createRes.status };
+      }
+      createdId = createJson.wordbook.id;
     }
 
     const patchRes = await fetch("/api/users/me/clipper-settings", {
@@ -149,7 +206,9 @@ async function ensureDefaultWordbookFromBrowser(page) {
         origin: window.location.origin,
         referer: `${window.location.origin}/wordbooks`
       },
-      body: JSON.stringify({ defaultWordbookId: createJson.wordbook.id })
+      body: JSON.stringify({
+        defaultWordbookId: createdId
+      })
     });
 
     if (!patchRes.ok) {
@@ -185,33 +244,52 @@ async function runFlow(context) {
   const page = await context.newPage();
   await page.goto(`${BASE_URL}/clipper/extension-fixture`, { waitUntil: "domcontentloaded" });
 
-  await page.evaluate(() => {
-    const strong = document.querySelector("p strong");
-    if (!strong || !strong.firstChild) throw new Error("selection target missing");
-    const node = strong.firstChild;
-    const text = node.textContent || "";
-    const needle = "example";
-    const start = text.toLowerCase().indexOf(needle);
-    if (start < 0) throw new Error("selection target missing");
-    const range = document.createRange();
-    range.setStart(node, start);
-    range.setEnd(node, start + needle.length);
-    const selection = window.getSelection();
-    if (!selection) throw new Error("selection unavailable");
-    selection.removeAllRanges();
-    selection.addRange(range);
-    document.dispatchEvent(new MouseEvent("mouseup", { bubbles: true }));
-  });
+  const target = page.locator("p strong", { hasText: "example" });
+  await target.waitFor({ timeout: 10000 });
+  const box = await target.boundingBox();
+  assert(box, "selection target missing");
+  const startX = box.x + 2;
+  const endX = box.x + Math.max(3, box.width - 2);
+  const y = box.y + box.height / 2;
+  await page.mouse.move(startX, y);
+  await page.mouse.down();
+  await page.mouse.move(endX, y, { steps: 8 });
+  await page.mouse.up();
 
   const addButton = page.locator("#englishapp-clipper-btn");
   await addButton.waitFor({ timeout: 10000 });
 
-  const openedPagePromise = context.waitForEvent("page");
+  const openBridgePattern = new RegExp(`${BASE_URL.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}/clipper/add\\?payload=`);
+  const pagesBeforeClick = new Set(context.pages());
+  const openedPagePromise = context.waitForEvent("page", { timeout: 7000 }).catch(() => null);
   await addButton.click();
-  const bridgePage = await openedPagePromise;
-  await bridgePage.waitForURL(new RegExp(`${BASE_URL.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}/clipper/add\\?payload=`), {
-    timeout: 10000
-  });
+  const [samePageNavigated, openedPage] = await Promise.all([
+    page
+      .waitForURL(openBridgePattern, { timeout: 5000 })
+      .then(() => true)
+      .catch(() => false),
+    openedPagePromise
+  ]);
+  if (samePageNavigated) {
+    const bodyText = await page.textContent("body");
+    assert(
+      bodyText?.includes("단어장에 추가했습니다") || bodyText?.includes("이미 같은 단어"),
+      "bridge success message missing"
+    );
+    return;
+  }
+
+  let bridgePage = openedPage;
+  if (!bridgePage) {
+    await page.waitForTimeout(2000);
+    const pages = context.pages();
+    bridgePage = pages.find((candidate) => {
+      if (pagesBeforeClick.has(candidate)) return false;
+      return candidate.url().includes("/clipper/add?payload=");
+    }) ?? null;
+  }
+  assert(Boolean(bridgePage), "bridge page did not open");
+  await bridgePage.waitForURL(openBridgePattern, { timeout: 10000 });
   const bodyText = await bridgePage.textContent("body");
   assert(
     bodyText?.includes("단어장에 추가했습니다") || bodyText?.includes("이미 같은 단어"),
@@ -235,13 +313,21 @@ async function main() {
     ]
   });
 
+  let auth = null;
+  let originalDefaultWordbookId = null;
+  let shouldRestoreDefaultWordbook = false;
+  let createdWordbookId = null;
+
   try {
     const serviceWorker = context.serviceWorkers()[0] ?? (await context.waitForEvent("serviceworker"));
     const extensionId = new URL(serviceWorker.url()).host;
 
-    const auth = await getE2eSession();
+    auth = await getE2eSession();
     if (auth && !MANUAL_LOGIN) {
-      await ensureDefaultWordbook(auth);
+      originalDefaultWordbookId = await getCurrentDefaultWordbookId(auth);
+      shouldRestoreDefaultWordbook = true;
+      const setup = await ensureDefaultWordbook(auth);
+      createdWordbookId = setup.createdWordbookId;
       await context.addCookies(
         auth.cookies.map((cookie) => ({
           ...cookie,
@@ -259,6 +345,26 @@ async function main() {
     await runFlow(context);
     console.log("[e2e-extension] passed");
   } finally {
+    if (auth && !MANUAL_LOGIN && shouldRestoreDefaultWordbook) {
+      try {
+        await setDefaultWordbook(auth, originalDefaultWordbookId);
+      } catch (error) {
+        console.error(
+          "[e2e-extension] cleanup failed: restore default wordbook",
+          error instanceof Error ? error.message : String(error)
+        );
+      }
+    }
+    if (auth && !MANUAL_LOGIN && createdWordbookId) {
+      try {
+        await deleteWordbook(auth, createdWordbookId);
+      } catch (error) {
+        console.error(
+          `[e2e-extension] cleanup failed: delete fixture wordbook ${createdWordbookId}`,
+          error instanceof Error ? error.message : String(error)
+        );
+      }
+    }
     await context.close();
   }
 }
