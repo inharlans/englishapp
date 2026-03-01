@@ -52,8 +52,8 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `41ebe3eab52b`
-- HEAD: `46ce4b4` extension: prevent clipper button click/mouseup race
+- Source hash: `74d6465a2408`
+- HEAD: `e6a7201` extension: use same-tab bridge open for fixture E2E
 
 ### Scope Digests
 - api-routes: 67 files, `401d6bc4c65a`

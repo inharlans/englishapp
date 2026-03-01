@@ -327,7 +327,19 @@ async function clickButtonWithFallbacks(page, addButton) {
   return { marker: result.marker, attempts };
 }
 
-async function dumpBridgeDebug(context, page, consoleLogs, swLogs, label, preClickSelection, postClickSelection, clickAttempts, buttonBox, buttonHit) {
+async function dumpBridgeDebug(
+  context,
+  page,
+  consoleLogs,
+  swLogs,
+  label,
+  preClickSelection,
+  postClickSelection,
+  clickAttempts,
+  buttonBox,
+  buttonHit,
+  clipperAddResponseDebug
+) {
   const pageUrls = context.pages().map((candidate) => candidate.url());
   let marker = null;
   let injected = null;
@@ -359,6 +371,7 @@ async function dumpBridgeDebug(context, page, consoleLogs, swLogs, label, preCli
   console.error(`[e2e-extension][debug] clickAttempts=${JSON.stringify(clickAttempts)}`);
   console.error(`[e2e-extension][debug] buttonBox=${JSON.stringify(buttonBox)}`);
   console.error(`[e2e-extension][debug] elementFromPoint=${JSON.stringify(buttonHit)}`);
+  console.error(`[e2e-extension][debug] clipperAddResponse=${JSON.stringify(clipperAddResponseDebug)}`);
   console.error(`[e2e-extension][debug] clipperLogs=${JSON.stringify(clipperLogs)}`);
   console.error(`[e2e-extension][debug] clipperSwLogs=${JSON.stringify(clipperSwLogs)}`);
 }
@@ -398,6 +411,10 @@ async function runFlow(context, swLogs) {
   assert(injected === "1", "content script was not injected");
 
   const openBridgePattern = new RegExp(`${BASE_URL.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}/clipper/add\\?payload=`);
+  const clipperAddResponsePromise = page.waitForResponse(
+    (response) => response.url().includes("/clipper/add?payload="),
+    { timeout: 10000 }
+  ).catch(() => null);
   const pagesBeforeClick = new Set(context.pages());
   const openedPagePromise = context.waitForEvent("page", { timeout: 7000 }).catch(() => null);
   const clickResult = await clickButtonWithFallbacks(page, addButton);
@@ -411,10 +428,38 @@ async function runFlow(context, swLogs) {
   ]);
   if (samePageNavigated) {
     const bodyText = await page.textContent("body");
-    assert(
-      bodyText?.includes("단어장에 추가했습니다") || bodyText?.includes("이미 같은 단어"),
-      "bridge success message missing"
-    );
+    const hasSuccessMessage = bodyText?.includes("단어장에 추가했습니다") || bodyText?.includes("이미 같은 단어");
+    if (!hasSuccessMessage) {
+      const clipperAddResponse = await clipperAddResponsePromise;
+      let clipperAddResponseDebug = null;
+      if (clipperAddResponse) {
+        let bodyPreview = null;
+        try {
+          bodyPreview = (await clipperAddResponse.text()).slice(0, 500);
+        } catch {
+          bodyPreview = null;
+        }
+        clipperAddResponseDebug = {
+          url: clipperAddResponse.url(),
+          status: clipperAddResponse.status(),
+          bodyPreview
+        };
+      }
+      await dumpBridgeDebug(
+        context,
+        page,
+        consoleLogs,
+        swLogs,
+        "bridge_success_message_missing",
+        preClickSelection,
+        postClickSelection,
+        clickResult.attempts,
+        buttonBox,
+        buttonHit,
+        clipperAddResponseDebug
+      );
+      throw new Error("bridge success message missing");
+    }
     return;
   }
 
@@ -441,6 +486,21 @@ async function runFlow(context, swLogs) {
       "bridge success message missing"
     );
   } catch (error) {
+    const clipperAddResponse = await clipperAddResponsePromise;
+    let clipperAddResponseDebug = null;
+    if (clipperAddResponse) {
+      let bodyPreview = null;
+      try {
+        bodyPreview = (await clipperAddResponse.text()).slice(0, 500);
+      } catch {
+        bodyPreview = null;
+      }
+      clipperAddResponseDebug = {
+        url: clipperAddResponse.url(),
+        status: clipperAddResponse.status(),
+        bodyPreview
+      };
+    }
     await dumpBridgeDebug(
       context,
       page,
@@ -451,7 +511,8 @@ async function runFlow(context, swLogs) {
       postClickSelection,
       clickResult.attempts,
       buttonBox,
-      buttonHit
+      buttonHit,
+      clipperAddResponseDebug
     );
     throw error;
   }
