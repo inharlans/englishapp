@@ -8,10 +8,12 @@ import { KeyboardPageNavigator } from "@/components/KeyboardPageNavigator";
 import { PwaInstallPrompt } from "@/components/PwaInstallPrompt";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import { AdProviderScript } from "@/components/ads/AdProviderScript";
+import { getAdsConfig } from "@/lib/ads/slots";
 import { getUserFromRequestCookies } from "@/lib/authServer";
 import { getBusinessInfo, isBusinessInfoComplete } from "@/lib/businessInfo";
 
 const appBaseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+const adsConfigForMetadata = getAdsConfig();
 
 export const metadata: Metadata = {
   title: "오잉앱",
@@ -32,7 +34,12 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     images: ["/og-image.png"]
   },
-  manifest: "/site.webmanifest"
+  manifest: "/site.webmanifest",
+  other: adsConfigForMetadata.enabled && adsConfigForMetadata.client
+    ? {
+        "google-adsense-account": adsConfigForMetadata.client
+      }
+    : undefined
 };
 
 const manrope = Manrope({
@@ -55,6 +62,7 @@ export default async function RootLayout({
   const user = await getUserFromRequestCookies(await cookies());
   const business = getBusinessInfo();
   const businessInfoReady = isBusinessInfoComplete(business);
+  const adsConfig = getAdsConfig();
   const placeholder = "준비 중";
 
   return (
@@ -68,7 +76,7 @@ export default async function RootLayout({
         </a>
         <KeyboardPageNavigator />
         <ServiceWorkerRegister />
-        <AdProviderScript />
+        <AdProviderScript enabled={adsConfig.enabled} client={adsConfig.client} />
         <main id="main-content" className="mx-auto min-h-screen w-full max-w-5xl p-6">
           <PwaInstallPrompt />
           <AppNav isLoggedIn={Boolean(user)} />

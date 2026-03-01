@@ -19,13 +19,19 @@ export function SessionRecapPanel({
   summary,
   suggestion,
   secondaryHref,
-  secondaryLabel
+  secondaryLabel,
+  adsEnabled,
+  adsClient,
+  sessionEndUnitId
 }: {
   title: string;
   summary: string;
   suggestion: Suggestion;
   secondaryHref?: Route;
   secondaryLabel?: string;
+  adsEnabled: boolean;
+  adsClient: string;
+  sessionEndUnitId: string;
 }) {
   const [reminderEnabled, setReminderEnabled] = useState(false);
 
@@ -91,7 +97,14 @@ export function SessionRecapPanel({
         내일 같은 시간 알림
       </label>
       <p className="mt-1 text-[11px] text-slate-600">{reminderText}</p>
-      <AdSlot slot="SESSION_END" isSessionEnd containerClassName="mt-3" />
+      <AdSlot
+        slot="SESSION_END"
+        enabled={adsEnabled}
+        client={adsClient}
+        unitId={sessionEndUnitId}
+        isSessionEnd
+        containerClassName="mt-3"
+      />
     </aside>
   );
 }

@@ -2,11 +2,12 @@
 
 import Script from "next/script";
 
-import { getAdsenseClient, isAdsEnabled } from "@/lib/ads/slots";
+type Props = {
+  enabled: boolean;
+  client: string;
+};
 
-export function AdProviderScript() {
-  const enabled = isAdsEnabled();
-  const client = getAdsenseClient();
+export function AdProviderScript({ enabled, client }: Props) {
 
   if (!enabled || !client) return null;
 

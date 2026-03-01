@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 
-import { type AdSlotKey, getAdsenseClient, getAdsenseUnitId, isAdsEnabled } from "@/lib/ads/slots";
+import { type AdSlotKey } from "@/lib/ads/slots";
 
 declare global {
   interface Window {
@@ -12,15 +12,15 @@ declare global {
 
 type Props = {
   slot: AdSlotKey;
+  enabled: boolean;
+  client: string;
+  unitId: string;
   isSessionEnd?: boolean;
   containerClassName?: string;
 };
 
-export function AdSlot({ slot, isSessionEnd = false, containerClassName }: Props) {
+export function AdSlot({ slot, enabled, client, unitId, isSessionEnd = false, containerClassName }: Props) {
   const blockedBySessionGuard = slot === "SESSION_END" && !isSessionEnd;
-  const enabled = isAdsEnabled();
-  const client = getAdsenseClient();
-  const unitId = getAdsenseUnitId(slot);
   const pushedRef = useRef(false);
 
   useEffect(() => {
