@@ -52,11 +52,11 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `7a341ae081ec`
-- HEAD: `db761a5` Improve AGENTS navigation links and routing map
+- Source hash: `a3f8cadb963a`
+- HEAD: `f6a352f` Ignore local market logs and clarify snapshot commit policy
 
 ### Scope Digests
-- api-routes: 67 files, `401d6bc4c65a`
+- api-routes: 67 files, `fdaab0e9478e`
 - api-helpers: 17 files, `86a333ad403c`
 - domain-services: 39 files, `a8235083d74b`
 - automation-policy: 90 files, `ace0c18c1f60`
