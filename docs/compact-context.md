@@ -52,8 +52,8 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `5589b5df9ef8`
-- HEAD: `24554b0` fix(quiz): enforce 10-question requeue flow
+- Source hash: `b8822f00b65b`
+- HEAD: `44a0dc1` docs(quiz): align policy notes with runtime behavior
 
 ### Scope Digests
 - api-routes: 68 files, `257938c88df6`

@@ -65,6 +65,55 @@ describe("QuizService submitWordbookQuizAnswer", () => {
     );
   });
 
+  it("uses mode-specific question count for WORD wrong requeue pointer", async () => {
+    const repo = {
+      findWordbookItem: vi.fn().mockResolvedValue({
+        id: 12,
+        term: "apple",
+        meaning: "사과"
+      }),
+      getStudyItemState: vi.fn().mockResolvedValue(null),
+      upsertStudyStateAndIncrementQuestion: vi.fn().mockResolvedValue({
+        meaningQuestionCount: 40,
+        wordQuestionCount: 9
+      }),
+      upsertStudyItemState: vi.fn().mockResolvedValue(undefined),
+      updateStudyStateCountsIfNeeded: vi.fn().mockResolvedValue(undefined)
+    };
+
+    const { QuizService } = await import("./service");
+    const service = new QuizService(repo as never);
+
+    const result = await service.submitWordbookQuizAnswer(
+      {
+        id: 1,
+        email: "u@test.com",
+        isAdmin: false,
+        plan: "FREE",
+        proUntil: null,
+        dailyGoal: 10
+      },
+      99,
+      {
+        itemId: 12,
+        mode: "WORD",
+        answer: "banana"
+      }
+    );
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.payload.correct).toBe(false);
+    }
+    expect(repo.upsertStudyItemState).toHaveBeenCalledWith(
+      expect.objectContaining({
+        mode: "WORD",
+        modeWrongRequeueAt: 19,
+        nextStatus: "WRONG"
+      })
+    );
+  });
+
   it("updates deltas when wrong state turns into correct state", async () => {
     const repo = {
       findWordbookItem: vi.fn().mockResolvedValue({
@@ -121,4 +170,3 @@ describe("QuizService submitWordbookQuizAnswer", () => {
     );
   });
 });
-
