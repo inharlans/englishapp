@@ -2,6 +2,7 @@ import Link from "next/link";
 import { cookies, headers } from "next/headers";
 
 import { getUserFromRequestCookies } from "@/lib/authServer";
+import { getAdsConfig } from "@/lib/ads/slots";
 import { isLocalDebugBypassEnabledByHostHeader } from "@/lib/localDebug";
 import { canAccessWordbookForStudy } from "@/lib/wordbookAccess";
 import { WordbookQuizClient } from "../quiz/quizClient";
@@ -61,6 +62,14 @@ export default async function WordbookQuizMeaningPage(props: { params: Promise<{
     );
   }
 
-  return <WordbookQuizClient wordbookId={id} initialMode="MEANING" />;
+  const adsConfig = getAdsConfig();
+  return (
+    <WordbookQuizClient
+      wordbookId={id}
+      initialMode="MEANING"
+      adsEnabled={adsConfig.enabled}
+      adsClient={adsConfig.client}
+      sessionEndUnitId={adsConfig.unitIds.SESSION_END}
+    />
+  );
 }
-

@@ -3,10 +3,12 @@ import { cookies } from "next/headers";
 
 import { AdSlot } from "@/components/ads/AdSlot";
 import { MetricLink } from "@/components/metrics/MetricLink";
+import { getAdsConfig } from "@/lib/ads/slots";
 import { getUserFromRequestCookies } from "@/lib/authServer";
 
 export default async function HomePage() {
   const user = await getUserFromRequestCookies(await cookies());
+  const adsConfig = getAdsConfig();
 
   return (
     <section className="relative grid gap-6 lg:grid-cols-[1.22fr_0.78fr] lg:items-stretch">
@@ -132,7 +134,13 @@ export default async function HomePage() {
               )}
             </div>
 
-            <AdSlot slot="HOME_BANNER" containerClassName="home-reveal-up [animation-delay:280ms]" />
+            <AdSlot
+              slot="HOME_BANNER"
+              enabled={adsConfig.enabled}
+              client={adsConfig.client}
+              unitId={adsConfig.unitIds.HOME_BANNER}
+              containerClassName="home-reveal-up [animation-delay:280ms]"
+            />
 
           <nav aria-label="정책 링크" className="home-reveal-up flex flex-wrap gap-4 text-xs text-slate-500 [animation-delay:320ms]">
             <Link href="/privacy" className="underline underline-offset-4 hover:text-slate-700">

@@ -19,6 +19,9 @@ type Props = {
   wordbookId: number;
   initialMode?: QuizMode;
   lockMode?: boolean;
+  adsEnabled: boolean;
+  adsClient: string;
+  sessionEndUnitId: string;
 };
 
 function parseBoundedInt(raw: string, fallback: number, min: number, max: number) {
@@ -27,7 +30,13 @@ function parseBoundedInt(raw: string, fallback: number, min: number, max: number
   return Math.min(max, Math.max(min, Math.floor(parsed)));
 }
 
-export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Props) {
+export function WordbookQuizClient({
+  wordbookId,
+  initialMode = "MEANING",
+  adsEnabled,
+  adsClient,
+  sessionEndUnitId
+}: Props) {
   const [mode] = useState<QuizMode>(initialMode);
   const [item, setItem] = useState<QuizItem | null>(null);
   const [answer, setAnswer] = useState("");
@@ -784,6 +793,9 @@ export function WordbookQuizClient({ wordbookId, initialMode = "MEANING" }: Prop
           suggestion={recommendation}
           secondaryHref={`/wordbooks/${wordbookId}/list-half` as Route}
           secondaryLabel="회복 목록 보기"
+          adsEnabled={adsEnabled}
+          adsClient={adsClient}
+          sessionEndUnitId={sessionEndUnitId}
         />
       ) : null}
     </section>
