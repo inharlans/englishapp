@@ -7,6 +7,7 @@ import { AppNav } from "@/components/AppNav";
 import { KeyboardPageNavigator } from "@/components/KeyboardPageNavigator";
 import { PwaInstallPrompt } from "@/components/PwaInstallPrompt";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
+import { AdProviderScript } from "@/components/ads/AdProviderScript";
 import { getUserFromRequestCookies } from "@/lib/authServer";
 import { getBusinessInfo, isBusinessInfoComplete } from "@/lib/businessInfo";
 
@@ -67,6 +68,7 @@ export default async function RootLayout({
         </a>
         <KeyboardPageNavigator />
         <ServiceWorkerRegister />
+        <AdProviderScript />
         <main id="main-content" className="mx-auto min-h-screen w-full max-w-5xl p-6">
           <PwaInstallPrompt />
           <AppNav isLoggedIn={Boolean(user)} />

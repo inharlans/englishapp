@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
 
+import { AdSlot } from "@/components/ads/AdSlot";
+import { MetricLink } from "@/components/metrics/MetricLink";
 import { getUserFromRequestCookies } from "@/lib/authServer";
 
 export default async function HomePage() {
@@ -90,30 +92,47 @@ export default async function HomePage() {
             </article>
           </section>
 
-          <div className="home-reveal-up flex flex-wrap gap-3 [animation-delay:260ms]" role="group" aria-label={user ? "사용자 동작" : "게스트 동작"}>
-            {!user ? (
-              <>
-                <Link href="/wordbooks/market" className="ui-btn-primary px-5 py-2.5 text-sm">
-                  마켓 먼저 보기
-                </Link>
-                <Link href="/login?next=/wordbooks" className="ui-btn-secondary px-5 py-2.5 text-sm">
-                  로그인하고 이어가기
-                </Link>
-              </>
-            ) : (
-              <>
-                <Link href="/wordbooks" className="ui-btn-primary px-5 py-2.5 text-sm">
-                  내 단어장 열기
-                </Link>
-                <Link href="/wordbooks/market" className="ui-btn-secondary px-5 py-2.5 text-sm">
-                  마켓 탐색
-                </Link>
-                <Link href="/offline" className="ui-btn-secondary px-5 py-2.5 text-sm">
-                  오프라인 복습
-                </Link>
-              </>
-            )}
-          </div>
+            <div className="home-reveal-up flex flex-wrap gap-3 [animation-delay:260ms]" role="group" aria-label={user ? "사용자 동작" : "게스트 동작"}>
+              {!user ? (
+                <>
+                  <Link href="/wordbooks/market" className="ui-btn-primary px-5 py-2.5 text-sm">
+                    마켓 먼저 보기
+                  </Link>
+                  <Link href="/login?next=/wordbooks" className="ui-btn-secondary px-5 py-2.5 text-sm">
+                    로그인하고 이어가기
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <MetricLink
+                    href="/wordbooks"
+                    metricName="metric.home_cta_click"
+                    metricPayload={{ cta: "hero_user_wordbooks", page: "home" }}
+                    className="ui-btn-primary px-5 py-2.5 text-sm"
+                  >
+                    내 단어장 열기
+                  </MetricLink>
+                  <MetricLink
+                    href="/wordbooks/market"
+                    metricName="metric.home_cta_click"
+                    metricPayload={{ cta: "hero_user_market", page: "home" }}
+                    className="ui-btn-secondary px-5 py-2.5 text-sm"
+                  >
+                    마켓 탐색
+                  </MetricLink>
+                  <MetricLink
+                    href="/offline"
+                    metricName="metric.home_cta_click"
+                    metricPayload={{ cta: "hero_user_offline", page: "home" }}
+                    className="ui-btn-secondary px-5 py-2.5 text-sm"
+                  >
+                    오프라인 복습
+                  </MetricLink>
+                </>
+              )}
+            </div>
+
+            <AdSlot slot="HOME_BANNER" containerClassName="home-reveal-up [animation-delay:280ms]" />
 
           <nav aria-label="정책 링크" className="home-reveal-up flex flex-wrap gap-4 text-xs text-slate-500 [animation-delay:320ms]">
             <Link href="/privacy" className="underline underline-offset-4 hover:text-slate-700">
@@ -157,15 +176,30 @@ export default async function HomePage() {
               아래 바로가기로 학습 재개, 마켓 탐색, 오프라인 복습까지 한 번에 이동할 수 있습니다.
             </p>
             <nav aria-label="로그인 사용자 빠른 이동" className="mt-4 grid gap-2 sm:grid-cols-3">
-              <Link href="/wordbooks" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-center text-sm font-semibold text-slate-800 hover:bg-slate-50">
+              <MetricLink
+                href="/wordbooks"
+                metricName="metric.home_cta_click"
+                metricPayload={{ cta: "panel_user_wordbooks", page: "home" }}
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-center text-sm font-semibold text-slate-800 hover:bg-slate-50"
+              >
                 학습 재개
-              </Link>
-              <Link href="/wordbooks/market" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-center text-sm font-semibold text-slate-800 hover:bg-slate-50">
+              </MetricLink>
+              <MetricLink
+                href="/wordbooks/market"
+                metricName="metric.home_cta_click"
+                metricPayload={{ cta: "panel_user_market", page: "home" }}
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-center text-sm font-semibold text-slate-800 hover:bg-slate-50"
+              >
                 마켓 탐색
-              </Link>
-              <Link href="/offline" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-center text-sm font-semibold text-slate-800 hover:bg-slate-50">
+              </MetricLink>
+              <MetricLink
+                href="/offline"
+                metricName="metric.home_cta_click"
+                metricPayload={{ cta: "panel_user_offline", page: "home" }}
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-center text-sm font-semibold text-slate-800 hover:bg-slate-50"
+              >
                 오프라인 복습
-              </Link>
+              </MetricLink>
             </nav>
           </section>
         )}

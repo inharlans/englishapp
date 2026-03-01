@@ -52,18 +52,18 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `74d6465a2408`
-- HEAD: `e6a7201` extension: use same-tab bridge open for fixture E2E
+- Source hash: `20989f9324a0`
+- HEAD: `1db340e` test(e2e): dump /clipper/add response on failure
 
 ### Scope Digests
-- api-routes: 67 files, `401d6bc4c65a`
+- api-routes: 68 files, `e3e76ebc8593`
 - api-helpers: 17 files, `86a333ad403c`
 - domain-services: 39 files, `a8235083d74b`
 - automation-policy: 90 files, `ace0c18c1f60`
-- tracking-docs: 10 files, `be316161cab4`
+- tracking-docs: 10 files, `4e1ff3202ee3`
 
 ### Legacy Route Migration Status
-- base: `app/api/`, total: 55, migrated: 44, remaining: 11
+- base: `app/api/`, total: 56, migrated: 44, remaining: 12
 - remaining files:
   - `app/api/auth/google/callback/route.ts`
   - `app/api/auth/google/route.ts`
@@ -73,6 +73,7 @@
   - `app/api/auth/naver/callback/route.ts`
   - `app/api/auth/naver/route.ts`
   - `app/api/clipper/extension/route.ts`
+  - `app/api/internal/client-metrics/route.ts`
   - `app/api/internal/e2e/login/route.ts`
   - `app/api/translate/route.ts`
   - `app/api/wordbooks/downloaded/route.ts`
