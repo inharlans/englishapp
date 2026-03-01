@@ -52,8 +52,8 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `bb05c9d1531a`
-- HEAD: `024d118` feat(ads): add AdSense slot architecture for HOME_BANNER and SESSION_END
+- Source hash: `b120413b5819`
+- HEAD: `cde9b75` feat(metrics): add client metric endpoint and CTA click tracking
 
 ### Scope Digests
 - api-routes: 68 files, `257938c88df6`
