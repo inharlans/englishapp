@@ -52,11 +52,11 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `72ef72643a40`
-- HEAD: `1db340e` test(e2e): dump /clipper/add response on failure
+- Source hash: `bb05c9d1531a`
+- HEAD: `024d118` feat(ads): add AdSense slot architecture for HOME_BANNER and SESSION_END
 
 ### Scope Digests
-- api-routes: 68 files, `fb26ba9b0d2d`
+- api-routes: 68 files, `257938c88df6`
 - api-helpers: 17 files, `86a333ad403c`
 - domain-services: 39 files, `a8235083d74b`
 - automation-policy: 90 files, `ace0c18c1f60`
