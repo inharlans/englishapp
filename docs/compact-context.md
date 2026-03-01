@@ -52,14 +52,14 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `21f2db63d1ff`
-- HEAD: `5c864b6` Harden clipper bridge diagnostics and cleanup guards
+- Source hash: `7a341ae081ec`
+- HEAD: `db761a5` Improve AGENTS navigation links and routing map
 
 ### Scope Digests
 - api-routes: 67 files, `401d6bc4c65a`
 - api-helpers: 17 files, `86a333ad403c`
 - domain-services: 39 files, `a8235083d74b`
-- automation-policy: 90 files, `74e5f47969a1`
+- automation-policy: 90 files, `ace0c18c1f60`
 - tracking-docs: 10 files, `be316161cab4`
 
 ### Legacy Route Migration Status
