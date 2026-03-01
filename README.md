@@ -1,6 +1,11 @@
 # Englishapp
 
-## 최근 업데이트 (2026-02-28)
+## 최근 업데이트 (2026-03-02)
+
+- 1차 광고 수익화 구조를 추가해 광고 슬롯(`HOME_BANNER`, `SESSION_END`)과 공급자 구현(AdSense)을 분리했습니다. 앱 코드는 `<AdSlot />`만 사용하고, 공급자 세부 구현은 내부에서 은닉되도록 정리했습니다.
+- AdSense 스크립트는 `app/layout.tsx`에서 `afterInteractive`로 1회만 로드하고(`components/ads/AdProviderScript.tsx`), `NEXT_PUBLIC_ADS_ENABLED`/`NEXT_PUBLIC_ADSENSE_CLIENT`/슬롯별 unit id가 하나라도 비어 있으면 광고를 조용히 미노출하도록 fail-closed 정책을 적용했습니다.
+- `SESSION_END` 슬롯은 `SessionRecapPanel`이 렌더되는 상태를 세션 종료 화면으로 간주해 노출하도록 정의했습니다. 향후 Recap 렌더 조건이 바뀌면 SESSION_END 노출 시점도 함께 바뀝니다.
+- 최소 제품 지표 2개(`metric.home_cta_click`, `metric.recap_next_action_click`)를 추가해 홈 CTA/세션 요약 추천 클릭 변화를 추적할 수 있게 했고, 내부 수집 라우트는 allowlist + payload 크기 제한 + same-host 검증으로 기본 오염 방어를 적용했습니다.
 
 - 인증/운영 API 응답 표준화를 위해 공통 에러 응답 헬퍼를 추가하고(`lib/api/service-response.ts`), `code/message/error`를 함께 반환하도록 정리해 클라이언트 분기 안정성을 높였습니다.
 - 레거시 경로 격리/폐기 정책을 문서화하고(`docs/legacy-route-deprecation-policy-2026-03-01.md`), 정책 요약 페이지(`/legacy-policy`)를 추가해 대체 경로/유지기간/제거 예정일을 단일 기준으로 관리하도록 정리했습니다.
