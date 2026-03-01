@@ -4,6 +4,9 @@ import Link from "next/link";
 import type { Route } from "next";
 import { useEffect, useMemo, useState } from "react";
 
+import { AdSlot } from "@/components/ads/AdSlot";
+import { sendClientMetric } from "@/lib/metrics/client";
+
 type Suggestion = {
   href: Route;
   label: string;
@@ -52,6 +55,12 @@ export function SessionRecapPanel({
           <Link
             href={suggestion.href}
             className="ui-btn-primary px-3 py-1.5 text-xs"
+            onClick={() => {
+              sendClientMetric("metric.recap_next_action_click", {
+                from: "session_recap",
+                suggestion: suggestion.label
+              });
+            }}
           >
             바로 이동
           </Link>
@@ -82,7 +91,7 @@ export function SessionRecapPanel({
         내일 같은 시간 알림
       </label>
       <p className="mt-1 text-[11px] text-slate-600">{reminderText}</p>
+      <AdSlot slot="SESSION_END" isSessionEnd containerClassName="mt-3" />
     </aside>
   );
 }
-
