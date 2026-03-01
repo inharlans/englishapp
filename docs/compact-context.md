@@ -52,15 +52,15 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `80f0772d87b8`
-- HEAD: `55bce19` feat(ads): add AdSense slots and minimal client metrics
+- Source hash: `03414eff7a7d`
+- HEAD: `d45bb92` ci(e2e): add optional clipper workflow and sync compact snapshot
 
 ### Scope Digests
 - api-routes: 68 files, `e3e76ebc8593`
 - api-helpers: 17 files, `86a333ad403c`
 - domain-services: 39 files, `a8235083d74b`
-- automation-policy: 90 files, `ace0c18c1f60`
-- tracking-docs: 10 files, `184b151560bb`
+- automation-policy: 90 files, `bd8e12280db9`
+- tracking-docs: 10 files, `4e1ff3202ee3`
 
 ### Legacy Route Migration Status
 - base: `app/api/`, total: 56, migrated: 44, remaining: 12
