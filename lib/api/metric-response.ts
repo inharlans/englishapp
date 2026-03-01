@@ -5,18 +5,17 @@ import { recordApiMetric, recordApiMetricFromStart } from "@/lib/observability";
 const METRIC_WRITE_TIMEOUT_MS = 60;
 
 async function waitForMetricWrite(task: Promise<unknown>): Promise<void> {
+  let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
+  const safeTask = task.catch(() => undefined);
+  const timeoutPromise = new Promise<void>((resolve) => {
+    timeoutHandle = setTimeout(resolve, METRIC_WRITE_TIMEOUT_MS);
+    timeoutHandle.unref?.();
+  });
+
   try {
-    let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
-    const timeoutPromise = new Promise((resolve) => {
-      timeoutHandle = setTimeout(resolve, METRIC_WRITE_TIMEOUT_MS);
-      timeoutHandle.unref?.();
-    });
-    await Promise.race([
-      task,
-      timeoutPromise
-    ]);
+    await Promise.race([safeTask.then(() => undefined), timeoutPromise]);
+  } finally {
     if (timeoutHandle !== undefined) clearTimeout(timeoutHandle);
-  } catch {
   }
 }
 

@@ -49,12 +49,12 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `05106e118164`
-- HEAD: `1f8bc81` Fix extension E2E bridge tab race handling
+- Source hash: `a1f69f5a452a`
+- HEAD: `12c5bc5` Add extension bridge fallback and robust clipper extension E2E
 
 ### Scope Digests
-- api-routes: 67 files, `fdaab0e9478e`
-- api-helpers: 17 files, `7c68503533f0`
+- api-routes: 67 files, `401d6bc4c65a`
+- api-helpers: 17 files, `86a333ad403c`
 - domain-services: 39 files, `a8235083d74b`
 - automation-policy: 90 files, `0b079e8b5384`
 - tracking-docs: 10 files, `7df6b43ce550`

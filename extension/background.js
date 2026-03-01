@@ -2,6 +2,14 @@ const DEFAULT_BRIDGE_ORIGIN = "https://www.oingapp.com";
 const TERM_MAX = 64;
 const EXAMPLE_MAX = 500;
 
+function logBackground(step, extra = {}) {
+  try {
+    console.log(JSON.stringify({ tag: "CLIPPER_E2E_BG", step, ts: Date.now(), ...extra }));
+  } catch {
+    // no-op
+  }
+}
+
 function base64UrlEncodeUtf8(value) {
   const utf8 = new TextEncoder().encode(value);
   let binary = "";
@@ -48,12 +56,16 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     const encoded = base64UrlEncodeUtf8(JSON.stringify(payload));
     const url = `${bridgeOrigin.replace(/\/$/, "")}/clipper/add?payload=${encodeURIComponent(encoded)}`;
 
+    logBackground("tabs_create_start");
     chrome.tabs.create({ url }, () => {
       const lastError = chrome.runtime.lastError;
       if (lastError) {
-        sendResponse({ ok: false, error: lastError.message || "TAB_CREATE_FAILED" });
+        const errorMessage = lastError.message || "TAB_CREATE_FAILED";
+        logBackground("tabs_create_failed", { error: errorMessage });
+        sendResponse({ ok: false, error: "tabs_create_failed", message: errorMessage });
         return;
       }
+      logBackground("tabs_create_success");
       sendResponse({ ok: true });
     });
   });

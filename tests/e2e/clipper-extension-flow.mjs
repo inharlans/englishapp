@@ -240,8 +240,30 @@ async function configureBridgeOrigin(context, extensionId) {
   await options.close();
 }
 
+async function dumpBridgeDebug(context, page, consoleLogs, label) {
+  const pageUrls = context.pages().map((candidate) => candidate.url());
+  let marker = null;
+  try {
+    marker = await page.evaluate(() => window.__CLIPPER_BRIDGE_OPENED__ || null);
+  } catch {
+    marker = null;
+  }
+  const clipperLogs = consoleLogs
+    .filter((entry) => entry.text.includes("CLIPPER_E2E"))
+    .slice(-60);
+
+  console.error(`[e2e-extension][debug] ${label}`);
+  console.error(`[e2e-extension][debug] pages=${JSON.stringify(pageUrls)}`);
+  console.error(`[e2e-extension][debug] marker=${JSON.stringify(marker)}`);
+  console.error(`[e2e-extension][debug] clipperLogs=${JSON.stringify(clipperLogs)}`);
+}
+
 async function runFlow(context) {
   const page = await context.newPage();
+  const consoleLogs = [];
+  page.on("console", (msg) => {
+    consoleLogs.push({ type: msg.type(), text: msg.text() });
+  });
   await page.goto(`${BASE_URL}/clipper/extension-fixture`, { waitUntil: "domcontentloaded" });
 
   const target = page.locator("p strong", { hasText: "example" });
@@ -279,22 +301,32 @@ async function runFlow(context) {
     return;
   }
 
-  let bridgePage = openedPage;
-  if (!bridgePage) {
-    await page.waitForTimeout(2000);
-    const pages = context.pages();
-    bridgePage = pages.find((candidate) => {
-      if (pagesBeforeClick.has(candidate)) return false;
-      return candidate.url().includes("/clipper/add?payload=");
-    }) ?? null;
+  try {
+    let bridgePage = openedPage;
+    if (!bridgePage) {
+      await page.waitForTimeout(2000);
+      if (page.url().includes("/clipper/add?payload=")) {
+        bridgePage = page;
+      }
+    }
+    if (!bridgePage) {
+      const pages = context.pages();
+      bridgePage = pages.find((candidate) => {
+        if (pagesBeforeClick.has(candidate)) return false;
+        return candidate.url().includes("/clipper/add?payload=");
+      }) ?? null;
+    }
+    assert(Boolean(bridgePage), "bridge page did not open");
+    await bridgePage.waitForURL(openBridgePattern, { timeout: 10000 });
+    const bodyText = await bridgePage.textContent("body");
+    assert(
+      bodyText?.includes("단어장에 추가했습니다") || bodyText?.includes("이미 같은 단어"),
+      "bridge success message missing"
+    );
+  } catch (error) {
+    await dumpBridgeDebug(context, page, consoleLogs, "bridge_open_failed");
+    throw error;
   }
-  assert(Boolean(bridgePage), "bridge page did not open");
-  await bridgePage.waitForURL(openBridgePattern, { timeout: 10000 });
-  const bodyText = await bridgePage.textContent("body");
-  assert(
-    bodyText?.includes("단어장에 추가했습니다") || bodyText?.includes("이미 같은 단어"),
-    "bridge success message missing"
-  );
 }
 
 async function main() {
@@ -317,6 +349,7 @@ async function main() {
   let originalDefaultWordbookId = null;
   let shouldRestoreDefaultWordbook = false;
   let createdWordbookId = null;
+  let restoreDefaultSucceeded = false;
 
   try {
     const serviceWorker = context.serviceWorkers()[0] ?? (await context.waitForEvent("serviceworker"));
@@ -347,7 +380,13 @@ async function main() {
   } finally {
     if (auth && !MANUAL_LOGIN && shouldRestoreDefaultWordbook) {
       try {
-        await setDefaultWordbook(auth, originalDefaultWordbookId);
+        if (typeof originalDefaultWordbookId === "number") {
+          await setDefaultWordbook(auth, originalDefaultWordbookId);
+          restoreDefaultSucceeded = true;
+        } else if (originalDefaultWordbookId === null) {
+          await setDefaultWordbook(auth, null);
+          restoreDefaultSucceeded = true;
+        }
       } catch (error) {
         console.error(
           "[e2e-extension] cleanup failed: restore default wordbook",
@@ -356,13 +395,19 @@ async function main() {
       }
     }
     if (auth && !MANUAL_LOGIN && createdWordbookId) {
-      try {
-        await deleteWordbook(auth, createdWordbookId);
-      } catch (error) {
+      if (shouldRestoreDefaultWordbook && !restoreDefaultSucceeded) {
         console.error(
-          `[e2e-extension] cleanup failed: delete fixture wordbook ${createdWordbookId}`,
-          error instanceof Error ? error.message : String(error)
+          `[e2e-extension] cleanup skipped: fixture delete blocked until default restore succeeds (wordbook ${createdWordbookId})`
         );
+      } else {
+        try {
+          await deleteWordbook(auth, createdWordbookId);
+        } catch (error) {
+          console.error(
+            `[e2e-extension] cleanup failed: delete fixture wordbook ${createdWordbookId}`,
+            error instanceof Error ? error.message : String(error)
+          );
+        }
       }
     }
     await context.close();

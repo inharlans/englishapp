@@ -5,6 +5,14 @@
 
   let button = null;
 
+  function logClipper(step, extra = {}) {
+    try {
+      console.log(JSON.stringify({ tag: "CLIPPER_E2E", step, ts: Date.now(), ...extra }));
+    } catch {
+      // no-op
+    }
+  }
+
   function normalizeSpace(value) {
     return String(value || "").replace(/\s+/g, " ").trim();
   }
@@ -61,14 +69,30 @@
   }
 
   function openBridgeInPage(payload) {
+    const markOpened = (via) => {
+      window.__CLIPPER_BRIDGE_OPENED__ = { via, ts: Date.now() };
+    };
+
     chrome.storage.sync.get(["bridgeOrigin"], (storage) => {
       const bridgeOrigin = typeof storage.bridgeOrigin === "string" && storage.bridgeOrigin.startsWith("http")
         ? storage.bridgeOrigin
         : DEFAULT_BRIDGE_ORIGIN;
       const encoded = base64UrlEncodeUtf8(JSON.stringify(payload));
       const url = `${bridgeOrigin.replace(/\/$/, "")}/clipper/add?payload=${encodeURIComponent(encoded)}`;
+      logClipper("fallback_open_bridge_attempt", {
+        bridgeOrigin: bridgeOrigin.replace(/\/$/, ""),
+        targetPath: "/clipper/add"
+      });
       const opened = window.open(url, "_blank", "noopener,noreferrer");
-      if (!opened) location.href = url;
+      if (opened) {
+        markOpened("window.open");
+        logClipper("fallback_open_bridge_success", { via: "window.open" });
+      } else {
+        markOpened("location.href");
+        logClipper("fallback_open_bridge_blocked", { via: "location.href" });
+        console.warn("[englishapp-clipper] bridge open blocked by popup policy");
+        location.href = url;
+      }
     });
   }
 
@@ -115,12 +139,15 @@
         sourceUrl: location.href,
         sourceTitle: document.title
       };
+      logClipper("sendMessage_start", { termLength: term.length });
       chrome.runtime.sendMessage({
         type: "openClipperBridge",
         payload
       }, (response) => {
-        const sendError = chrome.runtime.lastError;
+        const sendError = chrome.runtime.lastError?.message || null;
+        logClipper("sendMessage_done", { lastError: sendError, responseOk: Boolean(response?.ok), responseError: response?.error || null });
         if (sendError || !response?.ok) {
+          logClipper("sendMessage_fallback_triggered", { reason: sendError || response?.error || "unknown" });
           openBridgeInPage(payload);
         }
       });
