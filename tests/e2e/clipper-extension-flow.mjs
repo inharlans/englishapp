@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import path from "node:path";
 import readline from "node:readline/promises";
 
@@ -7,12 +8,18 @@ const BASE_URL = new URL(process.env.E2E_BASE_URL || "http://127.0.0.1:3000").or
 const E2E_SECRET = process.env.E2E_SECRET || "";
 const EMAIL = process.env.E2E_EMAIL || "e2e-clipped@example.com";
 const EXTENSION_DIR = process.env.E2E_EXTENSION_DIR || path.resolve("extension");
+const EXTENSION_SW_TIMEOUT_MS = Number(process.env.E2E_EXTENSION_SW_TIMEOUT_MS || "15000");
+const E2E_CLIENT_IP = process.env.E2E_CLIENT_IP || "127.0.0.1";
+const SCREENSHOT_DIR = process.env.E2E_SCREENSHOT_DIR || "";
 const HEADLESS = process.env.E2E_HEADLESS === "1";
 const MANUAL_LOGIN = process.env.E2E_MANUAL_LOGIN === "1";
+const ALLOW_LEGACY_FALLBACK = process.env.E2E_ALLOW_LEGACY_FALLBACK === "1";
 
 const FIXTURE_TITLE = `Clipper Ext E2E ${Date.now()} ${Math.random().toString(36).slice(2, 8)}`;
 const INJECTED_DATA_ATTR = "data-englishapp-clipper-injected";
 const CLICKED_DATA_ATTR = "data-englishapp-clipper-clicked";
+const TOAST_DATA_ATTR = "data-englishapp-clipper-toast";
+const TOAST_UPDATED_AT_ATTR = "data-englishapp-clipper-toast-updated-at";
 
 function assert(cond, msg) {
   if (!cond) throw new Error(msg);
@@ -49,7 +56,8 @@ async function getE2eSession() {
     method: "POST",
     headers: {
       "content-type": "application/json",
-      "x-e2e-secret": E2E_SECRET
+      "x-e2e-secret": E2E_SECRET,
+      "x-forwarded-for": E2E_CLIENT_IP
     },
     body: JSON.stringify({ email: EMAIL })
   });
@@ -106,6 +114,45 @@ async function deleteWordbook(auth, wordbookId) {
     }
   });
   assert(removed.res.ok, `wordbook delete failed: ${removed.res.status} ${JSON.stringify(removed.data)}`);
+}
+
+function resolveScreenshotPath(filename) {
+  if (!SCREENSHOT_DIR) return null;
+  fs.mkdirSync(SCREENSHOT_DIR, { recursive: true });
+  return path.join(SCREENSHOT_DIR, filename);
+}
+
+async function maybeCaptureScreenshot(page, filename, labelText) {
+  const outputPath = resolveScreenshotPath(filename);
+  if (!outputPath) return;
+  if (labelText) {
+    await page.evaluate((text) => {
+      const existing = document.getElementById("clipper-e2e-shot-label");
+      if (existing) existing.remove();
+      const el = document.createElement("div");
+      el.id = "clipper-e2e-shot-label";
+      el.textContent = text;
+      el.style.position = "fixed";
+      el.style.top = "12px";
+      el.style.right = "12px";
+      el.style.zIndex = "2147483647";
+      el.style.background = "#111827";
+      el.style.color = "#ffffff";
+      el.style.padding = "6px 10px";
+      el.style.borderRadius = "8px";
+      el.style.fontSize = "12px";
+      el.style.fontWeight = "700";
+      el.style.boxShadow = "0 4px 12px rgba(0,0,0,0.25)";
+      document.body.appendChild(el);
+    }, labelText);
+  }
+  await page.screenshot({ path: outputPath, fullPage: true });
+  if (labelText) {
+    await page.evaluate(() => {
+      const existing = document.getElementById("clipper-e2e-shot-label");
+      if (existing) existing.remove();
+    });
+  }
 }
 
 async function ensureDefaultWordbook(auth) {
@@ -220,6 +267,11 @@ async function ensureDefaultWordbookFromBrowser(page) {
   }, { title: FIXTURE_TITLE });
 
   assert(result?.ok, `manual default wordbook setup failed (${result?.step ?? "unknown"}:${result?.status ?? "n/a"})`);
+}
+
+async function waitForExtensionServiceWorker(context) {
+  return context.serviceWorkers()[0]
+    ?? (await context.waitForEvent("serviceworker", { timeout: EXTENSION_SW_TIMEOUT_MS }).catch(() => null));
 }
 
 async function configureBridgeOrigin(context, extensionId) {
@@ -384,135 +436,269 @@ async function runFlow(context, swLogs) {
   });
   await page.goto(`${BASE_URL}/clipper/extension-fixture`, { waitUntil: "domcontentloaded" });
 
-  const target = page.locator("p strong", { hasText: "example" });
-  await target.waitFor({ timeout: 10000 });
-  const box = await target.boundingBox();
-  assert(box, "selection target missing");
-  const startX = box.x + 2;
-  const endX = box.x + Math.max(3, box.width - 2);
-  const y = box.y + box.height / 2;
-  await page.mouse.move(startX, y);
-  await page.mouse.down();
-  await page.mouse.move(endX, y, { steps: 8 });
-  await page.mouse.up();
-
-  const addButton = page.locator('[data-englishapp-clipper="button"]');
-  await addButton.waitFor({ timeout: 10000 });
-  await page.evaluate((clickedDataAttr) => {
-    document.documentElement?.removeAttribute(clickedDataAttr);
-  }, CLICKED_DATA_ATTR);
-  const buttonBox = await addButton.boundingBox();
-  assert(buttonBox, "clipper add button has no bounding box");
-  const buttonHit = await readButtonHitTest(page, buttonBox);
-  const preClickSelection = await readSelectionDebug(page);
+  await page.waitForFunction((injectedDataAttr) => {
+    return document.documentElement?.getAttribute(injectedDataAttr) === "1";
+  }, INJECTED_DATA_ATTR, { timeout: 8000 }).catch(() => null);
   const injected = await page.evaluate((injectedDataAttr) => {
     return document.documentElement?.getAttribute(injectedDataAttr) || null;
   }, INJECTED_DATA_ATTR);
-  assert(injected === "1", "content script was not injected");
-
-  const openBridgePattern = new RegExp(`${BASE_URL.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}/clipper/add\\?payload=`);
-  const clipperAddResponsePromise = page.waitForResponse(
-    (response) => response.url().includes("/clipper/add?payload="),
-    { timeout: 10000 }
-  ).catch(() => null);
-  const pagesBeforeClick = new Set(context.pages());
-  const openedPagePromise = context.waitForEvent("page", { timeout: 7000 }).catch(() => null);
-  const clickResult = await clickButtonWithFallbacks(page, addButton);
-  const postClickSelection = await readSelectionDebug(page);
-  const [samePageNavigated, openedPage] = await Promise.all([
-    page
-      .waitForURL(openBridgePattern, { timeout: 5000 })
-      .then(() => true)
-      .catch(() => false),
-    openedPagePromise
-  ]);
-  if (samePageNavigated) {
-    const bodyText = await page.textContent("body");
-    const hasSuccessMessage = bodyText?.includes("단어장에 추가했습니다") || bodyText?.includes("이미 같은 단어");
-    if (!hasSuccessMessage) {
-      const clipperAddResponse = await clipperAddResponsePromise;
-      let clipperAddResponseDebug = null;
-      if (clipperAddResponse) {
-        let bodyPreview = null;
-        try {
-          bodyPreview = (await clipperAddResponse.text()).slice(0, 500);
-        } catch {
-          bodyPreview = null;
-        }
-        clipperAddResponseDebug = {
-          url: clipperAddResponse.url(),
-          status: clipperAddResponse.status(),
-          bodyPreview
-        };
-      }
-      await dumpBridgeDebug(
-        context,
-        page,
-        consoleLogs,
-        swLogs,
-        "bridge_success_message_missing",
-        preClickSelection,
-        postClickSelection,
-        clickResult.attempts,
-        buttonBox,
-        buttonHit,
-        clipperAddResponseDebug
-      );
-      throw new Error("bridge success message missing");
-    }
-    return;
-  }
-
-  try {
-    let bridgePage = openedPage;
-    if (!bridgePage) {
-      await page.waitForTimeout(2000);
-      if (page.url().includes("/clipper/add?payload=")) {
-        bridgePage = page;
-      }
-    }
-    if (!bridgePage) {
-      const pages = context.pages();
-      bridgePage = pages.find((candidate) => {
-        if (pagesBeforeClick.has(candidate)) return false;
-        return candidate.url().includes("/clipper/add?payload=");
-      }) ?? null;
-    }
-    assert(Boolean(bridgePage), "bridge page did not open");
-    await bridgePage.waitForURL(openBridgePattern, { timeout: 10000 });
-    const bodyText = await bridgePage.textContent("body");
-    assert(
-      bodyText?.includes("단어장에 추가했습니다") || bodyText?.includes("이미 같은 단어"),
-      "bridge success message missing"
-    );
-  } catch (error) {
-    const clipperAddResponse = await clipperAddResponsePromise;
-    let clipperAddResponseDebug = null;
-    if (clipperAddResponse) {
-      let bodyPreview = null;
-      try {
-        bodyPreview = (await clipperAddResponse.text()).slice(0, 500);
-      } catch {
-        bodyPreview = null;
-      }
-      clipperAddResponseDebug = {
-        url: clipperAddResponse.url(),
-        status: clipperAddResponse.status(),
-        bodyPreview
-      };
-    }
+  if (injected !== "1") {
     await dumpBridgeDebug(
       context,
       page,
       consoleLogs,
       swLogs,
-      "bridge_open_failed",
+      "content_script_not_injected",
+      null,
+      null,
+      [],
+      null,
+      null,
+      null
+    );
+    throw new Error("content script was not injected");
+  }
+
+  const selectFixtureTerm = async () => {
+    const target = page.locator("p strong", { hasText: "example" });
+    await target.waitFor({ timeout: 10000 });
+    const box = await target.boundingBox();
+    assert(box, "selection target missing");
+    const startX = box.x + 2;
+    const endX = box.x + Math.max(3, box.width - 2);
+    const y = box.y + box.height / 2;
+    await page.mouse.move(startX, y);
+    await page.mouse.down();
+    await page.mouse.move(endX, y, { steps: 8 });
+    await page.mouse.up();
+  };
+
+  const attemptSave = async (label) => {
+    const waitForBridgePage = async (timeoutMs, pagesBefore) => {
+      const deadline = Date.now() + timeoutMs;
+      while (Date.now() < deadline) {
+        const currentBridge = page.url().includes("/clipper/add?payload=") ? page : null;
+        if (currentBridge) return currentBridge;
+        const openedBridge = context.pages().find((candidate) => {
+          if (pagesBefore.has(candidate)) return false;
+          return candidate.url().includes("/clipper/add?payload=");
+        }) || null;
+        if (openedBridge) return openedBridge;
+        await page.waitForTimeout(100);
+      }
+      return null;
+    };
+
+    await selectFixtureTerm();
+
+    const addButton = page.locator('[data-englishapp-clipper="button"]');
+    await addButton.waitFor({ timeout: 10000 });
+    await page.evaluate((clickedDataAttr) => {
+      document.documentElement?.removeAttribute(clickedDataAttr);
+    }, CLICKED_DATA_ATTR);
+
+    const buttonBox = await addButton.boundingBox();
+    assert(buttonBox, "clipper add button has no bounding box");
+    const buttonHit = await readButtonHitTest(page, buttonBox);
+    const preClickSelection = await readSelectionDebug(page);
+    const previousToastUpdatedAt = await page.evaluate(({ toastDataAttr, toastUpdatedAtAttr }) => {
+      const toast = document.querySelector(`[${toastDataAttr}="toast"]`);
+      return toast?.getAttribute(toastUpdatedAtAttr) || null;
+    }, { toastDataAttr: TOAST_DATA_ATTR, toastUpdatedAtAttr: TOAST_UPDATED_AT_ATTR });
+
+    const clipperAddResponsePromise = page.waitForResponse(
+      (response) => response.url().includes("/api/clipper/add") && response.request().method() === "POST",
+      { timeout: 10000 }
+    ).catch(() => null);
+    const pagesBeforeClick = new Set(context.pages());
+
+    const clickResult = await clickButtonWithFallbacks(page, addButton);
+    const postClickSelection = await readSelectionDebug(page);
+    const unexpectedBridgePage = await waitForBridgePage(9000, pagesBeforeClick);
+    const bridgePage = unexpectedBridgePage;
+    const bridgeOpened = Boolean(bridgePage);
+
+    const clipperAddResponse = bridgeOpened
+      ? await Promise.race([clipperAddResponsePromise, page.waitForTimeout(300).then(() => null)])
+      : await clipperAddResponsePromise;
+    let clipperAddResponseDebug = null;
+    if (clipperAddResponse) {
+      let bodyPreview = null;
+      let parsedBody = null;
+      let bodyText = null;
+      try {
+        bodyText = await clipperAddResponse.text();
+      } catch {
+        bodyText = null;
+      }
+      if (bodyText) {
+        try {
+          parsedBody = JSON.parse(bodyText);
+        } catch {
+          parsedBody = null;
+        }
+        bodyPreview = bodyText.slice(0, 500);
+      }
+      clipperAddResponseDebug = {
+        url: (() => {
+          try {
+            const parsed = new URL(clipperAddResponse.url());
+            return `${parsed.origin}${parsed.pathname}`;
+          } catch {
+            return clipperAddResponse.url();
+          }
+        })(),
+        status: clipperAddResponse.status(),
+        bodyPreview,
+        statusValue: parsedBody?.status || null,
+        errorValue: parsedBody?.error || null
+      };
+    }
+
+    const statusCode = Number(clipperAddResponseDebug?.status || 0);
+    const statusValue = clipperAddResponseDebug?.statusValue;
+    if (!bridgeOpened) {
+      assert(!page.url().includes("/clipper/add?payload="), `${label}: current page navigated to bridge add page`);
+      assert(!unexpectedBridgePage, `${label}: unexpected bridge page opened`);
+    }
+
+    if (bridgeOpened) {
+      assert(ALLOW_LEGACY_FALLBACK, `${label}: legacy fallback opened unexpectedly`);
+      const fallbackPage = bridgePage;
+      assert(Boolean(fallbackPage), `${label}: fallback page handle missing`);
+      await fallbackPage.waitForURL(/\/clipper\/add\?payload=/, { timeout: 10000 }).catch(() => null);
+      const fallbackBodyText = await fallbackPage.textContent("body").catch(() => null);
+      const fallbackSucceeded = Boolean(
+        fallbackBodyText?.includes("단어장에 추가했습니다") || fallbackBodyText?.includes("이미 같은 단어")
+      );
+      assert(fallbackSucceeded, `${label}: fallback bridge success message missing`);
+      console.log(`[e2e-extension][case] ${label} legacy-fallback-opened statusCode=${statusCode}`);
+      return {
+        preClickSelection,
+        postClickSelection,
+        clickAttempts: clickResult.attempts,
+        buttonBox,
+        buttonHit,
+        clipperAddResponseDebug,
+        statusCode,
+        statusValue,
+        toastText: "",
+        legacyFallbackOpened: true
+      };
+    }
+
+    await page.waitForFunction(
+      ({ toastDataAttr, toastUpdatedAtAttr, prevValue }) => {
+        const toast = document.querySelector(`[${toastDataAttr}="toast"]`);
+        if (!toast) return false;
+        const updatedAt = toast.getAttribute(toastUpdatedAtAttr);
+        if (!updatedAt) return false;
+        return updatedAt !== prevValue;
+      },
+      {
+        toastDataAttr: TOAST_DATA_ATTR,
+        toastUpdatedAtAttr: TOAST_UPDATED_AT_ATTR,
+        prevValue: previousToastUpdatedAt
+      },
+      { timeout: 10000 }
+    );
+    const toastText = await page.evaluate((toastDataAttr) => {
+      const toast = document.querySelector(`[${toastDataAttr}="toast"]`);
+      return (toast?.textContent || "").trim();
+    }, TOAST_DATA_ATTR);
+
+    if ((statusCode === 200 || statusCode === 201) && !statusValue) {
+      throw new Error(`${label}: clipper status missing for ${statusCode}`);
+    }
+
+    if (statusValue === "created") {
+      assert(toastText.includes("저장되었습니다"), `${label}: created toast mismatch (${toastText})`);
+    } else if (statusValue === "duplicate") {
+      assert(toastText.includes("이미"), `${label}: duplicate toast mismatch (${toastText})`);
+    } else if (statusCode === 401 || statusCode === 403) {
+      assert(toastText.includes("로그인"), `${label}: auth toast mismatch (${toastText})`);
+    } else if (statusCode === 422) {
+      assert(toastText.includes("기본 단어장"), `${label}: default wordbook toast mismatch (${toastText})`);
+    } else if (statusCode >= 500 || statusCode === 0) {
+      assert(toastText.includes("저장 실패"), `${label}: error toast mismatch (${toastText})`);
+    } else {
+      throw new Error(
+        `${label}: unhandled save status (statusCode=${statusCode}, statusValue=${statusValue || "n/a"}, body=${clipperAddResponseDebug?.bodyPreview || "n/a"})`
+      );
+    }
+
+    console.log(
+      `[e2e-extension][case] ${label} statusCode=${statusCode} status=${statusValue || "n/a"} toast=${toastText}`
+    );
+
+    if (statusValue === "created") {
+      await maybeCaptureScreenshot(page, "01-created.png", "created toast");
+    } else if (statusValue === "duplicate") {
+      await maybeCaptureScreenshot(page, "02-duplicate.png", "duplicate toast");
+    } else if (statusCode === 401 || statusCode === 403) {
+      await maybeCaptureScreenshot(page, "03-auth-required.png", "auth-required toast");
+    }
+
+    return {
       preClickSelection,
       postClickSelection,
-      clickResult.attempts,
+      clickAttempts: clickResult.attempts,
       buttonBox,
       buttonHit,
-      clipperAddResponseDebug
+      clipperAddResponseDebug,
+      statusCode,
+      statusValue,
+      toastText,
+      legacyFallbackOpened: false
+    };
+  };
+
+  let first;
+  let second;
+  try {
+    first = await attemptSave("first");
+    if (first.legacyFallbackOpened) {
+      console.log("[e2e-extension][case] legacy fallback path observed via E2E_ALLOW_LEGACY_FALLBACK=1");
+      return;
+    }
+    second = await attemptSave("second");
+    if (first.legacyFallbackOpened || second.legacyFallbackOpened) {
+      console.log("[e2e-extension][case] legacy fallback path observed via E2E_ALLOW_LEGACY_FALLBACK=1");
+      return;
+    }
+    console.log(
+      `[e2e-extension][case] duplicate-check statusCode=${second.statusCode} status=${second.statusValue || "n/a"}`
+    );
+
+    const statuses = [first.statusValue, second.statusValue].filter(Boolean);
+    assert(statuses.length >= 2, "clipper add status logs missing");
+    assert(first.statusValue === "created" || first.statusValue === "duplicate", "first save status mismatch");
+    assert(second.statusValue === "duplicate", "duplicate check did not return duplicate");
+    assert(page.url().includes("/clipper/extension-fixture"), "page navigated unexpectedly");
+
+    if (SCREENSHOT_DIR) {
+      assert(first.statusValue === "created", "screenshot mode requires first save to be created");
+      await context.clearCookies();
+      const authRequired = await attemptSave("auth-required");
+      assert(
+        authRequired.statusCode === 401 || authRequired.statusCode === 403,
+        `auth-required status mismatch (${authRequired.statusCode})`
+      );
+    }
+  } catch (error) {
+    const latest = second || first;
+    await dumpBridgeDebug(
+      context,
+      page,
+      consoleLogs,
+      swLogs,
+      "save_flow_failed",
+      latest?.preClickSelection || null,
+      latest?.postClickSelection || null,
+      latest?.clickAttempts || [],
+      latest?.buttonBox || null,
+      latest?.buttonHit || null,
+      latest?.clipperAddResponseDebug || null
     );
     throw error;
   }
@@ -542,7 +728,8 @@ async function main() {
   const swLogs = [];
 
   try {
-    const serviceWorker = context.serviceWorkers()[0] ?? (await context.waitForEvent("serviceworker"));
+    const serviceWorker = await waitForExtensionServiceWorker(context);
+    assert(Boolean(serviceWorker), "extension service worker was not ready");
     serviceWorker.on("console", (msg) => {
       swLogs.push({ type: msg.type(), text: msg.text() });
     });

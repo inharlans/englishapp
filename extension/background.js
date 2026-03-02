@@ -1,6 +1,12 @@
 const DEFAULT_BRIDGE_ORIGIN = "https://www.oingapp.com";
 const TERM_MAX = 64;
 const EXAMPLE_MAX = 500;
+const ALLOWED_BRIDGE_HOSTS = new Set([
+  "oingapp.com",
+  "www.oingapp.com",
+  "localhost",
+  "127.0.0.1"
+]);
 
 function logBackground(step, extra = {}) {
   try {
@@ -29,21 +35,30 @@ function sanitizeExample(raw) {
   return normalizeSpace(raw).slice(0, EXAMPLE_MAX);
 }
 
-function isE2eFixtureSender(senderUrl) {
+function sanitizeBridgeOrigin(candidate) {
   try {
-    const parsed = new URL(senderUrl || "");
-    return parsed.pathname === "/clipper/extension-fixture" || parsed.pathname === "/clipper/extension-fixture/";
+    const parsed = new URL(candidate);
+    const isAllowedHost = ALLOWED_BRIDGE_HOSTS.has(parsed.hostname);
+    const isHttps = parsed.protocol === "https:";
+    const isLocalHttp = parsed.protocol === "http:" && (parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1");
+    if (isAllowedHost && (isHttps || isLocalHttp)) {
+      return parsed.origin;
+    }
   } catch {
-    return false;
+    // no-op
   }
+  return null;
 }
+
+logBackground("service_worker_ready");
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (!message || message.type !== "openClipperBridge") return;
   chrome.storage.sync.get(["bridgeOrigin"], (storage) => {
     const bridgeOrigin = typeof storage.bridgeOrigin === "string" && storage.bridgeOrigin.startsWith("http")
-      ? storage.bridgeOrigin
-      : DEFAULT_BRIDGE_ORIGIN;
+      ? sanitizeBridgeOrigin(storage.bridgeOrigin)
+      : null;
+    const safeBridgeOrigin = bridgeOrigin || sanitizeBridgeOrigin(DEFAULT_BRIDGE_ORIGIN) || DEFAULT_BRIDGE_ORIGIN;
 
     const term = sanitizeTerm(message.payload?.term || "");
     if (!term) {
@@ -63,39 +78,35 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     };
 
     const encoded = base64UrlEncodeUtf8(JSON.stringify(payload));
-    const url = `${bridgeOrigin.replace(/\/$/, "")}/clipper/add?payload=${encodeURIComponent(encoded)}`;
+    const url = `${safeBridgeOrigin.replace(/\/$/, "")}/clipper/add?payload=${encodeURIComponent(encoded)}`;
 
-    const senderTabId = sender?.tab?.id;
-    const useSameTab = Number.isInteger(senderTabId) && isE2eFixtureSender(sender?.url);
-
-    if (useSameTab) {
-      logBackground("tabs_update_start", { senderTabId });
-      chrome.tabs.update(senderTabId, { url }, () => {
-        const lastError = chrome.runtime.lastError;
-        if (lastError) {
-          const errorMessage = lastError.message || "TAB_UPDATE_FAILED";
-          logBackground("tabs_update_failed", { error: errorMessage, senderTabId });
-          sendResponse({ ok: false, error: "tabs_update_failed", message: errorMessage });
-          return;
-        }
-        logBackground("tabs_update_success", { senderTabId });
-        sendResponse({ ok: true, mode: "update", tabId: senderTabId });
-      });
+    if (!globalThis.clients || typeof globalThis.clients.openWindow !== "function") {
+      sendResponse({ ok: true, mode: "delegate", status: "openWindowUnavailable", url });
       return;
     }
 
-    logBackground("tabs_create_start");
-    chrome.tabs.create({ url }, (tab) => {
-      const lastError = chrome.runtime.lastError;
-      if (lastError) {
-        const errorMessage = lastError.message || "TAB_CREATE_FAILED";
-        logBackground("tabs_create_failed", { error: errorMessage });
-        sendResponse({ ok: false, error: "tabs_create_failed", message: errorMessage });
-        return;
-      }
-      logBackground("tabs_create_success", { tabId: tab?.id || null });
-      sendResponse({ ok: true, mode: "create", tabId: tab?.id || null });
-    });
+    logBackground("open_window_start", { senderUrl: sender?.url || null });
+    globalThis.clients.openWindow(url)
+      .then((client) => {
+        if (client) {
+          logBackground("open_window_success");
+          sendResponse({ ok: true, mode: "openWindow", status: "opened", url });
+          return;
+        }
+        logBackground("open_window_no_client");
+        sendResponse({ ok: true, mode: "delegate", status: "openWindowNoClient", url });
+      })
+      .catch((error) => {
+        const messageText = error instanceof Error ? error.message : String(error);
+        logBackground("open_window_failed", { error: messageText });
+        sendResponse({
+          ok: true,
+          mode: "delegate",
+          status: "openWindowFailed",
+          url,
+          message: messageText
+        });
+      });
   });
   return true;
 });

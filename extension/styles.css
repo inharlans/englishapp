@@ -17,3 +17,44 @@
   background: #1d4ed8;
   border-color: #1d4ed8;
 }
+
+.englishapp-clipper-toast {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 2147483647;
+  max-width: min(360px, calc(100vw - 32px));
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.35;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.22);
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 140ms ease, transform 140ms ease;
+  pointer-events: none;
+}
+
+.englishapp-clipper-toast.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.englishapp-clipper-toast.is-success {
+  color: #ecfdf5;
+  background: #047857;
+  border: 1px solid #065f46;
+}
+
+.englishapp-clipper-toast.is-warn {
+  color: #0f172a;
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+}
+
+.englishapp-clipper-toast.is-error {
+  color: #fff1f2;
+  background: #be123c;
+  border: 1px solid #9f1239;
+}

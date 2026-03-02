@@ -2,6 +2,10 @@
 
 ## 최근 업데이트 (2026-03-02)
 
+- 클리퍼 웹스토어 메타데이터 템플릿을 Option A 기준으로 교정해, 저장 플로우를 `/api/clipper/add` 직접 저장 + 토스트 피드백 중심으로 명시하고 권한 안내를 `storage` only 기준으로 정리했습니다.
+- 개인정보처리방침(`/privacy`)에 `Chrome 확장(Englishapp PDF Clipper)` 섹션을 추가해 전송 데이터 범위, 세션 인증 방식(비밀번호 미저장), 저장 목적/문의 경로를 확장 관점에서 명시했습니다.
+- 클리퍼 확장 스토어 제출 준비를 위해 아이콘 세트(16/48/128)를 추가하고 manifest `icons` 항목을 연결했습니다(`extension/icons/icon16.png`, `extension/icons/icon48.png`, `extension/icons/icon128.png`).
+- 클리퍼 확장 권한을 `storage` 단일 권한으로 축소했고, 레거시 브릿지 이동은 background `openWindow` + content delegate fallback(window.open/location.assign)으로 재구성해 `tabs/activeTab` 의존을 제거했습니다.
 - 1차 광고 수익화 구조를 추가해 광고 슬롯(`HOME_BANNER`, `SESSION_END`)과 공급자 구현(AdSense)을 분리했습니다. 앱 코드는 `<AdSlot />`만 사용하고, 공급자 세부 구현은 내부에서 은닉되도록 정리했습니다.
 - AdSense 스크립트는 `app/layout.tsx`에서 `afterInteractive`로 1회만 로드하고(`components/ads/AdProviderScript.tsx`), `NEXT_PUBLIC_ADS_ENABLED`/`NEXT_PUBLIC_ADSENSE_CLIENT`/슬롯별 unit id가 하나라도 비어 있으면 광고를 조용히 미노출하도록 fail-closed 정책을 적용했습니다.
 - `SESSION_END` 슬롯은 `SessionRecapPanel`이 렌더되는 상태를 세션 종료 화면으로 간주해 노출하도록 정의했습니다. 향후 Recap 렌더 조건이 바뀌면 SESSION_END 노출 시점도 함께 바뀝니다.
