@@ -11,13 +11,15 @@ EnglishApp PDF Clipper는 브라우저에서 선택한 영어 단어를 EnglishA
 
 주요 기능:
 - 페이지에서 단어를 드래그하면 `단어장에 추가` 버튼 노출
-- 버튼 클릭 시 EnglishApp 브릿지 페이지(`/clipper/add`)를 통해 단어 저장
+- 버튼 클릭 시 탭 이동 없이 `POST /api/clipper/add`로 즉시 저장
+- 저장 결과를 토스트(`created`/`duplicate`/`auth-required`/`error`)로 즉시 피드백
 - 옵션 페이지에서 `bridgeOrigin`을 환경별로 설정 가능
 
 필수 권한 안내:
-- `storage`: 옵션(`bridgeOrigin`) 저장/복원을 위해 사용
+- `storage` only: 옵션(`bridgeOrigin`) 저장/복원을 위해 사용
 - 콘텐츠 스크립트 대상: `https://www.oingapp.com/*`, `https://oingapp.com/*`, `https://127.0.0.1/*`, `https://localhost/*`, `http://127.0.0.1/*`, `http://localhost/*`
 - `web_accessible_resources(page-bridge.js)` 대상: `https://www.oingapp.com/*`, `https://oingapp.com/*`, `https://127.0.0.1/*`, `https://localhost/*`, `http://127.0.0.1/*`, `http://localhost/*`
+- 운영 안내 문구: Englishapp(oingapp) 페이지에서 동작하며, 로컬 디버그는 localhost/127.0.0.1 범위에서만 지원
 
 개인정보/보안:
 - 로그인은 EnglishApp 웹 애플리케이션에서 처리

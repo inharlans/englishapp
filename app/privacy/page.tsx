@@ -27,7 +27,14 @@ export default function PrivacyPage() {
         </p>
       </div>
 
-      <p className="mt-6 text-xs text-slate-500">시행일: 2026년 2월 18일</p>
+      <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-700">
+        <p className="font-bold text-slate-900">Chrome 확장(Englishapp PDF Clipper) 개인정보 안내</p>
+        <p className="mt-2">- 사용자가 텍스트를 선택하고 `단어장에 추가`를 클릭한 경우에만 단어/예문(있는 경우)/출처 URL/출처 제목이 Englishapp 서버로 전송됩니다.</p>
+        <p>- 확장은 사이트 로그인 세션(쿠키) 기반으로 요청을 수행하며, 계정 비밀번호를 저장하지 않습니다.</p>
+        <p>- 전송된 데이터는 단어장 저장 및 학습 기능 제공 목적으로만 사용되며, 삭제/정정 요청은 개인정보 문의처를 통해 접수할 수 있습니다.</p>
+      </div>
+
+      <p className="mt-6 text-xs text-slate-500">시행일: 2026년 2월 18일 / 최종 수정일: 2026년 3월 2일</p>
     </section>
   );
 }
