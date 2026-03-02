@@ -29,14 +29,7 @@ function sanitizeExample(raw) {
   return normalizeSpace(raw).slice(0, EXAMPLE_MAX);
 }
 
-function isE2eFixtureSender(senderUrl) {
-  try {
-    const parsed = new URL(senderUrl || "");
-    return parsed.pathname === "/clipper/extension-fixture" || parsed.pathname === "/clipper/extension-fixture/";
-  } catch {
-    return false;
-  }
-}
+logBackground("service_worker_ready");
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (!message || message.type !== "openClipperBridge") return;
@@ -65,37 +58,33 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     const encoded = base64UrlEncodeUtf8(JSON.stringify(payload));
     const url = `${bridgeOrigin.replace(/\/$/, "")}/clipper/add?payload=${encodeURIComponent(encoded)}`;
 
-    const senderTabId = sender?.tab?.id;
-    const useSameTab = Number.isInteger(senderTabId) && isE2eFixtureSender(sender?.url);
-
-    if (useSameTab) {
-      logBackground("tabs_update_start", { senderTabId });
-      chrome.tabs.update(senderTabId, { url }, () => {
-        const lastError = chrome.runtime.lastError;
-        if (lastError) {
-          const errorMessage = lastError.message || "TAB_UPDATE_FAILED";
-          logBackground("tabs_update_failed", { error: errorMessage, senderTabId });
-          sendResponse({ ok: false, error: "tabs_update_failed", message: errorMessage });
-          return;
-        }
-        logBackground("tabs_update_success", { senderTabId });
-        sendResponse({ ok: true, mode: "update", tabId: senderTabId });
-      });
+    if (!globalThis.clients || typeof globalThis.clients.openWindow !== "function") {
+      sendResponse({ ok: true, mode: "delegate", status: "openWindowUnavailable", url });
       return;
     }
 
-    logBackground("tabs_create_start");
-    chrome.tabs.create({ url }, (tab) => {
-      const lastError = chrome.runtime.lastError;
-      if (lastError) {
-        const errorMessage = lastError.message || "TAB_CREATE_FAILED";
-        logBackground("tabs_create_failed", { error: errorMessage });
-        sendResponse({ ok: false, error: "tabs_create_failed", message: errorMessage });
-        return;
-      }
-      logBackground("tabs_create_success", { tabId: tab?.id || null });
-      sendResponse({ ok: true, mode: "create", tabId: tab?.id || null });
-    });
+    logBackground("open_window_start", { senderUrl: sender?.url || null });
+    globalThis.clients.openWindow(url)
+      .then((client) => {
+        if (client) {
+          logBackground("open_window_success");
+          sendResponse({ ok: true, mode: "openWindow", status: "opened", url });
+          return;
+        }
+        logBackground("open_window_no_client");
+        sendResponse({ ok: true, mode: "delegate", status: "openWindowNoClient", url });
+      })
+      .catch((error) => {
+        const messageText = error instanceof Error ? error.message : String(error);
+        logBackground("open_window_failed", { error: messageText });
+        sendResponse({
+          ok: true,
+          mode: "delegate",
+          status: "openWindowFailed",
+          url,
+          message: messageText
+        });
+      });
   });
   return true;
 });

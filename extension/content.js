@@ -310,25 +310,65 @@
       window.__CLIPPER_BRIDGE_OPENED__ = { via, ts: Date.now() };
     };
 
-    chrome.storage.sync.get(["bridgeOrigin"], (storage) => {
-      const bridgeOrigin = typeof storage.bridgeOrigin === "string" && storage.bridgeOrigin.startsWith("http")
-        ? storage.bridgeOrigin
-        : DEFAULT_BRIDGE_ORIGIN;
-      const encoded = base64UrlEncodeUtf8(JSON.stringify(payload));
-      const url = `${bridgeOrigin.replace(/\/$/, "")}/clipper/add?payload=${encodeURIComponent(encoded)}`;
-      logClipper("fallback_open_bridge_attempt", {
-        bridgeOrigin: bridgeOrigin.replace(/\/$/, ""),
-        targetPath: "/clipper/add"
-      });
+    const placeholderWindow = window.open("about:blank", "_blank", "noreferrer");
+
+    const openBridgeUrl = (url, via) => {
+      if (placeholderWindow && !placeholderWindow.closed) {
+        try {
+          placeholderWindow.location.href = url;
+          markOpened(`${via}.placeholder`);
+          logClipper("fallback_open_bridge_success", { via: `${via}.placeholder` });
+          return;
+        } catch {
+          // continue to window.open fallback
+        }
+      }
+
       const opened = window.open(url, "_blank", "noopener,noreferrer");
       if (opened) {
-        markOpened("window.open");
-        logClipper("fallback_open_bridge_success", { via: "window.open" });
-      } else {
-        markOpened("location.assign");
-        logClipper("fallback_open_bridge_blocked", { via: "location.assign" });
-        location.assign(url);
+        markOpened(via);
+        logClipper("fallback_open_bridge_success", { via });
+        return;
       }
+      logClipper("fallback_open_bridge_blocked", { via: "window.open" });
+      const shouldReplace = window.confirm("새 창 열기에 실패했습니다. 현재 페이지로 이동할까요?");
+      if (!shouldReplace) return;
+      markOpened("location.assign");
+      logClipper("fallback_open_bridge_replace_confirmed", { via: "location.assign" });
+      location.assign(url);
+    };
+
+    chrome.runtime.sendMessage({ type: "openClipperBridge", payload }, (response) => {
+      if (!chrome.runtime.lastError && response?.ok && response.mode === "openWindow") {
+        if (placeholderWindow && !placeholderWindow.closed) {
+          try {
+            placeholderWindow.close();
+          } catch {
+            // no-op
+          }
+        }
+        markOpened("background.openWindow");
+        logClipper("fallback_open_bridge_success", { via: "background.openWindow" });
+        return;
+      }
+
+      if (!chrome.runtime.lastError && typeof response?.url === "string" && response.url.startsWith("http")) {
+        openBridgeUrl(response.url, "background.delegate");
+        return;
+      }
+
+      chrome.storage.sync.get(["bridgeOrigin"], (storage) => {
+        const bridgeOrigin = typeof storage.bridgeOrigin === "string" && storage.bridgeOrigin.startsWith("http")
+          ? storage.bridgeOrigin
+          : DEFAULT_BRIDGE_ORIGIN;
+        const encoded = base64UrlEncodeUtf8(JSON.stringify(payload));
+        const url = `${bridgeOrigin.replace(/\/$/, "")}/clipper/add?payload=${encodeURIComponent(encoded)}`;
+        logClipper("fallback_open_bridge_attempt", {
+          bridgeOrigin: bridgeOrigin.replace(/\/$/, ""),
+          targetPath: "/clipper/add"
+        });
+        openBridgeUrl(url, "window.open");
+      });
     });
   }
 

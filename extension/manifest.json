@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "description": "Englishapp 페이지에서 선택한 영어 단어를 단어장으로 저장합니다.",
   "minimum_chrome_version": "114",
-  "permissions": ["storage", "activeTab", "tabs"],
+  "permissions": ["storage"],
   "action": {
     "default_title": "Englishapp PDF Clipper"
   },

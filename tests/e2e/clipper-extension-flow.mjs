@@ -7,6 +7,8 @@ const BASE_URL = new URL(process.env.E2E_BASE_URL || "http://127.0.0.1:3000").or
 const E2E_SECRET = process.env.E2E_SECRET || "";
 const EMAIL = process.env.E2E_EMAIL || "e2e-clipped@example.com";
 const EXTENSION_DIR = process.env.E2E_EXTENSION_DIR || path.resolve("extension");
+const EXTENSION_SW_TIMEOUT_MS = Number(process.env.E2E_EXTENSION_SW_TIMEOUT_MS || "15000");
+const E2E_CLIENT_IP = process.env.E2E_CLIENT_IP || "127.0.0.1";
 const HEADLESS = process.env.E2E_HEADLESS === "1";
 const MANUAL_LOGIN = process.env.E2E_MANUAL_LOGIN === "1";
 const ALLOW_LEGACY_FALLBACK = process.env.E2E_ALLOW_LEGACY_FALLBACK === "1";
@@ -52,7 +54,8 @@ async function getE2eSession() {
     method: "POST",
     headers: {
       "content-type": "application/json",
-      "x-e2e-secret": E2E_SECRET
+      "x-e2e-secret": E2E_SECRET,
+      "x-forwarded-for": E2E_CLIENT_IP
     },
     body: JSON.stringify({ email: EMAIL })
   });
@@ -223,6 +226,11 @@ async function ensureDefaultWordbookFromBrowser(page) {
   }, { title: FIXTURE_TITLE });
 
   assert(result?.ok, `manual default wordbook setup failed (${result?.step ?? "unknown"}:${result?.status ?? "n/a"})`);
+}
+
+async function waitForExtensionServiceWorker(context) {
+  return context.serviceWorkers()[0]
+    ?? (await context.waitForEvent("serviceworker", { timeout: EXTENSION_SW_TIMEOUT_MS }).catch(() => null));
 }
 
 async function configureBridgeOrigin(context, extensionId) {
@@ -661,7 +669,8 @@ async function main() {
   const swLogs = [];
 
   try {
-    const serviceWorker = context.serviceWorkers()[0] ?? (await context.waitForEvent("serviceworker"));
+    const serviceWorker = await waitForExtensionServiceWorker(context);
+    assert(Boolean(serviceWorker), "extension service worker was not ready");
     serviceWorker.on("console", (msg) => {
       swLogs.push({ type: msg.type(), text: msg.text() });
     });

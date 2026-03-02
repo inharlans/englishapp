@@ -52,15 +52,15 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `9446700d6ed0`
-- HEAD: `c1ae8fd` chore(clipper): narrow content script matches for store-ready scope
+- Source hash: `4e21bc269b4a`
+- HEAD: `4c245d8` feat(clipper): add fallback navigation notice toast
 
 ### Scope Digests
 - api-routes: 68 files, `e3e76ebc8593`
 - api-helpers: 17 files, `86a333ad403c`
 - domain-services: 39 files, `a8235083d74b`
 - automation-policy: 90 files, `ace0c18c1f60`
-- tracking-docs: 10 files, `4e1ff3202ee3`
+- tracking-docs: 10 files, `c9a279f713b9`
 
 ### Legacy Route Migration Status
 - base: `app/api/`, total: 56, migrated: 44, remaining: 12

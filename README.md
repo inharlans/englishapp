@@ -2,6 +2,7 @@
 
 ## 최근 업데이트 (2026-03-02)
 
+- 클리퍼 확장 권한을 `storage` 단일 권한으로 축소했고, 레거시 브릿지 이동은 background `openWindow` + content delegate fallback(window.open/location.assign)으로 재구성해 `tabs/activeTab` 의존을 제거했습니다.
 - 1차 광고 수익화 구조를 추가해 광고 슬롯(`HOME_BANNER`, `SESSION_END`)과 공급자 구현(AdSense)을 분리했습니다. 앱 코드는 `<AdSlot />`만 사용하고, 공급자 세부 구현은 내부에서 은닉되도록 정리했습니다.
 - AdSense 스크립트는 `app/layout.tsx`에서 `afterInteractive`로 1회만 로드하고(`components/ads/AdProviderScript.tsx`), `NEXT_PUBLIC_ADS_ENABLED`/`NEXT_PUBLIC_ADSENSE_CLIENT`/슬롯별 unit id가 하나라도 비어 있으면 광고를 조용히 미노출하도록 fail-closed 정책을 적용했습니다.
 - `SESSION_END` 슬롯은 `SessionRecapPanel`이 렌더되는 상태를 세션 종료 화면으로 간주해 노출하도록 정의했습니다. 향후 Recap 렌더 조건이 바뀌면 SESSION_END 노출 시점도 함께 바뀝니다.
