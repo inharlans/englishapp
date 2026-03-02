@@ -52,15 +52,15 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `71af7b8c3754`
-- HEAD: `a13e259` chore(clipper): drop tabs permissions for store-ready Option A
+- Source hash: `118ae5650ddf`
+- HEAD: `f74a559` docs(clipper): align webstore host scope with manifest
 
 ### Scope Digests
 - api-routes: 68 files, `e3e76ebc8593`
 - api-helpers: 17 files, `86a333ad403c`
 - domain-services: 39 files, `a8235083d74b`
 - automation-policy: 90 files, `ace0c18c1f60`
-- tracking-docs: 10 files, `c9a279f713b9`
+- tracking-docs: 10 files, `b5c53b7609af`
 
 ### Legacy Route Migration Status
 - base: `app/api/`, total: 56, migrated: 44, remaining: 12
