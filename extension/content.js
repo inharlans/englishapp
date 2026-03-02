@@ -289,6 +289,12 @@
     return result?.errorCode === "timeout" || result?.errorCode === "network_error" || statusCode >= 500;
   }
 
+  function triggerLegacyFallback(payload, reason, extra = {}) {
+    logClipper("legacy_fallback_triggered", { reason, ...extra });
+    createOrUpdateToast("문제가 발생해 저장 화면으로 이동합니다…", "warn");
+    openBridgeInPage(payload);
+  }
+
   function isClipperButtonTarget(target) {
     return target instanceof Element && Boolean(target.closest(`[${BUTTON_DATA_ATTR}="button"]`));
   }
@@ -406,16 +412,14 @@
           }
 
           if (!sameOrigin) {
-            logClipper("legacy_fallback_triggered", { reason: "cross_origin_context", bridgeOrigin });
-            openBridgeInPage(payload);
+            triggerLegacyFallback(payload, "cross_origin_context", { bridgeOrigin });
             return;
           }
 
           void injectPageBridgeScript().then((bridgeReady) => {
             if (!bridgeReady) {
               logClipper("save_bridge_injection_failed");
-              logClipper("legacy_fallback_triggered", { reason: "bridge_injection_failed" });
-              openBridgeInPage(payload);
+              triggerLegacyFallback(payload, "bridge_injection_failed");
               return;
             }
 
@@ -428,9 +432,13 @@
                 errorCode: result?.errorCode || null
               });
               showSaveResultToast(result);
-              if (!result?.ok && (shouldAutoLegacyFallback(result) || shouldUseLegacyBridgeFallback())) {
-                logClipper("legacy_fallback_triggered", { reason: result?.errorCode || `status_${result?.statusCode || 0}` });
-                openBridgeInPage(payload);
+              const autoLegacyFallback = shouldAutoLegacyFallback(result);
+              const forcedLegacyFallback = shouldUseLegacyBridgeFallback();
+              if (!result?.ok && (autoLegacyFallback || forcedLegacyFallback)) {
+                const reason = forcedLegacyFallback && !autoLegacyFallback
+                  ? "manual_legacy_fallback"
+                  : (result?.errorCode || `status_${result?.statusCode || 0}`);
+                triggerLegacyFallback(payload, reason);
               }
             });
           });

@@ -52,8 +52,8 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `5e2d2d867d96`
-- HEAD: `aeed3cf` feat(clipper): switch extension save to direct API with toast UX
+- Source hash: `9446700d6ed0`
+- HEAD: `c1ae8fd` chore(clipper): narrow content script matches for store-ready scope
 
 ### Scope Digests
 - api-routes: 68 files, `e3e76ebc8593`
