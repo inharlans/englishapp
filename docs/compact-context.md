@@ -52,18 +52,18 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `0f559b003568`
-- HEAD: `4a3877f` fix(ad): inject adsense meta and server-driven ad props
+- Source hash: `5e2d2d867d96`
+- HEAD: `aeed3cf` feat(clipper): switch extension save to direct API with toast UX
 
 ### Scope Digests
-- api-routes: 76 files, `336945ff6014`
+- api-routes: 68 files, `e3e76ebc8593`
 - api-helpers: 17 files, `86a333ad403c`
-- domain-services: 40 files, `b642b6cca1b1`
+- domain-services: 39 files, `a8235083d74b`
 - automation-policy: 90 files, `ace0c18c1f60`
-- tracking-docs: 10 files, `184b151560bb`
+- tracking-docs: 10 files, `4e1ff3202ee3`
 
 ### Legacy Route Migration Status
-- base: `app/api/`, total: 60, migrated: 48, remaining: 12
+- base: `app/api/`, total: 56, migrated: 44, remaining: 12
 - remaining files:
   - `app/api/auth/google/callback/route.ts`
   - `app/api/auth/google/route.ts`

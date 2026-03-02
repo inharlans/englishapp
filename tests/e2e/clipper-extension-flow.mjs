@@ -452,10 +452,10 @@ async function runFlow(context, swLogs) {
     assert(buttonBox, "clipper add button has no bounding box");
     const buttonHit = await readButtonHitTest(page, buttonBox);
     const preClickSelection = await readSelectionDebug(page);
-    const previousToastUpdatedAt = await page.evaluate((toastDataAttr, toastUpdatedAtAttr) => {
+    const previousToastUpdatedAt = await page.evaluate(({ toastDataAttr, toastUpdatedAtAttr }) => {
       const toast = document.querySelector(`[${toastDataAttr}="toast"]`);
       return toast?.getAttribute(toastUpdatedAtAttr) || null;
-    }, TOAST_DATA_ATTR, TOAST_UPDATED_AT_ATTR);
+    }, { toastDataAttr: TOAST_DATA_ATTR, toastUpdatedAtAttr: TOAST_UPDATED_AT_ATTR });
 
     const clipperAddResponsePromise = page.waitForResponse(
       (response) => response.url().includes("/api/clipper/add") && response.request().method() === "POST",
