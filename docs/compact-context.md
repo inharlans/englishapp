@@ -52,8 +52,8 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `4e21bc269b4a`
-- HEAD: `4c245d8` feat(clipper): add fallback navigation notice toast
+- Source hash: `71af7b8c3754`
+- HEAD: `a13e259` chore(clipper): drop tabs permissions for store-ready Option A
 
 ### Scope Digests
 - api-routes: 68 files, `e3e76ebc8593`

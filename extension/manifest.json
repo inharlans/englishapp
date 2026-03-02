@@ -15,8 +15,8 @@
   "content_scripts": [
     {
       "matches": [
-        "https://oingapp.com/*",
         "https://www.oingapp.com/*",
+        "https://oingapp.com/*",
         "https://127.0.0.1/*",
         "https://localhost/*",
         "http://127.0.0.1/*",
@@ -31,6 +31,7 @@
     {
       "resources": ["page-bridge.js"],
       "matches": [
+        "https://oingapp.com/*",
         "https://www.oingapp.com/*",
         "https://127.0.0.1/*",
         "https://localhost/*",

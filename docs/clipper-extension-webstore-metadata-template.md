@@ -15,9 +15,9 @@ EnglishApp PDF Clipper는 브라우저에서 선택한 영어 단어를 EnglishA
 - 옵션 페이지에서 `bridgeOrigin`을 환경별로 설정 가능
 
 필수 권한 안내:
-- `activeTab`: 현재 탭의 선택 텍스트를 읽기 위해 사용
 - `storage`: 옵션(`bridgeOrigin`) 저장/복원을 위해 사용
-- `<all_urls>`: 다양한 웹/PDF 문서에서 버튼을 표시하기 위해 사용
+- 콘텐츠 스크립트 대상: `https://www.oingapp.com/*`, `https://oingapp.com/*`, `https://127.0.0.1/*`, `https://localhost/*`, `http://127.0.0.1/*`, `http://localhost/*`
+- `web_accessible_resources(page-bridge.js)` 대상: `https://www.oingapp.com/*`, `https://oingapp.com/*`, `https://127.0.0.1/*`, `https://localhost/*`, `http://127.0.0.1/*`, `http://localhost/*`
 
 개인정보/보안:
 - 로그인은 EnglishApp 웹 애플리케이션에서 처리

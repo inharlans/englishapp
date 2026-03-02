@@ -61,9 +61,9 @@ export default function ClipperExtensionPage() {
         <article className="rounded-2xl border border-slate-200 bg-white p-5">
           <h2 className="text-sm font-black uppercase tracking-[0.16em] text-slate-700">권한 안내</h2>
           <ul className="mt-3 space-y-2 text-sm text-slate-700">
-            <li>- `activeTab`: 선택한 탭에서 드래그된 단어를 읽기 위해 사용합니다.</li>
             <li>- `storage`: 브릿지 Origin(`bridgeOrigin`) 설정을 저장하기 위해 사용합니다.</li>
-            <li>- `&lt;all_urls&gt;`: PDF/웹 문서 전반에서 클리퍼 버튼을 띄우기 위해 사용합니다.</li>
+            <li>- 동작 권한/호스트 범위는 현재 배포된 manifest 정의를 따릅니다.</li>
+            <li>- 실제 동작 대상은 manifest의 `content_scripts.matches`에 기재된 호스트/프로토콜 기준입니다.</li>
           </ul>
         </article>
 
