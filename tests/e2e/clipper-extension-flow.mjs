@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import path from "node:path";
 import readline from "node:readline/promises";
 
@@ -9,6 +10,7 @@ const EMAIL = process.env.E2E_EMAIL || "e2e-clipped@example.com";
 const EXTENSION_DIR = process.env.E2E_EXTENSION_DIR || path.resolve("extension");
 const EXTENSION_SW_TIMEOUT_MS = Number(process.env.E2E_EXTENSION_SW_TIMEOUT_MS || "15000");
 const E2E_CLIENT_IP = process.env.E2E_CLIENT_IP || "127.0.0.1";
+const SCREENSHOT_DIR = process.env.E2E_SCREENSHOT_DIR || "";
 const HEADLESS = process.env.E2E_HEADLESS === "1";
 const MANUAL_LOGIN = process.env.E2E_MANUAL_LOGIN === "1";
 const ALLOW_LEGACY_FALLBACK = process.env.E2E_ALLOW_LEGACY_FALLBACK === "1";
@@ -112,6 +114,45 @@ async function deleteWordbook(auth, wordbookId) {
     }
   });
   assert(removed.res.ok, `wordbook delete failed: ${removed.res.status} ${JSON.stringify(removed.data)}`);
+}
+
+function resolveScreenshotPath(filename) {
+  if (!SCREENSHOT_DIR) return null;
+  fs.mkdirSync(SCREENSHOT_DIR, { recursive: true });
+  return path.join(SCREENSHOT_DIR, filename);
+}
+
+async function maybeCaptureScreenshot(page, filename, labelText) {
+  const outputPath = resolveScreenshotPath(filename);
+  if (!outputPath) return;
+  if (labelText) {
+    await page.evaluate((text) => {
+      const existing = document.getElementById("clipper-e2e-shot-label");
+      if (existing) existing.remove();
+      const el = document.createElement("div");
+      el.id = "clipper-e2e-shot-label";
+      el.textContent = text;
+      el.style.position = "fixed";
+      el.style.top = "12px";
+      el.style.right = "12px";
+      el.style.zIndex = "2147483647";
+      el.style.background = "#111827";
+      el.style.color = "#ffffff";
+      el.style.padding = "6px 10px";
+      el.style.borderRadius = "8px";
+      el.style.fontSize = "12px";
+      el.style.fontWeight = "700";
+      el.style.boxShadow = "0 4px 12px rgba(0,0,0,0.25)";
+      document.body.appendChild(el);
+    }, labelText);
+  }
+  await page.screenshot({ path: outputPath, fullPage: true });
+  if (labelText) {
+    await page.evaluate(() => {
+      const existing = document.getElementById("clipper-e2e-shot-label");
+      if (existing) existing.remove();
+    });
+  }
 }
 
 async function ensureDefaultWordbook(auth) {
@@ -590,6 +631,14 @@ async function runFlow(context, swLogs) {
       `[e2e-extension][case] ${label} statusCode=${statusCode} status=${statusValue || "n/a"} toast=${toastText}`
     );
 
+    if (statusValue === "created") {
+      await maybeCaptureScreenshot(page, "01-created.png", "created toast");
+    } else if (statusValue === "duplicate") {
+      await maybeCaptureScreenshot(page, "02-duplicate.png", "duplicate toast");
+    } else if (statusCode === 401 || statusCode === 403) {
+      await maybeCaptureScreenshot(page, "03-auth-required.png", "auth-required toast");
+    }
+
     return {
       preClickSelection,
       postClickSelection,
@@ -626,6 +675,16 @@ async function runFlow(context, swLogs) {
     assert(first.statusValue === "created" || first.statusValue === "duplicate", "first save status mismatch");
     assert(second.statusValue === "duplicate", "duplicate check did not return duplicate");
     assert(page.url().includes("/clipper/extension-fixture"), "page navigated unexpectedly");
+
+    if (SCREENSHOT_DIR) {
+      assert(first.statusValue === "created", "screenshot mode requires first save to be created");
+      await context.clearCookies();
+      const authRequired = await attemptSave("auth-required");
+      assert(
+        authRequired.statusCode === 401 || authRequired.statusCode === 403,
+        `auth-required status mismatch (${authRequired.statusCode})`
+      );
+    }
   } catch (error) {
     const latest = second || first;
     await dumpBridgeDebug(

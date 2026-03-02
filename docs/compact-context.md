@@ -52,8 +52,8 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `ce7dd431706a`
-- HEAD: `f6660f3` feat(clipper): add extension icon set for webstore package
+- Source hash: `91f51a7642e5`
+- HEAD: `86e621c` docs(clipper): align webstore copy and privacy policy for Option A
 
 ### Scope Digests
 - api-routes: 68 files, `e3e76ebc8593`
