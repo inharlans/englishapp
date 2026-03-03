@@ -7,6 +7,7 @@ const links: Array<{ href: string; label: string }> = [
   { href: "/", label: "홈" },
   { href: "/wordbooks", label: "단어장" },
   { href: "/wordbooks/market", label: "마켓" },
+  { href: "/clipper/extension", label: "클리퍼 설치" },
   { href: "/offline", label: "오프라인" },
   { href: "/pricing", label: "요금제" }
 ];

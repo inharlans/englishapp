@@ -38,9 +38,11 @@ function isPublicPath(pathname: string): boolean {
   if (pathname.startsWith("/api/auth/")) return true;
   if (pathname === "/api/payments/webhook") return true;
   if (pathname === "/api/wordbooks/market") return true;
+  if (pathname === "/api/clipper/extension") return true;
   if (/^\/api\/wordbooks\/\d+\/reviews$/.test(pathname)) return true;
   if (pathname.startsWith("/api/internal/cron/")) return true;
   if (pathname === "/wordbooks/market") return true;
+  if (pathname === "/clipper/extension") return true;
   if (/^\/wordbooks\/\d+$/.test(pathname)) return true;
   if (pathname.startsWith("/offline")) return true;
   if (pathname === "/sw.js") return true;
