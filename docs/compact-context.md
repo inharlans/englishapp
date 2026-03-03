@@ -52,8 +52,8 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `20b60ce2b84c`
-- HEAD: `82b61fd` chore: sync compact context
+- Source hash: `bc6a5b044af4`
+- HEAD: `4a99c5e` fix(auth): enforce x-auth-mode precedence for bearer vs session
 
 ### Scope Digests
 - api-routes: 74 files, `9af8ec41c622`
