@@ -52,8 +52,8 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `6d4464a1beda`
-- HEAD: `2ed6cb4` chore: ignore local .tmp artifacts
+- Source hash: `d2e685c11561`
+- HEAD: `5b52e6e` feat(clipper): expose installer path and add entry CTAs
 
 ### Scope Digests
 - api-routes: 74 files, `9af8ec41c622`
