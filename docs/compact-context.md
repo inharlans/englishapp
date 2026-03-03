@@ -52,15 +52,15 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `c4e908a0fadf`
-- HEAD: `0eb0475` docs: update agent guide and webstore screenshots
+- Source hash: `d2e685c11561`
+- HEAD: `5b52e6e` feat(clipper): expose installer path and add entry CTAs
 
 ### Scope Digests
 - api-routes: 74 files, `9af8ec41c622`
 - api-helpers: 17 files, `bc7a41e2a688`
 - domain-services: 39 files, `a8235083d74b`
 - automation-policy: 90 files, `28ad694b609c`
-- tracking-docs: 10 files, `912b29c21ad2`
+- tracking-docs: 10 files, `c35d78ce87c4`
 
 ### Legacy Route Migration Status
 - base: `app/api/`, total: 59, migrated: 44, remaining: 15

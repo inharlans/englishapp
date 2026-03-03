@@ -165,6 +165,12 @@ export default async function WordbooksPage() {
             마켓
           </Link>
           <Link
+            href={{ pathname: "/clipper/extension" }}
+            className="ui-btn-secondary px-4 py-2 text-sm"
+          >
+            클리퍼 설치
+          </Link>
+          <Link
             href={{ pathname: "/offline" }}
             className="ui-btn-secondary px-4 py-2 text-sm"
           >

@@ -100,6 +100,9 @@ export default async function HomePage() {
                   <Link href="/wordbooks/market" className="ui-btn-primary px-5 py-2.5 text-sm">
                     마켓 먼저 보기
                   </Link>
+                  <Link href="/clipper/extension" className="ui-btn-secondary px-5 py-2.5 text-sm">
+                    클리퍼 설치
+                  </Link>
                   <Link href="/login?next=/wordbooks" className="ui-btn-secondary px-5 py-2.5 text-sm">
                     로그인하고 이어가기
                   </Link>
@@ -121,6 +124,14 @@ export default async function HomePage() {
                     className="ui-btn-secondary px-5 py-2.5 text-sm"
                   >
                     마켓 탐색
+                  </MetricLink>
+                  <MetricLink
+                    href="/clipper/extension"
+                    metricName="metric.home_cta_click"
+                    metricPayload={{ cta: "hero_user_clipper", page: "home" }}
+                    className="ui-btn-secondary px-5 py-2.5 text-sm"
+                  >
+                    클리퍼 설치
                   </MetricLink>
                   <MetricLink
                     href="/offline"
