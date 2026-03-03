@@ -52,14 +52,14 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `e8a2b5b48310`
-- HEAD: `7bd77cf` feat(clipper): store-ready permissions + webstore assets for Option A
+- Source hash: `bd46e84ee233`
+- HEAD: `484d8df` feat(auth): add mobile OAuth flow with rotated refresh tokens
 
 ### Scope Digests
 - api-routes: 74 files, `9af8ec41c622`
 - api-helpers: 17 files, `bc7a41e2a688`
 - domain-services: 39 files, `a8235083d74b`
-- automation-policy: 90 files, `bbc5b13583de`
+- automation-policy: 90 files, `28ad694b609c`
 - tracking-docs: 10 files, `912b29c21ad2`
 
 ### Legacy Route Migration Status

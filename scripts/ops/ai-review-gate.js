@@ -58,6 +58,11 @@ function runReviewOnDiff(diffText) {
 }
 
 function main() {
+  if (process.env.CODEX_REVIEW === "0") {
+    console.log("ai-review-gate: SKIP (CODEX_REVIEW=0)");
+    process.exit(0);
+  }
+
   const stagedDiff = getStagedDiff();
   if (!stagedDiff.trim()) {
     console.log("ai-review-gate: SKIP (no staged diff)");

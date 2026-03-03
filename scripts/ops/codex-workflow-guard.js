@@ -51,7 +51,9 @@ function getPlan(changedFiles) {
 
   const steps = ["compact:check", "hooks:validate"];
   if (hasCode) steps.push("verify");
-  steps.push("ai:review:gate");
+  if (hasCode || hasPolicy) {
+    steps.push("ai:review:gate");
+  }
 
   return { hasRelevant: true, steps, hasCode, hasPolicy, hasDocs };
 }

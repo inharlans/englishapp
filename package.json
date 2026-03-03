@@ -27,7 +27,7 @@
     "completion:report": "node scripts/ops/write-completion-report.js",
     "compact:sync": "node scripts/ops/sync-compact-context.js",
     "compact:check": "node scripts/ops/check-compact-context.js",
-    "hooks:validate": "node scripts/ops/validate-hook-chains.js && node scripts/ops/validate-text-encoding.js",
+    "hooks:validate": "node scripts/ops/validate-hook-chains.js && node scripts/ops/validate-text-encoding.js --staged",
     "ai:review:gate": "node scripts/ops/ai-review-gate.js",
     "codex:workflow:check": "node scripts/ops/codex-workflow-guard.js",
     "codex:precommit": "npm run codex:workflow:check",
