@@ -52,8 +52,8 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `bd46e84ee233`
-- HEAD: `484d8df` feat(auth): add mobile OAuth flow with rotated refresh tokens
+- Source hash: `60df1e2af332`
+- HEAD: `e30cc78` chore(workflow): run ai gate only for code/policy; add safe skip + staged encoding
 
 ### Scope Digests
 - api-routes: 74 files, `9af8ec41c622`
