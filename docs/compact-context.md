@@ -52,8 +52,8 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `60df1e2af332`
-- HEAD: `e30cc78` chore(workflow): run ai gate only for code/policy; add safe skip + staged encoding
+- Source hash: `20b60ce2b84c`
+- HEAD: `82b61fd` chore: sync compact context
 
 ### Scope Digests
 - api-routes: 74 files, `9af8ec41c622`
