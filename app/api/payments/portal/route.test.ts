@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockAssertTrustedMutationRequest = vi.fn();
 const mockGetUserFromRequestCookies = vi.fn();
+const mockGetUserFromRequest = vi.fn();
 const mockRecordApiMetricFromStart = vi.fn();
 const mockCaptureAppError = vi.fn();
 const mockGetPortOnePaymentClient = vi.fn();
@@ -17,7 +18,8 @@ vi.mock("@/lib/requestSecurity", () => ({
 }));
 
 vi.mock("@/lib/authServer", () => ({
-  getUserFromRequestCookies: mockGetUserFromRequestCookies
+  getUserFromRequestCookies: mockGetUserFromRequestCookies,
+  getUserFromRequest: mockGetUserFromRequest
 }));
 
 vi.mock("@/lib/observability", () => ({
@@ -70,7 +72,7 @@ describe("POST /api/payments/portal", () => {
   });
 
   it("returns 401 when unauthenticated", async () => {
-    mockGetUserFromRequestCookies.mockResolvedValue(null);
+    mockGetUserFromRequest.mockResolvedValue(null);
     const { POST } = await import("./route");
 
     const res = await POST(makeReq());
@@ -78,7 +80,7 @@ describe("POST /api/payments/portal", () => {
   });
 
   it("returns 400 for FREE user without billing key", async () => {
-    mockGetUserFromRequestCookies.mockResolvedValue({
+    mockGetUserFromRequest.mockResolvedValue({
       id: 21,
       email: "free-user@test.com",
       plan: "FREE",

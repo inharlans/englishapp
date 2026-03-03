@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { getUserFromRequestCookies } from "@/lib/authServer";
+import { getUserFromRequest } from "@/lib/authServer";
 import { WordbookMarketService, parseMarketSort } from "@/server/domain/wordbook/market-service";
 
 const marketService = new WordbookMarketService();
 
 export async function GET(req: NextRequest) {
-  const user = await getUserFromRequestCookies(req.cookies);
+  const user = await getUserFromRequest(req);
 
   const { searchParams } = new URL(req.url);
   const q = (searchParams.get("q") ?? "").trim();

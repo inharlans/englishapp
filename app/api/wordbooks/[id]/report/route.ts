@@ -15,7 +15,7 @@ const reportBodySchema = z.object({
 const feedbackService = new WordbookFeedbackService();
 
 export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
-  const badReq = assertTrustedMutationRequest(req);
+  const badReq = await assertTrustedMutationRequest(req);
   if (badReq) return badReq;
 
   const ip = getClientIpFromHeaders(req.headers);

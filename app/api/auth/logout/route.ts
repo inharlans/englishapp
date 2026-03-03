@@ -9,7 +9,7 @@ const authService = new AuthService();
 
 export async function POST(req: NextRequest) {
   const startedAt = Date.now();
-  const badReq = assertTrustedMutationRequest(req);
+  const badReq = await assertTrustedMutationRequest(req);
   if (badReq) {
     await recordApiMetricFromStart({
       route: "/api/auth/logout",

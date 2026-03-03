@@ -1,11 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockGetUserFromRequestCookies = vi.fn();
+const mockGetUserFromRequest = vi.fn();
 const mockFindMany = vi.fn();
 const mockMaskEmailAddress = vi.fn((email: string) => `masked:${email}`);
 
 vi.mock("@/lib/authServer", () => ({
-  getUserFromRequestCookies: mockGetUserFromRequestCookies
+  getUserFromRequestCookies: mockGetUserFromRequestCookies,
+  getUserFromRequest: mockGetUserFromRequest
 }));
 
 vi.mock("@/lib/prisma", () => ({
@@ -30,7 +32,7 @@ describe("GET /api/admin/reports", () => {
   });
 
   it("returns 401 when unauthenticated", async () => {
-    mockGetUserFromRequestCookies.mockResolvedValue(null);
+    mockGetUserFromRequest.mockResolvedValue(null);
     const { GET } = await import("./route");
 
     const res = await GET(makeReq());
@@ -42,7 +44,7 @@ describe("GET /api/admin/reports", () => {
   });
 
   it("returns 403 when user is not admin", async () => {
-    mockGetUserFromRequestCookies.mockResolvedValue({
+    mockGetUserFromRequest.mockResolvedValue({
       id: 10,
       email: "member@test.com",
       isAdmin: false
@@ -58,7 +60,7 @@ describe("GET /api/admin/reports", () => {
   });
 
   it("returns reports for admin", async () => {
-    mockGetUserFromRequestCookies.mockResolvedValue({
+    mockGetUserFromRequest.mockResolvedValue({
       id: 1,
       email: "admin@test.com",
       isAdmin: true

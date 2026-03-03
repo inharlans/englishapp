@@ -52,24 +52,27 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `2d48232d54b4`
-- HEAD: `da1a8e9` ci(e2e): add optional clipper extension workflow
+- Source hash: `c4e908a0fadf`
+- HEAD: `0eb0475` docs: update agent guide and webstore screenshots
 
 ### Scope Digests
-- api-routes: 68 files, `e3e76ebc8593`
-- api-helpers: 17 files, `86a333ad403c`
+- api-routes: 74 files, `9af8ec41c622`
+- api-helpers: 17 files, `bc7a41e2a688`
 - domain-services: 39 files, `a8235083d74b`
-- automation-policy: 90 files, `ace0c18c1f60`
-- tracking-docs: 10 files, `928bfa0134a9`
+- automation-policy: 90 files, `28ad694b609c`
+- tracking-docs: 10 files, `912b29c21ad2`
 
 ### Legacy Route Migration Status
-- base: `app/api/`, total: 56, migrated: 44, remaining: 12
+- base: `app/api/`, total: 59, migrated: 44, remaining: 15
 - remaining files:
   - `app/api/auth/google/callback/route.ts`
   - `app/api/auth/google/route.ts`
   - `app/api/auth/kakao/callback/route.ts`
   - `app/api/auth/kakao/route.ts`
   - `app/api/auth/local-debug-login/route.ts`
+  - `app/api/auth/mobile/exchange/route.ts`
+  - `app/api/auth/mobile/refresh/route.ts`
+  - `app/api/auth/mobile/start/route.ts`
   - `app/api/auth/naver/callback/route.ts`
   - `app/api/auth/naver/route.ts`
   - `app/api/clipper/extension/route.ts`

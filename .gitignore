@@ -7,6 +7,7 @@ dist
 
 # local temp
 /tmp
+.tmp/
 scripts/dev/tmp-*
 .devserver.log
 ui-e2e.out.log

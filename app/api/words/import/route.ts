@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     requestPath: new URL(req.url).pathname
   });
 
-  const badReq = assertTrustedMutationRequest(req);
+  const badReq = await assertTrustedMutationRequest(req);
   if (badReq) {
     return withLegacyDeprecationHeaders(badReq, legacyPolicy);
   }

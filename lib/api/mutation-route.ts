@@ -9,7 +9,7 @@ export async function requireTrustedUserMutation(
   req: NextRequest,
   meta: { route: string; method: string; startedAt: number }
 ): Promise<{ ok: true; user: RequestUser } | { ok: false; response: NextResponse }> {
-  const badReq = assertTrustedMutationRequest(req);
+  const badReq = await assertTrustedMutationRequest(req);
   if (badReq) {
     return {
       ok: false,

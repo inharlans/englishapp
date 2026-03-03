@@ -35,6 +35,20 @@ function listTrackedFiles() {
     .filter(Boolean);
 }
 
+function listStagedFiles() {
+  const out = spawnSync("git", ["diff", "--cached", "--name-only", "-z"], {
+    cwd: root,
+    encoding: "utf8"
+  });
+  if (out.status !== 0) {
+    throw new Error(`git diff --cached --name-only -z failed: ${out.stderr || out.stdout}`);
+  }
+  return (out.stdout || "")
+    .split("\0")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
 function listChangedFiles() {
   const out = spawnSync("git", ["status", "--porcelain", "-z"], {
     cwd: root,
@@ -119,7 +133,8 @@ function validateFile(relPath) {
 
 function main() {
   const validateAll = process.argv.includes("--all") || process.env.TEXT_ENCODING_VALIDATE_ALL === "1";
-  const changed = new Set(listChangedFiles());
+  const stagedOnly = process.argv.includes("--staged") || process.env.TEXT_ENCODING_VALIDATE_STAGED === "1";
+  const changed = new Set(stagedOnly ? listStagedFiles() : listChangedFiles());
   const tracked = listTrackedFiles();
 
   const candidates = new Set();
@@ -166,7 +181,8 @@ function main() {
     process.exit(1);
   }
 
-  console.log(`text-encoding-validation: PASS (${files.length} files checked)`);
+  const modeLabel = validateAll ? "all" : stagedOnly ? "staged" : "changed";
+  console.log(`text-encoding-validation: PASS (${files.length} files checked, mode=${modeLabel})`);
 }
 
 main();

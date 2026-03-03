@@ -24,7 +24,7 @@ const updatePlanSchema = z.object({
 const adminService = new AdminService();
 
 export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
-  const badReq = assertTrustedMutationRequest(req);
+  const badReq = await assertTrustedMutationRequest(req);
   if (badReq) return badReq;
 
   const { id: idRaw } = await ctx.params;
