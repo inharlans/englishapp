@@ -13,7 +13,7 @@ const bodySchema = z.object({
 const userService = new UserService();
 
 export async function POST(req: NextRequest) {
-  const badReq = assertTrustedMutationRequest(req);
+  const badReq = await assertTrustedMutationRequest(req);
   if (badReq) return badReq;
 
   const auth = await requireUserFromRequest(req);

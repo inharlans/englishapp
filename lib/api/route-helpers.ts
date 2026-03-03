@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { getUserFromRequestCookies } from "@/lib/authServer";
+import { getUserFromRequest } from "@/lib/authServer";
 
-export type RequestUser = NonNullable<Awaited<ReturnType<typeof getUserFromRequestCookies>>>;
+export type RequestUser = NonNullable<Awaited<ReturnType<typeof getUserFromRequest>>>;
 
 export function parsePositiveIntParam(raw: string): number | null {
   const n = Number(raw);
@@ -13,7 +13,7 @@ export function parsePositiveIntParam(raw: string): number | null {
 export async function requireUserFromRequest(
   req: NextRequest
 ): Promise<{ ok: true; user: RequestUser } | { ok: false; response: NextResponse<{ error: string }> }> {
-  const user = await getUserFromRequestCookies(req.cookies);
+  const user = await getUserFromRequest(req);
   if (!user) {
     return {
       ok: false,

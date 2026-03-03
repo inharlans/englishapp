@@ -25,7 +25,7 @@ export async function PATCH(
   req: NextRequest,
   ctx: { params: Promise<{ id: string; itemId: string }> }
 ) {
-  const badReq = assertTrustedMutationRequest(req);
+  const badReq = await assertTrustedMutationRequest(req);
   if (badReq) return badReq;
 
   const { id: idRaw, itemId: itemIdRaw } = await ctx.params;
@@ -118,7 +118,7 @@ export async function DELETE(
   req: NextRequest,
   ctx: { params: Promise<{ id: string; itemId: string }> }
 ) {
-  const badReq = assertTrustedMutationRequest(req);
+  const badReq = await assertTrustedMutationRequest(req);
   if (badReq) return badReq;
 
   const { id: idRaw, itemId: itemIdRaw } = await ctx.params;

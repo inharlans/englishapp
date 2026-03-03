@@ -28,7 +28,7 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
     requestPath
   });
 
-  const badReq = assertTrustedMutationRequest(req);
+  const badReq = await assertTrustedMutationRequest(req);
   if (badReq) {
     return withLegacyDeprecationHeaders(badReq, legacyPolicy, requestPath);
   }

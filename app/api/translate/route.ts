@@ -32,7 +32,7 @@ function decodeHtmlEntities(value: string): string {
 }
 
 export async function POST(req: NextRequest) {
-  const badReq = assertTrustedMutationRequest(req);
+  const badReq = await assertTrustedMutationRequest(req);
   if (badReq) return badReq;
 
   const ip = getClientIpFromHeaders(req.headers);

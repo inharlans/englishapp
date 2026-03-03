@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockAssertTrustedMutationRequest = vi.fn();
 const mockGetUserFromRequestCookies = vi.fn();
+const mockGetUserFromRequest = vi.fn();
 const mockRecordApiMetricFromStart = vi.fn();
 const mockCaptureAppError = vi.fn();
 const mockParseJsonWithSchema = vi.fn();
@@ -24,7 +25,8 @@ vi.mock("@/lib/requestSecurity", () => ({
 }));
 
 vi.mock("@/lib/authServer", () => ({
-  getUserFromRequestCookies: mockGetUserFromRequestCookies
+  getUserFromRequestCookies: mockGetUserFromRequestCookies,
+  getUserFromRequest: mockGetUserFromRequest
 }));
 
 vi.mock("@/lib/observability", () => ({
@@ -109,7 +111,7 @@ describe("POST /api/payments/confirm", () => {
   });
 
   it("returns 401 when unauthenticated", async () => {
-    mockGetUserFromRequestCookies.mockResolvedValue(null);
+    mockGetUserFromRequest.mockResolvedValue(null);
     const { POST } = await import("./route");
 
     const res = await POST(makeReq());
@@ -117,7 +119,7 @@ describe("POST /api/payments/confirm", () => {
   });
 
   it("applies payment and schedules renewal once", async () => {
-    mockGetUserFromRequestCookies.mockResolvedValue({
+    mockGetUserFromRequest.mockResolvedValue({
       id: 7,
       email: "u@test.com",
       proUntil: null
@@ -137,7 +139,7 @@ describe("POST /api/payments/confirm", () => {
   });
 
   it("does not schedule when entitlement was already applied", async () => {
-    mockGetUserFromRequestCookies.mockResolvedValue({
+    mockGetUserFromRequest.mockResolvedValue({
       id: 7,
       email: "u@test.com",
       proUntil: null
@@ -155,7 +157,7 @@ describe("POST /api/payments/confirm", () => {
   });
 
   it("returns 400 when paid amount is unexpected", async () => {
-    mockGetUserFromRequestCookies.mockResolvedValue({
+    mockGetUserFromRequest.mockResolvedValue({
       id: 7,
       email: "u@test.com",
       proUntil: null

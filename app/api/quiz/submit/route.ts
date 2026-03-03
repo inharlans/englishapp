@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { getUserFromRequestCookies } from "@/lib/authServer";
+import { getUserFromRequest } from "@/lib/authServer";
 import {
   LEGACY_ROUTE_POLICIES,
   recordLegacyRouteAccess,
@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     requestPath: new URL(req.url).pathname
   });
 
-  const badReq = assertTrustedMutationRequest(req);
+  const badReq = await assertTrustedMutationRequest(req);
   if (badReq) {
     return withLegacyDeprecationHeaders(badReq, legacyPolicy);
   }
@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const user = await getUserFromRequestCookies(req.cookies);
+    const user = await getUserFromRequest(req);
     if (!user) {
       return withLegacyDeprecationHeaders(
         NextResponse.json({ error: "Unauthorized." }, { status: 401 }),

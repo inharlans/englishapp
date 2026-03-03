@@ -90,9 +90,35 @@ model User {
   submittedReports WordbookReport[] @relation("ReportByUser")
   reviewedReports WordbookReport[] @relation("ReportReviewedByUser")
   oauthAccounts OAuthAccount[]
+  mobileRefreshTokens MobileRefreshToken[]
   paymentEvents PaymentEvent[]
   apiRequestMetrics ApiRequestMetric[]
   appErrorEvents AppErrorEvent[]
+}
+
+model MobileRefreshToken {
+  id            Int                 @id @default(autoincrement())
+  userId        Int
+  deviceId      String
+  tokenHash     String              @unique
+  expiresAt     DateTime
+  revokedAt     DateTime?
+  rotatedFromId Int?
+  createdAt     DateTime            @default(now())
+
+  user          User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rotatedFrom   MobileRefreshToken? @relation("MobileRefreshRotation", fields: [rotatedFromId], references: [id])
+  rotatedTo     MobileRefreshToken[] @relation("MobileRefreshRotation")
+
+  /// NOTE: One active token per (userId, deviceId) is enforced by
+  /// migration-only partial unique index:
+  /// MobileRefreshToken_userId_deviceId_active_key
+  /// WHERE revokedAt IS NULL.
+  /// Keep that index when generating future migrations.
+
+  @@index([userId, deviceId, createdAt])
+  @@index([expiresAt])
+  @@index([revokedAt])
 }
 
 model OAuthAccount {

@@ -17,7 +17,7 @@ const submitSchema = z.object({
 const quizService = new QuizService();
 
 export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
-  const badReq = assertTrustedMutationRequest(req);
+  const badReq = await assertTrustedMutationRequest(req);
   if (badReq) return badReq;
 
   const ip = getClientIpFromHeaders(req.headers);

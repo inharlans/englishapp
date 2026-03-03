@@ -1,9 +1,26 @@
 import { NextRequest } from "next/server";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { getSessionCookieName } from "@/lib/authJwt";
 import { getCsrfCookieName, getCsrfHeaderName } from "@/lib/csrf";
 import { assertTrustedMutationRequest } from "@/lib/requestSecurity";
+
+const { mockVerifyMobileAccessToken, mockVerifySessionToken } = vi.hoisted(() => ({
+  mockVerifyMobileAccessToken: vi.fn(),
+  mockVerifySessionToken: vi.fn()
+}));
+
+vi.mock("@/lib/authJwt", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/authJwt")>();
+  return {
+    ...actual,
+    verifySessionToken: mockVerifySessionToken
+  };
+});
+
+vi.mock("@/lib/mobileTokens", () => ({
+  verifyMobileAccessToken: mockVerifyMobileAccessToken
+}));
 
 function makeRequest(input: {
   origin?: string;
@@ -37,13 +54,18 @@ function makeRequest(input: {
 }
 
 describe("assertTrustedMutationRequest", () => {
-  it("blocks requests when both origin and referer are missing", () => {
-    const res = assertTrustedMutationRequest(makeRequest());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockVerifySessionToken.mockResolvedValue({ sub: "1" });
+  });
+
+  it("blocks requests when both origin and referer are missing", async () => {
+    const res = await assertTrustedMutationRequest(makeRequest());
     expect(res?.status).toBe(403);
   });
 
-  it("blocks origin mismatch", () => {
-    const res = assertTrustedMutationRequest(
+  it("blocks origin mismatch", async () => {
+    const res = await assertTrustedMutationRequest(
       makeRequest({
         origin: "https://evil.example.com"
       })
@@ -51,8 +73,8 @@ describe("assertTrustedMutationRequest", () => {
     expect(res?.status).toBe(403);
   });
 
-  it("allows same-host session request with valid csrf", () => {
-    const res = assertTrustedMutationRequest(
+  it("allows same-host session request with valid csrf", async () => {
+    const res = await assertTrustedMutationRequest(
       makeRequest({
         origin: "https://www.oingapp.com",
         referer: "https://www.oingapp.com/pricing",
@@ -60,6 +82,92 @@ describe("assertTrustedMutationRequest", () => {
         csrfToken: "same-token"
       })
     );
+    expect(res).toBeNull();
+  });
+
+  it("allows bearer-only mutation request for mobile path in bearer mode", async () => {
+    mockVerifyMobileAccessToken.mockResolvedValue({ userId: 1 });
+
+    const req = new NextRequest("https://www.oingapp.com/api/wordbooks", {
+      method: "POST",
+      headers: new Headers({
+        host: "www.oingapp.com",
+        authorization: "Bearer mobile-access",
+        "x-auth-mode": "bearer"
+      })
+    });
+
+    const res = await assertTrustedMutationRequest(req);
+    expect(res).toBeNull();
+  });
+
+  it("does not bypass csrf when session cookie exists even with bearer mode", async () => {
+    mockVerifyMobileAccessToken.mockResolvedValue({ userId: 1 });
+
+    const req = new NextRequest("https://www.oingapp.com/api/wordbooks", {
+      method: "POST",
+      headers: new Headers({
+        host: "www.oingapp.com",
+        origin: "https://www.oingapp.com",
+        authorization: "Bearer mobile-access",
+        "x-auth-mode": "bearer",
+        cookie: `${getSessionCookieName()}=session-value; ${getCsrfCookieName()}=csrf-cookie`
+      })
+    });
+
+    const res = await assertTrustedMutationRequest(req);
+    expect(res?.status).toBe(403);
+  });
+
+  it("does not bypass when method is not allowlisted", async () => {
+    mockVerifyMobileAccessToken.mockResolvedValue({ userId: 1 });
+
+    const req = new NextRequest("https://www.oingapp.com/api/wordbooks", {
+      method: "GET",
+      headers: new Headers({
+        host: "www.oingapp.com",
+        authorization: "Bearer mobile-access",
+        "x-auth-mode": "bearer"
+      })
+    });
+
+    const res = await assertTrustedMutationRequest(req);
+    expect(res?.status).toBe(403);
+  });
+
+  it("blocks bearer mode on non-allowlisted mutation routes", async () => {
+    mockVerifyMobileAccessToken.mockResolvedValue({ userId: 1 });
+
+    const req = new NextRequest("https://www.oingapp.com/api/admin/reports/1", {
+      method: "POST",
+      headers: new Headers({
+        host: "www.oingapp.com",
+        origin: "https://www.oingapp.com",
+        referer: "https://www.oingapp.com/dashboard",
+        authorization: "Bearer mobile-access",
+        "x-auth-mode": "bearer"
+      })
+    });
+
+    const res = await assertTrustedMutationRequest(req);
+    expect(res?.status).toBe(403);
+  });
+
+  it("allows valid bearer on allowlisted route when session cookie is stale", async () => {
+    mockVerifyMobileAccessToken.mockResolvedValue({ userId: 1 });
+    mockVerifySessionToken.mockResolvedValue(null);
+
+    const req = new NextRequest("https://www.oingapp.com/api/wordbooks", {
+      method: "POST",
+      headers: new Headers({
+        host: "www.oingapp.com",
+        authorization: "Bearer mobile-access",
+        "x-auth-mode": "bearer",
+        cookie: `${getSessionCookieName()}=stale-token`
+      })
+    });
+
+    const res = await assertTrustedMutationRequest(req);
     expect(res).toBeNull();
   });
 });
