@@ -4,7 +4,7 @@ import { asMobileAuthError, MobileAuthError } from "@/lib/mobileAuthErrors";
 import { mobileAuthErrorJson } from "@/lib/mobileAuthResponse";
 import { mobileStartSchema } from "@/lib/mobileAuthSchemas";
 import { buildAuthorizationUrl } from "@/lib/mobileOauthProviders";
-import { assertValidMobileRedirectUri } from "@/lib/mobileRedirectUri";
+import { assertValidMobileRedirectUri, resolveProviderRedirectUri } from "@/lib/mobileRedirectUri";
 import { captureAppError, recordApiMetricFromStart } from "@/lib/observability";
 import { checkRateLimit, getClientIpFromHeaders } from "@/lib/rateLimit";
 import { issueMobileState } from "@/lib/mobileState";
@@ -32,17 +32,23 @@ export async function POST(req: NextRequest) {
     }
 
     assertValidMobileRedirectUri(parsed.data.redirectUri);
+    const providerRedirectUri = resolveProviderRedirectUri({
+      provider: parsed.data.provider,
+      mobileRedirectUri: parsed.data.redirectUri,
+      requestOrigin: req.nextUrl.origin
+    });
 
     const state = await issueMobileState({
       provider: parsed.data.provider,
       deviceId: parsed.data.deviceId,
       redirectUri: parsed.data.redirectUri,
+      providerRedirectUri,
       codeChallenge: parsed.data.codeChallenge
     });
 
     const authorizationUrl = buildAuthorizationUrl({
       provider: parsed.data.provider,
-      redirectUri: parsed.data.redirectUri,
+      redirectUri: providerRedirectUri,
       state,
       codeChallenge: parsed.data.codeChallenge,
       codeChallengeMethod: parsed.data.codeChallengeMethod

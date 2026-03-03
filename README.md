@@ -415,6 +415,7 @@ powershell -ExecutionPolicy Bypass -File scripts/ops/auto-loop-runner.ps1 -Inter
   - `MOBILE_ACCESS_SECRET`
   - `MOBILE_REFRESH_PEPPER`
   - `MOBILE_OAUTH_ALLOWED_REDIRECT_URIS`
+  - `MOBILE_GOOGLE_OAUTH_REDIRECT_URI`(권장: `https://<도메인>/api/auth/mobile/google/callback`)
   - `CRON_SECRET`
   - `AUTH_BOOTSTRAP_TOKEN`
 

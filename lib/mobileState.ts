@@ -23,6 +23,7 @@ type MobileStatePayload = JWTPayload & {
   provider: OAuthProvider;
   deviceId: string;
   redirectUri: string;
+  providerRedirectUri: string;
   codeChallenge: string;
   nonce: string;
 };
@@ -31,6 +32,7 @@ export type MobileStateClaims = {
   provider: OAuthProvider;
   deviceId: string;
   redirectUri: string;
+  providerRedirectUri: string;
   codeChallenge: string;
   nonce: string;
 };
@@ -39,6 +41,7 @@ export async function issueMobileState(input: {
   provider: OAuthProvider;
   deviceId: string;
   redirectUri: string;
+  providerRedirectUri: string;
   codeChallenge: string;
 }): Promise<string> {
   const now = Math.floor(Date.now() / 1000);
@@ -46,6 +49,7 @@ export async function issueMobileState(input: {
     provider: input.provider,
     deviceId: input.deviceId,
     redirectUri: input.redirectUri,
+    providerRedirectUri: input.providerRedirectUri,
     codeChallenge: input.codeChallenge,
     nonce: randomHex(16)
   } satisfies Omit<MobileStatePayload, keyof JWTPayload>;
@@ -70,6 +74,7 @@ export async function verifyMobileState(state: string): Promise<MobileStateClaim
     const provider = payload.provider;
     const deviceId = payload.deviceId;
     const redirectUri = payload.redirectUri;
+    const providerRedirectUri = payload.providerRedirectUri;
     const codeChallenge = payload.codeChallenge;
     const nonce = payload.nonce;
 
@@ -82,6 +87,10 @@ export async function verifyMobileState(state: string): Promise<MobileStateClaim
     if (typeof redirectUri !== "string" || !redirectUri) {
       return null;
     }
+    const resolvedProviderRedirectUri =
+      typeof providerRedirectUri === "string" && providerRedirectUri
+        ? providerRedirectUri
+        : redirectUri;
     if (
       typeof codeChallenge !== "string" ||
       codeChallenge.length < 43 ||
@@ -98,6 +107,7 @@ export async function verifyMobileState(state: string): Promise<MobileStateClaim
       provider,
       deviceId,
       redirectUri,
+      providerRedirectUri: resolvedProviderRedirectUri,
       codeChallenge,
       nonce
     };

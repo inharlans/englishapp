@@ -9,7 +9,7 @@ import {
   exchangeCodeForProviderToken,
   fetchProviderProfile
 } from "@/lib/mobileOauthProviders";
-import { assertValidMobileRedirectUri } from "@/lib/mobileRedirectUri";
+import { assertValidMobileRedirectUri, resolveProviderRedirectUri } from "@/lib/mobileRedirectUri";
 import { issueMobileAccessToken, mintRefreshTokenPair } from "@/lib/mobileTokens";
 import { captureAppError, recordApiMetricFromStart } from "@/lib/observability";
 import { resolveOrLinkOAuthUser } from "@/lib/oauthAccounts";
@@ -77,11 +77,20 @@ export async function POST(req: NextRequest) {
 
     assertValidMobileRedirectUri(stateClaims.redirectUri);
 
+    const providerRedirectUri =
+      parsed.data.provider === "google" && stateClaims.providerRedirectUri === stateClaims.redirectUri
+        ? resolveProviderRedirectUri({
+            provider: parsed.data.provider,
+            mobileRedirectUri: stateClaims.redirectUri,
+            requestOrigin: req.nextUrl.origin
+          })
+        : stateClaims.providerRedirectUri;
+
     const exchanged = await exchangeCodeForProviderToken({
       provider: parsed.data.provider,
       code: parsed.data.code,
       state: parsed.data.state,
-      redirectUri: stateClaims.redirectUri,
+      redirectUri: providerRedirectUri,
       codeVerifier: parsed.data.codeVerifier
     });
 
