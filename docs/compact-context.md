@@ -52,8 +52,8 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `bc6a5b044af4`
-- HEAD: `4a99c5e` fix(auth): enforce x-auth-mode precedence for bearer vs session
+- Source hash: `c4e908a0fadf`
+- HEAD: `0eb0475` docs: update agent guide and webstore screenshots
 
 ### Scope Digests
 - api-routes: 74 files, `9af8ec41c622`
