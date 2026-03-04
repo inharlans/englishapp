@@ -52,15 +52,15 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `5f2b1638b401`
-- HEAD: `9ae8135` feat(lockdown): tighten crawler access and trim heavy wordbook loads
+- Source hash: `9f16ab8cc513`
+- HEAD: `a5e3ff0` chore(skills): streamline routing and publish skill catalog
 
 ### Scope Digests
 - api-routes: 80 files, `ac434de8c9b4`
 - api-helpers: 17 files, `bc7a41e2a688`
 - domain-services: 39 files, `2b48376ab314`
 - automation-policy: 90 files, `9e4671947820`
-- tracking-docs: 10 files, `0fb75843ea11`
+- tracking-docs: 10 files, `78d5fc6471ce`
 
 ### Legacy Route Migration Status
 - base: `app/api/`, total: 62, migrated: 44, remaining: 18

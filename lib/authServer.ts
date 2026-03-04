@@ -146,7 +146,7 @@ export async function getUserFromRequest(req: NextRequest): Promise<Authenticate
     return sessionUser;
   }
 
-  if (bearerToken) {
+  if (bearerToken && authMode === "bearer") {
     const claims = await verifyBearerTokenNoThrow(bearerToken, route);
     return claims ? findUserById(claims.userId) : null;
   }

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { jwtVerify } from "jose";
 
 import { getSessionCookieName, verifySessionToken } from "@/lib/authJwt";
 
@@ -28,9 +29,49 @@ function isCrawlerLockedPath(pathname: string): boolean {
   return false;
 }
 
-function hasBearerAuthorization(req: NextRequest): boolean {
-  const authorization = req.headers.get("authorization") ?? "";
-  return /^\s*Bearer\s+\S+/i.test(authorization);
+function extractBearerToken(authorizationHeader: string | null): string | null {
+  if (!authorizationHeader) return null;
+  const match = authorizationHeader.match(/^\s*Bearer\s+(\S+)\s*$/i);
+  return match?.[1] ?? null;
+}
+
+function isBearerAuthMode(req: NextRequest): boolean {
+  return (req.headers.get("x-auth-mode") ?? "").trim().toLowerCase() === "bearer";
+}
+
+function getMobileAccessSecretForEdge(): Uint8Array | null {
+  const secret = process.env.MOBILE_ACCESS_SECRET?.trim();
+  if (!secret) {
+    return null;
+  }
+  return new TextEncoder().encode(secret);
+}
+
+async function verifyMobileAccessBearerToken(token: string): Promise<boolean> {
+  const secret = getMobileAccessSecretForEdge();
+  if (!secret) {
+    return false;
+  }
+
+  try {
+    const { payload } = await jwtVerify(token, secret, {
+      algorithms: ["HS256"],
+      issuer: "mobile-access",
+      audience: "mobile-api"
+    });
+
+    const userId = Number(payload.sub);
+    const email = payload.email;
+    const tokenType = payload.tokenType;
+
+    if (!Number.isFinite(userId) || userId <= 0) return false;
+    if (typeof email !== "string" || !email) return false;
+    if (tokenType !== "mobile_access") return false;
+
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function withSecurityHeaders(res: NextResponse): NextResponse {
@@ -97,16 +138,17 @@ export async function middleware(req: NextRequest) {
     return withSecurityHeaders(NextResponse.next());
   }
 
-  if (isCrawlerLockdownEnabled() && isCrawlerLockedPath(pathname) && pathname.startsWith("/api/")) {
-    if (hasBearerAuthorization(req)) {
-      return withSecurityHeaders(NextResponse.next());
-    }
-  }
-
   const token = req.cookies.get(getSessionCookieName())?.value;
   const claims = token ? await verifySessionToken(token) : null;
   if (claims) {
     return withSecurityHeaders(NextResponse.next());
+  }
+
+  if (pathname.startsWith("/api/") && isBearerAuthMode(req)) {
+    const bearerToken = extractBearerToken(req.headers.get("authorization"));
+    if (bearerToken && (await verifyMobileAccessBearerToken(bearerToken))) {
+      return withSecurityHeaders(NextResponse.next());
+    }
   }
 
   if (pathname.startsWith("/api/")) {

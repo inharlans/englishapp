@@ -173,7 +173,18 @@ describe("getUserFromRequest", () => {
     expect(mockVerifyMobileAccessToken).not.toHaveBeenCalled();
   });
 
-  it("uses bearer when session is missing and bearer is valid", async () => {
+  it("uses bearer when session is missing, mode is bearer, and bearer is valid", async () => {
+    mockVerifySessionToken.mockResolvedValue(null);
+    mockVerifyMobileAccessToken.mockResolvedValue({ userId: 2, email: "bearer@test.com" });
+
+    const { getUserFromRequest } = await import("@/lib/authServer");
+    const req = makeRequest({ authHeader: "Bearer mobile-token", authMode: "bearer" });
+    const user = await getUserFromRequest(req);
+
+    expect(user?.id).toBe(2);
+  });
+
+  it("returns null when session is missing and bearer mode header is absent", async () => {
     mockVerifySessionToken.mockResolvedValue(null);
     mockVerifyMobileAccessToken.mockResolvedValue({ userId: 2, email: "bearer@test.com" });
 
@@ -181,7 +192,8 @@ describe("getUserFromRequest", () => {
     const req = makeRequest({ authHeader: "Bearer mobile-token" });
     const user = await getUserFromRequest(req);
 
-    expect(user?.id).toBe(2);
+    expect(user).toBeNull();
+    expect(mockVerifyMobileAccessToken).not.toHaveBeenCalled();
   });
 
   it("returns null when only bearer is present and verifier throws", async () => {
@@ -191,7 +203,7 @@ describe("getUserFromRequest", () => {
     mockVerifyMobileAccessToken.mockRejectedValue(authError);
 
     const { getUserFromRequest } = await import("@/lib/authServer");
-    const req = makeRequest({ authHeader: "Bearer broken-token" });
+    const req = makeRequest({ authHeader: "Bearer broken-token", authMode: "bearer" });
     const user = await getUserFromRequest(req);
 
     expect(user).toBeNull();
@@ -203,7 +215,7 @@ describe("getUserFromRequest", () => {
     mockVerifyMobileAccessToken.mockRejectedValue(new Error("internal verifier outage"));
 
     const { getUserFromRequest } = await import("@/lib/authServer");
-    const req = makeRequest({ authHeader: "Bearer broken-token" });
+    const req = makeRequest({ authHeader: "Bearer broken-token", authMode: "bearer" });
 
     await expect(getUserFromRequest(req)).rejects.toThrow("internal verifier outage");
     expect(mockCaptureAppError).toHaveBeenCalledWith(
