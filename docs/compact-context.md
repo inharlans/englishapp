@@ -52,18 +52,18 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `699a5e31bf52`
-- HEAD: `f0b3143` fix(auth): allow strict mobile bearer at middleware entry
+- Source hash: `be533c3c87c4`
+- HEAD: `0e12d3a` feat(api): add mobile home fallback endpoints
 
 ### Scope Digests
-- api-routes: 84 files, `8293e84d3ef4`
+- api-routes: 90 files, `f7a289ef5a9f`
 - api-helpers: 17 files, `bc7a41e2a688`
-- domain-services: 41 files, `177100fbe675`
+- domain-services: 44 files, `589128fc5a0c`
 - automation-policy: 90 files, `9e4671947820`
-- tracking-docs: 10 files, `62b7500dbcf8`
+- tracking-docs: 10 files, `2a84fb430ca7`
 
 ### Legacy Route Migration Status
-- base: `app/api/`, total: 66, migrated: 48, remaining: 18
+- base: `app/api/`, total: 67, migrated: 49, remaining: 18
 - remaining files:
   - `app/api/auth/google/callback/route.ts`
   - `app/api/auth/google/route.ts`

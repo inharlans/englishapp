@@ -9,7 +9,7 @@ export class MobileHomeService {
     const lastUsedWordbookId = await this.repo.findUserDefaultWordbookId(userId);
 
     return {
-      lastUsedWordbookId,
+      lastUsedWordbookId: lastUsedWordbookId === null ? null : String(lastUsedWordbookId),
       partSize: DEFAULT_PART_SIZE
     };
   }
