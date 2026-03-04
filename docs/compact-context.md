@@ -52,15 +52,15 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `68ca27dcc171`
-- HEAD: `7886122` test(clipper): mock updateMany in capture service test
+- Source hash: `1aa7ee2d85d9`
+- HEAD: `1a1a511` feat(admin): add market curated drop-reason metrics
 
 ### Scope Digests
 - api-routes: 91 files, `6033a11e3c0c`
 - api-helpers: 17 files, `bc7a41e2a688`
-- domain-services: 44 files, `40bf5a6b0c14`
+- domain-services: 44 files, `efb4fe1a6ef5`
 - automation-policy: 90 files, `9e4671947820`
-- tracking-docs: 10 files, `2a84fb430ca7`
+- tracking-docs: 10 files, `bdd64c4f8541`
 
 ### Legacy Route Migration Status
 - base: `app/api/`, total: 67, migrated: 49, remaining: 18

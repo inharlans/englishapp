@@ -27,6 +27,14 @@
 - `SESSION_END` 슬롯은 `SessionRecapPanel`이 렌더되는 상태를 세션 종료 화면으로 간주해 노출하도록 정의했습니다. 향후 Recap 렌더 조건이 바뀌면 SESSION_END 노출 시점도 함께 바뀝니다.
 - 최소 제품 지표 2개(`metric.home_cta_click`, `metric.recap_next_action_click`)를 추가해 홈 CTA/세션 요약 추천 클릭 변화를 추적할 수 있게 했고, 내부 수집 라우트는 allowlist + payload 크기 제한 + same-host 검증으로 기본 오염 방어를 적용했습니다.
 
+### Wordbook 퀴즈 정책 점검 (문서 기준 vs 실제 동작)
+
+- SRS 간격 정책(모드 공통): 연속 정답 1회 `+1시간`, 2회 `+1일`, 3회 `+3일`, 4회 `+7일`, 5회 이상 `+30일`.
+- 정책 적용 위치: `computeNextReviewAt`(`lib/scheduling.ts`)를 퀴즈 제출 경로에서 호출해 모드별(`MEANING`/`WORD`) `nextReviewAt`에 반영합니다.
+- 오답 재출제 정책: 오답 즉시 재출제가 아니라 모드별 질문 카운트 기준 `10문제 뒤`(`questionCountAfter + 10`)에 다시 출제합니다.
+- 출제 우선순위: `unseen -> due -> wrongReady -> fallbackNonWrong -> wrongAtEnd` 순서로 선택합니다. 따라서 신규 단어(`unseen`)가 남아 있으면 기존 단어와 완전 균등하게 섞이지 않을 수 있습니다.
+- 프론트 정합성: 로컬 오답 큐 기반 즉시 재출제와 `다시 풀기` 액션을 제거해, 실제 체감 동작도 서버의 `10문제 뒤` 정책과 일치시켰습니다.
+
 - 인증/운영 API 응답 표준화를 위해 공통 에러 응답 헬퍼를 추가하고(`lib/api/service-response.ts`), `code/message/error`를 함께 반환하도록 정리해 클라이언트 분기 안정성을 높였습니다.
 - 레거시 경로 격리/폐기 정책을 문서화하고(`docs/legacy-route-deprecation-policy-2026-03-01.md`), 정책 요약 페이지(`/legacy-policy`)를 추가해 대체 경로/유지기간/제거 예정일을 단일 기준으로 관리하도록 정리했습니다.
 - 레거시 API(`api/quiz/submit`, `api/words*`)에 `Deprecation`/`Sunset`/`X-Legacy-*` 헤더를 부여하고 JSON 로그 이벤트(`legacy_route_access`)를 남겨 폐기 전 호출량 관측을 가능하게 했습니다.
