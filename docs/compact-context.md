@@ -52,13 +52,13 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `1aa7ee2d85d9`
-- HEAD: `1a1a511` feat(admin): add market curated drop-reason metrics
+- Source hash: `7a32d0be9eb8`
+- HEAD: `ac24564` align quiz requeue UX with server policy
 
 ### Scope Digests
-- api-routes: 91 files, `6033a11e3c0c`
+- api-routes: 91 files, `8225e5741d2a`
 - api-helpers: 17 files, `bc7a41e2a688`
-- domain-services: 44 files, `efb4fe1a6ef5`
+- domain-services: 44 files, `8aa18fd378a7`
 - automation-policy: 90 files, `9e4671947820`
 - tracking-docs: 10 files, `bdd64c4f8541`
 
