@@ -434,7 +434,7 @@ export class InternalService {
       let geminiResults = new Map<number, EnrichmentResult>();
       let usedFallbackForBatchFailure = false;
       let fallbackDoneCount = 0;
-      let fallbackFailedCount = pendingFailed.length;
+      let fallbackFailedCount = 0;
       try {
         geminiResults = await enrichWithGeminiBatch({
           items: processingItems.map((item) => ({
@@ -522,7 +522,7 @@ export class InternalService {
         }
       } else {
         doneCount = fallbackDoneCount;
-        failedCount = fallbackFailedCount;
+        failedCount += fallbackFailedCount;
       }
 
       const durationMs = Date.now() - runStartedAt;

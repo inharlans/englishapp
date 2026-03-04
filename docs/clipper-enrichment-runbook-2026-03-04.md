@@ -1,7 +1,8 @@
 # Clipper Enrichment 점검 시나리오 (운영자용)
 
 ## 1) QUEUED 생성
-- 방법 A: 앱에서 `POST /api/clipper/add` 호출(정상 저장 시 `enrichmentStatus=QUEUED`)
+- 방법 A: 앱에서 `POST /api/clipper/capture` 호출(표준, 정상 저장 시 `enrichmentStatus=QUEUED`)
+- 방법 A-legacy: 레거시 호환 경로 `POST /api/clipper/add`
 - 방법 B: DB에 테스트 데이터 직접 삽입(운영에서는 A 권장)
 
 ## 2) 수동 크론 호출

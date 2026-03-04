@@ -52,13 +52,13 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `eb84db967e60`
-- HEAD: `650192c` fix(auth): accept strict bearer in client metrics route
+- Source hash: `f2f66b18b29a`
+- HEAD: `47f4e60` feat(clipper): standardize capture API and enrichment handling
 
 ### Scope Digests
 - api-routes: 91 files, `c2443db72c54`
 - api-helpers: 17 files, `bc7a41e2a688`
-- domain-services: 44 files, `5655a9a25a77`
+- domain-services: 44 files, `801c6e3ac7a0`
 - automation-policy: 90 files, `9e4671947820`
 - tracking-docs: 10 files, `2a84fb430ca7`
 

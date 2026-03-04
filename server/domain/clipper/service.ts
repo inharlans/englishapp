@@ -316,6 +316,13 @@ export class ClipperService {
     }
 
     return prisma.$transaction(async (tx) => {
+      await tx.$queryRaw<Array<{ id: number }>>(Prisma.sql`
+        SELECT "id"
+        FROM "User"
+        WHERE "id" = ${input.userId}
+        FOR UPDATE
+      `);
+
       const user = await tx.user.findUnique({
         where: { id: input.userId },
         select: { defaultWordbookId: true }
@@ -358,10 +365,27 @@ export class ClipperService {
         select: { id: true }
       });
 
-      await tx.user.update({
-        where: { id: input.userId },
+      const claim = await tx.user.updateMany({
+        where: { id: input.userId, defaultWordbookId: null },
         data: { defaultWordbookId: created.id }
       });
+
+      if (claim.count !== 1) {
+        const latestUser = await tx.user.findUnique({
+          where: { id: input.userId },
+          select: { defaultWordbookId: true }
+        });
+        const latestDefaultWordbookId = latestUser?.defaultWordbookId ?? null;
+        if (latestDefaultWordbookId) {
+          await tx.wordbook.delete({ where: { id: created.id } });
+          return { ok: true as const, wordbookId: latestDefaultWordbookId };
+        }
+
+        await tx.user.update({
+          where: { id: input.userId },
+          data: { defaultWordbookId: created.id }
+        });
+      }
 
       return { ok: true as const, wordbookId: created.id };
     });

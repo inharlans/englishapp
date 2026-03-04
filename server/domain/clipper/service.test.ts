@@ -58,6 +58,7 @@ describe("ClipperService captureWord", () => {
           findUnique: mockUserFindUnique,
           update: mockUserUpdate
         },
+        $queryRaw: vi.fn().mockResolvedValue([{ id: user.id }]),
         wordbook: {
           findFirst: mockWordbookFindFirst,
           create: mockWordbookCreate
