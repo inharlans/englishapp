@@ -28,6 +28,12 @@ function assertContains(text, expected, label) {
   }
 }
 
+function assertNotContains(text, expected, label) {
+  if (text.includes(expected)) {
+    throw new Error(`${label}: should not include "${expected}"`);
+  }
+}
+
 function main() {
   const sessionId = "ahw-hook-validation";
   const cacheDir = path.join(cacheRoot, sessionId);
@@ -35,13 +41,38 @@ function main() {
   if (fs.existsSync(cacheDir)) fs.rmSync(cacheDir, { recursive: true, force: true });
 
   const skillAuth = runNodeHook("skill-activation-prompt.mjs", {
-    prompt: "\\uC778\\uC99D \\uB77C\\uC6B0\\uD2B8 \\uC624\\uB958 api \\uD14C\\uC2A4\\uD2B8"
+    prompt: "skill-rules hook trigger routing"
   });
   if (skillAuth.status !== 0) {
     throw new Error(`skill hook failed with exit ${skillAuth.status}`);
   }
-  assertContains(skillAuth.stdout, "auth-route-debugger", "skill activation auth debugger");
-  assertContains(skillAuth.stdout, "auth-route-tester", "skill activation auth tester");
+  assertContains(skillAuth.stdout, "skill-developer", "skill activation skill developer");
+
+  const skillFrontend = runNodeHook("skill-activation-prompt.mjs", {
+    prompt: "next.js app router 컴포넌트 페이지"
+  });
+  if (skillFrontend.status !== 0) {
+    throw new Error(`skill frontend hook failed with exit ${skillFrontend.status}`);
+  }
+  assertContains(skillFrontend.stdout, "nextjs-frontend-guidelines", "skill activation frontend");
+  assertNotContains(skillFrontend.stdout, "fastapi-backend-guidelines", "skill activation frontend");
+
+  const skillErrorTracking = runNodeHook("skill-activation-prompt.mjs", {
+    prompt: "sentry captureException monitoring"
+  });
+  if (skillErrorTracking.status !== 0) {
+    throw new Error(`skill error-tracking hook failed with exit ${skillErrorTracking.status}`);
+  }
+  assertContains(skillErrorTracking.stdout, "error-tracking", "skill activation error tracking");
+  assertNotContains(skillErrorTracking.stdout, "fastapi-backend-guidelines", "skill activation error tracking");
+
+  const skillBackend = runNodeHook("skill-activation-prompt.mjs", {
+    prompt: "fastapi router endpoint service repository"
+  });
+  if (skillBackend.status !== 0) {
+    throw new Error(`skill backend hook failed with exit ${skillBackend.status}`);
+  }
+  assertContains(skillBackend.stdout, "fastapi-backend-guidelines", "skill activation backend");
 
   const postTool = runNodeHook("post-tool-use-tracker.mjs", {
     session_id: sessionId,

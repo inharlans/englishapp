@@ -21,6 +21,14 @@ Classify task as one or more:
 - frontend_ui
 - docs_only
 
+### Team Keyword Map (영영사 프로젝트)
+- market, 마켓, 상품, 결제, purchase, portone -> UI/페이지/컴포넌트 문맥이면 `frontend_ui`, API/서비스 문맥이면 `backend_api`
+- wordbook, 워드북, 단어장, meaning quality -> UI 문맥 `frontend_ui`, 데이터/정제/배치 문맥 `backend_api`
+- clipper, 클리퍼, extension, 익스텐션, chrome extension -> UI 문맥 `frontend_ui`, API/내부엔드포인트 문맥 `backend_api`
+- login, oauth, kakao, jwt, 인증 -> 기본 `backend_api` (UI/페이지/컴포넌트 문맥이면 `frontend_ui`)
+- sentry, 장애, 오류, 에러 추적, tracing -> `error_tracking`
+- skill, hook, trigger, routing, guardrail -> `skill_system`
+
 Use:
 - user prompt keywords
 - referenced file paths
