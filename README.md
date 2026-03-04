@@ -13,6 +13,7 @@
 - 모바일 Bearer access token 인증을 서버 공통 인증 경로에 연결해(`getUserFromRequest`) 기존 쿠키 세션과 병행 운용이 가능하도록 정리했습니다.
 - 변경 요청 보안 가드(`assertTrustedMutationRequest`)는 쿠키 세션(CSRF) 흐름은 유지하면서 모바일 Bearer 전용 요청은 정상 통과하도록 분기해 모바일 API 호출 호환성을 보강했습니다.
 - 미들웨어 입구 인증도 모바일 Bearer를 정식 검증하도록 보강해(`Authorization: Bearer` + `x-auth-mode: bearer` 필수), 쿠키 없는 모바일 `/api/*` 요청이 JWT 검증 후 통과되도록 맞췄고 헤더 누락/토큰 불일치 요청은 기존처럼 401로 차단합니다.
+- 모바일 홈 화면 연동 복구를 위해 `/api/home/summary`, `/api/llm/quota`, `/api/users/me/study-preferences`, `/api/ads/config` 경로를 추가하고 최소 응답(요약 기본값+내 단어장/단어 수, quota fallback, 최근 단어장 ID, 광고 슬롯 OFF)을 반환하도록 정렬해 404로 인한 홈 섹션 실패를 우선 해소했습니다.
 - 클리퍼 웹스토어 메타데이터 템플릿을 Option A 기준으로 교정해, 저장 플로우를 `/api/clipper/add` 직접 저장 + 토스트 피드백 중심으로 명시하고 권한 안내를 `storage` only 기준으로 정리했습니다.
 - 개인정보처리방침(`/privacy`)에 `Chrome 확장(Englishapp PDF Clipper)` 섹션을 추가해 전송 데이터 범위, 세션 인증 방식(비밀번호 미저장), 저장 목적/문의 경로를 확장 관점에서 명시했습니다.
 - 클리퍼 확장 스토어 제출 준비를 위해 아이콘 세트(16/48/128)를 추가하고 manifest `icons` 항목을 연결했습니다(`extension/icons/icon16.png`, `extension/icons/icon48.png`, `extension/icons/icon128.png`).

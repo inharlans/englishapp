@@ -52,18 +52,18 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `9f16ab8cc513`
-- HEAD: `a5e3ff0` chore(skills): streamline routing and publish skill catalog
+- Source hash: `699a5e31bf52`
+- HEAD: `f0b3143` fix(auth): allow strict mobile bearer at middleware entry
 
 ### Scope Digests
-- api-routes: 80 files, `ac434de8c9b4`
+- api-routes: 84 files, `8293e84d3ef4`
 - api-helpers: 17 files, `bc7a41e2a688`
-- domain-services: 39 files, `2b48376ab314`
+- domain-services: 41 files, `177100fbe675`
 - automation-policy: 90 files, `9e4671947820`
-- tracking-docs: 10 files, `78d5fc6471ce`
+- tracking-docs: 10 files, `62b7500dbcf8`
 
 ### Legacy Route Migration Status
-- base: `app/api/`, total: 62, migrated: 44, remaining: 18
+- base: `app/api/`, total: 66, migrated: 48, remaining: 18
 - remaining files:
   - `app/api/auth/google/callback/route.ts`
   - `app/api/auth/google/route.ts`
