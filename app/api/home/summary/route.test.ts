@@ -26,6 +26,10 @@ function unauthorizedResponse() {
 }
 
 describe("GET /api/home/summary", () => {
+  function makeReq() {
+    return new Request("http://localhost/api/home/summary") as never;
+  }
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -34,7 +38,7 @@ describe("GET /api/home/summary", () => {
     mockRequireUserFromRequest.mockResolvedValue({ ok: false, response: unauthorizedResponse() });
     const { GET } = await import("./route");
 
-    const res = await GET({} as never);
+    const res = await GET(makeReq());
     expect(res.status).toBe(401);
   });
 
@@ -50,7 +54,7 @@ describe("GET /api/home/summary", () => {
     });
     const { GET } = await import("./route");
 
-    const res = await GET({} as never);
+    const res = await GET(makeReq());
     const body = await res.json();
 
     expect(res.status).toBe(200);

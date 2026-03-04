@@ -52,13 +52,13 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `be533c3c87c4`
-- HEAD: `0e12d3a` feat(api): add mobile home fallback endpoints
+- Source hash: `a9f8c3a0892d`
+- HEAD: `d01cd18` test(api): add mobile home route coverage
 
 ### Scope Digests
-- api-routes: 90 files, `f7a289ef5a9f`
+- api-routes: 91 files, `1bc0785f728c`
 - api-helpers: 17 files, `bc7a41e2a688`
-- domain-services: 44 files, `589128fc5a0c`
+- domain-services: 44 files, `bb298066446b`
 - automation-policy: 90 files, `9e4671947820`
 - tracking-docs: 10 files, `2a84fb430ca7`
 

@@ -18,6 +18,20 @@ describe("MobileHomeService", () => {
     });
   });
 
+  it("returns null lastUsedWordbookId when defaultWordbookId is missing", async () => {
+    const repo = {
+      findUserDefaultWordbookId: vi.fn().mockResolvedValue(null)
+    } as unknown as MobileHomeRepository;
+
+    const service = new MobileHomeService(repo);
+    const result = await service.getStudyPreferences(7);
+
+    expect(result).toEqual({
+      lastUsedWordbookId: null,
+      partSize: 20
+    });
+  });
+
   it("deduplicates owned/downloaded wordbooks when building summary", async () => {
     const mockCountWordbookItems = vi.fn().mockResolvedValue(14);
     const repo = {
