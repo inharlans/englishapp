@@ -42,6 +42,21 @@ export interface AdminMetricsPayload {
     createdAt: string;
   }>;
   clipper: InternalMetricsResult["payload"] | null;
+  marketQuality: {
+    candidateTotal: number;
+    eligibleTotal: number;
+    curatedTotal: number;
+    dropReasons: Array<{
+      reason:
+        | "ADMIN_HIDDEN"
+        | "NOT_PUBLIC"
+        | "BELOW_MIN_ITEM_COUNT"
+        | "LOW_RATING_COUNT"
+        | "LOW_DONE_RATIO";
+      count: number;
+      pct: number;
+    }>;
+  };
 }
 
 export interface ModerateReportInput {

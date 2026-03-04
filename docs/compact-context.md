@@ -52,13 +52,13 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `2ca3dce6662f`
-- HEAD: `249dad2` merge: clipper capture standardization
+- Source hash: `68ca27dcc171`
+- HEAD: `7886122` test(clipper): mock updateMany in capture service test
 
 ### Scope Digests
-- api-routes: 91 files, `66c7f6efbe4b`
+- api-routes: 91 files, `6033a11e3c0c`
 - api-helpers: 17 files, `bc7a41e2a688`
-- domain-services: 44 files, `29cd7609e554`
+- domain-services: 44 files, `40bf5a6b0c14`
 - automation-policy: 90 files, `9e4671947820`
 - tracking-docs: 10 files, `2a84fb430ca7`
 

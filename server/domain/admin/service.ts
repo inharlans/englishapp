@@ -106,14 +106,37 @@ export class AdminService {
     const disputableWrongRate = quizWrongCount > 0 ? (disputableWrongCount / quizWrongCount) * 100 : 0;
 
     const clipperWindow = options?.clipperWindow ?? "24h";
-    const clipperResult = await this.internalService.getClipperMetrics({
-      authorizationHeader: null,
-      trustedInternal: true,
-      window: clipperWindow,
-      includeSeries: true,
-      refresh: options?.clipperRefresh ?? false
-    });
+    const [clipperResult, marketQualityResult] = await Promise.all([
+      this.internalService.getClipperMetrics({
+        authorizationHeader: null,
+        trustedInternal: true,
+        window: clipperWindow,
+        includeSeries: true,
+        refresh: options?.clipperRefresh ?? false
+      }),
+      this.repo.findMarketQualityMetrics()
+    ]);
     const clipper = clipperResult.ok ? clipperResult.payload : null;
+
+    const reasonOrder = [
+      "ADMIN_HIDDEN",
+      "NOT_PUBLIC",
+      "BELOW_MIN_ITEM_COUNT",
+      "LOW_RATING_COUNT",
+      "LOW_DONE_RATIO"
+    ] as const;
+    const reasonMap = new Map(marketQualityResult.reasons.map((row) => [row.reason, row.count]));
+    const dropReasons = reasonOrder.map((reason) => {
+      const count = reasonMap.get(reason) ?? 0;
+      return {
+        reason,
+        count,
+        pct:
+          marketQualityResult.candidateTotal > 0
+            ? Number(((count / marketQualityResult.candidateTotal) * 100).toFixed(2))
+            : 0
+      };
+    });
 
     return {
       ok: true,
@@ -144,7 +167,13 @@ export class AdminService {
           ...e,
           createdAt: e.createdAt.toISOString()
         })),
-        clipper
+        clipper,
+        marketQuality: {
+          candidateTotal: marketQualityResult.candidateTotal,
+          eligibleTotal: marketQualityResult.eligibleTotal,
+          curatedTotal: marketQualityResult.curatedTotal,
+          dropReasons
+        }
       }
     };
   }

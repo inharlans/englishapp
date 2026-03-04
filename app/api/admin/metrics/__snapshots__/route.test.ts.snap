@@ -104,6 +104,38 @@ exports[`GET /api/admin/metrics > returns stable snapshot when clipper payload e
     },
     "window": "24h",
   },
+  "marketQuality": {
+    "candidateTotal": 420,
+    "curatedTotal": 180,
+    "dropReasons": [
+      {
+        "count": 30,
+        "pct": 7.14,
+        "reason": "ADMIN_HIDDEN",
+      },
+      {
+        "count": 70,
+        "pct": 16.67,
+        "reason": "NOT_PUBLIC",
+      },
+      {
+        "count": 90,
+        "pct": 21.43,
+        "reason": "BELOW_MIN_ITEM_COUNT",
+      },
+      {
+        "count": 40,
+        "pct": 9.52,
+        "reason": "LOW_RATING_COUNT",
+      },
+      {
+        "count": 60,
+        "pct": 14.29,
+        "reason": "LOW_DONE_RATIO",
+      },
+    ],
+    "eligibleTotal": 420,
+  },
   "quizQuality": {
     "disputableWrongCount": 0,
     "disputableWrongRate": 0,

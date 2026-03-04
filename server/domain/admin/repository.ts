@@ -1,4 +1,11 @@
+import { Prisma } from "@prisma/client";
+
 import { prisma } from "@/lib/prisma";
+import {
+  MARKET_CURATED_MIN_DONE_RATIO,
+  MARKET_CURATED_MIN_RATING_COUNT,
+  MARKET_MIN_ITEM_COUNT
+} from "@/lib/wordbookPolicy";
 import { refreshWordbookRankScore } from "@/lib/wordbookRanking";
 import type { ModerateReportInput, UpdateUserPlanInput } from "@/server/domain/admin/contracts";
 
@@ -24,6 +31,103 @@ export class AdminRepository {
         createdAt: true
       }
     });
+  }
+
+  async findMarketQualityMetrics() {
+    const rows = await prisma.$queryRaw<
+      Array<{
+        candidateTotal: number;
+        eligibleTotal: number;
+        curatedTotal: number;
+        reason:
+          | "CURATED_PASS"
+          | "ADMIN_HIDDEN"
+          | "NOT_PUBLIC"
+          | "BELOW_MIN_ITEM_COUNT"
+          | "LOW_RATING_COUNT"
+          | "LOW_DONE_RATIO"
+          | null;
+        count: number;
+      }>
+    >(Prisma.sql`
+      WITH item_stats AS (
+        SELECT
+          wi."wordbookId" AS wordbook_id,
+          COUNT(*)::int AS total_count,
+          COUNT(*) FILTER (WHERE wi."enrichmentStatus" = 'DONE')::int AS done_count
+        FROM "WordbookItem" wi
+        GROUP BY wi."wordbookId"
+      ), base AS (
+        SELECT
+          wb."id" AS id,
+          wb."isPublic" AS "isPublic",
+          wb."hiddenByAdmin" AS "hiddenByAdmin",
+          wb."ratingCount" AS "ratingCount",
+          COALESCE(item_stats.total_count, 0) AS item_total,
+          CASE
+            WHEN COALESCE(item_stats.total_count, 0) = 0 THEN 0
+            ELSE COALESCE(item_stats.done_count, 0)::float / item_stats.total_count::float
+          END AS done_ratio
+        FROM "Wordbook" wb
+        LEFT JOIN item_stats ON item_stats.wordbook_id = wb."id"
+      ), classified AS (
+        SELECT
+          "isPublic",
+          "hiddenByAdmin",
+          "ratingCount",
+          item_total,
+          done_ratio,
+          (
+            "isPublic" = true
+            AND "hiddenByAdmin" = false
+            AND item_total >= ${MARKET_MIN_ITEM_COUNT}
+          ) AS is_eligible,
+          CASE
+            WHEN "hiddenByAdmin" = true THEN 'ADMIN_HIDDEN'
+            WHEN "isPublic" = false THEN 'NOT_PUBLIC'
+            WHEN item_total < ${MARKET_MIN_ITEM_COUNT} THEN 'BELOW_MIN_ITEM_COUNT'
+            WHEN "ratingCount" < ${MARKET_CURATED_MIN_RATING_COUNT} THEN 'LOW_RATING_COUNT'
+            WHEN done_ratio < ${MARKET_CURATED_MIN_DONE_RATIO} THEN 'LOW_DONE_RATIO'
+            ELSE 'CURATED_PASS'
+          END AS reason
+        FROM base
+      ), summary AS (
+        SELECT
+          COUNT(*)::int AS "candidateTotal",
+          COUNT(*) FILTER (WHERE is_eligible)::int AS "eligibleTotal",
+          COUNT(*) FILTER (WHERE reason = 'CURATED_PASS')::int AS "curatedTotal"
+        FROM classified
+      ), reason_counts AS (
+        SELECT
+          reason,
+          COUNT(*)::int AS count
+        FROM classified
+        WHERE reason <> 'CURATED_PASS'
+        GROUP BY reason
+      )
+      SELECT
+        summary."candidateTotal" AS "candidateTotal",
+        summary."eligibleTotal" AS "eligibleTotal",
+        summary."curatedTotal" AS "curatedTotal",
+        reason_counts.reason AS reason,
+        COALESCE(reason_counts.count, 0)::int AS count
+      FROM summary
+      LEFT JOIN reason_counts ON TRUE
+    `);
+
+    const candidateTotal = rows[0]?.candidateTotal ?? 0;
+    const eligibleTotal = rows[0]?.eligibleTotal ?? 0;
+    const curatedTotal = rows[0]?.curatedTotal ?? 0;
+    const reasons = rows
+      .filter((row) => row.reason !== null && row.reason !== "CURATED_PASS")
+      .map((row) => ({ reason: row.reason, count: row.count }));
+
+    return {
+      candidateTotal,
+      eligibleTotal,
+      curatedTotal,
+      reasons
+    };
   }
 
   async findReportsForAdmin() {

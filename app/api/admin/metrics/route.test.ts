@@ -53,7 +53,19 @@ describe("GET /api/admin/metrics", () => {
           violations: []
         },
         recentErrors: [],
-        clipper: null
+        clipper: null,
+        marketQuality: {
+          candidateTotal: 10,
+          eligibleTotal: 10,
+          curatedTotal: 4,
+          dropReasons: [
+            { reason: "ADMIN_HIDDEN", count: 2, pct: 20 },
+            { reason: "NOT_PUBLIC", count: 1, pct: 10 },
+            { reason: "BELOW_MIN_ITEM_COUNT", count: 2, pct: 20 },
+            { reason: "LOW_RATING_COUNT", count: 1, pct: 10 },
+            { reason: "LOW_DONE_RATIO", count: 2, pct: 20 }
+          ]
+        }
       }
     });
 
@@ -167,6 +179,18 @@ describe("GET /api/admin/metrics", () => {
           series: {
             hourly: [{ hour: "2026-03-01T00:00:00.000Z", doneCount: 22, failedCount: 1 }]
           }
+        },
+        marketQuality: {
+          candidateTotal: 420,
+          eligibleTotal: 420,
+          curatedTotal: 180,
+          dropReasons: [
+            { reason: "ADMIN_HIDDEN", count: 30, pct: 7.14 },
+            { reason: "NOT_PUBLIC", count: 70, pct: 16.67 },
+            { reason: "BELOW_MIN_ITEM_COUNT", count: 90, pct: 21.43 },
+            { reason: "LOW_RATING_COUNT", count: 40, pct: 9.52 },
+            { reason: "LOW_DONE_RATIO", count: 60, pct: 14.29 }
+          ]
         }
       }
     });
