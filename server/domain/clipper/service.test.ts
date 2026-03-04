@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const {
   mockUserFindUnique,
   mockUserUpdate,
+  mockUserUpdateMany,
   mockWordbookFindFirst,
   mockWordbookCreate,
   mockWordbookItemFindFirst,
@@ -12,6 +13,7 @@ const {
 } = vi.hoisted(() => ({
   mockUserFindUnique: vi.fn(),
   mockUserUpdate: vi.fn(),
+  mockUserUpdateMany: vi.fn(),
   mockWordbookFindFirst: vi.fn(),
   mockWordbookCreate: vi.fn(),
   mockWordbookItemFindFirst: vi.fn(),
@@ -24,7 +26,8 @@ vi.mock("@/lib/prisma", () => ({
   prisma: {
     user: {
       findUnique: mockUserFindUnique,
-      update: mockUserUpdate
+      update: mockUserUpdate,
+      updateMany: mockUserUpdateMany
     },
     wordbook: {
       findFirst: mockWordbookFindFirst,
@@ -56,7 +59,8 @@ describe("ClipperService captureWord", () => {
       const tx = {
         user: {
           findUnique: mockUserFindUnique,
-          update: mockUserUpdate
+          update: mockUserUpdate,
+          updateMany: mockUserUpdateMany
         },
         $queryRaw: vi.fn().mockResolvedValue([{ id: user.id }]),
         wordbook: {
@@ -72,6 +76,7 @@ describe("ClipperService captureWord", () => {
     mockUserFindUnique.mockResolvedValue({ defaultWordbookId: null });
     mockWordbookFindFirst.mockResolvedValue(null);
     mockWordbookCreate.mockResolvedValue({ id: 101 });
+    mockUserUpdateMany.mockResolvedValue({ count: 1 });
     mockWordbookItemFindFirst.mockResolvedValue(null);
     mockWordbookItemCreate.mockResolvedValue({
       id: 900,
@@ -102,8 +107,8 @@ describe("ClipperService captureWord", () => {
     expect(mockWordbookCreate).toHaveBeenCalledWith(
       expect.objectContaining({ data: expect.objectContaining({ title: "개인 기본 단어장" }) })
     );
-    expect(mockUserUpdate).toHaveBeenCalledWith({
-      where: { id: 7 },
+    expect(mockUserUpdateMany).toHaveBeenCalledWith({
+      where: { id: 7, defaultWordbookId: null },
       data: { defaultWordbookId: 101 }
     });
   });

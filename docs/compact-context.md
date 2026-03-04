@@ -52,15 +52,15 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `a89eb55b2fb4`
-- HEAD: `5279dee` fix(clipper): handle fallback failure counts and bootstrap race
+- Source hash: `2ca3dce6662f`
+- HEAD: `249dad2` merge: clipper capture standardization
 
 ### Scope Digests
-- api-routes: 91 files, `c2443db72c54`
+- api-routes: 91 files, `66c7f6efbe4b`
 - api-helpers: 17 files, `bc7a41e2a688`
-- domain-services: 44 files, `67f6706627d1`
+- domain-services: 44 files, `29cd7609e554`
 - automation-policy: 90 files, `9e4671947820`
-- tracking-docs: 10 files, `ab6256fc2834`
+- tracking-docs: 10 files, `2a84fb430ca7`
 
 ### Legacy Route Migration Status
 - base: `app/api/`, total: 67, migrated: 49, remaining: 18
