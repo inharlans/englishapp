@@ -101,6 +101,22 @@ describe("assertTrustedMutationRequest", () => {
     expect(res).toBeNull();
   });
 
+  it("allows bearer-only mutation request for /api/clipper/capture", async () => {
+    mockVerifyMobileAccessToken.mockResolvedValue({ userId: 1 });
+
+    const req = new NextRequest("https://www.oingapp.com/api/clipper/capture", {
+      method: "POST",
+      headers: new Headers({
+        host: "www.oingapp.com",
+        authorization: "Bearer mobile-access",
+        "x-auth-mode": "bearer"
+      })
+    });
+
+    const res = await assertTrustedMutationRequest(req);
+    expect(res).toBeNull();
+  });
+
   it("does not bypass csrf when session cookie exists even with bearer mode", async () => {
     mockVerifyMobileAccessToken.mockResolvedValue({ userId: 1 });
 

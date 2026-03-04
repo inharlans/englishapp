@@ -52,13 +52,13 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `cb2c333446e3`
-- HEAD: `4c5eeec` feat(market): add curated quality filter and policy docs
+- Source hash: `eb84db967e60`
+- HEAD: `650192c` fix(auth): accept strict bearer in client metrics route
 
 ### Scope Digests
-- api-routes: 91 files, `f1df36f3960e`
+- api-routes: 91 files, `c2443db72c54`
 - api-helpers: 17 files, `bc7a41e2a688`
-- domain-services: 44 files, `bb298066446b`
+- domain-services: 44 files, `5655a9a25a77`
 - automation-policy: 90 files, `9e4671947820`
 - tracking-docs: 10 files, `2a84fb430ca7`
 

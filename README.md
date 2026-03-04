@@ -2,19 +2,23 @@
 
 ## 최근 업데이트 (2026-03-04)
 
+- 마켓 품질 파이프라인 1차를 적용해 노출/운영 기준 문서를 고정했고(`docs/market-quality-policy.md`), `GET /api/wordbooks/market`에 `quality=all|curated` 필터를 추가했습니다. 기본값은 `all`로 유지하고, `quality=curated`에서는 `DONE 비율 80% 이상 + ratingCount 3 이상` 조건을 DB 조회 단계에서 적용합니다.
 - 크롤러 트래픽 급증 대응을 위해 강경 차단 모드를 기본 활성화했습니다. `CRAWLER_LOCKDOWN_MODE`가 `on`(기본값)인 동안 `/wordbooks/market`, `/wordbooks/:id`, `/clipper/extension` 및 관련 공개 API는 로그인 사용자만 접근할 수 있고, `app/robots.ts`는 전체 경로 크롤링을 금지합니다. 배포 단계에서 해제하려면 `CRAWLER_LOCKDOWN_MODE=off`로 전환하세요.
 - 마켓 페이지 조회는 요청 페이지에 필요한 데이터만 DB에서 가져오도록 재구성했습니다. 기존처럼 후보 전체를 메모리로 읽지 않고 SQL 레벨에서 count/offset/limit을 적용해 크롤링 트래픽 상황에서도 불필요한 대량 조회를 줄였습니다.
 - 학습/퀴즈/카드 화면의 조회 배치 상한을 50으로 통일해 한 번의 요청으로 과도한 단어 데이터를 가져오지 않도록 제한했습니다.
 - 카드 학습 화면은 전체 페이지 순회 로딩을 제거하고, 현재 파트(`partSize`, `partIndex`)에 필요한 데이터만 API에서 가져오도록 변경했습니다.
 - 학습 결과 저장 시(`study/items`) 전체 상태 행을 메모리로 읽어 집계하던 로직을 DB `groupBy` 집계로 변경해, 제출 빈도가 높을 때도 불필요한 대량 로드를 줄였습니다.
+- 클리퍼 enrichment 내부 크론의 실행 요약 필드(`picked/succeeded/failed/skipped/durationMs`)와 실패 관측 로그를 보강해, `QUEUED -> PROCESSING -> DONE/FAILED` 전이를 런 단위로 추적할 수 있게 했습니다. 운영 점검 절차는 `docs/clipper-enrichment-runbook-2026-03-04.md`에 정리했습니다.
 
 - 클리퍼 설치 동선을 강화해 내 단어장 헤더/홈 히어로/전역 상단 메뉴에서 `/clipper/extension`으로 바로 이동할 수 있도록 했고, `CRAWLER_LOCKDOWN_MODE=off`일 때는 비로그인 사용자도 설치 ZIP을 받을 수 있게 `/clipper/extension`·`/api/clipper/extension`을 공개 경로로 열었습니다.
 - 모바일 OAuth 전용 인증 경로(`/api/auth/mobile/start|exchange|refresh`)를 추가하고, refresh 토큰을 DB 해시 저장 + 회전(1회 사용) 방식으로 재구성해 탈취/재사용 대응과 기기 단위 세션 관리를 강화했습니다.
 - 모바일 Bearer access token 인증을 서버 공통 인증 경로에 연결해(`getUserFromRequest`) 기존 쿠키 세션과 병행 운용이 가능하도록 정리했습니다.
 - 변경 요청 보안 가드(`assertTrustedMutationRequest`)는 쿠키 세션(CSRF) 흐름은 유지하면서 모바일 Bearer 전용 요청은 정상 통과하도록 분기해 모바일 API 호출 호환성을 보강했습니다.
 - 미들웨어 입구 인증도 모바일 Bearer를 정식 검증하도록 보강해(`Authorization: Bearer` + `x-auth-mode: bearer` 필수), 쿠키 없는 모바일 `/api/*` 요청이 JWT 검증 후 통과되도록 맞췄고 헤더 누락/토큰 불일치 요청은 기존처럼 401로 차단합니다.
+- 내부 수집 API(`/api/internal/client-metrics`) 인증은 쿠키 단독 검증에서 쿠키+모바일 Bearer 공통 검증 분기로 보강해, 미들웨어를 통과한 모바일 Bearer 요청이 라우트 단계에서 다시 401로 떨어지지 않도록 정합성을 맞췄습니다(동일 호스트 검증은 유지).
+- 클리퍼 개인 캡처 표준 엔드포인트를 `POST /api/clipper/capture`로 고정하고, `defaultWordbookId`가 비어 있으면 개인 기본 단어장을 자동 부트스트랩하도록 보강했습니다. 동일 단어 재저장은 409 대신 비어 있는 필드만 보강하는 idempotent 병합 정책으로 처리합니다.
 - 모바일 홈 화면 연동 복구를 위해 `/api/home/summary`, `/api/llm/quota`, `/api/users/me/study-preferences`, `/api/ads/config` 경로를 추가하고 최소 응답(요약 기본값+내 단어장/단어 수, quota fallback, 최근 단어장 ID, 광고 슬롯 OFF)을 반환하도록 정렬해 404로 인한 홈 섹션 실패를 우선 해소했습니다.
-- 클리퍼 웹스토어 메타데이터 템플릿을 Option A 기준으로 교정해, 저장 플로우를 `/api/clipper/add` 직접 저장 + 토스트 피드백 중심으로 명시하고 권한 안내를 `storage` only 기준으로 정리했습니다.
+- 클리퍼 웹스토어 메타데이터 템플릿을 Option A 기준으로 교정해, 저장 플로우를 `/api/clipper/capture` 직접 저장 + 토스트 피드백 중심으로 명시하고 권한 안내를 `storage` only 기준으로 정리했습니다.
 - 개인정보처리방침(`/privacy`)에 `Chrome 확장(Englishapp PDF Clipper)` 섹션을 추가해 전송 데이터 범위, 세션 인증 방식(비밀번호 미저장), 저장 목적/문의 경로를 확장 관점에서 명시했습니다.
 - 클리퍼 확장 스토어 제출 준비를 위해 아이콘 세트(16/48/128)를 추가하고 manifest `icons` 항목을 연결했습니다(`extension/icons/icon16.png`, `extension/icons/icon48.png`, `extension/icons/icon128.png`).
 - 클리퍼 확장 권한을 `storage` 단일 권한으로 축소했고, 레거시 브릿지 이동은 background `openWindow` + content delegate fallback(window.open/location.assign)으로 재구성해 `tabs/activeTab` 의존을 제거했습니다.
@@ -109,7 +113,8 @@
 - 운영 로그인 정책을 고정했습니다. `NODE_ENV=production`에서 비관리자 비밀번호 로그인은 `403(PASSWORD_LOGIN_DISABLED)`으로 차단되며, 회귀 테스트(`app/api/auth/login/route.test.ts`)를 추가했습니다.
 - 운영/개발 환경 분리 템플릿을 추가했습니다(`.env.production.example`, `.env.development.example`). 미들웨어 보호 경로와 일치하도록 `PREVIEW_ACCESS_TOKEN` 키를 환경 템플릿에 반영했습니다.
 - PDF/웹 텍스트 선택을 단어장으로 보내는 클리퍼 경로를 추가했습니다.
-  - `POST /api/clipper/add`
+  - `POST /api/clipper/capture` (표준)
+  - `POST /api/clipper/add` (레거시 호환)
   - `GET/PATCH /api/users/me/clipper-settings`
   - `POST /api/internal/cron/clipper-enrichment`
   - `GET /api/internal/ops/clipper-metrics`
