@@ -52,11 +52,11 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `af98bc89cf69`
-- HEAD: `2d0387c` test(api): tighten mobile home fallback contracts
+- Source hash: `cb2c333446e3`
+- HEAD: `4c5eeec` feat(market): add curated quality filter and policy docs
 
 ### Scope Digests
-- api-routes: 91 files, `1bc0785f728c`
+- api-routes: 91 files, `f1df36f3960e`
 - api-helpers: 17 files, `bc7a41e2a688`
 - domain-services: 44 files, `bb298066446b`
 - automation-policy: 90 files, `9e4671947820`

@@ -1,5 +1,7 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
+
+const originalMobileAccessSecret = process.env.MOBILE_ACCESS_SECRET;
 
 const { mockJwtVerify, mockVerifySessionToken } = vi.hoisted(() => ({
   mockJwtVerify: vi.fn(),
@@ -23,9 +25,17 @@ function makeRequest(pathname: string, headers?: HeadersInit): NextRequest {
 
 describe("middleware auth entry", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
     mockVerifySessionToken.mockResolvedValue(null);
     process.env.MOBILE_ACCESS_SECRET = "test-mobile-secret";
+  });
+
+  afterEach(() => {
+    if (originalMobileAccessSecret === undefined) {
+      delete process.env.MOBILE_ACCESS_SECRET;
+      return;
+    }
+    process.env.MOBILE_ACCESS_SECRET = originalMobileAccessSecret;
   });
 
   it("returns 401 for protected API without credentials", async () => {
@@ -88,6 +98,22 @@ describe("middleware auth entry", () => {
     expect(res.status).toBe(401);
     await expect(res.json()).resolves.toEqual({ error: "Unauthorized." });
     expect(mockJwtVerify).not.toHaveBeenCalled();
+  });
+
+  it("rejects bearer when token verification fails", async () => {
+    mockJwtVerify.mockRejectedValue(new Error("invalid token"));
+    const { middleware } = await import("@/middleware");
+
+    const res = await middleware(
+      makeRequest("/api/wordbooks", {
+        authorization: "Bearer invalid-mobile-token",
+        "x-auth-mode": "bearer"
+      })
+    );
+
+    expect(res.status).toBe(401);
+    await expect(res.json()).resolves.toEqual({ error: "Unauthorized." });
+    expect(mockJwtVerify).toHaveBeenCalledOnce();
   });
 
   it("keeps /api/auth as public path", async () => {
