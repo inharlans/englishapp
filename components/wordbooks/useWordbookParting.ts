@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 const DEFAULT_PART_SIZE = 30;
 const MIN_PART_SIZE = 1;
-const MAX_PART_SIZE = 200;
+const MAX_PART_SIZE = 50;
 
 function clampPartSize(n: number): number {
   if (!Number.isFinite(n) || n <= 0) return DEFAULT_PART_SIZE;

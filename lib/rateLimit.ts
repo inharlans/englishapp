@@ -26,19 +26,25 @@ function getBuckets(): Map<string, Bucket> {
 export function getClientIpFromHeaders(headers: Headers): string {
   const xff = headers.get("x-forwarded-for");
   if (xff) {
-    const first = xff.split(",")[0]?.trim();
+    const first = xff
+      .split(",")
+      .map((value) => value.trim())
+      .find((value) => value.length > 0 && value.toLowerCase() !== "unknown");
     if (first) {
       return first;
     }
   }
+
   const cf = headers.get("cf-connecting-ip");
   if (cf) {
     return cf.trim();
   }
+
   const realIp = headers.get("x-real-ip");
   if (realIp) {
     return realIp.trim();
   }
+
   return "unknown";
 }
 

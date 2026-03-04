@@ -24,6 +24,8 @@ type Props = {
   sessionEndUnitId: string;
 };
 
+const MAX_BATCH_SIZE = 50;
+
 function parseBoundedInt(raw: string, fallback: number, min: number, max: number) {
   const parsed = Number(raw);
   if (!Number.isFinite(parsed)) return fallback;
@@ -453,10 +455,10 @@ export function WordbookQuizClient({
             id="quiz-part-size"
             type="number"
             min={1}
-            max={200}
+            max={MAX_BATCH_SIZE}
             value={partSize}
             onChange={(e) => {
-              const next = parseBoundedInt(e.target.value, partSize, 1, 200);
+              const next = parseBoundedInt(e.target.value, partSize, 1, MAX_BATCH_SIZE);
               setPartSize(next);
               setPartJump("1");
               resetPartScopedState(1);

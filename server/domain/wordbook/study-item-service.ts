@@ -5,13 +5,14 @@ import { invalidateStudyPartStatsCacheForWordbook } from "@/lib/studyPartStatsCa
 
 export class WordbookStudyItemService {
   private async syncWordbookStudyState(userId: number, wordbookId: number) {
-    const states = await prisma.wordbookStudyItemState.findMany({
+    const grouped = await prisma.wordbookStudyItemState.groupBy({
       where: { userId, wordbookId },
-      select: { status: true }
+      by: ["status"],
+      _count: { _all: true }
     });
-    const studiedCount = states.length;
-    const correctCount = states.filter((s) => s.status === "CORRECT").length;
-    const wrongCount = states.filter((s) => s.status === "WRONG").length;
+    const studiedCount = grouped.reduce((sum, row) => sum + row._count._all, 0);
+    const correctCount = grouped.find((row) => row.status === "CORRECT")?._count._all ?? 0;
+    const wrongCount = grouped.find((row) => row.status === "WRONG")?._count._all ?? 0;
 
     return prisma.wordbookStudyState.upsert({
       where: { userId_wordbookId: { userId, wordbookId } },

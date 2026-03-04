@@ -10,15 +10,20 @@ export const MARKET_BLOCK_KEYWORDS_IN_TITLE = [
   "sample"
 ];
 
+export function isBelowMarketMinItemCount(itemCount: number): boolean {
+  return itemCount < MARKET_MIN_ITEM_COUNT;
+}
+
+export function isMarketTitleBlocked(title: string): boolean {
+  const normalizedTitle = title.toLowerCase();
+  return MARKET_BLOCK_KEYWORDS_IN_TITLE.some((kw) => normalizedTitle.includes(kw));
+}
+
 export function shouldHideWordbookFromMarket(input: {
   title: string;
   itemCount: number;
 }): boolean {
-  if (input.itemCount < MARKET_MIN_ITEM_COUNT) return true;
-
-  const title = input.title.toLowerCase();
-
   // Keep market quality filters focused on obvious test titles only.
   // Description may include import metadata for curated decks.
-  return MARKET_BLOCK_KEYWORDS_IN_TITLE.some((kw) => title.includes(kw));
+  return isBelowMarketMinItemCount(input.itemCount) || isMarketTitleBlocked(input.title);
 }

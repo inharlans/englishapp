@@ -1,8 +1,14 @@
 # Englishapp
 
-## 최근 업데이트 (2026-03-02)
+## 최근 업데이트 (2026-03-04)
 
-- 클리퍼 설치 동선을 강화해 내 단어장 헤더/홈 히어로/전역 상단 메뉴에서 `/clipper/extension`으로 바로 이동할 수 있도록 했고, 비로그인 사용자도 설치 ZIP을 받을 수 있게 `/clipper/extension`·`/api/clipper/extension`을 공개 경로로 열었습니다.
+- 크롤러 트래픽 급증 대응을 위해 강경 차단 모드를 기본 활성화했습니다. `CRAWLER_LOCKDOWN_MODE`가 `on`(기본값)인 동안 `/wordbooks/market`, `/wordbooks/:id`, `/clipper/extension` 및 관련 공개 API는 로그인 사용자만 접근할 수 있고, `app/robots.ts`는 전체 경로 크롤링을 금지합니다. 배포 단계에서 해제하려면 `CRAWLER_LOCKDOWN_MODE=off`로 전환하세요.
+- 마켓 페이지 조회는 요청 페이지에 필요한 데이터만 DB에서 가져오도록 재구성했습니다. 기존처럼 후보 전체를 메모리로 읽지 않고 SQL 레벨에서 count/offset/limit을 적용해 크롤링 트래픽 상황에서도 불필요한 대량 조회를 줄였습니다.
+- 학습/퀴즈/카드 화면의 조회 배치 상한을 50으로 통일해 한 번의 요청으로 과도한 단어 데이터를 가져오지 않도록 제한했습니다.
+- 카드 학습 화면은 전체 페이지 순회 로딩을 제거하고, 현재 파트(`partSize`, `partIndex`)에 필요한 데이터만 API에서 가져오도록 변경했습니다.
+- 학습 결과 저장 시(`study/items`) 전체 상태 행을 메모리로 읽어 집계하던 로직을 DB `groupBy` 집계로 변경해, 제출 빈도가 높을 때도 불필요한 대량 로드를 줄였습니다.
+
+- 클리퍼 설치 동선을 강화해 내 단어장 헤더/홈 히어로/전역 상단 메뉴에서 `/clipper/extension`으로 바로 이동할 수 있도록 했고, `CRAWLER_LOCKDOWN_MODE=off`일 때는 비로그인 사용자도 설치 ZIP을 받을 수 있게 `/clipper/extension`·`/api/clipper/extension`을 공개 경로로 열었습니다.
 - 모바일 OAuth 전용 인증 경로(`/api/auth/mobile/start|exchange|refresh`)를 추가하고, refresh 토큰을 DB 해시 저장 + 회전(1회 사용) 방식으로 재구성해 탈취/재사용 대응과 기기 단위 세션 관리를 강화했습니다.
 - 모바일 Bearer access token 인증을 서버 공통 인증 경로에 연결해(`getUserFromRequest`) 기존 쿠키 세션과 병행 운용이 가능하도록 정리했습니다.
 - 변경 요청 보안 가드(`assertTrustedMutationRequest`)는 쿠키 세션(CSRF) 흐름은 유지하면서 모바일 Bearer 전용 요청은 정상 통과하도록 분기해 모바일 API 호출 호환성을 보강했습니다.

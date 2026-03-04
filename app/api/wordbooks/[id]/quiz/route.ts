@@ -4,6 +4,7 @@ import { parsePositiveIntParam, requireUserFromRequest } from "@/lib/api/route-h
 import { parsePositiveInt, parseQuizMode, QuizService } from "@/server/domain/quiz/service";
 
 const quizService = new QuizService();
+const MAX_BATCH_SIZE = 50;
 
 export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const { id: idRaw } = await ctx.params;
@@ -17,7 +18,7 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
 
   const { searchParams } = new URL(req.url);
   const mode = parseQuizMode(searchParams.get("mode"));
-  const partSize = parsePositiveInt(searchParams.get("partSize"), 30, 1, 200);
+  const partSize = parsePositiveInt(searchParams.get("partSize"), 30, 1, MAX_BATCH_SIZE);
   const partIndex = parsePositiveInt(searchParams.get("partIndex"), 1, 1, 100_000);
 
   const result = await quizService.getWordbookQuizQuestion(auth.user, wordbookId, {

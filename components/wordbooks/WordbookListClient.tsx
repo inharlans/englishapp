@@ -13,6 +13,7 @@ import { fetchWordbookStudy } from "@/lib/api/study";
 import { sanitizeUserText } from "@/lib/textQuality";
 
 type ListMode = "listCorrect" | "listWrong" | "listHalf";
+const MAX_BATCH_SIZE = 50;
 
 type Item = {
   id: number;
@@ -250,10 +251,10 @@ export function WordbookListClient({
           <input
             type="number"
             min={1}
-            max={200}
+            max={MAX_BATCH_SIZE}
             value={partSize}
             onChange={(e) => {
-              const next = parseBoundedInt(e.target.value, partSize, 1, 200);
+              const next = parseBoundedInt(e.target.value, partSize, 1, MAX_BATCH_SIZE);
               setPartSize(next);
               setPartIndex(1);
               setPartJump("1");
@@ -478,6 +479,5 @@ export function WordbookListClient({
     </section>
   );
 }
-
 
 

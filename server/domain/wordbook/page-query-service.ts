@@ -1,18 +1,22 @@
-import { LastResult } from "@prisma/client";
+import { LastResult, Prisma } from "@prisma/client";
 
 import { getUserDownloadedWordCount } from "@/lib/planLimits";
 import { prisma } from "@/lib/prisma";
 import { aggregateVersionLogs } from "@/lib/wordbookVersion";
-import { MARKET_MIN_ITEM_COUNT, shouldHideWordbookFromMarket } from "@/lib/wordbookPolicy";
+import { MARKET_BLOCK_KEYWORDS_IN_TITLE, MARKET_MIN_ITEM_COUNT, shouldHideWordbookFromMarket } from "@/lib/wordbookPolicy";
 
 type MarketSort = "top" | "new" | "downloads";
 type MarketSize = "all" | "100-300" | "301-700" | "701+";
 
-function matchesSize(itemCount: number, size: MarketSize): boolean {
-  if (size === "100-300") return itemCount >= 100 && itemCount <= 300;
-  if (size === "301-700") return itemCount >= 301 && itemCount <= 700;
-  if (size === "701+") return itemCount >= 701;
-  return true;
+function getSizeBounds(size: MarketSize): { min: number; max: number | null } {
+  if (size === "100-300") return { min: 100, max: 300 };
+  if (size === "301-700") return { min: 301, max: 700 };
+  if (size === "701+") return { min: 701, max: null };
+  return { min: MARKET_MIN_ITEM_COUNT, max: null };
+}
+
+function escapeSqlLikePattern(input: string): string {
+  return input.replace(/([\\%_])/g, "\\$1");
 }
 
 export class WordbookPageQueryService {
@@ -123,76 +127,151 @@ export class WordbookPageQueryService {
         ).map((row) => row.ownerId)
       : [];
 
-    const where = {
-      isPublic: true,
-      hiddenByAdmin: false,
-      ...(blockedOwnerIds.length > 0 ? { ownerId: { notIn: blockedOwnerIds } } : {}),
-      ...(input.q
-        ? {
-            OR: [
-              { title: { contains: input.q, mode: "insensitive" as const } },
-              { description: { contains: input.q, mode: "insensitive" as const } },
-              { owner: { email: { contains: input.q, mode: "insensitive" as const } } }
-            ]
-          }
-        : {})
-    };
+    const search = input.q.trim();
+    const escapedSearch = escapeSqlLikePattern(search);
+    const searchPattern = `%${escapedSearch}%`;
+    const sizeBounds = getSizeBounds(input.size);
 
-    const orderBy =
-      input.sort === "new"
-        ? [{ createdAt: "desc" as const }]
-        : input.sort === "downloads"
-          ? [{ downloadCount: "desc" as const }, { ratingAvg: "desc" as const }]
-          : [{ rankScore: "desc" as const }, { createdAt: "desc" as const }];
+    const blockedSql =
+      blockedOwnerIds.length > 0
+        ? Prisma.sql`AND wb."ownerId" NOT IN (${Prisma.join(blockedOwnerIds)})`
+        : Prisma.empty;
 
-    const candidates = await prisma.wordbook.findMany({
-      where,
-      orderBy,
-      select: {
-        id: true,
-        title: true,
-        description: true,
-        owner: { select: { email: true } },
-        _count: { select: { items: true } }
-      }
+    const searchSql =
+      search.length > 0
+        ? Prisma.sql`
+            AND (
+              wb."title" ILIKE ${searchPattern}
+                ESCAPE '\\'
+              OR coalesce(wb."description", '') ILIKE ${searchPattern}
+                ESCAPE '\\'
+              OR EXISTS (
+                SELECT 1
+                FROM "User" u
+                WHERE u."id" = wb."ownerId"
+                  AND u."email" ILIKE ${searchPattern}
+                    ESCAPE '\\'
+              )
+            )
+          `
+        : Prisma.empty;
+
+    const sqlBlockedKeywords = MARKET_BLOCK_KEYWORDS_IN_TITLE.filter((keyword) =>
+      shouldHideWordbookFromMarket({ title: keyword, itemCount: MARKET_MIN_ITEM_COUNT })
+    );
+
+    const blockedTitleClauses = sqlBlockedKeywords.map((kw) => {
+      const escapedKeyword = escapeSqlLikePattern(kw.toLowerCase());
+      const blockedPattern = `%${escapedKeyword}%`;
+      return Prisma.sql`lower(wb."title") LIKE ${blockedPattern} ESCAPE '\\'`;
     });
+    const blockedTitleSql =
+      blockedTitleClauses.length > 0 ? Prisma.join(blockedTitleClauses, " OR ") : Prisma.sql`FALSE`;
 
-    const eligibleIds = candidates
-      .filter(
-        (wordbook) =>
-          wordbook._count.items >= MARKET_MIN_ITEM_COUNT &&
-          matchesSize(wordbook._count.items, input.size) &&
-          !shouldHideWordbookFromMarket({
-            title: wordbook.title,
-            itemCount: wordbook._count.items
-          })
+    const itemCountLowerSql = Prisma.sql`COALESCE(item_counter.item_count, 0) >= ${sizeBounds.min}`;
+    const itemCountUpperSql =
+      sizeBounds.max !== null
+        ? Prisma.sql`AND COALESCE(item_counter.item_count, 0) <= ${sizeBounds.max}`
+        : Prisma.empty;
+
+    const orderBySql =
+      input.sort === "new"
+        ? Prisma.sql`cw."createdAt" DESC`
+        : input.sort === "downloads"
+          ? Prisma.sql`cw."downloadCount" DESC, cw."ratingAvg" DESC`
+          : Prisma.sql`cw."rankScore" DESC, cw."createdAt" DESC`;
+
+    const countRows = await prisma.$queryRaw<Array<{ total: number }>>(Prisma.sql`
+      WITH candidate_wordbooks AS (
+        SELECT wb."id"
+        FROM "Wordbook" wb
+        WHERE wb."isPublic" = true
+          AND wb."hiddenByAdmin" = false
+          ${blockedSql}
+          ${searchSql}
+          AND NOT (${blockedTitleSql})
+      ), item_counter AS (
+        SELECT wi."wordbookId" AS wordbook_id, COUNT(*)::int AS item_count
+        FROM "WordbookItem" wi
+        JOIN candidate_wordbooks cw ON cw."id" = wi."wordbookId"
+        GROUP BY wi."wordbookId"
       )
-      .map((wordbook) => wordbook.id);
+      SELECT COUNT(*)::int AS total
+      FROM candidate_wordbooks cw
+      LEFT JOIN item_counter ON item_counter.wordbook_id = cw."id"
+      WHERE ${itemCountLowerSql}
+        ${itemCountUpperSql}
+    `);
 
-    const total = eligibleIds.length;
+    const total = countRows[0]?.total ?? 0;
     const maxPage = Math.max(Math.ceil(total / input.take) - 1, 0);
     const page = Math.min(input.requestedPage, maxPage);
-    const pageIds = eligibleIds.slice(page * input.take, page * input.take + input.take);
+    const offset = page * input.take;
 
-    const [wordbooksUnordered, myDownloads, myDownloadedWordCount] = await Promise.all([
-      pageIds.length > 0
-        ? prisma.wordbook.findMany({
-            where: { id: { in: pageIds } },
-            select: {
-              id: true,
-              title: true,
-              description: true,
-              fromLang: true,
-              toLang: true,
-              downloadCount: true,
-              ratingAvg: true,
-              ratingCount: true,
-              createdAt: true,
-              owner: { select: { id: true, email: true } },
-              _count: { select: { items: true } }
-            }
-          })
-        : Promise.resolve([]),
+    const [rows, myDownloads, myDownloadedWordCount] = await Promise.all([
+      prisma.$queryRaw<
+        Array<{
+          id: number;
+          title: string;
+          description: string | null;
+          fromLang: string;
+          toLang: string;
+          downloadCount: number;
+          ratingAvg: number;
+          ratingCount: number;
+          createdAt: Date;
+          ownerId: number;
+          ownerEmail: string;
+          itemCount: number;
+        }>
+      >(Prisma.sql`
+        WITH candidate_wordbooks AS (
+          SELECT
+            wb."id" AS "id",
+            wb."title" AS "title",
+            wb."description" AS "description",
+            wb."fromLang" AS "fromLang",
+            wb."toLang" AS "toLang",
+            wb."downloadCount" AS "downloadCount",
+            wb."ratingAvg" AS "ratingAvg",
+            wb."ratingCount" AS "ratingCount",
+            wb."createdAt" AS "createdAt",
+            wb."rankScore" AS "rankScore",
+            wb."ownerId" AS "ownerId"
+          FROM "Wordbook" wb
+          WHERE wb."isPublic" = true
+            AND wb."hiddenByAdmin" = false
+            ${blockedSql}
+            ${searchSql}
+            AND NOT (${blockedTitleSql})
+        ), item_counter AS (
+          SELECT wi."wordbookId" AS wordbook_id, COUNT(*)::int AS item_count
+          FROM "WordbookItem" wi
+          JOIN candidate_wordbooks cw ON cw."id" = wi."wordbookId"
+          GROUP BY wi."wordbookId"
+        )
+        SELECT
+          cw."id" AS "id",
+          cw."title" AS "title",
+          cw."description" AS "description",
+          cw."fromLang" AS "fromLang",
+          cw."toLang" AS "toLang",
+          cw."downloadCount" AS "downloadCount",
+          cw."ratingAvg" AS "ratingAvg",
+          cw."ratingCount" AS "ratingCount",
+          cw."createdAt" AS "createdAt",
+          u."id" AS "ownerId",
+          u."email" AS "ownerEmail",
+          COALESCE(item_counter.item_count, 0) AS "itemCount"
+        FROM candidate_wordbooks cw
+        JOIN "User" u ON u."id" = cw."ownerId"
+        LEFT JOIN item_counter ON item_counter.wordbook_id = cw."id"
+        WHERE ${itemCountLowerSql}
+          ${itemCountUpperSql}
+        ORDER BY ${orderBySql}
+        OFFSET ${offset}
+        LIMIT ${input.take}
+      `),
       input.userId
         ? prisma.wordbookDownload.findMany({
             where: { userId: input.userId },
@@ -202,10 +281,19 @@ export class WordbookPageQueryService {
       input.userId ? getUserDownloadedWordCount(input.userId) : Promise.resolve(0)
     ]);
 
-    const byId = new Map(wordbooksUnordered.map((wordbook) => [wordbook.id, wordbook] as const));
-    const wordbooks = pageIds
-      .map((id) => byId.get(id))
-      .filter((wordbook): wordbook is NonNullable<typeof wordbook> => wordbook !== undefined);
+    const wordbooks = rows.map((row) => ({
+      id: row.id,
+      title: row.title,
+      description: row.description,
+      fromLang: row.fromLang,
+      toLang: row.toLang,
+      downloadCount: row.downloadCount,
+      ratingAvg: row.ratingAvg,
+      ratingCount: row.ratingCount,
+      createdAt: row.createdAt,
+      owner: { id: row.ownerId, email: row.ownerEmail },
+      _count: { items: row.itemCount }
+    }));
 
     return {
       total,

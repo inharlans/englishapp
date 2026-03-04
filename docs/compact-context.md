@@ -52,15 +52,15 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `980fc1818cab`
-- HEAD: `dd69c63` fix(auth): bridge Google mobile OAuth callback through server
+- Source hash: `0dfafd9a009e`
+- HEAD: `3e56159` feat(auth): add mobile OAuth callback bridges for naver and kakao
 
 ### Scope Digests
-- api-routes: 80 files, `138c658aed8d`
+- api-routes: 80 files, `ac434de8c9b4`
 - api-helpers: 17 files, `bc7a41e2a688`
-- domain-services: 39 files, `0c19e87c6dc6`
+- domain-services: 39 files, `2b48376ab314`
 - automation-policy: 90 files, `28ad694b609c`
-- tracking-docs: 10 files, `b6c780d0afe9`
+- tracking-docs: 10 files, `0fb75843ea11`
 
 ### Legacy Route Migration Status
 - base: `app/api/`, total: 62, migrated: 44, remaining: 18

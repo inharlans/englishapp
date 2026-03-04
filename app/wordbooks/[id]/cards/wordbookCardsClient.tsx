@@ -23,6 +23,8 @@ type Item = {
   partOfSpeech?: "NOUN" | "VERB" | "ADJECTIVE" | "ADVERB" | "PHRASE" | "OTHER" | "UNKNOWN" | null;
 };
 
+const MAX_BATCH_SIZE = 50;
+
 function mulberry32(seed: number) {
   let t = seed >>> 0;
   return () => {
@@ -53,6 +55,7 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
   const [title, setTitle] = useState("");
   const [speakLang, setSpeakLang] = useState<string | undefined>(undefined);
   const [items, setItems] = useState<Item[]>([]);
+  const [totalItems, setTotalItems] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
@@ -70,7 +73,7 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
   const requestSeqRef = useRef(0);
   const restoredKeyRef = useRef("");
   const skipInitialPartInfoRef = useRef(true);
-  const { partSize, setPartSize, partIndex, setPartIndex, partCount } = useWordbookParting(wordbookId, items.length);
+  const { partSize, setPartSize, partIndex, setPartIndex, partCount } = useWordbookParting(wordbookId, totalItems);
   const progressStorageKey = `wordbook_cards_progress_${wordbookId}_${partSize}_${partIndex}`;
   const resumePrefKey = `wordbook_cards_resume_enabled_${wordbookId}`;
   const autoAdvanceKey = `wordbook_cards_auto_advance_${wordbookId}`;
@@ -97,75 +100,54 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
   }, [autoAdvanceKey, autoSpeakKey, resumePrefKey]);
 
   useEffect(() => {
-    const loadAll = async () => {
+    const loadPart = async () => {
       const requestSeq = requestSeqRef.current + 1;
       requestSeqRef.current = requestSeq;
       setLoading(true);
       setError("");
       setInfo("");
+      setItems([]);
+      setIdx(0);
+      setShowMeaning(false);
       try {
-        const first = await fetchWordbookStudy({
+        const payload = await fetchWordbookStudy({
           wordbookId,
           view: "memorize",
           page: 0,
-          take: 200
+          take: partSize,
+          partSize,
+          partIndex
         });
-        if (!first.wordbook) throw new Error("카드 데이터를 불러오지 못했습니다.");
-
-        const total = first.paging?.totalFiltered ?? (first.items?.length ?? 0);
-        const take = first.paging?.take ?? 200;
-        const pageCount = Math.max(1, Math.ceil(total / Math.max(take, 1)));
-        const merged = [...(first.items ?? [])];
-        if (pageCount > 1) {
-          const pagePayloads = await Promise.all(
-            Array.from({ length: pageCount - 1 }, (_, idx) =>
-              fetchWordbookStudy({
-                wordbookId,
-                view: "memorize",
-                page: idx + 1,
-                take
-              })
-            )
-          );
-          for (const payload of pagePayloads) {
-            if (payload.items?.length) merged.push(...payload.items);
-          }
-        }
+        if (!payload.wordbook) throw new Error("카드 데이터를 불러오지 못했습니다.");
 
         if (!mountedRef.current || requestSeqRef.current !== requestSeq) return;
-        setTitle(first.wordbook.title);
-        setSpeakLang(first.wordbook.fromLang?.toLowerCase().startsWith("en") ? "en-US" : undefined);
-        setItems(merged);
-        setIdx(0);
-        setShowMeaning(false);
-        setInfo(`카드 ${merged.length}개를 불러왔습니다.`);
+        setTitle(payload.wordbook.title);
+        setSpeakLang(payload.wordbook.fromLang?.toLowerCase().startsWith("en") ? "en-US" : undefined);
+        setItems(payload.items ?? []);
+        setTotalItems(payload.paging?.totalItems ?? payload.paging?.totalFiltered ?? payload.items?.length ?? 0);
       } catch (e) {
         if (!mountedRef.current || requestSeqRef.current !== requestSeq) return;
         setItems([]);
+        setTotalItems(0);
         setError(e instanceof Error ? e.message : "카드 데이터를 불러오지 못했습니다.");
       } finally {
         if (mountedRef.current && requestSeqRef.current === requestSeq) setLoading(false);
       }
     };
 
-    void loadAll();
-  }, [reloadTick, wordbookId]);
-
-  const partItems = useMemo(() => {
-    const start = (partIndex - 1) * partSize;
-    return items.slice(start, start + partSize);
-  }, [items, partIndex, partSize]);
+    void loadPart();
+  }, [partIndex, partSize, reloadTick, wordbookId]);
 
   const shuffledItems = useMemo(() => {
     void orderSeed;
-    return shuffleBySeed(partItems, partShuffleSeed);
-  }, [partItems, orderSeed, partShuffleSeed]);
+    return shuffleBySeed(items, partShuffleSeed);
+  }, [items, orderSeed, partShuffleSeed]);
   const hasPartItems = shuffledItems.length > 0;
-  const partStart = (partIndex - 1) * partSize + 1;
-  const partEnd = Math.min(partIndex * partSize, items.length);
+  const partStart = hasPartItems ? (partIndex - 1) * partSize + 1 : 0;
+  const partEnd = hasPartItems ? Math.min(partStart + shuffledItems.length - 1, totalItems) : 0;
   const overallCardNumber = hasPartItems ? (partIndex - 1) * partSize + (idx + 1) : 0;
   const overallProgressPercent =
-    items.length > 0 && hasPartItems ? Math.round((overallCardNumber / items.length) * 100) : 0;
+    totalItems > 0 && hasPartItems ? Math.round((overallCardNumber / totalItems) * 100) : 0;
   const isPartComplete = hasPartItems && idx >= shuffledItems.length - 1;
   const remainingInPart = Math.max(shuffledItems.length - (idx + 1), 0);
   const remainingParts = Math.max(partCount - partIndex, 0);
@@ -245,13 +227,13 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
   useEffect(() => {
     setIdx(0);
     setShowMeaning(false);
-    if (loading || items.length === 0) return;
+    if (loading || totalItems === 0) return;
     if (skipInitialPartInfoRef.current) {
       skipInitialPartInfoRef.current = false;
       return;
     }
     setInfo(`${partIndex}파트로 이동했습니다.`);
-  }, [items.length, loading, partIndex, partSize]);
+  }, [loading, partIndex, partSize, totalItems]);
 
   useEffect(() => {
     if (!info) return;
@@ -438,13 +420,13 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
 
   const current = shuffledItems[idx] ?? null;
   const progressPercent = shuffledItems.length > 0 ? Math.round(((idx + 1) / shuffledItems.length) * 100) : 0;
-  const isInitialLoading = loading && items.length === 0;
-  const totalItemsLabel = isInitialLoading ? "-" : String(items.length);
+  const isInitialLoading = loading && totalItems === 0;
+  const totalItemsLabel = isInitialLoading ? "-" : String(totalItems);
   const partCountLabel = isInitialLoading ? "-" : String(partCount);
   const currentRangeLabel = isInitialLoading || !hasPartItems ? "-" : `${partStart}~${partEnd}`;
   const remainingInPartLabel = isInitialLoading ? "-" : String(remainingInPart);
   const remainingPartsLabel = isInitialLoading ? "-" : String(remainingParts);
-  const overallProgressLabel = isInitialLoading ? "-" : `${overallCardNumber}/${items.length}`;
+  const overallProgressLabel = isInitialLoading ? "-" : `${overallCardNumber}/${totalItems}`;
 
   useEffect(() => {
     if (!autoSpeak || !current) return;
@@ -488,10 +470,10 @@ export function WordbookCardsClient({ wordbookId }: { wordbookId: number }) {
             id="cards-part-size"
             type="number"
             min={1}
-            max={200}
+            max={MAX_BATCH_SIZE}
             value={partSize}
             onChange={(event) => {
-              const next = parseBoundedInt(event.target.value, partSize, 1, 200);
+              const next = parseBoundedInt(event.target.value, partSize, 1, MAX_BATCH_SIZE);
               setPartSize(next);
               setPartIndex(1);
               setPartJump("1");

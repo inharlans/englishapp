@@ -6,6 +6,7 @@ import { canAccessWordbookForStudy } from "@/lib/wordbookAccess";
 import { WordbookStudyService } from "@/server/domain/wordbook/study-service";
 
 const studyService = new WordbookStudyService();
+const MAX_BATCH_SIZE = 50;
 
 function parseIntParam(raw: string | null, fallback: number, min: number, max: number): number {
   const n = Number(raw);
@@ -45,11 +46,11 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
   const sp = new URL(req.url).searchParams;
   const view = parseView(sp.get("view"));
   const page = parseIntParam(sp.get("page"), 0, 0, 100_000);
-  const take = parseIntParam(sp.get("take"), 30, 1, 200);
+  const take = parseIntParam(sp.get("take"), 30, 1, MAX_BATCH_SIZE);
   const q = (sp.get("q") ?? "").trim();
   const hideCorrect = parseBoolParam(sp.get("hideCorrect"), false);
   const partSizeRaw = sp.get("partSize");
-  const partSize = partSizeRaw ? parseIntParam(partSizeRaw, 30, 1, 200) : null;
+  const partSize = partSizeRaw ? parseIntParam(partSizeRaw, 30, 1, MAX_BATCH_SIZE) : null;
   const requestedPartIndex = parseIntParam(sp.get("partIndex"), 1, 1, 100_000);
 
   const result = await studyService.getStudyPayload({

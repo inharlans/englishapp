@@ -5,6 +5,34 @@ import { getSessionCookieName, verifySessionToken } from "@/lib/authJwt";
 
 const PREVIEW_COOKIE_NAME = "preview_access";
 
+function isCrawlerLockdownEnabled(): boolean {
+  const raw = (process.env.CRAWLER_LOCKDOWN_MODE ?? "on").trim().toLowerCase();
+  return raw !== "off" && raw !== "0" && raw !== "false";
+}
+
+function normalizePathname(pathname: string): string {
+  if (pathname.length > 1 && pathname.endsWith("/")) {
+    return pathname.slice(0, -1);
+  }
+  return pathname;
+}
+
+function isCrawlerLockedPath(pathname: string): boolean {
+  const normalized = normalizePathname(pathname);
+  if (normalized === "/api/wordbooks/market") return true;
+  if (/^\/api\/wordbooks\/\d+\/reviews$/.test(normalized)) return true;
+  if (normalized === "/api/clipper/extension") return true;
+  if (normalized === "/wordbooks/market") return true;
+  if (/^\/wordbooks\/\d+$/.test(normalized)) return true;
+  if (normalized === "/clipper/extension") return true;
+  return false;
+}
+
+function hasBearerAuthorization(req: NextRequest): boolean {
+  const authorization = req.headers.get("authorization") ?? "";
+  return /^\s*Bearer\s+\S+/i.test(authorization);
+}
+
 function withSecurityHeaders(res: NextResponse): NextResponse {
   res.headers.set("X-Frame-Options", "DENY");
   res.headers.set("X-Content-Type-Options", "nosniff");
@@ -29,25 +57,27 @@ function hasValidPreviewAccess(req: NextRequest): boolean {
 }
 
 function isPublicPath(pathname: string): boolean {
-  if (pathname === "/") return true;
-  if (pathname === "/login") return true;
-  if (pathname === "/privacy") return true;
-  if (pathname === "/terms") return true;
-  if (pathname === "/pricing") return true;
-  if (pathname === "/preview-access") return true;
-  if (pathname.startsWith("/api/auth/")) return true;
-  if (pathname === "/api/payments/webhook") return true;
-  if (pathname === "/api/wordbooks/market") return true;
-  if (pathname === "/api/clipper/extension") return true;
-  if (/^\/api\/wordbooks\/\d+\/reviews$/.test(pathname)) return true;
-  if (pathname.startsWith("/api/internal/cron/")) return true;
-  if (pathname === "/wordbooks/market") return true;
-  if (pathname === "/clipper/extension") return true;
-  if (/^\/wordbooks\/\d+$/.test(pathname)) return true;
-  if (pathname.startsWith("/offline")) return true;
-  if (pathname === "/sw.js") return true;
-  if (pathname.startsWith("/_next/")) return true;
-  if (pathname === "/favicon.ico") return true;
+  const normalized = normalizePathname(pathname);
+  if (isCrawlerLockdownEnabled() && isCrawlerLockedPath(normalized)) return false;
+  if (normalized === "/") return true;
+  if (normalized === "/login") return true;
+  if (normalized === "/privacy") return true;
+  if (normalized === "/terms") return true;
+  if (normalized === "/pricing") return true;
+  if (normalized === "/preview-access") return true;
+  if (normalized.startsWith("/api/auth/")) return true;
+  if (normalized === "/api/payments/webhook") return true;
+  if (normalized === "/api/wordbooks/market") return true;
+  if (normalized === "/api/clipper/extension") return true;
+  if (/^\/api\/wordbooks\/\d+\/reviews$/.test(normalized)) return true;
+  if (normalized.startsWith("/api/internal/cron/")) return true;
+  if (normalized === "/wordbooks/market") return true;
+  if (normalized === "/clipper/extension") return true;
+  if (/^\/wordbooks\/\d+$/.test(normalized)) return true;
+  if (normalized.startsWith("/offline")) return true;
+  if (normalized === "/sw.js") return true;
+  if (normalized.startsWith("/_next/")) return true;
+  if (normalized === "/favicon.ico") return true;
   return false;
 }
 
@@ -65,6 +95,12 @@ export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   if (isPublicPath(pathname) || hasValidPreviewAccess(req)) {
     return withSecurityHeaders(NextResponse.next());
+  }
+
+  if (isCrawlerLockdownEnabled() && isCrawlerLockedPath(pathname) && pathname.startsWith("/api/")) {
+    if (hasBearerAuthorization(req)) {
+      return withSecurityHeaders(NextResponse.next());
+    }
   }
 
   const token = req.cookies.get(getSessionCookieName())?.value;
