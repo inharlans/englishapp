@@ -1,4 +1,6 @@
 export const MARKET_MIN_ITEM_COUNT = 100;
+export const MARKET_CURATED_MIN_DONE_RATIO = 0.8;
+export const MARKET_CURATED_MIN_RATING_COUNT = 3;
 
 export const MARKET_BLOCK_KEYWORDS_IN_TITLE = [
   "e2e",

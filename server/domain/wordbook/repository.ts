@@ -1,7 +1,12 @@
 import { Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
-import { MARKET_BLOCK_KEYWORDS_IN_TITLE, MARKET_MIN_ITEM_COUNT } from "@/lib/wordbookPolicy";
+import {
+  MARKET_BLOCK_KEYWORDS_IN_TITLE,
+  MARKET_CURATED_MIN_DONE_RATIO,
+  MARKET_CURATED_MIN_RATING_COUNT,
+  MARKET_MIN_ITEM_COUNT
+} from "@/lib/wordbookPolicy";
 import { bumpWordbookVersion } from "@/lib/wordbookVersion";
 import type {
   CreateWordbookInput,
@@ -299,9 +304,22 @@ export class WordbookRepository {
           ? Prisma.sql`cw."downloadCount" DESC, cw."ratingAvg" DESC`
           : Prisma.sql`cw."rankScore" DESC, cw."createdAt" DESC`;
 
+    const qualityWhereSql =
+      query.quality === "curated"
+        ? Prisma.sql`
+          AND cw."ratingCount" >= ${MARKET_CURATED_MIN_RATING_COUNT}
+          AND (
+            CASE
+              WHEN COALESCE(quality_counter.total_count, 0) = 0 THEN 0
+              ELSE COALESCE(quality_counter.done_count, 0)::float / quality_counter.total_count::float
+            END
+          ) >= ${MARKET_CURATED_MIN_DONE_RATIO}
+        `
+        : Prisma.empty;
+
     const countRows = await prisma.$queryRaw<Array<{ total: number }>>(Prisma.sql`
       WITH candidate_wordbooks AS (
-        SELECT wb."id"
+        SELECT wb."id", wb."ratingCount"
         FROM "Wordbook" wb
         WHERE wb."isPublic" = true
           AND wb."hiddenByAdmin" = false
@@ -313,11 +331,21 @@ export class WordbookRepository {
         FROM "WordbookItem" wi
         JOIN candidate_wordbooks cw ON cw."id" = wi."wordbookId"
         GROUP BY wi."wordbookId"
+      ), quality_counter AS (
+        SELECT
+          wi."wordbookId" AS wordbook_id,
+          COUNT(*)::int AS total_count,
+          COUNT(*) FILTER (WHERE wi."enrichmentStatus" = 'DONE')::int AS done_count
+        FROM "WordbookItem" wi
+        JOIN candidate_wordbooks cw ON cw."id" = wi."wordbookId"
+        GROUP BY wi."wordbookId"
       )
       SELECT COUNT(*)::int AS total
       FROM candidate_wordbooks cw
       LEFT JOIN item_counter ON item_counter.wordbook_id = cw."id"
+      LEFT JOIN quality_counter ON quality_counter.wordbook_id = cw."id"
       WHERE COALESCE(item_counter.item_count, 0) >= ${MARKET_MIN_ITEM_COUNT}
+        ${qualityWhereSql}
     `);
 
     const rows = await prisma.$queryRaw<
@@ -364,6 +392,14 @@ export class WordbookRepository {
         FROM "WordbookItem" wi
         JOIN candidate_wordbooks cw ON cw."id" = wi."wordbookId"
         GROUP BY wi."wordbookId"
+      ), quality_counter AS (
+        SELECT
+          wi."wordbookId" AS wordbook_id,
+          COUNT(*)::int AS total_count,
+          COUNT(*) FILTER (WHERE wi."enrichmentStatus" = 'DONE')::int AS done_count
+        FROM "WordbookItem" wi
+        JOIN candidate_wordbooks cw ON cw."id" = wi."wordbookId"
+        GROUP BY wi."wordbookId"
       )
       SELECT
         cw."id" AS id,
@@ -383,7 +419,9 @@ export class WordbookRepository {
       FROM candidate_wordbooks cw
       JOIN "User" u ON u."id" = cw."ownerId"
       LEFT JOIN item_counter ON item_counter.wordbook_id = cw."id"
+      LEFT JOIN quality_counter ON quality_counter.wordbook_id = cw."id"
       WHERE COALESCE(item_counter.item_count, 0) >= ${MARKET_MIN_ITEM_COUNT}
+        ${qualityWhereSql}
       ORDER BY ${orderBySql}
       OFFSET ${offset}
       LIMIT ${query.take}

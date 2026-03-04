@@ -52,8 +52,8 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `a9f8c3a0892d`
-- HEAD: `d01cd18` test(api): add mobile home route coverage
+- Source hash: `af98bc89cf69`
+- HEAD: `2d0387c` test(api): tighten mobile home fallback contracts
 
 ### Scope Digests
 - api-routes: 91 files, `1bc0785f728c`

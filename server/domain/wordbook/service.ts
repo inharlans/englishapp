@@ -53,6 +53,7 @@ export class WordbookService {
       page: query.page,
       take: query.take,
       sort: query.sort,
+      quality: query.quality,
       q: query.q,
       wordbooks: pageResult.wordbooks.map((wb) => {
         const desc = splitWordbookDescription(wb.description);
