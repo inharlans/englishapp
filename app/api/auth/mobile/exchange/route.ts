@@ -81,7 +81,6 @@ export async function POST(req: NextRequest) {
       parsed.data.provider === "google" && stateClaims.providerRedirectUri === stateClaims.redirectUri
         ? resolveProviderRedirectUri({
             provider: parsed.data.provider,
-            mobileRedirectUri: stateClaims.redirectUri,
             requestOrigin: req.nextUrl.origin
           })
         : stateClaims.providerRedirectUri;

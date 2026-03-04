@@ -13,7 +13,6 @@ describe("resolveProviderRedirectUri", () => {
 
     const uri = resolveProviderRedirectUri({
       provider: "google",
-      mobileRedirectUri: "englishappmobile://auth/callback",
       requestOrigin: "https://malicious-host.example"
     });
 
@@ -28,7 +27,6 @@ describe("resolveProviderRedirectUri", () => {
 
     const uri = resolveProviderRedirectUri({
       provider: "google",
-      mobileRedirectUri: "englishappmobile://auth/callback",
       requestOrigin: "https://www.oingapp.com"
     });
 
@@ -43,7 +41,6 @@ describe("resolveProviderRedirectUri", () => {
     expect(() =>
       resolveProviderRedirectUri({
         provider: "google",
-        mobileRedirectUri: "englishappmobile://auth/callback",
         requestOrigin: "https://www.oingapp.com"
       })
     ).toThrow("MOBILE_GOOGLE_OAUTH_REDIRECT_URI 또는 NEXT_PUBLIC_APP_URL 설정이 필요합니다.");
@@ -54,8 +51,7 @@ describe("resolveProviderRedirectUri", () => {
 
     expect(() =>
       resolveProviderRedirectUri({
-        provider: "google",
-        mobileRedirectUri: "englishappmobile://auth/callback"
+        provider: "google"
       })
     ).toThrow("MOBILE_GOOGLE_OAUTH_REDIRECT_URI 형식이 올바르지 않습니다.");
   });
@@ -65,8 +61,7 @@ describe("resolveProviderRedirectUri", () => {
 
     expect(() =>
       resolveProviderRedirectUri({
-        provider: "google",
-        mobileRedirectUri: "englishappmobile://auth/callback"
+        provider: "google"
       })
     ).toThrow("MOBILE_GOOGLE_OAUTH_REDIRECT_URI 경로는 /api/auth/mobile/google/callback 이어야 합니다.");
   });
@@ -76,8 +71,7 @@ describe("resolveProviderRedirectUri", () => {
 
     expect(() =>
       resolveProviderRedirectUri({
-        provider: "google",
-        mobileRedirectUri: "englishappmobile://auth/callback"
+        provider: "google"
       })
     ).toThrow("MOBILE_GOOGLE_OAUTH_REDIRECT_URI 는 https 또는 localhost http URL 이어야 합니다.");
   });
@@ -87,8 +81,7 @@ describe("resolveProviderRedirectUri", () => {
     vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://www.oingapp.com/app");
 
     const uri = resolveProviderRedirectUri({
-      provider: "google",
-      mobileRedirectUri: "englishappmobile://auth/callback"
+      provider: "google"
     });
 
     expect(uri).toBe("https://www.oingapp.com/api/auth/mobile/google/callback");
@@ -100,10 +93,31 @@ describe("resolveProviderRedirectUri", () => {
 
     const uri = resolveProviderRedirectUri({
       provider: "google",
-      mobileRedirectUri: "englishappmobile://auth/callback",
       requestOrigin: "https://attacker.example"
     });
 
     expect(uri).toBe("http://localhost:3000/api/auth/mobile/google/callback");
+  });
+
+  it("resolves naver callback from explicit env", () => {
+    vi.stubEnv("MOBILE_NAVER_OAUTH_REDIRECT_URI", "https://www.oingapp.com/api/auth/mobile/naver/callback");
+
+    const uri = resolveProviderRedirectUri({
+      provider: "naver"
+    });
+
+    expect(uri).toBe("https://www.oingapp.com/api/auth/mobile/naver/callback");
+  });
+
+  it("throws in production when kakao callback env and app URL are missing", () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("MOBILE_KAKAO_OAUTH_REDIRECT_URI", "");
+    vi.stubEnv("NEXT_PUBLIC_APP_URL", "");
+
+    expect(() =>
+      resolveProviderRedirectUri({
+        provider: "kakao"
+      })
+    ).toThrow("MOBILE_KAKAO_OAUTH_REDIRECT_URI 또는 NEXT_PUBLIC_APP_URL 설정이 필요합니다.");
   });
 });

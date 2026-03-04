@@ -52,18 +52,18 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `d2693514c43e`
-- HEAD: `d6e4cfa` feat(clipper): expose installer path and add entry CTAs
+- Source hash: `980fc1818cab`
+- HEAD: `dd69c63` fix(auth): bridge Google mobile OAuth callback through server
 
 ### Scope Digests
-- api-routes: 76 files, `b855f9386ea4`
+- api-routes: 80 files, `138c658aed8d`
 - api-helpers: 17 files, `bc7a41e2a688`
-- domain-services: 39 files, `a8235083d74b`
+- domain-services: 39 files, `0c19e87c6dc6`
 - automation-policy: 90 files, `28ad694b609c`
-- tracking-docs: 10 files, `c5479887a831`
+- tracking-docs: 10 files, `b6c780d0afe9`
 
 ### Legacy Route Migration Status
-- base: `app/api/`, total: 60, migrated: 44, remaining: 16
+- base: `app/api/`, total: 62, migrated: 44, remaining: 18
 - remaining files:
   - `app/api/auth/google/callback/route.ts`
   - `app/api/auth/google/route.ts`
@@ -72,6 +72,8 @@
   - `app/api/auth/local-debug-login/route.ts`
   - `app/api/auth/mobile/exchange/route.ts`
   - `app/api/auth/mobile/google/callback/route.ts`
+  - `app/api/auth/mobile/kakao/callback/route.ts`
+  - `app/api/auth/mobile/naver/callback/route.ts`
   - `app/api/auth/mobile/refresh/route.ts`
   - `app/api/auth/mobile/start/route.ts`
   - `app/api/auth/naver/callback/route.ts`

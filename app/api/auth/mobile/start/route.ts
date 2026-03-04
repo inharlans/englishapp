@@ -34,7 +34,6 @@ export async function POST(req: NextRequest) {
     assertValidMobileRedirectUri(parsed.data.redirectUri);
     const providerRedirectUri = resolveProviderRedirectUri({
       provider: parsed.data.provider,
-      mobileRedirectUri: parsed.data.redirectUri,
       requestOrigin: req.nextUrl.origin
     });
 
