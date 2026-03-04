@@ -1,6 +1,7 @@
 import { PartOfSpeech } from "@prisma/client";
 
 import { enrichWithGeminiBatch, translateWithGoogle, type EnrichmentResult } from "@/lib/clipperEnrichment";
+import { logJson } from "@/lib/logger";
 import { captureAppError } from "@/lib/observability";
 import {
   CLIPPER_ALERT_POLICY_VERSION,
@@ -18,6 +19,7 @@ import type {
   InternalMetricsServiceResult
 } from "@/server/domain/internal/contracts";
 import {
+  classifyEnrichmentError,
   createReasonCounts,
   formatEnrichmentReason,
   parseEnrichmentReason,
@@ -326,17 +328,39 @@ export class InternalService {
       1,
       Number.parseInt(process.env.CLIPPER_ENRICH_MAX_ATTEMPTS ?? "3", 10) || 3
     );
+    const runStartedAt = Date.now();
 
     try {
       const reasonCounts = createReasonCounts();
+      const failedAttempts: number[] = [];
       const incrementReason = (code: EnrichmentReasonCode) => {
         reasonCounts[code] += 1;
       };
-      const markFailedWithReason = async (input: { id: number; code: EnrichmentReasonCode; detail?: string }) => {
+      const markFailedWithReason = async (input: {
+        id: number;
+        code: EnrichmentReasonCode;
+        detail?: string;
+        attempt?: number;
+      }) => {
         await this.repo.markClipperItemFailed({
           id: input.id,
           message: formatEnrichmentReason(input.code, input.detail)
         });
+        await captureAppError({
+          level: "warn",
+          route: "/api/internal/cron/clipper-enrichment",
+          message: "cron_clipper_enrichment_item_failed",
+          context: {
+            itemId: input.id,
+            attempt: input.attempt ?? null,
+            maxAttempts,
+            reasonCode: input.code,
+            detail: input.detail ?? null
+          }
+        });
+        if (typeof input.attempt === "number" && Number.isFinite(input.attempt)) {
+          failedAttempts.push(input.attempt);
+        }
         incrementReason(input.code);
       };
 
@@ -362,12 +386,28 @@ export class InternalService {
         maxPick: batchSize
       });
       const claimedIds = await this.repo.claimQueuedClipperItemsByIds(eligibleIds);
+      const skippedCount = Math.max(0, eligibleIds.length - claimedIds.length);
       if (claimedIds.length === 0) {
+        const durationMs = Date.now() - runStartedAt;
+        logJson("info", "cron_clipper_enrichment_run_summary", {
+          picked: 0,
+          succeeded: 0,
+          failed: 0,
+          skipped: skippedCount,
+          durationMs,
+          requeuedCount,
+          reasonCounts
+        });
         return {
           ok: true,
           status: 200,
           payload: {
             ok: true,
+            picked: 0,
+            succeeded: 0,
+            failed: 0,
+            skipped: skippedCount,
+            durationMs,
             requeuedCount,
             claimedCount: 0,
             processedCount: 0,
@@ -382,14 +422,19 @@ export class InternalService {
       const processingItems = await this.repo.loadClipperItemsForProcessing(claimedIds);
       const idSet = new Set(processingItems.map((item) => item.id));
       const pendingFailed = claimedIds.filter((id) => !idSet.has(id));
+      const attemptsById = new Map<number, number>(queuedPool.map((item) => [item.id, item.enrichmentAttempts + 1]));
       for (const id of pendingFailed) {
-        await markFailedWithReason({ id, code: "ITEM_NOT_FOUND_AFTER_CLAIM" });
+        await markFailedWithReason({
+          id,
+          code: "ITEM_NOT_FOUND_AFTER_CLAIM",
+          attempt: attemptsById.get(id)
+        });
       }
 
       let geminiResults = new Map<number, EnrichmentResult>();
       let usedFallbackForBatchFailure = false;
       let fallbackDoneCount = 0;
-      let fallbackFailedCount = pendingFailed.length;
+      let fallbackFailedCount = 0;
       try {
         geminiResults = await enrichWithGeminiBatch({
           items: processingItems.map((item) => ({
@@ -400,8 +445,20 @@ export class InternalService {
           }))
         });
       } catch (error) {
+        const batchReason = classifyEnrichmentError(error);
+        await captureAppError({
+          level: "warn",
+          route: "/api/internal/cron/clipper-enrichment",
+          message: "cron_clipper_enrichment_batch_failed",
+          context: {
+            reasonCode: batchReason,
+            err: error instanceof Error ? error.message : String(error),
+            itemCount: processingItems.length
+          }
+        });
         usedFallbackForBatchFailure = true;
         for (const item of processingItems) {
+          const attempt = attemptsById.get(item.id);
           try {
             const meaningKo = await translateWithGoogle({ text: item.term, source: "en", target: "ko" });
             const exampleSentenceKo = item.exampleSentenceEn
@@ -411,7 +468,8 @@ export class InternalService {
               await markFailedWithReason({
                 id: item.id,
                 code: "GOOGLE_TRANSLATE_FALLBACK_EMPTY",
-                detail: "meaningKo_empty"
+                detail: "meaningKo_empty",
+                attempt
               });
               fallbackFailedCount += 1;
               continue;
@@ -429,7 +487,8 @@ export class InternalService {
             await markFailedWithReason({
               id: item.id,
               code: "BATCH_FALLBACK_FAILED",
-              detail: fallbackError instanceof Error ? fallbackError.message : String(fallbackError)
+              detail: fallbackError instanceof Error ? fallbackError.message : String(fallbackError),
+              attempt
             });
             fallbackFailedCount += 1;
           }
@@ -443,7 +502,11 @@ export class InternalService {
         for (const item of processingItems) {
           const output = geminiResults.get(item.id);
           if (!output) {
-            await markFailedWithReason({ id: item.id, code: "ITEM_MISSING_OR_INVALID" });
+            await markFailedWithReason({
+              id: item.id,
+              code: "ITEM_MISSING_OR_INVALID",
+              attempt: attemptsById.get(item.id)
+            });
             failedCount += 1;
             continue;
           }
@@ -459,14 +522,36 @@ export class InternalService {
         }
       } else {
         doneCount = fallbackDoneCount;
-        failedCount = fallbackFailedCount;
+        failedCount += fallbackFailedCount;
       }
+
+      const durationMs = Date.now() - runStartedAt;
+      const terminalFailedCount = failedAttempts.filter((attempt) => attempt >= maxAttempts).length;
+      const succeeded = doneCount;
+      const failed = failedCount;
+      const picked = claimedIds.length;
+      logJson("info", "cron_clipper_enrichment_run_summary", {
+        picked,
+        succeeded,
+        failed,
+        skipped: skippedCount,
+        durationMs,
+        requeuedCount,
+        terminalFailedCount,
+        reasonCounts
+      });
 
       return {
         ok: true,
         status: 200,
         payload: {
           ok: true,
+          picked,
+          succeeded,
+          failed,
+          skipped: skippedCount,
+          durationMs,
+          terminalFailedCount,
           requeuedCount,
           claimedCount: claimedIds.length,
           processedCount: processingItems.length,

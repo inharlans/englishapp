@@ -35,6 +35,7 @@ const MOBILE_BEARER_MUTATION_ALLOWLIST: MobileBearerRouteRule[] = [
   { method: "POST", pattern: /^\/api\/auth\/mobile\/(start|exchange|refresh)$/ },
   { method: "DELETE", pattern: /^\/api\/blocked-owners$/ },
   { method: "POST", pattern: /^\/api\/payments\/(checkout|confirm|portal)$/ },
+  { method: "POST", pattern: /^\/api\/clipper\/capture$/ },
   { method: "POST", pattern: /^\/api\/quiz\/submit$/ },
   { method: "POST", pattern: /^\/api\/translate$/ },
   { method: "PATCH", pattern: /^\/api\/users\/me\/clipper-settings$/ },

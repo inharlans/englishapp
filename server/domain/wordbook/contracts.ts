@@ -53,6 +53,7 @@ export interface WordbookDetail extends WordbookSummary {
 export interface MarketQuery {
   q: string;
   sort: "top" | "new" | "downloads";
+  quality: "all" | "curated";
   page: number;
   take: number;
   blockedOwnerIds: number[];

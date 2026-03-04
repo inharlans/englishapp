@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { getUserFromRequest } from "@/lib/authServer";
 import { checkRateLimit, getClientIpFromHeaders } from "@/lib/rateLimit";
-import { WordbookMarketService, parseMarketSort } from "@/server/domain/wordbook/market-service";
+import { WordbookMarketService, parseMarketQuality, parseMarketSort } from "@/server/domain/wordbook/market-service";
 
 const marketService = new WordbookMarketService();
 
@@ -37,12 +37,14 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const q = (searchParams.get("q") ?? "").trim();
   const sort = parseMarketSort(searchParams.get("sort"));
+  const quality = parseMarketQuality(searchParams.get("quality"));
   const page = Math.max(Number(searchParams.get("page") ?? "0") || 0, 0);
   const take = Math.min(Math.max(Number(searchParams.get("take") ?? "30") || 30, 1), 50);
 
   const result = await marketService.list(user, {
     q,
     sort,
+    quality,
     page,
     take
   });

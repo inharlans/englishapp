@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionCookieName, verifySessionToken } from "@/lib/authJwt";
 import { logJson } from "@/lib/logger";
 import { CLIENT_METRIC_NAMES, type ClientMetricName } from "@/lib/metrics/names";
+import { verifyMobileAccessToken } from "@/lib/mobileTokens";
 import { checkRateLimit, getClientIpFromHeaders } from "@/lib/rateLimit";
 
 const ALLOWED_METRICS = new Set(CLIENT_METRIC_NAMES);
@@ -114,6 +115,96 @@ function isClientMetricName(value: string): value is ClientMetricName {
   return ALLOWED_METRICS.has(value as ClientMetricName);
 }
 
+function parseAuthMode(req: NextRequest): "session" | "bearer" | null {
+  const mode = (req.headers.get("x-auth-mode") ?? "").trim().toLowerCase();
+  if (mode === "session" || mode === "bearer") {
+    return mode;
+  }
+  return null;
+}
+
+function extractBearerToken(authorizationHeader: string | null): string | null {
+  if (!authorizationHeader) return null;
+  const match = authorizationHeader.match(/^\s*Bearer\s+(\S+)\s*$/i);
+  return match?.[1] ?? null;
+}
+
+function toPositiveInt(value: unknown): number | null {
+  const n = Number(value);
+  if (!Number.isInteger(n) || n <= 0) {
+    return null;
+  }
+  return n;
+}
+
+async function verifyMobileAccessTokenNoThrow(token: string): Promise<{ userId: number } | null> {
+  try {
+    const claims = await verifyMobileAccessToken(token);
+    if (!claims) {
+      return null;
+    }
+
+    const userId = toPositiveInt(claims.userId);
+    if (!userId) {
+      return null;
+    }
+
+    return { userId };
+  } catch {
+    return null;
+  }
+}
+
+async function getAuthenticatedUserId(req: NextRequest): Promise<number | null> {
+  const bearerToken = extractBearerToken(req.headers.get("authorization"));
+  const authMode = parseAuthMode(req);
+
+  const sessionToken = req.cookies.get(getSessionCookieName())?.value;
+  let sessionClaims: Awaited<ReturnType<typeof verifySessionToken>> = null;
+  if (sessionToken) {
+    try {
+      sessionClaims = await verifySessionToken(sessionToken);
+    } catch {
+      sessionClaims = null;
+    }
+  }
+  const sessionClaimUserId =
+    sessionClaims && typeof sessionClaims === "object"
+      ? ((sessionClaims as { uid?: unknown; sub?: unknown }).uid ??
+        (sessionClaims as { uid?: unknown; sub?: unknown }).sub)
+      : undefined;
+  const sessionUserId = toPositiveInt(sessionClaimUserId);
+  const hasSessionUserId = sessionUserId !== null;
+
+  if (hasSessionUserId && !bearerToken) {
+    return Math.floor(sessionUserId);
+  }
+
+  if (hasSessionUserId && bearerToken) {
+    if (authMode !== "bearer") {
+      return null;
+    }
+
+    const bearerClaims = await verifyMobileAccessTokenNoThrow(bearerToken);
+    if (!bearerClaims) {
+      return null;
+    }
+
+    if (bearerClaims.userId !== sessionUserId) {
+      return null;
+    }
+
+    return sessionUserId;
+  }
+
+  if (bearerToken && authMode === "bearer") {
+    const bearerClaims = await verifyMobileAccessTokenNoThrow(bearerToken);
+    return bearerClaims ? bearerClaims.userId : null;
+  }
+
+  return null;
+}
+
 export async function POST(req: NextRequest) {
   const ip = getClientIpFromHeaders(req.headers);
   const preAuthLimit = await checkRateLimit({
@@ -128,14 +219,13 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const token = req.cookies.get(getSessionCookieName())?.value;
-  const claims = token ? await verifySessionToken(token) : null;
-  if (!claims) {
+  const authenticatedUserId = await getAuthenticatedUserId(req);
+  if (!authenticatedUserId) {
     return NextResponse.json({ ok: false, error: "Unauthorized." }, { status: 401 });
   }
 
   const limit = await checkRateLimit({
-    key: `client-metrics:${claims.uid}:${ip}`,
+    key: `client-metrics:${authenticatedUserId}:${ip}`,
     limit: 60,
     windowMs: 60_000
   });
