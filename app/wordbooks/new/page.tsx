@@ -1,8 +1,10 @@
 "use client";
 
-import { createWordbook, saveWordbookItems } from "@/lib/api/wordbook";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+
+import { ValidationStatusBadge } from "@/components/wordbooks/ValidationStatusBadge";
+import { createWordbook, saveWordbookItems } from "@/lib/api/wordbook";
 
 type ImportTab = "paste" | "upload" | "manual";
 
@@ -475,11 +477,11 @@ export default function NewWordbookPage() {
                         <td className="px-3 py-2"><input value={row.meaning} onChange={(e) => updateRow(row.id, { meaning: e.target.value })} className="w-full rounded-lg border border-slate-300 px-2 py-1" /></td>
                         <td className="px-3 py-2">
                           {!v.isValid ? (
-                            <span className="rounded-full border border-red-200 bg-red-50 px-2 py-0.5 text-xs font-semibold text-red-700">invalid ({v.issues.join(", ")})</span>
+                            <ValidationStatusBadge tone="invalid" label={`invalid (${v.issues.join(", ")})`} />
                           ) : v.isDuplicate ? (
-                            <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700">warn (duplicate)</span>
+                            <ValidationStatusBadge tone="warning" label="warn (duplicate)" />
                           ) : (
-                            <span className="rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700">valid</span>
+                            <ValidationStatusBadge tone="valid" label="valid" />
                           )}
                         </td>
                         <td className="px-3 py-2"><button type="button" onClick={() => removeRow(row.id)} aria-label={`검증 결과 ${v.position}행 삭제`} className="ui-btn-secondary px-2 py-1 text-xs">삭제</button></td>

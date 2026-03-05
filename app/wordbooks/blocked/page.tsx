@@ -23,7 +23,10 @@ export default async function BlockedOwnersPage() {
       <section className="space-y-3">
         <h1 className="text-2xl font-black text-slate-900">차단 목록</h1>
         <p className="text-sm text-slate-600">로그인이 필요합니다.</p>
-        <Link href={{ pathname: "/login", query: { next: "/wordbooks/blocked" } }} className="text-sm font-semibold text-blue-700 hover:underline">
+        <Link
+          href={{ pathname: "/login", query: { next: "/wordbooks/blocked" } }}
+          className="inline-flex w-fit ui-btn-accent px-4 py-2 text-sm"
+        >
           로그인하러 가기
         </Link>
       </section>
@@ -39,7 +42,7 @@ export default async function BlockedOwnersPage() {
         <p className="text-sm text-slate-600">
           차단한 제작자는 마켓에서 숨겨집니다. 언제든 해제할 수 있습니다.
         </p>
-        <Link href="/wordbooks" className="text-sm font-semibold text-blue-700 hover:underline">
+        <Link href="/wordbooks" className="inline-flex w-fit ui-btn-accent px-4 py-2 text-sm">
           내 단어장으로
         </Link>
       </header>
@@ -66,4 +69,3 @@ export default async function BlockedOwnersPage() {
     </section>
   );
 }
-
