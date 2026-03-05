@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { Route } from "next";
 
+import { MetricLink } from "@/components/metrics/MetricLink";
 import { MeaningView } from "@/components/MeaningView";
 import { WordbookStudyTabs } from "@/components/wordbooks/WordbookStudyTabs";
 import { useMeaningViewMode } from "@/components/wordbooks/useMeaningViewMode";
@@ -10,6 +12,7 @@ import { DensityModeToggle } from "@/components/ui/DensityModeToggle";
 import { densityCardClass, useDensityMode } from "@/components/ui/useDensityMode";
 import { EmptyStateCard } from "@/components/ui/EmptyStateCard";
 import { fetchWordbookStudy } from "@/lib/api/study";
+import { sendClientMetric } from "@/lib/metrics/client";
 import { sanitizeUserText } from "@/lib/textQuality";
 
 type ListMode = "listCorrect" | "listWrong" | "listHalf";
@@ -149,6 +152,54 @@ export function WordbookListClient({
     }
     return result;
   }, [displayPartCount, partByIndex, partIndex, parts]);
+  const listSummary = useMemo(() => {
+    const metricBase = {
+      mode,
+      partIndex: String(partIndex),
+      partSize: String(partSize),
+      matched: String(activePartStat.matchedCount),
+      total: String(activePartStat.totalInPart)
+    };
+
+    if (mode === "listWrong") {
+      const primaryHref = `/wordbooks/${wordbookId}/quiz-meaning?partSize=${partSize}&partIndex=${partIndex}` as Route;
+      const secondaryHref = `/wordbooks/${wordbookId}/memorize?partSize=${partSize}&partIndex=${partIndex}` as Route;
+      return {
+        title: "오답 우선 복습",
+        description: "지금 파트의 오답을 먼저 퀴즈로 회복하면 다음 학습 효율이 높아집니다.",
+        kpi: `${partIndex}파트 오답 ${activePartStat.matchedCount}개 / 전체 ${activePartStat.totalInPart}개`,
+        primary: { label: "오답 퀴즈 시작", href: primaryHref },
+        secondary: { label: "암기 화면으로 이동", href: secondaryHref },
+        metricBase
+      };
+    }
+
+    if (mode === "listHalf") {
+      const primaryHref = `/wordbooks/${wordbookId}/quiz-word?partSize=${partSize}&partIndex=${partIndex}` as Route;
+      const secondaryHref = `/wordbooks/${wordbookId}/cards?partSize=${partSize}&partIndex=${partIndex}` as Route;
+      return {
+        title: "회복 파트 점검",
+        description: "부분 기억 단어를 단어 퀴즈로 점검하면 회복 목록을 빠르게 정리할 수 있습니다.",
+        kpi: `${partIndex}파트 회복 ${activePartStat.matchedCount}개 / 전체 ${activePartStat.totalInPart}개`,
+        primary: { label: "단어 퀴즈 시작", href: primaryHref },
+        secondary: { label: "카드로 빠르게 확인", href: secondaryHref },
+        metricBase
+      };
+    }
+
+    const primaryHref = `/wordbooks/${wordbookId}/cards?partSize=${partSize}&partIndex=${partIndex}` as Route;
+    const secondaryHref = `/wordbooks/${wordbookId}/quiz-meaning?partSize=${partSize}&partIndex=${partIndex}` as Route;
+    return {
+      title: "정답 유지 루프",
+      description: "이미 맞춘 단어는 카드 학습으로 짧게 순환해 장기 기억으로 고정하세요.",
+      kpi: `${partIndex}파트 정답 ${activePartStat.matchedCount}개 / 전체 ${activePartStat.totalInPart}개`,
+      primary: { label: "카드 학습 시작", href: primaryHref },
+      secondary: { label: "의미 퀴즈로 재점검", href: secondaryHref },
+      metricBase
+    };
+  }, [activePartStat.matchedCount, activePartStat.totalInPart, mode, partIndex, partSize, wordbookId]);
+  const summaryImpressionKey = `${wordbookId}:${mode}:${partIndex}:${partSize}:${activePartStat.matchedCount}:${activePartStat.totalInPart}:${String(listSummary.primary.href)}:${String(listSummary.secondary.href)}`;
+  const lastSummaryImpressionKeyRef = useRef("");
 
   useEffect(() => {
     setPartJump(String(partIndex));
@@ -200,6 +251,22 @@ export function WordbookListClient({
     return () => window.clearTimeout(timeout);
   }, [info]);
 
+  useEffect(() => {
+    if (loading) return;
+    if (lastSummaryImpressionKeyRef.current === summaryImpressionKey) return;
+    lastSummaryImpressionKeyRef.current = summaryImpressionKey;
+    sendClientMetric("metric.wordbook_list_summary_impression", {
+      ...listSummary.metricBase,
+      cta: "primary",
+      destination: String(listSummary.primary.href)
+    });
+    sendClientMetric("metric.wordbook_list_summary_impression", {
+      ...listSummary.metricBase,
+      cta: "secondary",
+      destination: String(listSummary.secondary.href)
+    });
+  }, [listSummary.metricBase, listSummary.primary.href, listSummary.secondary.href, loading, summaryImpressionKey]);
+
   return (
     <section className="space-y-4">
       <header className="space-y-3">
@@ -213,6 +280,39 @@ export function WordbookListClient({
         </div>
         <WordbookStudyTabs wordbookId={wordbookId} active={activeTab(mode)} />
       </header>
+
+      <div className="ui-card p-4">
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">추천 학습 루프</p>
+        <h2 className="mt-1 text-lg font-black text-slate-900">{listSummary.title}</h2>
+        <p className="mt-1 text-sm text-slate-700">{listSummary.description}</p>
+        <p className="mt-2 text-xs text-slate-500">{listSummary.kpi}</p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <MetricLink
+            href={listSummary.primary.href}
+            className="ui-btn-primary px-3 py-2 text-sm"
+            metricName="metric.wordbook_list_summary_click"
+            metricPayload={{
+              ...listSummary.metricBase,
+              cta: "primary",
+              destination: String(listSummary.primary.href)
+            }}
+          >
+            {listSummary.primary.label}
+          </MetricLink>
+          <MetricLink
+            href={listSummary.secondary.href}
+            className="ui-btn-secondary px-3 py-2 text-sm"
+            metricName="metric.wordbook_list_summary_click"
+            metricPayload={{
+              ...listSummary.metricBase,
+              cta: "secondary",
+              destination: String(listSummary.secondary.href)
+            }}
+          >
+            {listSummary.secondary.label}
+          </MetricLink>
+        </div>
+      </div>
 
       <div className="ui-card p-3">
         <div className="text-xs text-slate-600">의미 표시</div>
@@ -479,5 +579,3 @@ export function WordbookListClient({
     </section>
   );
 }
-
-

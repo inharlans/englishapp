@@ -52,15 +52,15 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `f96067df3b66`
-- HEAD: `b6dd494` feat: rebrand core UI color tokens for calm focus
+- Source hash: `98148b9d6b71`
+- HEAD: `7121c5f` merge: round1 monet mcp launcher updates
 
 ### Scope Digests
-- api-routes: 104 files, `163816810916`
+- api-routes: 104 files, `2ee00e7098d9`
 - api-helpers: 19 files, `d7388a13c595`
 - domain-services: 44 files, `1714cfbe1f2e`
-- automation-policy: 267 files, `c770541bb934`
-- tracking-docs: 10 files, `bb06f4919b56`
+- automation-policy: 267 files, `26b4ce1150cb`
+- tracking-docs: 10 files, `95571ec1395c`
 
 ### Legacy Route Migration Status
 - base: `app/api/`, total: 71, migrated: 53, remaining: 18

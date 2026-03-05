@@ -1,10 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import type { Route } from "next";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { AdSlot } from "@/components/ads/AdSlot";
+import { MetricLink } from "@/components/metrics/MetricLink";
 import { sendClientMetric } from "@/lib/metrics/client";
 
 type Suggestion = {
@@ -34,6 +34,9 @@ export function SessionRecapPanel({
   sessionEndUnitId: string;
 }) {
   const [reminderEnabled, setReminderEnabled] = useState(false);
+  const lastImpressionKeyRef = useRef("");
+
+  const impressionKey = `${String(suggestion.href)}:${secondaryHref ? String(secondaryHref) : "none"}`;
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -48,6 +51,16 @@ export function SessionRecapPanel({
     [reminderEnabled]
   );
 
+  useEffect(() => {
+    if (lastImpressionKeyRef.current === impressionKey) return;
+    lastImpressionKeyRef.current = impressionKey;
+    sendClientMetric("metric.recap_next_action_impression", {
+      from: "session_recap",
+      suggestion: String(suggestion.href),
+      hasSecondary: secondaryHref ? "1" : "0"
+    });
+  }, [impressionKey, secondaryHref, suggestion.href]);
+
   return (
     <aside className="rounded-2xl border border-blue-200 bg-blue-50/70 p-4">
       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-700">세션 요약</p>
@@ -58,25 +71,31 @@ export function SessionRecapPanel({
         <p className="text-sm font-semibold text-slate-900">다음 추천: {suggestion.label}</p>
         <p className="mt-1 text-xs text-slate-600">예상 소요 {suggestion.eta} · {suggestion.reason}</p>
         <div className="mt-2 flex flex-wrap gap-2">
-          <Link
+          <MetricLink
             href={suggestion.href}
             className="ui-btn-primary px-3 py-1.5 text-xs"
-            onClick={() => {
-              sendClientMetric("metric.recap_next_action_click", {
-                from: "session_recap",
-                suggestion: String(suggestion.href)
-              });
+            metricName="metric.recap_next_action_click"
+            metricPayload={{
+              from: "session_recap",
+              cta: "primary",
+              suggestion: String(suggestion.href)
             }}
           >
             바로 이동
-          </Link>
+          </MetricLink>
           {secondaryHref && secondaryLabel ? (
-            <Link
+            <MetricLink
               href={secondaryHref}
               className="ui-btn-secondary px-3 py-1.5 text-xs"
+              metricName="metric.recap_next_action_click"
+              metricPayload={{
+                from: "session_recap",
+                cta: "secondary",
+                suggestion: String(secondaryHref)
+              }}
             >
               {secondaryLabel}
-            </Link>
+            </MetricLink>
           ) : null}
         </div>
       </div>

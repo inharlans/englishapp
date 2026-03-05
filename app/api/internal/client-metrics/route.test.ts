@@ -193,6 +193,161 @@ describe("POST /api/internal/client-metrics", () => {
     );
   });
 
+  it("accepts recap impression metric", async () => {
+    const { POST } = await import("./route");
+
+    const res = await POST(
+      makeRequest(
+        {
+          origin: "https://www.oingapp.com",
+          cookie: "auth_session=session-token"
+        },
+        {
+          name: "metric.recap_next_action_impression",
+          ts: Date.now(),
+          payload: {
+            from: "session_recap",
+            suggestion: "/wordbooks/12/memorize",
+            hasSecondary: "1"
+          }
+        }
+      )
+    );
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toEqual({ ok: true });
+    expect(mockLogJson).toHaveBeenCalledWith(
+      "info",
+      "client_metric",
+      expect.objectContaining({ name: "metric.recap_next_action_impression" })
+    );
+  });
+
+  it("accepts recap click metric with cta field", async () => {
+    const { POST } = await import("./route");
+
+    const res = await POST(
+      makeRequest(
+        {
+          origin: "https://www.oingapp.com",
+          cookie: "auth_session=session-token"
+        },
+        {
+          name: "metric.recap_next_action_click",
+          ts: Date.now(),
+          payload: {
+            from: "session_recap",
+            cta: "secondary",
+            suggestion: "/wordbooks/12/list-half"
+          }
+        }
+      )
+    );
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toEqual({ ok: true });
+    expect(mockLogJson).toHaveBeenCalledWith(
+      "info",
+      "client_metric",
+      expect.objectContaining({
+        name: "metric.recap_next_action_click",
+        payload: expect.objectContaining({ cta: "secondary" })
+      })
+    );
+  });
+
+  it("accepts list summary impression metric and sanitizes payload", async () => {
+    const { POST } = await import("./route");
+
+    const res = await POST(
+      makeRequest(
+        {
+          origin: "https://www.oingapp.com",
+          cookie: "auth_session=session-token"
+        },
+        {
+          name: "metric.wordbook_list_summary_impression",
+          ts: Date.now(),
+          payload: {
+            mode: "listCorrect",
+            cta: "primary",
+            destination: "/wordbooks/12/cards?partSize=20&partIndex=1",
+            partIndex: "1",
+            partSize: "20",
+            matched: "10",
+            total: "18",
+            extra: "ignored"
+          }
+        }
+      )
+    );
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toEqual({ ok: true });
+    expect(mockLogJson).toHaveBeenCalledWith(
+      "info",
+      "client_metric",
+      expect.objectContaining({
+        name: "metric.wordbook_list_summary_impression",
+        payload: {
+          mode: "listCorrect",
+          cta: "primary",
+          destination: "/wordbooks/12/cards?partSize=20&partIndex=1",
+          partIndex: "1",
+          partSize: "20",
+          matched: "10",
+          total: "18"
+        }
+      })
+    );
+  });
+
+  it("accepts list summary click metric and sanitizes payload", async () => {
+    const { POST } = await import("./route");
+
+    const res = await POST(
+      makeRequest(
+        {
+          origin: "https://www.oingapp.com",
+          cookie: "auth_session=session-token"
+        },
+        {
+          name: "metric.wordbook_list_summary_click",
+          ts: Date.now(),
+          payload: {
+            mode: "listWrong",
+            cta: "primary",
+            destination: "/wordbooks/12/quiz-meaning?partSize=20&partIndex=1",
+            partIndex: "1",
+            partSize: "20",
+            matched: "7",
+            total: "18",
+            extra: "ignored"
+          }
+        }
+      )
+    );
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toEqual({ ok: true });
+    expect(mockLogJson).toHaveBeenCalledWith(
+      "info",
+      "client_metric",
+      expect.objectContaining({
+        name: "metric.wordbook_list_summary_click",
+        payload: {
+          mode: "listWrong",
+          cta: "primary",
+          destination: "/wordbooks/12/quiz-meaning?partSize=20&partIndex=1",
+          partIndex: "1",
+          partSize: "20",
+          matched: "7",
+          total: "18"
+        }
+      })
+    );
+  });
+
   it("keeps same-host guard and rejects invalid origin", async () => {
     const { POST } = await import("./route");
 
