@@ -52,15 +52,15 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `450d7e6fa42b`
-- HEAD: `7d217ac` merge: integrate home round1 hero A/B
+- Source hash: `f81d96a31f57`
+- HEAD: `6bcb553` feat(home): lock round2 hero winner behind flag
 
 ### Scope Digests
-- api-routes: 104 files, `163816810916`
+- api-routes: 104 files, `2ee00e7098d9`
 - api-helpers: 19 files, `d7388a13c595`
 - domain-services: 44 files, `1714cfbe1f2e`
 - automation-policy: 267 files, `c770541bb934`
-- tracking-docs: 10 files, `bb06f4919b56`
+- tracking-docs: 10 files, `95571ec1395c`
 
 ### Legacy Route Migration Status
 - base: `app/api/`, total: 71, migrated: 53, remaining: 18

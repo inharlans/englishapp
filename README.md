@@ -27,6 +27,7 @@
 - AdSense 스크립트는 `app/layout.tsx`에서 `afterInteractive`로 1회만 로드하고(`components/ads/AdProviderScript.tsx`), `NEXT_PUBLIC_ADS_ENABLED`/`NEXT_PUBLIC_ADSENSE_CLIENT`/슬롯별 unit id가 하나라도 비어 있으면 광고를 조용히 미노출하도록 fail-closed 정책을 적용했습니다.
 - `SESSION_END` 슬롯은 `SessionRecapPanel`이 렌더되는 상태를 세션 종료 화면으로 간주해 노출하도록 정의했습니다. 향후 Recap 렌더 조건이 바뀌면 SESSION_END 노출 시점도 함께 바뀝니다.
 - 최소 제품 지표 2개(`metric.home_cta_click`, `metric.recap_next_action_click`)를 추가해 홈 CTA/세션 요약 추천 클릭 변화를 추적할 수 있게 했고, 내부 수집 라우트는 allowlist + payload 크기 제한 + same-host 검증으로 기본 오염 방어를 적용했습니다.
+- 학습 퍼널 전환 측정을 위해 세션 요약/목록 진입 지표를 확장했습니다. `metric.recap_next_action_impression`, `metric.wordbook_list_summary_impression`, `metric.wordbook_list_summary_click`를 추가해 `노출 -> 클릭` 비교가 가능해졌고, `/wordbooks/[id]/list-correct|half|wrong` 화면은 요약 카드(Primary CTA 우선) 구조로 정리했습니다.
 
 ### Wordbook 퀴즈 정책 점검 (문서 기준 vs 실제 동작)
 

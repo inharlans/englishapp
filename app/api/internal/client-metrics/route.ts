@@ -101,10 +101,43 @@ function sanitizeMetricPayload(name: string, raw: unknown): Record<string, strin
     };
   }
 
+  if (name === "metric.recap_next_action_impression") {
+    return {
+      from: normalizeShortText(input.from, 64) ?? "unknown",
+      suggestion: normalizeShortText(input.suggestion, 80) ?? "unknown",
+      hasSecondary: normalizeShortText(input.hasSecondary, 8) ?? "0"
+    };
+  }
+
   if (name === "metric.recap_next_action_click") {
     return {
       from: normalizeShortText(input.from, 64) ?? "unknown",
-      suggestion: normalizeShortText(input.suggestion, 80) ?? "unknown"
+      suggestion: normalizeShortText(input.suggestion, 80) ?? "unknown",
+      cta: normalizeShortText(input.cta, 32) ?? "unknown"
+    };
+  }
+
+  if (name === "metric.wordbook_list_summary_impression") {
+    return {
+      mode: normalizeShortText(input.mode, 32) ?? "unknown",
+      cta: normalizeShortText(input.cta, 32) ?? "unknown",
+      destination: normalizeShortText(input.destination, 120) ?? "unknown",
+      partIndex: normalizeShortText(input.partIndex, 16) ?? "unknown",
+      partSize: normalizeShortText(input.partSize, 16) ?? "unknown",
+      matched: normalizeShortText(input.matched, 16) ?? "unknown",
+      total: normalizeShortText(input.total, 16) ?? "unknown"
+    };
+  }
+
+  if (name === "metric.wordbook_list_summary_click") {
+    return {
+      mode: normalizeShortText(input.mode, 32) ?? "unknown",
+      cta: normalizeShortText(input.cta, 32) ?? "unknown",
+      destination: normalizeShortText(input.destination, 120) ?? "unknown",
+      partIndex: normalizeShortText(input.partIndex, 16) ?? "unknown",
+      partSize: normalizeShortText(input.partSize, 16) ?? "unknown",
+      matched: normalizeShortText(input.matched, 16) ?? "unknown",
+      total: normalizeShortText(input.total, 16) ?? "unknown"
     };
   }
 
