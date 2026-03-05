@@ -3,6 +3,7 @@ import { Manrope, Noto_Sans_KR } from "next/font/google";
 import { cookies } from "next/headers";
 
 import "./globals.css";
+import { AppFooter } from "@/components/AppFooter";
 import { AppNav } from "@/components/AppNav";
 import { KeyboardPageNavigator } from "@/components/KeyboardPageNavigator";
 import { PwaInstallPrompt } from "@/components/PwaInstallPrompt";
@@ -74,34 +75,17 @@ export default async function RootLayout({
         >
           본문으로 건너뛰기
         </a>
-        <KeyboardPageNavigator />
-        <ServiceWorkerRegister />
-        <AdProviderScript enabled={adsConfig.enabled} client={adsConfig.client} />
-        <main id="main-content" className="mx-auto min-h-screen w-full max-w-5xl p-6">
-          <PwaInstallPrompt />
-          <AppNav isLoggedIn={Boolean(user)} />
-          {children}
-          <footer className="mt-10 rounded-2xl border border-slate-200 bg-white px-4 py-5 text-xs leading-6 text-slate-600">
-            <p className="font-semibold text-slate-800">사업자 정보</p>
-            {!businessInfoReady && process.env.NODE_ENV !== "production" ? (
-              <p className="mt-1 text-blue-700">
-                심사용 필수 사업자 정보가 일부 비어 있습니다. 운영 배포 전 환경변수를 입력해 주세요.
-              </p>
-            ) : null}
-            <p className="mt-2">
-              상호명: {business.legalName || placeholder} | 대표자: {business.representative || placeholder} |
-              사업자등록번호: {business.businessRegistrationNumber || placeholder}
-            </p>
-            <p>
-              통신판매업 신고번호: {business.mailOrderRegistrationNumber || placeholder} | 주소:{" "}
-              {business.address || placeholder}
-            </p>
-            <p>
-              고객센터: {business.supportPhone || placeholder} / {business.supportEmail || placeholder}
-              {business.supportHours ? ` (${business.supportHours})` : ""}
-            </p>
-          </footer>
-        </main>
+        <div className="flex min-h-screen flex-col">
+          <KeyboardPageNavigator />
+          <ServiceWorkerRegister />
+          <AdProviderScript enabled={adsConfig.enabled} client={adsConfig.client} />
+          <main id="main-content" className="mx-auto w-full max-w-5xl flex-1 px-4 pb-8 pt-6 sm:px-6">
+            <PwaInstallPrompt />
+            <AppNav isLoggedIn={Boolean(user)} />
+            {children}
+          </main>
+          <AppFooter business={business} businessInfoReady={businessInfoReady} placeholder={placeholder} />
+        </div>
       </body>
     </html>
   );

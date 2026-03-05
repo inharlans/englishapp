@@ -35,16 +35,21 @@ export function AppNav({ isLoggedIn }: { isLoggedIn: boolean }) {
   };
 
   return (
-    <nav aria-label="주요 메뉴" className="ui-card-soft mb-6 p-4">
-      <ul className="flex flex-wrap items-center gap-2">
+    <nav
+      aria-label="주요 메뉴"
+      className="mb-6 rounded-2xl border border-slate-200/80 bg-white/85 p-3 shadow-sm backdrop-blur"
+    >
+      <ul className="flex flex-wrap items-center gap-1.5">
         {links.map((link) => (
           <li key={link.href}>
             <Link
               href={{ pathname: link.href }}
               aria-current={isActive(link.href) ? "page" : undefined}
               className={[
-                "px-3 py-2 text-sm",
-                isActive(link.href) ? "ui-btn-primary" : "ui-btn-secondary"
+                "inline-flex items-center rounded-full px-3 py-2 text-sm font-medium transition-colors",
+                isActive(link.href)
+                  ? "bg-slate-900 text-white shadow-sm"
+                  : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
               ].join(" ")}
             >
               {link.label}
@@ -53,16 +58,23 @@ export function AppNav({ isLoggedIn }: { isLoggedIn: boolean }) {
         ))}
         <li className="ml-auto">
           <div className="flex items-center gap-2" role="group" aria-label="계정 메뉴">
-          {!isLoggedIn ? (
-            <Link href={{ pathname: "/login", query: { next: nextPath } }} className="ui-btn-secondary px-3 py-2 text-sm">
-              로그인
-            </Link>
-          ) : null}
-          {isLoggedIn ? (
-            <Link href="/logout" className="ui-btn-ghost px-3 py-2 text-sm" aria-label="계정 로그아웃">
-              로그아웃
-            </Link>
-          ) : null}
+            {!isLoggedIn ? (
+              <Link
+                href={{ pathname: "/login", query: { next: nextPath } }}
+                className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
+              >
+                로그인
+              </Link>
+            ) : null}
+            {isLoggedIn ? (
+              <Link
+                href="/logout"
+                className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
+                aria-label="계정 로그아웃"
+              >
+                로그아웃
+              </Link>
+            ) : null}
           </div>
         </li>
       </ul>
