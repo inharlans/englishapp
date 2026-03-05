@@ -129,6 +129,7 @@ export async function POST(req: NextRequest) {
     const accessToken = await issueMobileAccessToken({
       userId: resolved.user.id,
       email: resolved.user.email,
+      deviceId: parsed.data.deviceId,
       ttlSeconds: 60 * 15
     });
 

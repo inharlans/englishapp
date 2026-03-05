@@ -7,6 +7,7 @@ import { MobileAuthError } from "@/lib/mobileAuthErrors";
 import { prisma } from "@/lib/prisma";
 
 const DEFAULT_REFRESH_TTL_DAYS = 30;
+const LEGACY_DEVICELESS_TOKEN_GRACE_UNTIL = "2026-04-01T00:00:00.000Z";
 
 function getMobileAccessSecret(): Uint8Array {
   const secret = process.env.MOBILE_ACCESS_SECRET;
@@ -26,17 +27,20 @@ function getRefreshPepper(): string {
 
 type MobileAccessClaims = JWTPayload & {
   email: string;
+  deviceId: string;
   tokenType: "mobile_access";
 };
 
 export async function issueMobileAccessToken(input: {
   userId: number;
   email: string;
+  deviceId: string;
   ttlSeconds: number;
 }): Promise<string> {
   const now = Math.floor(Date.now() / 1000);
   return new SignJWT({
     email: input.email,
+    deviceId: input.deviceId,
     tokenType: "mobile_access"
   } satisfies Omit<MobileAccessClaims, "sub">)
     .setProtectedHeader({ alg: "HS256", typ: "JWT" })
@@ -51,6 +55,7 @@ export async function issueMobileAccessToken(input: {
 export async function verifyMobileAccessToken(token: string): Promise<{
   userId: number;
   email: string;
+  deviceId: string | null;
 } | null> {
   try {
     const { payload } = await jwtVerify(token, getMobileAccessSecret(), {
@@ -61,14 +66,30 @@ export async function verifyMobileAccessToken(token: string): Promise<{
 
     const userId = Number(payload.sub);
     const email = payload.email;
+    const deviceId = payload.deviceId;
     const tokenType = payload.tokenType;
     if (!Number.isFinite(userId) || userId <= 0) return null;
     if (typeof email !== "string" || !email) return null;
     if (tokenType !== "mobile_access") return null;
 
+    let normalizedDeviceId: string | null = null;
+    if (typeof deviceId === "string" && deviceId.length > 0) {
+      if (deviceId.length < 8 || deviceId.length > 128) return null;
+      normalizedDeviceId = deviceId;
+    } else {
+      const configuredGraceUntil = Date.parse(process.env.MOBILE_ACCESS_LEGACY_DEVICELESS_UNTIL ?? "");
+      const fallbackGraceUntil = Date.parse(LEGACY_DEVICELESS_TOKEN_GRACE_UNTIL);
+      const graceUntil = Number.isNaN(configuredGraceUntil) ? fallbackGraceUntil : configuredGraceUntil;
+
+      if (Date.now() > graceUntil) {
+        return null;
+      }
+    }
+
     return {
       userId: Math.floor(userId),
-      email
+      email,
+      deviceId: normalizedDeviceId
     };
   } catch {
     return null;
@@ -100,7 +121,7 @@ export async function rotateRefreshToken(input: {
   refreshToken: string;
   deviceId: string;
   ttlDays?: number;
-}): Promise<{ userId: number; email: string; newRefreshToken: string; newRefreshExpiresAt: Date }> {
+}): Promise<{ userId: number; email: string; deviceId: string; newRefreshToken: string; newRefreshExpiresAt: Date }> {
   const tokenHash = await hashRefreshToken(input.refreshToken);
 
   return prisma.$transaction(async (tx) => {
@@ -172,6 +193,7 @@ export async function rotateRefreshToken(input: {
     return {
       userId: row.userId,
       email: row.user.email,
+      deviceId: row.deviceId,
       newRefreshToken: minted.refreshToken,
       newRefreshExpiresAt: minted.expiresAt
     };

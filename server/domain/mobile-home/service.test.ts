@@ -6,7 +6,8 @@ import type { MobileHomeRepository } from "@/server/domain/mobile-home/repositor
 describe("MobileHomeService", () => {
   it("maps defaultWordbookId to string lastUsedWordbookId", async () => {
     const repo = {
-      findUserDefaultWordbookId: vi.fn().mockResolvedValue(321)
+      findUserDefaultWordbookId: vi.fn().mockResolvedValue(321),
+      findUserStudyPartSize: vi.fn().mockResolvedValue(25)
     } as unknown as MobileHomeRepository;
 
     const service = new MobileHomeService(repo);
@@ -14,13 +15,14 @@ describe("MobileHomeService", () => {
 
     expect(result).toEqual({
       lastUsedWordbookId: "321",
-      partSize: 20
+      partSize: 25
     });
   });
 
   it("returns null lastUsedWordbookId when defaultWordbookId is missing", async () => {
     const repo = {
-      findUserDefaultWordbookId: vi.fn().mockResolvedValue(null)
+      findUserDefaultWordbookId: vi.fn().mockResolvedValue(null),
+      findUserStudyPartSize: vi.fn().mockResolvedValue(null)
     } as unknown as MobileHomeRepository;
 
     const service = new MobileHomeService(repo);
@@ -29,6 +31,54 @@ describe("MobileHomeService", () => {
     expect(result).toEqual({
       lastUsedWordbookId: null,
       partSize: 20
+    });
+  });
+
+  it("clamps persisted partSize above 100 to contract max", async () => {
+    const repo = {
+      findUserDefaultWordbookId: vi.fn().mockResolvedValue(11),
+      findUserStudyPartSize: vi.fn().mockResolvedValue(150)
+    } as unknown as MobileHomeRepository;
+
+    const service = new MobileHomeService(repo);
+    const result = await service.getStudyPreferences(7);
+
+    expect(result).toEqual({
+      lastUsedWordbookId: "11",
+      partSize: 100
+    });
+  });
+
+  it("clamps oversized study part size values", async () => {
+    const repo = {
+      findUserDefaultWordbookId: vi.fn().mockResolvedValue(321),
+      findUserStudyPartSize: vi.fn().mockResolvedValue(300)
+    } as unknown as MobileHomeRepository;
+
+    const service = new MobileHomeService(repo);
+    const result = await service.getStudyPreferences(7);
+
+    expect(result).toEqual({
+      lastUsedWordbookId: "321",
+      partSize: 100
+    });
+  });
+
+  it("updates and returns persisted study preferences", async () => {
+    const mockUpdateUserStudyPartSize = vi.fn().mockResolvedValue(undefined);
+    const repo = {
+      updateUserStudyPartSize: mockUpdateUserStudyPartSize,
+      findUserDefaultWordbookId: vi.fn().mockResolvedValue(100),
+      findUserStudyPartSize: vi.fn().mockResolvedValue(40)
+    } as unknown as MobileHomeRepository;
+
+    const service = new MobileHomeService(repo);
+    const result = await service.updateStudyPreferences(7, { partSize: 40 });
+
+    expect(mockUpdateUserStudyPartSize).toHaveBeenCalledWith(7, 40);
+    expect(result).toEqual({
+      lastUsedWordbookId: "100",
+      partSize: 40
     });
   });
 

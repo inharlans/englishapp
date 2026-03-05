@@ -38,9 +38,14 @@ export async function POST(req: NextRequest) {
       ttlDays: 30
     });
 
+    if (rotated.deviceId.length < 8 || rotated.deviceId.length > 128) {
+      throw new MobileAuthError(401, "AUTH_REFRESH_INVALID", "세션 정보가 유효하지 않습니다. 다시 로그인해 주세요.");
+    }
+
     const accessToken = await issueMobileAccessToken({
       userId: rotated.userId,
       email: rotated.email,
+      deviceId: rotated.deviceId,
       ttlSeconds: 60 * 15
     });
 

@@ -10,6 +10,23 @@ export class MobileHomeRepository {
     return user?.defaultWordbookId ?? null;
   }
 
+  async findUserStudyPartSize(userId: number): Promise<number | null> {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { studyPartSize: true }
+    });
+
+    return user?.studyPartSize ?? null;
+  }
+
+  async updateUserStudyPartSize(userId: number, partSize: number): Promise<void> {
+    await prisma.user.update({
+      where: { id: userId },
+      data: { studyPartSize: partSize },
+      select: { id: true }
+    });
+  }
+
   async listOwnedWordbookIds(userId: number): Promise<number[]> {
     const rows = await prisma.wordbook.findMany({
       where: { ownerId: userId },

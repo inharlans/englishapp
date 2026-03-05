@@ -72,6 +72,7 @@ model User {
   plan     UserPlan  @default(FREE)
   proUntil DateTime?
   dailyGoal Int      @default(30)
+  studyPartSize Int  @default(20)
   stripeCustomerId String? @unique
   stripeSubscriptionId String? @unique
   stripeSubscriptionStatus String?

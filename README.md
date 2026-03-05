@@ -12,6 +12,7 @@
 
 - 클리퍼 설치 동선을 강화해 내 단어장 헤더/홈 히어로/전역 상단 메뉴에서 `/clipper/extension`으로 바로 이동할 수 있도록 했고, `CRAWLER_LOCKDOWN_MODE=off`일 때는 비로그인 사용자도 설치 ZIP을 받을 수 있게 `/clipper/extension`·`/api/clipper/extension`을 공개 경로로 열었습니다.
 - 모바일 OAuth 전용 인증 경로(`/api/auth/mobile/start|exchange|refresh`)를 추가하고, refresh 토큰을 DB 해시 저장 + 회전(1회 사용) 방식으로 재구성해 탈취/재사용 대응과 기기 단위 세션 관리를 강화했습니다.
+- 모바일-웹 기능 패리티 1차 기반으로 세션/클리퍼 호환 API를 추가해(`GET /api/auth/sessions`, `DELETE /api/auth/sessions/[sessionId]`, `POST /api/clipper/candidates`, `POST /api/word-capture`) 모바일 앱의 기능 경로를 백엔드에서 수용하도록 정렬했고, 세션 삭제는 refresh 토큰만 즉시 만료되며 이미 발급된 access token은 TTL(15분) 만료로 정리됩니다.
 - 모바일 Bearer access token 인증을 서버 공통 인증 경로에 연결해(`getUserFromRequest`) 기존 쿠키 세션과 병행 운용이 가능하도록 정리했습니다.
 - 변경 요청 보안 가드(`assertTrustedMutationRequest`)는 쿠키 세션(CSRF) 흐름은 유지하면서 모바일 Bearer 전용 요청은 정상 통과하도록 분기해 모바일 API 호출 호환성을 보강했습니다.
 - 미들웨어 입구 인증도 모바일 Bearer를 정식 검증하도록 보강해(`Authorization: Bearer` + `x-auth-mode: bearer` 필수), 쿠키 없는 모바일 `/api/*` 요청이 JWT 검증 후 통과되도록 맞췄고 헤더 누락/토큰 불일치 요청은 기존처럼 401로 차단합니다.

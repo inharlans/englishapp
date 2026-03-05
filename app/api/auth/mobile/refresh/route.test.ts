@@ -33,6 +33,7 @@ describe("POST /api/auth/mobile/refresh", () => {
     mockRotateRefreshToken.mockResolvedValue({
       userId: 1,
       email: "user@test.com",
+      deviceId: "device-12345",
       newRefreshToken: "new-refresh-token",
       newRefreshExpiresAt: new Date()
     });
@@ -55,6 +56,13 @@ describe("POST /api/auth/mobile/refresh", () => {
       accessToken: "mobile-access-token",
       refreshToken: "new-refresh-token"
     });
+    expect(mockIssueMobileAccessToken).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 1,
+        email: "user@test.com",
+        deviceId: "device-12345"
+      })
+    );
   });
 
   it("returns AUTH_REFRESH_CONCURRENT when replay/concurrency is detected", async () => {
@@ -93,6 +101,33 @@ describe("POST /api/auth/mobile/refresh", () => {
         body: JSON.stringify({
           refreshToken: "r".repeat(32),
           deviceId: "wrong-device"
+        })
+      })
+    );
+
+    expect(res.status).toBe(401);
+    await expect(res.json()).resolves.toMatchObject({
+      errorCode: "AUTH_REFRESH_INVALID"
+    });
+  });
+
+  it("returns AUTH_REFRESH_INVALID when rotated session has invalid device id", async () => {
+    mockRotateRefreshToken.mockResolvedValue({
+      userId: 1,
+      email: "user@test.com",
+      deviceId: "short",
+      newRefreshToken: "new-refresh-token",
+      newRefreshExpiresAt: new Date()
+    });
+
+    const { POST } = await import("./route");
+
+    const res = await POST(
+      new NextRequest("http://localhost/api/auth/mobile/refresh", {
+        method: "POST",
+        body: JSON.stringify({
+          refreshToken: "r".repeat(32),
+          deviceId: "device-12345"
         })
       })
     );
