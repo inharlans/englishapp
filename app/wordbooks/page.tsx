@@ -168,7 +168,7 @@ export default async function WordbooksPage() {
             href={{ pathname: "/clipper/extension" }}
             className="ui-btn-secondary px-4 py-2 text-sm"
           >
-            클리퍼 설치
+            확장자 설치
           </Link>
           <Link
             href={{ pathname: "/offline" }}

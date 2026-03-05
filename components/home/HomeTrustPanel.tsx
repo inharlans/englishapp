@@ -61,11 +61,11 @@ export function HomeTrustPanel({ isLoggedIn, copyVariant }: HomeTrustPanelProps)
                 metricPayload={{ cta: "hero_user_clipper", page: "home", variant: copyVariant }}
                 className="underline underline-offset-4"
               >
-                클리퍼 설치
+                확장자 설치
               </MetricLink>
             ) : (
               <Link href="/clipper/extension" className="underline underline-offset-4">
-                클리퍼 설치
+                확장자 설치
               </Link>
             )}
           </nav>

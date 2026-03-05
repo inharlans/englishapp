@@ -52,15 +52,15 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `f81d96a31f57`
-- HEAD: `6bcb553` feat(home): lock round2 hero winner behind flag
+- Source hash: `b6667d82355c`
+- HEAD: `3c5930b` merge: integrate round2 study funnel updates
 
 ### Scope Digests
 - api-routes: 104 files, `2ee00e7098d9`
 - api-helpers: 19 files, `d7388a13c595`
 - domain-services: 44 files, `1714cfbe1f2e`
 - automation-policy: 267 files, `c770541bb934`
-- tracking-docs: 10 files, `95571ec1395c`
+- tracking-docs: 10 files, `77f6d5eaa162`
 
 ### Legacy Route Migration Status
 - base: `app/api/`, total: 71, migrated: 53, remaining: 18
