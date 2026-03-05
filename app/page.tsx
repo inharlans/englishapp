@@ -6,7 +6,14 @@ import type { HeroCopyVariant } from "@/components/home";
 import { getAdsConfig } from "@/lib/ads/slots";
 import { getUserFromRequestCookies } from "@/lib/authServer";
 
-function resolveRound1HeroVariant(isLoggedIn: boolean): HeroCopyVariant {
+const HOME_HERO_ROUND2_WINNER_LOCK_ENABLED = true;
+const HOME_HERO_ROUND2_WINNER: HeroCopyVariant = "b";
+
+function resolveHeroCopyVariant(isLoggedIn: boolean): HeroCopyVariant {
+  if (HOME_HERO_ROUND2_WINNER_LOCK_ENABLED) {
+    return HOME_HERO_ROUND2_WINNER;
+  }
+
   return isLoggedIn ? "b" : "a";
 }
 
@@ -14,7 +21,7 @@ export default async function HomePage() {
   const user = await getUserFromRequestCookies(await cookies());
   const adsConfig = getAdsConfig();
   const isLoggedIn = Boolean(user);
-  const heroCopyVariant = resolveRound1HeroVariant(isLoggedIn);
+  const heroCopyVariant = resolveHeroCopyVariant(isLoggedIn);
 
   return (
     <section className="space-y-6 md:space-y-8">

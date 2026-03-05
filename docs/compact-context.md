@@ -52,8 +52,8 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `71ee5bce5061`
-- HEAD: `2a6f731` merge: round2 wordbook badge and CTA updates
+- Source hash: `450d7e6fa42b`
+- HEAD: `7d217ac` merge: integrate home round1 hero A/B
 
 ### Scope Digests
 - api-routes: 104 files, `163816810916`
