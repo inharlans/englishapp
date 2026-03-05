@@ -128,6 +128,116 @@
           "backend test"
         ]
       }
+    },
+    "frontend-design": {
+      "priority": "medium",
+      "promptTriggers": {
+        "keywords": [
+          "frontend-design",
+          "frontend design",
+          "ui design",
+          "landing page",
+          "dashboard ui",
+          "design system",
+          "웹 디자인",
+          "디자인 시스템",
+          "컴포넌트 디자인",
+          "ui 개선"
+        ]
+      }
+    },
+    "vercel-react-best-practices": {
+      "priority": "medium",
+      "promptTriggers": {
+        "keywords": [
+          "vercel-react-best-practices",
+          "react performance",
+          "next.js performance",
+          "bundle optimization",
+          "rerender",
+          "hydration",
+          "react 최적화",
+          "웹 성능",
+          "렌더링 최적화"
+        ]
+      }
+    },
+    "web-design-guidelines": {
+      "priority": "medium",
+      "promptTriggers": {
+        "keywords": [
+          "web-design-guidelines",
+          "ui review",
+          "accessibility",
+          "a11y",
+          "ux audit",
+          "design audit",
+          "웹 접근성",
+          "디자인 점검",
+          "ui 일관성"
+        ]
+      }
+    },
+    "vercel-react-native-skills": {
+      "priority": "medium",
+      "promptTriggers": {
+        "keywords": [
+          "vercel-react-native-skills",
+          "react native",
+          "expo",
+          "mobile performance",
+          "native module",
+          "rn optimization",
+          "리액트 네이티브",
+          "엑스포",
+          "모바일 성능"
+        ]
+      }
+    },
+    "building-native-ui": {
+      "priority": "medium",
+      "promptTriggers": {
+        "keywords": [
+          "building-native-ui",
+          "native ui",
+          "expo router ui",
+          "ios style ui",
+          "rn interaction",
+          "네이티브 ui",
+          "네이티브 인터랙션"
+        ]
+      }
+    },
+    "react-native-best-practices": {
+      "priority": "medium",
+      "promptTriggers": {
+        "keywords": [
+          "react-native-best-practices",
+          "react native best practices",
+          "rn fps",
+          "tti",
+          "frame drop",
+          "flashlist",
+          "react native 최적화",
+          "프레임 드랍"
+        ]
+      }
+    },
+    "systematic-debugging": {
+      "priority": "high",
+      "promptTriggers": {
+        "keywords": [
+          "systematic-debugging",
+          "debug",
+          "root cause",
+          "test failure",
+          "unexpected behavior",
+          "디버깅",
+          "원인 분석",
+          "테스트 실패",
+          "버그 원인"
+        ]
+      }
     }
   }
 }

@@ -52,8 +52,8 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `302390e2ef55`
-- HEAD: `ba9363f` feat: unify UI design primitives and finalize mobile parity checks
+- Source hash: `7c65a1a9b8ad`
+- HEAD: `72f2a2f` fix: relax mobile session parsing for forward compatibility
 
 ### Scope Digests
 - api-routes: 104 files, `163816810916`
