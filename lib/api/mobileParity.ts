@@ -3,17 +3,27 @@ import { z } from "zod";
 import { ApiError, parseApiResponse } from "@/lib/api/base";
 import { apiFetch } from "@/lib/clientApi";
 
-const sessionSchema = z.object({
+const rawSessionSchema = z.object({
   id: z.union([z.string().min(1), z.number().int().nonnegative()]).transform((value) => String(value)),
-  platform: z.enum(["MOBILE", "WEB"]),
+  platform: z.string().min(1),
   deviceLabel: z.string().min(1),
   createdAt: z.string().min(1),
   isCurrent: z.boolean()
 }).passthrough();
 
 const sessionsEnvelopeSchema = z.object({
-  sessions: z.array(sessionSchema)
+  sessions: z.array(rawSessionSchema)
 }).passthrough();
+
+const sessionSchema = rawSessionSchema.extend({
+  platform: z.enum(["MOBILE", "WEB"])
+});
+
+const mobileSessionSchema = sessionSchema.extend({
+  platform: z.literal("MOBILE")
+});
+
+const mobileSessionsSchema = z.array(mobileSessionSchema);
 
 const revokeSessionResponseSchema = z.object({
   ok: z.boolean(),
@@ -37,7 +47,7 @@ type MobileSessionsResponse = {
   sessions: MobileSession[];
 };
 type Session = z.infer<typeof sessionSchema>;
-type MobileSession = Session & { platform: "MOBILE" };
+type MobileSession = z.infer<typeof mobileSessionSchema>;
 type RevokeSessionResponse = z.infer<typeof revokeSessionResponseSchema>;
 type ClipperCandidatesResponse = z.infer<typeof clipperCandidatesResponseSchema>;
 type WordCaptureResponse = z.infer<typeof wordCaptureResponseSchema>;
@@ -60,7 +70,22 @@ export async function fetchMobileSessions(): Promise<MobileSessionsResponse> {
   const res = await apiFetch("/api/auth/sessions", { method: "GET" });
   const body = await parseApiResponse<unknown>(res, "Failed to load sessions.", "mobileParity.sessions");
   const parsed = assertContract(sessionsEnvelopeSchema, body, "mobileParity.sessions");
-  const sessions = parsed.sessions.filter((session): session is MobileSession => session.platform === "MOBILE");
+  const knownSessions: Session[] = [];
+
+  for (const candidate of parsed.sessions) {
+    const known = sessionSchema.safeParse(candidate);
+    if (known.success) {
+      knownSessions.push(known.data);
+      continue;
+    }
+
+    console.warn("[mobileParity.sessions] unknown platform ignored", {
+      platform: candidate.platform
+    });
+  }
+
+  const mobileCandidates = knownSessions.filter((session) => session.platform === "MOBILE");
+  const sessions = assertContract(mobileSessionsSchema, mobileCandidates, "mobileParity.sessions");
   return { sessions };
 }
 

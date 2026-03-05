@@ -58,15 +58,22 @@ describe("mobileParity API contracts", () => {
     } satisfies Partial<ApiError>);
   });
 
-  it("filters non-mobile sessions without failing contract", async () => {
+  it("filters non-mobile and unknown-platform sessions without failing contract", async () => {
     mockApiFetch.mockResolvedValue(
       new Response(
         JSON.stringify({
           sessions: [
             {
               id: "1",
-              platform: "WEB",
+              platform: "TABLET",
               deviceLabel: "web",
+              createdAt: new Date().toISOString(),
+              isCurrent: false
+            },
+            {
+              id: "3",
+              platform: "WEB",
+              deviceLabel: "web-2",
               createdAt: new Date().toISOString(),
               isCurrent: false
             },

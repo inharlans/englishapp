@@ -52,12 +52,12 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `1c28b04d9d7d`
-- HEAD: `c6f5c77` feat: unify web design system surfaces and feedback UX
+- Source hash: `302390e2ef55`
+- HEAD: `ba9363f` feat: unify UI design primitives and finalize mobile parity checks
 
 ### Scope Digests
 - api-routes: 104 files, `163816810916`
-- api-helpers: 19 files, `e819c6ca6f1f`
+- api-helpers: 19 files, `d7388a13c595`
 - domain-services: 44 files, `1714cfbe1f2e`
 - automation-policy: 265 files, `7e3019043826`
 - tracking-docs: 10 files, `bb06f4919b56`
