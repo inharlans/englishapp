@@ -5,6 +5,8 @@ import Link from "next/link";
 
 import { confirmPayment, createCheckout, getPortalUrl, type BillingCycle } from "@/lib/api/payments";
 import PortOne from "@portone/browser-sdk/v2";
+import { Button } from "@/components/ui/Button";
+import { Feedback } from "@/components/ui/Feedback";
 
 export function PricingActions(props: {
   plan: "FREE" | "PRO" | null;
@@ -55,16 +57,16 @@ export function PricingActions(props: {
   };
 
   if (!props.paymentEnabled) {
-    return <p className="mt-3 text-xs text-slate-500">결제 키가 설정되지 않아 실제 결제는 비활성화 상태입니다.</p>;
+    return <p className="mt-3 text-xs text-[var(--ds-color-text-muted)]">결제 설정이 완료되지 않아 실제 결제는 현재 비활성화 상태입니다.</p>;
   }
 
   if (!props.isLoggedIn) {
     return (
       <div className="mt-4 space-y-2">
-        <Link href={{ pathname: "/login", query: { next: "/pricing" } }} className="ui-btn-primary block w-full px-4 py-2.5 text-center text-sm">
+        <Link href={{ pathname: "/login", query: { next: "/pricing" } }} className="ui-btn ui-btn--primary ui-btn--md w-full text-center">
           로그인 후 결제하기
         </Link>
-        <p className="text-xs text-slate-500">실제 결제는 로그인 이후에 진행됩니다.</p>
+        <p className="text-xs text-[var(--ds-color-text-muted)]">실제 결제는 로그인 이후에 진행됩니다.</p>
       </div>
     );
   }
@@ -72,38 +74,21 @@ export function PricingActions(props: {
   return (
     <div className="mt-4 space-y-2">
       {props.plan === "PRO" ? (
-        <button
-          type="button"
-          className="ui-btn-primary w-full px-4 py-2.5 text-sm disabled:opacity-60"
-          onClick={() => void goPortal()}
-          disabled={loading !== null}
-        >
-          {loading === "portal" ? "처리 중..." : "구독 갱신/해지"}
-        </button>
+        <Button onClick={() => void goPortal()} disabled={loading !== null} fullWidth>
+          {loading === "portal" ? "처리 중…" : "구독 갱신/해지"}
+        </Button>
       ) : (
         <div className="grid gap-2 sm:grid-cols-2">
-          <button
-            type="button"
-            className="ui-btn-accent w-full px-4 py-2.5 text-sm disabled:opacity-60"
-            onClick={() => void goCheckout("monthly")}
-            disabled={loading !== null}
-          >
-            {loading === "monthly" ? "처리 중..." : "월간 구독 시작"}
-          </button>
-          <button
-            type="button"
-            className="ui-btn-primary w-full px-4 py-2.5 text-sm disabled:opacity-60"
-            onClick={() => void goCheckout("yearly")}
-            disabled={loading !== null}
-          >
-            {loading === "yearly" ? "처리 중..." : "연간 구독 시작"}
-          </button>
+          <Button onClick={() => void goCheckout("monthly")} disabled={loading !== null} variant="primary" fullWidth>
+            {loading === "monthly" ? "처리 중…" : "월간 구독 시작"}
+          </Button>
+          <Button onClick={() => void goCheckout("yearly")} disabled={loading !== null} variant="secondary" fullWidth>
+            {loading === "yearly" ? "처리 중…" : "연간 구독 시작"}
+          </Button>
         </div>
       )}
       {error ? (
-        <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
-          {error}
-        </p>
+        <Feedback tone="danger" live>{error}</Feedback>
       ) : null}
     </div>
   );

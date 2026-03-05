@@ -26,6 +26,7 @@
     "ops:prod-login-check": "node scripts/ops/check-login-prod-accessibility.js",
     "ops:mobile-known-gaps:check": "node scripts/ops/check-mobile-known-gap-routes.mjs",
     "ops:mobile-parity:backend-check": "node scripts/ops/mobile-parity-backend-check.mjs",
+    "ops:mobile-parity:cross-check": "node scripts/ops/mobile-parity-cross-check.mjs",
     "completion:report": "node scripts/ops/write-completion-report.js",
     "compact:sync": "node scripts/ops/sync-compact-context.js",
     "compact:check": "node scripts/ops/check-compact-context.js",

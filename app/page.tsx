@@ -3,6 +3,8 @@ import { cookies } from "next/headers";
 
 import { AdSlot } from "@/components/ads/AdSlot";
 import { MetricLink } from "@/components/metrics/MetricLink";
+import { Feedback } from "@/components/ui/Feedback";
+import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { getAdsConfig } from "@/lib/ads/slots";
 import { getUserFromRequestCookies } from "@/lib/authServer";
 
@@ -11,218 +13,102 @@ export default async function HomePage() {
   const adsConfig = getAdsConfig();
 
   return (
-    <section className="relative grid gap-6 lg:grid-cols-[1.22fr_0.78fr] lg:items-stretch">
-      <div className="home-bg-mesh pointer-events-none absolute inset-0 -z-10 rounded-[2rem]" />
+    <section className="space-y-5">
+      <SurfaceCard className="p-6">
+        <p className="ui-kicker">오늘 학습</p>
+        <h1 className="ui-h1 mt-3 text-balance">지금 해야 할 학습 하나에만 집중하세요</h1>
+        <p className="ui-body mt-3">목록에서 단어장을 고르고, 바로 학습을 시작한 뒤 결과를 확인하는 흐름으로 진행합니다.</p>
 
-      <div className="home-editorial-shell relative overflow-hidden rounded-3xl border border-white/70 p-7 sm:p-8">
-        <div className="home-accent-line pointer-events-none absolute -left-16 top-12 h-16 w-64 -rotate-12" />
-        <div className="home-accent-dot pointer-events-none absolute right-10 top-10 h-24 w-24 rounded-full" />
-
-        <div className="relative space-y-7">
-          <header className="home-reveal-up [animation-delay:60ms]">
-            <p className="inline-flex rounded-full border border-blue-200 bg-white/80 px-3 py-1 text-[11px] font-extrabold uppercase tracking-[0.18em] text-blue-700">
-              영어 학습 보드
-            </p>
-            <h1 className="mt-4 text-4xl font-black leading-[1.05] tracking-tight text-slate-950 sm:text-5xl">
-              오늘의 학습 루틴을
-              <br />
-              하나의 화면으로 정리하세요
-            </h1>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-700 sm:text-base">
-              단어 마켓 탐색부터 암기, 퀴즈, 오프라인 복습까지 한 흐름으로 연결됩니다.
-              매일 같은 리듬으로 학습을 이어가 보세요.
-            </p>
-          </header>
-
-          <section className="home-reveal-up grid gap-3 sm:grid-cols-3 [animation-delay:120ms]" aria-label="핵심 학습 흐름">
-            <article className="home-rail-card rounded-2xl p-4">
-              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">탐색</p>
-              <h2 className="mt-1 text-base font-extrabold text-slate-900">마켓 큐레이션</h2>
-              <p className="mt-1 text-sm text-slate-600">리뷰와 평점을 보고 오늘 학습할 단어를 빠르게 고릅니다.</p>
-            </article>
-            <article className="home-rail-card rounded-2xl p-4">
-              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">암기</p>
-              <h2 className="mt-1 text-base font-extrabold text-slate-900">카드 반복 학습</h2>
-              <p className="mt-1 text-sm text-slate-600">짧은 세션을 반복해 핵심 단어를 장기 기억으로 고정합니다.</p>
-            </article>
-            <article className="home-rail-card rounded-2xl p-4">
-              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">점검</p>
-              <h2 className="mt-1 text-base font-extrabold text-slate-900">퀴즈 피드백 루프</h2>
-              <p className="mt-1 text-sm text-slate-600">취약 단어를 즉시 확인하고 다음 복습 루틴에 자동 반영합니다.</p>
-            </article>
-          </section>
-
-          <section className="home-reveal-up grid gap-3 lg:grid-cols-[1.15fr_0.85fr] [animation-delay:180ms]" aria-label="오늘의 루틴과 지표">
-            <article className="home-rail-card rounded-2xl p-4">
-              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">오늘의 루틴</p>
-              <ol className="mt-2 grid gap-2 text-sm text-slate-700">
-                <li className="home-flow-item flex items-center justify-between rounded-lg px-3 py-2">
-                  <span>1. 주제 선택</span>
-                  <span className="font-bold text-blue-700">3분</span>
-                </li>
-                <li className="home-flow-item flex items-center justify-between rounded-lg px-3 py-2">
-                  <span>2. 암기 세션</span>
-                  <span className="font-bold text-blue-700">12분</span>
-                </li>
-                <li className="home-flow-item flex items-center justify-between rounded-lg px-3 py-2">
-                  <span>3. 퀴즈 점검</span>
-                  <span className="font-bold text-blue-700">8분</span>
-                </li>
-              </ol>
-            </article>
-
-            <article className="home-rail-card rounded-2xl p-4">
-              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">학습 지표</p>
-              <dl className="mt-2 grid grid-cols-2 gap-2">
-                <div className="home-pulse rounded-lg px-3 py-2">
-                  <dt className="text-[11px] text-slate-500">오늘 목표</dt>
-                  <dd className="text-lg font-black text-slate-900">25 단어</dd>
-                </div>
-                <div className="home-pulse rounded-lg px-3 py-2">
-                  <dt className="text-[11px] text-slate-500">예상 완료</dt>
-                  <dd className="text-lg font-black text-slate-900">23분</dd>
-                </div>
-                <div className="home-pulse rounded-lg px-3 py-2">
-                  <dt className="text-[11px] text-slate-500">복습 주기</dt>
-                  <dd className="text-lg font-black text-slate-900">D+1</dd>
-                </div>
-                <div className="home-pulse rounded-lg px-3 py-2">
-                  <dt className="text-[11px] text-slate-500">진행 모드</dt>
-                  <dd className="text-lg font-black text-slate-900">집중</dd>
-                </div>
-              </dl>
-            </article>
-          </section>
-
-            <div className="home-reveal-up flex flex-wrap gap-3 [animation-delay:260ms]" role="group" aria-label={user ? "사용자 동작" : "게스트 동작"}>
-              {!user ? (
-                <>
-                  <Link href="/wordbooks/market" className="ui-btn-primary px-5 py-2.5 text-sm">
-                    마켓 먼저 보기
-                  </Link>
-                  <Link href="/clipper/extension" className="ui-btn-secondary px-5 py-2.5 text-sm">
-                    클리퍼 설치
-                  </Link>
-                  <Link href="/login?next=/wordbooks" className="ui-btn-secondary px-5 py-2.5 text-sm">
-                    로그인하고 이어가기
-                  </Link>
-                </>
-              ) : (
-                <>
-                  <MetricLink
-                    href="/wordbooks"
-                    metricName="metric.home_cta_click"
-                    metricPayload={{ cta: "hero_user_wordbooks", page: "home" }}
-                    className="ui-btn-primary px-5 py-2.5 text-sm"
-                  >
-                    내 단어장 열기
-                  </MetricLink>
-                  <MetricLink
-                    href="/wordbooks/market"
-                    metricName="metric.home_cta_click"
-                    metricPayload={{ cta: "hero_user_market", page: "home" }}
-                    className="ui-btn-secondary px-5 py-2.5 text-sm"
-                  >
-                    마켓 탐색
-                  </MetricLink>
-                  <MetricLink
-                    href="/clipper/extension"
-                    metricName="metric.home_cta_click"
-                    metricPayload={{ cta: "hero_user_clipper", page: "home" }}
-                    className="ui-btn-secondary px-5 py-2.5 text-sm"
-                  >
-                    클리퍼 설치
-                  </MetricLink>
-                  <MetricLink
-                    href="/offline"
-                    metricName="metric.home_cta_click"
-                    metricPayload={{ cta: "hero_user_offline", page: "home" }}
-                    className="ui-btn-secondary px-5 py-2.5 text-sm"
-                  >
-                    오프라인 복습
-                  </MetricLink>
-                </>
-              )}
-            </div>
-
-            <AdSlot
-              slot="HOME_BANNER"
-              enabled={adsConfig.enabled}
-              client={adsConfig.client}
-              unitId={adsConfig.unitIds.HOME_BANNER}
-              containerClassName="home-reveal-up [animation-delay:280ms]"
-            />
-
-          <nav aria-label="정책 링크" className="home-reveal-up flex flex-wrap gap-4 text-xs text-slate-500 [animation-delay:320ms]">
-            <Link href="/privacy" className="underline underline-offset-4 hover:text-slate-700">
-              개인정보처리방침
+        <div className="mt-5">
+          {user ? (
+            <MetricLink
+              href="/wordbooks"
+              metricName="metric.home_cta_click"
+              metricPayload={{ cta: "hero_user_wordbooks", page: "home" }}
+              className="ui-btn ui-btn--primary ui-btn--lg"
+            >
+              학습 시작
+            </MetricLink>
+          ) : (
+            <Link href="/login?next=/wordbooks" className="ui-btn ui-btn--primary ui-btn--lg">
+              로그인하고 학습 시작
             </Link>
-            <Link href="/terms" className="underline underline-offset-4 hover:text-slate-700">
-              서비스 이용약관
-            </Link>
-          </nav>
+          )}
         </div>
+
+        <nav aria-label="보조 이동" className="mt-4 flex flex-wrap gap-4 text-sm text-[var(--ds-color-text-muted)]">
+          {user ? (
+            <MetricLink
+              href="/wordbooks/market"
+              metricName="metric.home_cta_click"
+              metricPayload={{ cta: "hero_user_market", page: "home" }}
+              className="underline underline-offset-4"
+            >
+              마켓 보기
+            </MetricLink>
+          ) : (
+            <Link href="/wordbooks/market" className="underline underline-offset-4">
+              마켓 보기
+            </Link>
+          )}
+          <Link href="/pricing" className="underline underline-offset-4">
+            요금제 보기
+          </Link>
+          {user ? (
+            <MetricLink
+              href="/clipper/extension"
+              metricName="metric.home_cta_click"
+              metricPayload={{ cta: "hero_user_clipper", page: "home" }}
+              className="underline underline-offset-4"
+            >
+              클리퍼 설치
+            </MetricLink>
+          ) : (
+            <Link href="/clipper/extension" className="underline underline-offset-4">
+              클리퍼 설치
+            </Link>
+          )}
+          {user ? (
+            <MetricLink
+              href="/offline"
+              metricName="metric.home_cta_click"
+              metricPayload={{ cta: "hero_user_offline", page: "home" }}
+              className="underline underline-offset-4"
+            >
+              오프라인 복습
+            </MetricLink>
+          ) : null}
+        </nav>
+      </SurfaceCard>
+
+      <div className="grid gap-3 md:grid-cols-3">
+        <SurfaceCard className="p-4">
+          <p className="text-xs font-semibold text-[var(--ds-color-text-muted)]">1단계</p>
+          <h2 className="mt-1 text-base font-bold text-[var(--ds-color-text)]">목록 확인</h2>
+          <p className="mt-1 text-sm text-[var(--ds-color-text-muted)]">내 단어장 또는 마켓에서 오늘 학습 대상을 고릅니다.</p>
+        </SurfaceCard>
+        <SurfaceCard className="p-4">
+          <p className="text-xs font-semibold text-[var(--ds-color-text-muted)]">2단계</p>
+          <h2 className="mt-1 text-base font-bold text-[var(--ds-color-text)]">학습 시작</h2>
+          <p className="mt-1 text-sm text-[var(--ds-color-text-muted)]">암기 세션으로 바로 진입해 핵심 단어를 반복합니다.</p>
+        </SurfaceCard>
+        <SurfaceCard className="p-4">
+          <p className="text-xs font-semibold text-[var(--ds-color-text-muted)]">3단계</p>
+          <h2 className="mt-1 text-base font-bold text-[var(--ds-color-text)]">결과 확인</h2>
+          <p className="mt-1 text-sm text-[var(--ds-color-text-muted)]">퀴즈 결과를 보고 다음 복습 대상을 정리합니다.</p>
+        </SurfaceCard>
       </div>
 
-      <div className="lg:pt-2 home-reveal-up [animation-delay:220ms]">
-        {!user ? (
-          <section className="rounded-3xl border border-white/70 bg-white/90 p-6 shadow-[0_24px_55px_-30px_rgba(15,23,42,0.75)] backdrop-blur">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">빠른 시작</p>
-            <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-900">지금 바로 학습을 시작하세요</h2>
-            <p className="mt-2 text-sm text-slate-600">
-              먼저 마켓을 둘러보거나 로그인 후 내 단어장 학습으로 바로 이어갈 수 있습니다.
-            </p>
-            <div className="mt-4 grid gap-2 sm:grid-cols-2">
-              <Link
-                href="/login?next=/wordbooks"
-                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-center text-sm font-semibold text-slate-800 hover:bg-slate-50"
-              >
-                로그인하고 시작하기
-              </Link>
-              <Link
-                href="/wordbooks/market"
-                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-center text-sm font-semibold text-slate-800 hover:bg-slate-50"
-              >
-                마켓 둘러보기
-              </Link>
-            </div>
-          </section>
-        ) : (
-          <section className="rounded-3xl border border-white/70 bg-white/90 p-6 shadow-[0_24px_55px_-30px_rgba(15,23,42,0.75)] backdrop-blur">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">다시 오신 것을 환영합니다</p>
-            <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-900">오늘 학습을 다시 시작하세요</h2>
-            <p className="mt-2 text-sm text-slate-600">
-              아래 바로가기로 학습 재개, 마켓 탐색, 오프라인 복습까지 한 번에 이동할 수 있습니다.
-            </p>
-            <nav aria-label="로그인 사용자 빠른 이동" className="mt-4 grid gap-2 sm:grid-cols-3">
-              <MetricLink
-                href="/wordbooks"
-                metricName="metric.home_cta_click"
-                metricPayload={{ cta: "panel_user_wordbooks", page: "home" }}
-                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-center text-sm font-semibold text-slate-800 hover:bg-slate-50"
-              >
-                학습 재개
-              </MetricLink>
-              <MetricLink
-                href="/wordbooks/market"
-                metricName="metric.home_cta_click"
-                metricPayload={{ cta: "panel_user_market", page: "home" }}
-                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-center text-sm font-semibold text-slate-800 hover:bg-slate-50"
-              >
-                마켓 탐색
-              </MetricLink>
-              <MetricLink
-                href="/offline"
-                metricName="metric.home_cta_click"
-                metricPayload={{ cta: "panel_user_offline", page: "home" }}
-                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-center text-sm font-semibold text-slate-800 hover:bg-slate-50"
-              >
-                오프라인 복습
-              </MetricLink>
-            </nav>
-          </section>
-        )}
-      </div>
+      <Feedback tone="info" live>
+        핵심 행동은 하나만 먼저 선택하세요. 추천: 단어장 열기 → 학습 시작
+      </Feedback>
+
+      <AdSlot
+        slot="HOME_BANNER"
+        enabled={adsConfig.enabled}
+        client={adsConfig.client}
+        unitId={adsConfig.unitIds.HOME_BANNER}
+      />
     </section>
   );
 }

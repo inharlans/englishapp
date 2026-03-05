@@ -26,7 +26,7 @@ Back to [AGENTS.md](../AGENTS.md)
 - [x] 모바일 단어장 목록을 소유+다운로드 병합으로 정렬
 - [x] 모바일 학습 결과 저장을 `POST /api/wordbooks/[id]/study/items/[itemId]`에 완전 연동
 - [x] 모바일 퀴즈 제출을 `POST /api/wordbooks/[id]/quiz/submit`에 완전 연동
-- [ ] 모바일 로컬 계산 의존(학습/퀴즈) 제거 및 서버 권위 모델 전환
+- [x] 모바일 로컬 계산 의존(학습/퀴즈) 제거 및 서버 권위 모델 전환
 - [x] 학습/퀴즈 라우트 계약 테스트 추가(`study/items`, `quiz/submit`)
 
 ## EPIC-04 설정 기능 정합성
@@ -39,15 +39,15 @@ Back to [AGENTS.md](../AGENTS.md)
 ## P1 (2차, 안정화)
 
 ## EPIC-05 계약 테스트/회귀 자동화
-- [ ] 모바일 API wrapper 계약 테스트 추가(응답 shape drift 방어)
+- [x] 모바일 API wrapper 계약 테스트 추가(응답 shape drift 방어)
 - [x] 404 Known Gap 재발 감시 스크립트 추가(`ops:mobile-known-gaps:check`)
 - [x] 백엔드 패리티 통합 점검 커맨드 추가(`ops:mobile-parity:backend-check`)
-- [ ] 교차 검증(웹 작업 -> 모바일 반영, 모바일 작업 -> 웹 반영) 자동화
+- [x] 교차 검증(웹 작업 -> 모바일 반영, 모바일 작업 -> 웹 반영) 자동화
 
 ## EPIC-06 운영 품질
-- [ ] 장애 우선순위 룰(권한/데이터 불일치 최우선) 문서화
-- [ ] 릴리즈 전 고정 검증 루틴 문서화
-- [ ] 패리티 점검 리포트 템플릿 고정
+- [x] 장애 우선순위 룰(권한/데이터 불일치 최우선) 문서화
+- [x] 릴리즈 전 고정 검증 루틴 문서화
+- [x] 패리티 점검 리포트 템플릿 고정
 
 ## P2 (2차 확장)
 
@@ -64,3 +64,6 @@ Back to [AGENTS.md](../AGENTS.md)
 - [x] 신규 라우트 단위 테스트 추가(세션/클리퍼/word-capture/study-preferences PATCH)
 - [x] 신규 라우트 예외 관측 표준화(`captureAppError` + `errorJson`)
 - [x] 패리티 계획서 1차/2차 문서화 완료
+- [x] API wrapper 계약 테스트 추가(`lib/api/mobileParity.test.ts`)
+- [x] 교차 검증 자동화 스크립트 추가(`ops:mobile-parity:cross-check`)
+- [x] 운영 룰/릴리즈 루틴/리포트 템플릿 문서화

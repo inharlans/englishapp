@@ -3,6 +3,9 @@
 import { useState } from "react";
 
 import { loginWithEmail } from "@/lib/api/auth";
+import { Button } from "@/components/ui/Button";
+import { Feedback } from "@/components/ui/Feedback";
+import { Input } from "@/components/ui/Input";
 
 export function LoginPanel({
   nextPath = "/wordbooks",
@@ -90,62 +93,56 @@ export function LoginPanel({
         </div>
       </div>
 
-      <details className="mt-5 rounded-xl border border-slate-200 bg-slate-50/70 p-3">
+      <details className="mt-5 rounded-xl border border-[var(--ds-color-border)] bg-[var(--ds-color-background)]/70 p-3">
         <summary className="cursor-pointer text-sm font-semibold text-slate-700">
           비밀번호 로그인 (관리자/개발용)
         </summary>
         <form onSubmit={onSubmit} className="mt-3 space-y-3">
-          <label className="block" htmlFor="login-email">
-            <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">이메일</span>
-            <input
-              id="login-email"
-              name="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              type="email"
-              className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-              autoComplete="email"
-              required
-              disabled={loading}
-            />
-          </label>
-
-          <label className="block" htmlFor="login-password">
-            <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">비밀번호</span>
-            <input
-              id="login-password"
-              name="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              type="password"
-              className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-              autoComplete="current-password"
-              required
-              disabled={loading}
-            />
-          </label>
-
-          <button
-            type="submit"
+          <Input
+            id="login-email"
+            name="email"
+            label="이메일"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            type="email"
+            autoComplete="email"
+            required
             disabled={loading}
-            aria-busy={loading}
-            className="ui-btn-accent w-full px-4 py-2.5 text-sm transition disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {loading ? "로그인 중..." : "로그인"}
-          </button>
+            spellCheck={false}
+          />
+
+          <Input
+            id="login-password"
+            name="password"
+            label="비밀번호"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            type="password"
+            autoComplete="current-password"
+            required
+            disabled={loading}
+          />
+
+          <Button type="submit" disabled={loading} aria-busy={loading} variant="primary" fullWidth>
+            {loading ? "로그인 중…" : "로그인"}
+          </Button>
         </form>
       </details>
 
       {error ? (
-        <p className="mt-3 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700" role="alert">
-          {error}
-        </p>
+        <div className="mt-3">
+          <Feedback tone="danger" live>
+            {error}
+          </Feedback>
+        </div>
       ) : null}
 
       {oauthError ? (
-        <p className="mt-3 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700" role="alert">
-          {oauthError}
-        </p>
+        <div className="mt-3">
+          <Feedback tone="danger" live>
+            {oauthError}
+          </Feedback>
+        </div>
       ) : null}
     </section>
   );

@@ -52,14 +52,14 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `94a8261e3ac8`
-- HEAD: `d720fed` feat: add mobile-web parity auth and clipper APIs
+- Source hash: `1c28b04d9d7d`
+- HEAD: `c6f5c77` feat: unify web design system surfaces and feedback UX
 
 ### Scope Digests
 - api-routes: 104 files, `163816810916`
-- api-helpers: 17 files, `bc7a41e2a688`
+- api-helpers: 19 files, `e819c6ca6f1f`
 - domain-services: 44 files, `1714cfbe1f2e`
-- automation-policy: 264 files, `ea67912134a9`
+- automation-policy: 265 files, `7e3019043826`
 - tracking-docs: 10 files, `bb06f4919b56`
 
 ### Legacy Route Migration Status
