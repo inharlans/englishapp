@@ -5,6 +5,8 @@ export default function PrivacyPage() {
   const supportEmail = business.supportEmail || "준비 중";
   const supportPhone = business.supportPhone || "준비 중";
   const supportHours = business.supportHours ? ` (${business.supportHours})` : "";
+  const supportActionHref = business.supportEmail ? `mailto:${business.supportEmail}` : "/wordbooks";
+  const supportActionLabel = business.supportEmail ? "개인정보 문의 메일 보내기" : "내 단어장으로";
 
   return (
     <section className="ui-card-soft p-6 sm:p-8" aria-labelledby="privacy-title">
@@ -33,6 +35,10 @@ export default function PrivacyPage() {
         <p>- 확장은 사이트 로그인 세션(쿠키) 기반으로 요청을 수행하며, 계정 비밀번호를 저장하지 않습니다.</p>
         <p>- 전송된 데이터는 단어장 저장 및 학습 기능 제공 목적으로만 사용되며, 삭제/정정 요청은 개인정보 문의처를 통해 접수할 수 있습니다.</p>
       </div>
+
+      <a href={supportActionHref} className="mt-6 inline-flex w-fit ui-btn-accent px-4 py-2 text-sm">
+        {supportActionLabel}
+      </a>
 
       <p className="mt-6 text-xs text-slate-500">시행일: 2026년 2월 18일 / 최종 수정일: 2026년 3월 2일</p>
     </section>

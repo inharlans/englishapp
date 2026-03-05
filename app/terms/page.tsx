@@ -5,6 +5,8 @@ export default function TermsPage() {
   const supportEmail = business.supportEmail || "준비 중";
   const supportPhone = business.supportPhone || "준비 중";
   const supportHours = business.supportHours ? ` (${business.supportHours})` : "";
+  const supportActionHref = business.supportEmail ? `mailto:${business.supportEmail}` : "/wordbooks";
+  const supportActionLabel = business.supportEmail ? "약관 문의 메일 보내기" : "내 단어장으로";
 
   return (
     <section className="ui-card-soft p-6 sm:p-8" aria-labelledby="terms-title">
@@ -27,6 +29,10 @@ export default function TermsPage() {
           {supportHours}
         </p>
       </div>
+
+      <a href={supportActionHref} className="mt-6 inline-flex w-fit ui-btn-accent px-4 py-2 text-sm">
+        {supportActionLabel}
+      </a>
 
       <p className="mt-6 text-xs text-slate-500">시행일: 2026년 2월 18일</p>
     </section>
