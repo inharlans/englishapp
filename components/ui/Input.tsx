@@ -14,7 +14,7 @@ export function Input({ id, label, error, hint, className = "", ...rest }: Props
 
   return (
     <label htmlFor={id} className="block">
-      <span className="text-xs font-semibold text-[var(--ds-color-text-muted)]">{label}</span>
+      <span className="text-xs font-semibold text-[var(--token-text-secondary)]">{label}</span>
       <input
         {...rest}
         id={id}
@@ -24,11 +24,11 @@ export function Input({ id, label, error, hint, className = "", ...rest }: Props
         aria-describedby={describedBy}
       />
       {error ? (
-        <span id={`${id}-error`} className="mt-1 block text-xs text-[var(--ds-color-danger)]" role="alert">
+        <span id={`${id}-error`} className="mt-1 block text-xs text-[var(--token-status-danger)]" role="alert">
           {error}
         </span>
       ) : hint ? (
-        <span id={`${id}-hint`} className="mt-1 block text-xs text-[var(--ds-color-text-muted)]">{hint}</span>
+        <span id={`${id}-hint`} className="mt-1 block text-xs text-[var(--token-text-secondary)]">{hint}</span>
       ) : null}
     </label>
   );

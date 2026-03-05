@@ -52,15 +52,15 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `7c65a1a9b8ad`
-- HEAD: `72f2a2f` fix: relax mobile session parsing for forward compatibility
+- Source hash: `a346fef2749a`
+- HEAD: `bd883b7` chore: add skill bundles and trigger mappings
 
 ### Scope Digests
 - api-routes: 104 files, `163816810916`
 - api-helpers: 19 files, `d7388a13c595`
 - domain-services: 44 files, `1714cfbe1f2e`
-- automation-policy: 265 files, `7e3019043826`
-- tracking-docs: 10 files, `bb06f4919b56`
+- automation-policy: 267 files, `f721d0c1195c`
+- tracking-docs: 10 files, `db9515f64c28`
 
 ### Legacy Route Migration Status
 - base: `app/api/`, total: 71, migrated: 53, remaining: 18

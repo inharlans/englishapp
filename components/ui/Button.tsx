@@ -24,7 +24,6 @@ export function Button({
     `ui-btn--${variant}`,
     `ui-btn--${size}`,
     fullWidth ? "w-full" : "",
-    rest.disabled ? "opacity-60" : "",
     className
   ]
     .filter(Boolean)

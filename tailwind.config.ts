@@ -8,11 +8,23 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        brand: "var(--ds-color-brand-primary)",
-        surface: "var(--ds-color-surface)",
+        brand: {
+          DEFAULT: "var(--ds-color-brand-primary)",
+          secondary: "var(--ds-color-brand-secondary)"
+        },
+        surface: {
+          DEFAULT: "var(--ds-color-surface)",
+          background: "var(--ds-color-background)",
+          raised: "var(--ds-color-surface-raised)"
+        },
+        text: {
+          primary: "var(--ds-color-text)",
+          secondary: "var(--ds-color-text-muted)"
+        },
         foreground: "var(--ds-color-text)",
         muted: "var(--ds-color-text-muted)",
         border: "var(--ds-color-border)",
+        info: "var(--ds-color-info)",
         success: "var(--ds-color-success)",
         warning: "var(--ds-color-warning)",
         danger: "var(--ds-color-danger)"
