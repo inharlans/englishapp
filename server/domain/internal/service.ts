@@ -328,6 +328,10 @@ export class InternalService {
       1,
       Number.parseInt(process.env.CLIPPER_ENRICH_MAX_ATTEMPTS ?? "3", 10) || 3
     );
+    const maxPerOwnerPerRun = Math.max(
+      0,
+      Number.parseInt(process.env.CLIPPER_ENRICH_MAX_PER_OWNER_PER_RUN ?? "0", 10) || 0
+    );
     const runStartedAt = Date.now();
 
     try {
@@ -383,10 +387,16 @@ export class InternalService {
         items: queuedPool,
         minGroupSize: batchSize,
         maxWaitSeconds,
+        maxPick: queuedPool.length
+      });
+      const pickedIds = applyOwnerRunQuota({
+        ids: eligibleIds,
+        ownerIdByItemId: new Map(queuedPool.map((item) => [item.id, item.ownerId])),
+        maxPerOwnerPerRun,
         maxPick: batchSize
       });
-      const claimedIds = await this.repo.claimQueuedClipperItemsByIds(eligibleIds);
-      const skippedCount = Math.max(0, eligibleIds.length - claimedIds.length);
+      const claimedIds = await this.repo.claimQueuedClipperItemsByIds(pickedIds);
+      const skippedCount = Math.max(0, pickedIds.length - claimedIds.length);
       if (claimedIds.length === 0) {
         const durationMs = Date.now() - runStartedAt;
         logJson("info", "cron_clipper_enrichment_run_summary", {
@@ -640,4 +650,26 @@ function pickEligibleQueuedIds(input: {
 
   if (eligible.length > 0) return eligible;
   return input.items.slice(0, input.maxPick).map((item) => item.id);
+}
+
+function applyOwnerRunQuota(input: {
+  ids: number[];
+  ownerIdByItemId: Map<number, number>;
+  maxPerOwnerPerRun: number;
+  maxPick: number;
+}): number[] {
+  if (input.maxPerOwnerPerRun <= 0) return input.ids.slice(0, input.maxPick);
+
+  const ownerPicked = new Map<number, number>();
+  const picked: number[] = [];
+  for (const id of input.ids) {
+    if (picked.length >= input.maxPick) break;
+    const ownerId = input.ownerIdByItemId.get(id);
+    if (ownerId === undefined) continue;
+    const current = ownerPicked.get(ownerId) ?? 0;
+    if (current >= input.maxPerOwnerPerRun) continue;
+    ownerPicked.set(ownerId, current + 1);
+    picked.push(id);
+  }
+  return picked;
 }

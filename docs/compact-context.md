@@ -52,13 +52,13 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `4e9fc06adc0d`
-- HEAD: `c23674a` feat: add normalizeTerm util + de-dupe policy
+- Source hash: `9ef6d8510a07`
+- HEAD: `fabcac8` feat: add POST /api/clipper/capture with default wordbook bootstrap
 
 ### Scope Digests
-- api-routes: 91 files, `14c38f82ccc4`
+- api-routes: 91 files, `57599a7811fa`
 - api-helpers: 17 files, `bc7a41e2a688`
-- domain-services: 44 files, `8aa18fd378a7`
+- domain-services: 44 files, `b5a231d6e99a`
 - automation-policy: 90 files, `9e4671947820`
 - tracking-docs: 10 files, `bdd64c4f8541`
 

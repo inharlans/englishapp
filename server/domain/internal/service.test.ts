@@ -25,6 +25,7 @@ describe("InternalService runClipperEnrichmentCron", () => {
     process.env.CLIPPER_ENRICH_BATCH_SIZE = "1";
     process.env.CLIPPER_ENRICH_MAX_WAIT_SECONDS = "1";
     process.env.CLIPPER_ENRICH_MAX_ATTEMPTS = "3";
+    process.env.CLIPPER_ENRICH_MAX_PER_OWNER_PER_RUN = "0";
   });
 
   it("transitions claimed queued items to done and returns run summary", async () => {
@@ -252,5 +253,44 @@ describe("InternalService runClipperEnrichmentCron", () => {
       });
     }
     expect(mockEnrichWithGeminiBatch).not.toHaveBeenCalled();
+  });
+
+  it("applies per-owner quota when configured", async () => {
+    process.env.CLIPPER_ENRICH_BATCH_SIZE = "2";
+    process.env.CLIPPER_ENRICH_MAX_PER_OWNER_PER_RUN = "1";
+
+    const queuedAt = new Date("2026-03-04T00:00:00.000Z");
+    const repo = {
+      listRetriableFailedClipperItems: vi.fn().mockResolvedValue([]),
+      requeueClipperItems: vi.fn().mockResolvedValue(0),
+      listQueuedClipperItems: vi.fn().mockResolvedValue([
+        { id: 401, ownerId: 1, wordbookId: 10, term: "a", exampleSentenceEn: null, enrichmentAttempts: 0, enrichmentQueuedAt: queuedAt },
+        { id: 402, ownerId: 1, wordbookId: 11, term: "b", exampleSentenceEn: null, enrichmentAttempts: 0, enrichmentQueuedAt: queuedAt },
+        { id: 403, ownerId: 2, wordbookId: 12, term: "c", exampleSentenceEn: null, enrichmentAttempts: 0, enrichmentQueuedAt: queuedAt }
+      ]),
+      claimQueuedClipperItemsByIds: vi.fn().mockResolvedValue([401, 403]),
+      loadClipperItemsForProcessing: vi.fn().mockResolvedValue([
+        { id: 401, term: "a", meaning: "a", exampleSentenceEn: null },
+        { id: 403, term: "c", meaning: "c", exampleSentenceEn: null }
+      ]),
+      markClipperItemDone: vi.fn().mockResolvedValue(undefined),
+      markClipperItemFailed: vi.fn().mockResolvedValue(undefined)
+    };
+
+    mockEnrichWithGeminiBatch.mockResolvedValue(
+      new Map([
+        [401, { id: 401, meaningKo: "에이", partOfSpeech: "NOUN", exampleSentenceEn: null, exampleSentenceKo: null, exampleSource: "NONE" }],
+        [403, { id: 403, meaningKo: "씨", partOfSpeech: "NOUN", exampleSentenceEn: null, exampleSentenceKo: null, exampleSource: "NONE" }]
+      ])
+    );
+
+    const { InternalService } = await import("./service");
+    const service = new InternalService(repo as never);
+
+    const result = await service.runClipperEnrichmentCron("Bearer cron-secret");
+
+    expect(result.ok).toBe(true);
+    expect(repo.claimQueuedClipperItemsByIds).toHaveBeenCalledWith([401, 403]);
+    expect(repo.markClipperItemDone).toHaveBeenCalledTimes(2);
   });
 });
