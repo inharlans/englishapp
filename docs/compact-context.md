@@ -52,8 +52,8 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `57686e8ac6a3`
-- HEAD: `7121c5f` merge: round1 monet mcp launcher updates
+- Source hash: `71ee5bce5061`
+- HEAD: `2a6f731` merge: round2 wordbook badge and CTA updates
 
 ### Scope Digests
 - api-routes: 104 files, `163816810916`
