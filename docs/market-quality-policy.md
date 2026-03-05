@@ -41,8 +41,14 @@ done_ratio = DONE 아이템 수 / 전체 아이템 수
 - 쿼리 파라미터:
   - `quality=all|curated`
   - 기본값은 `all` (기존 호환 유지)
+- 정렬 기본값:
+  - `sort=top` (내부적으로 `rankScore DESC, createdAt DESC`)
 - 정책 적용 위치:
   - DB 조회 단계(Repository SQL)에서 필터 적용
+
+향후 확장(선택):
+
+- `minDoneRatio=0..1` 옵션을 추가해 운영자가 최소 품질 컷을 동적으로 적용할 수 있다.
 
 ## 4) 신고/검수 운영 정책
 
@@ -190,6 +196,12 @@ LIMIT 50;
 - [ ] `quality=curated` 대상 수 추이 점검
 - [ ] hide/resolve/dismiss 처리 리드타임 점검
 - [ ] 임계치(`0.8`, `ratingCount>=3`) 재조정 필요성 검토
+
+### 랭킹 재계산
+
+- 내부 크론 `POST /api/internal/cron/wordbook-rank`에서 재계산
+- GitHub Actions 스케줄은 30분 주기(`.github/workflows/cron-jobs.yml`)
+- 대량 업데이트/운영 이슈 시 수동 실행으로 즉시 보정 가능
 
 ## 8) 롤아웃 원칙
 

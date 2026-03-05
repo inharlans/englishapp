@@ -7,6 +7,7 @@ const {
   mockWordbookFindFirst,
   mockWordbookCreate,
   mockWordbookItemFindFirst,
+  mockWordbookItemFindUnique,
   mockWordbookItemCreate,
   mockWordbookItemUpdate,
   mockTransaction
@@ -17,6 +18,7 @@ const {
   mockWordbookFindFirst: vi.fn(),
   mockWordbookCreate: vi.fn(),
   mockWordbookItemFindFirst: vi.fn(),
+  mockWordbookItemFindUnique: vi.fn(),
   mockWordbookItemCreate: vi.fn(),
   mockWordbookItemUpdate: vi.fn(),
   mockTransaction: vi.fn()
@@ -35,6 +37,7 @@ vi.mock("@/lib/prisma", () => ({
     },
     wordbookItem: {
       findFirst: mockWordbookItemFindFirst,
+      findUnique: mockWordbookItemFindUnique,
       create: mockWordbookItemCreate,
       update: mockWordbookItemUpdate
     },
@@ -53,7 +56,7 @@ const user = {
 
 describe("ClipperService captureWord", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
 
     mockTransaction.mockImplementation(async (callback) => {
       const tx = {
@@ -78,6 +81,7 @@ describe("ClipperService captureWord", () => {
     mockWordbookCreate.mockResolvedValue({ id: 101 });
     mockUserUpdateMany.mockResolvedValue({ count: 1 });
     mockWordbookItemFindFirst.mockResolvedValue(null);
+    mockWordbookItemFindUnique.mockReset();
     mockWordbookItemCreate.mockResolvedValue({
       id: 900,
       wordbookId: 101,
@@ -167,6 +171,18 @@ describe("ClipperService captureWord", () => {
         exampleSource: "NONE",
         enrichmentStatus: "QUEUED"
       });
+    mockWordbookItemFindUnique.mockResolvedValue({
+      id: 501,
+      wordbookId: 44,
+      term: "abandoned",
+      meaning: "abandoned",
+      example: null,
+      exampleSentenceEn: null,
+      sourceUrl: null,
+      sourceTitle: "기존 제목",
+      exampleSource: "NONE",
+      enrichmentStatus: "QUEUED"
+    });
     mockWordbookItemUpdate.mockResolvedValue({
       id: 501,
       wordbookId: 44,
@@ -202,6 +218,171 @@ describe("ClipperService captureWord", () => {
           sourceUrl: "https://example.com/a",
           sourceTitle: "기존 제목",
           enrichmentStatus: "DONE"
+        })
+      })
+    );
+  });
+
+  it("표면형이 달라도 동일 normalizedTerm이면 중복 병합으로 처리한다", async () => {
+    mockUserFindUnique.mockResolvedValue({ defaultWordbookId: 44 });
+    mockWordbookFindFirst.mockResolvedValue({ id: 44 });
+    mockWordbookItemFindFirst
+      .mockResolvedValueOnce({ id: 777 });
+    mockWordbookItemFindUnique.mockResolvedValue({
+      id: 777,
+      wordbookId: 44,
+      term: "abandoned",
+      meaning: "abandoned",
+      example: null,
+      exampleSentenceEn: null,
+      sourceUrl: null,
+      sourceTitle: null,
+      exampleSource: "NONE",
+      enrichmentStatus: "QUEUED"
+    });
+    mockWordbookItemUpdate.mockResolvedValue({
+      id: 777,
+      wordbookId: 44,
+      enrichmentStatus: "DONE"
+    });
+
+    const { ClipperService } = await import("./service");
+    const service = new ClipperService();
+
+    const result = await service.captureWord({
+      user,
+      data: {
+        term: "Abandoned.",
+        meaning: "버려진",
+        context: "The house was abandoned for years."
+      }
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.status).toBe(200);
+      expect(result.payload.itemId).toBe(777);
+    }
+    expect(mockWordbookItemFindFirst).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        where: expect.objectContaining({
+          wordbookId: 44,
+          normalizedTerm: "abandoned"
+        })
+      })
+    );
+  });
+
+  it("신규 normalizedTerm과 레거시 normalizedTerm을 함께 조회한다", async () => {
+    mockUserFindUnique.mockResolvedValue({ defaultWordbookId: 44 });
+    mockWordbookFindFirst.mockResolvedValue({ id: 44 });
+    mockWordbookItemFindFirst
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ id: 778 });
+    mockWordbookItemFindUnique.mockResolvedValue({
+      id: 778,
+      wordbookId: 44,
+      term: "teacher's",
+      meaning: "teacher's",
+      example: null,
+      exampleSentenceEn: null,
+      sourceUrl: null,
+      sourceTitle: null,
+      exampleSource: "NONE",
+      enrichmentStatus: "QUEUED"
+    });
+    mockWordbookItemUpdate.mockResolvedValue({
+      id: 778,
+      wordbookId: 44,
+      enrichmentStatus: "DONE"
+    });
+
+    const { ClipperService } = await import("./service");
+    const service = new ClipperService();
+
+    const result = await service.captureWord({
+      user,
+      data: {
+        term: "teacher's",
+        meaning: "교사의",
+        context: "The teacher's desk was near the window."
+      }
+    });
+
+    expect(result.ok).toBe(true);
+    expect(mockWordbookItemFindFirst).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        where: expect.objectContaining({
+          wordbookId: 44,
+          normalizedTerm: "teachers"
+        })
+      })
+    );
+    expect(mockWordbookItemFindFirst).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        where: expect.objectContaining({
+          wordbookId: 44,
+          normalizedTerm: "teacher's"
+        })
+      })
+    );
+  });
+
+  it("비아포스트로피 정규화 드리프트에서도 레거시 키를 fallback 조회한다", async () => {
+    mockUserFindUnique.mockResolvedValue({ defaultWordbookId: 44 });
+    mockWordbookFindFirst.mockResolvedValue({ id: 44 });
+    mockWordbookItemFindFirst
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ id: 779 });
+    mockWordbookItemFindUnique.mockResolvedValue({
+      id: 779,
+      wordbookId: 44,
+      term: "abandoned",
+      meaning: "abandoned",
+      example: null,
+      exampleSentenceEn: null,
+      sourceUrl: null,
+      sourceTitle: null,
+      exampleSource: "NONE",
+      enrichmentStatus: "QUEUED"
+    });
+    mockWordbookItemUpdate.mockResolvedValue({
+      id: 779,
+      wordbookId: 44,
+      enrichmentStatus: "DONE"
+    });
+
+    const { ClipperService } = await import("./service");
+    const service = new ClipperService();
+
+    const result = await service.captureWord({
+      user,
+      data: {
+        term: "Ａｂａｎｄｏｎｅｄ",
+        meaning: "버려진",
+        context: "The house was abandoned for years."
+      }
+    });
+
+    expect(result.ok).toBe(true);
+    expect(mockWordbookItemFindFirst).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        where: expect.objectContaining({
+          wordbookId: 44,
+          normalizedTerm: "abandoned"
+        })
+      })
+    );
+    expect(mockWordbookItemFindFirst).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        where: expect.objectContaining({
+          wordbookId: 44,
+          normalizedTerm: "ａｂａｎｄｏｎｅｄ"
         })
       })
     );

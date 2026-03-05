@@ -9,6 +9,7 @@ import {
   sanitizeExampleInput,
   sanitizeTermInput
 } from "@/lib/clipper";
+import { normalizeTerm } from "@/lib/normalizeTerm";
 import { prisma } from "@/lib/prisma";
 
 import type { RequestUser } from "@/lib/api/route-helpers";
@@ -33,6 +34,19 @@ type CaptureInput = {
 const CLIPPER_MEANING_MAX_LEN = 1000;
 const CLIPPER_SOURCE_TITLE_MAX_LEN = 300;
 const DEFAULT_PERSONAL_WORDBOOK_TITLE = "개인 기본 단어장";
+const APOSTROPHE_IN_TERM_RE = /['\u2018\u2019\u02BC]/;
+const EDGE_SYMBOL_RE = /(^[\p{S}])|([\p{S}]$)/u;
+const NON_ASCII_RE = /[^\x00-\x7F]/;
+const PRESERVED_SYMBOL_RE = /[+#&]/;
+
+function shouldAllowLegacyFallback(rawTerm: string): boolean {
+  const trimmed = rawTerm.trim();
+  if (!trimmed) return false;
+  if (PRESERVED_SYMBOL_RE.test(trimmed)) return false;
+  if (APOSTROPHE_IN_TERM_RE.test(trimmed)) return true;
+  if (NON_ASCII_RE.test(trimmed)) return true;
+  return !EDGE_SYMBOL_RE.test(trimmed);
+}
 
 function sanitizeOptionalMeaning(value?: string | null): string | null {
   if (!value) return null;
@@ -170,7 +184,8 @@ export class ClipperService {
     const { user, data } = input;
 
     const term = sanitizeTermInput(data.term);
-    const normalizedTerm = normalizeTermForKey(term);
+    const normalizedTerm = normalizeTerm(term);
+    const legacyNormalizedTerm = normalizeTermForKey(term);
     if (!normalizedTerm) {
       return { ok: false as const, status: 400, error: "Invalid term." };
     }
@@ -192,18 +207,16 @@ export class ClipperService {
     const createAsDone = hasSufficientMeaning(incomingMeaning, term) && !isBlank(incomingContext);
     const now = new Date();
 
-    const existing = await prisma.wordbookItem.findFirst({
-      where: {
-        wordbookId: effectiveWordbookId,
-        normalizedTerm
-      },
-      select: { id: true }
+    const existing = await this.findExistingByNormalizedTerms({
+      wordbookId: effectiveWordbookId,
+      normalizedTerm,
+      legacyNormalizedTerm,
+      rawTerm: term
     });
 
     if (existing) {
-      const merged = await this.mergeExistingDuplicate({
-        wordbookId: effectiveWordbookId,
-        normalizedTerm,
+      const merged = await this.mergeExistingDuplicateById({
+        itemId: existing.id,
         incoming: {
           term,
           meaning: incomingMeaning,
@@ -269,9 +282,19 @@ export class ClipperService {
       };
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
-        const merged = await this.mergeExistingDuplicate({
+        const raceExisting = await this.findExistingByNormalizedTerms({
           wordbookId: effectiveWordbookId,
           normalizedTerm,
+          legacyNormalizedTerm,
+          rawTerm: term
+        });
+
+        if (!raceExisting) {
+          return { ok: false as const, status: 409, error: "동일한 단어가 이미 존재합니다." };
+        }
+
+        const merged = await this.mergeExistingDuplicateById({
+          itemId: raceExisting.id,
           incoming: {
             term,
             meaning: incomingMeaning,
@@ -298,6 +321,38 @@ export class ClipperService {
       }
       throw error;
     }
+  }
+
+  private async findExistingByNormalizedTerms(input: {
+    wordbookId: number;
+    normalizedTerm: string;
+    legacyNormalizedTerm: string;
+    rawTerm: string;
+  }): Promise<{ id: number } | null> {
+    const exact = await prisma.wordbookItem.findFirst({
+      where: {
+        wordbookId: input.wordbookId,
+        normalizedTerm: input.normalizedTerm
+      },
+      select: { id: true }
+    });
+    if (exact) return exact;
+
+    if (!input.legacyNormalizedTerm || input.legacyNormalizedTerm === input.normalizedTerm) {
+      return null;
+    }
+
+    if (!shouldAllowLegacyFallback(input.rawTerm)) {
+      return null;
+    }
+
+    return prisma.wordbookItem.findFirst({
+      where: {
+        wordbookId: input.wordbookId,
+        normalizedTerm: input.legacyNormalizedTerm
+      },
+      select: { id: true }
+    });
   }
 
   private async resolveEffectiveWordbookId(input: {
@@ -391,9 +446,8 @@ export class ClipperService {
     });
   }
 
-  private async mergeExistingDuplicate(input: {
-    wordbookId: number;
-    normalizedTerm: string;
+  private async mergeExistingDuplicateById(input: {
+    itemId: number;
     incoming: {
       term: string;
       meaning: string | null;
@@ -402,11 +456,8 @@ export class ClipperService {
       sourceTitle: string | null;
     };
   }): Promise<{ id: number; wordbookId: number; enrichmentStatus: "QUEUED" | "PROCESSING" | "DONE" | "FAILED" } | null> {
-    const existing = await prisma.wordbookItem.findFirst({
-      where: {
-        wordbookId: input.wordbookId,
-        normalizedTerm: input.normalizedTerm
-      },
+    const existing = await prisma.wordbookItem.findUnique({
+      where: { id: input.itemId },
       select: {
         id: true,
         wordbookId: true,

@@ -56,7 +56,6 @@ export function WordbookQuizClient({
       reason: string;
     };
   } | null>(null);
-  const [retryQueue, setRetryQueue] = useState<QuizItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [attempts, setAttempts] = useState(0);
   const [corrects, setCorrects] = useState(0);
@@ -69,7 +68,6 @@ export function WordbookQuizClient({
   const [autoNextOnCorrect, setAutoNextOnCorrect] = useState(false);
   const skipInitialPartNoticeRef = useRef(true);
   const answerInputRef = useRef<HTMLInputElement>(null);
-  const retryQueueRef = useRef<QuizItem[]>([]);
   const mountedRef = useRef(true);
   const requestSeqRef = useRef(0);
   const { mode: meaningMode, setMode: setMeaningMode } = useMeaningViewMode();
@@ -86,10 +84,6 @@ export function WordbookQuizClient({
   }, []);
 
   useEffect(() => {
-    retryQueueRef.current = retryQueue;
-  }, [retryQueue]);
-
-  useEffect(() => {
     if (typeof window === "undefined") return;
     const raw = window.localStorage.getItem(autoNextKey);
     if (raw === "1") setAutoNextOnCorrect(true);
@@ -102,8 +96,6 @@ export function WordbookQuizClient({
       setPartSolvedIds([]);
       setFeedback(null);
       setMessage("");
-      retryQueueRef.current = [];
-      setRetryQueue([]);
     },
     [setPartIndex]
   );
@@ -111,19 +103,6 @@ export function WordbookQuizClient({
   const loadNext = useCallback(async () => {
     const requestSeq = requestSeqRef.current + 1;
     requestSeqRef.current = requestSeq;
-    const queued = retryQueueRef.current;
-    if (queued.length > 0) {
-      const [next, ...rest] = queued;
-      if (!mountedRef.current || requestSeqRef.current !== requestSeq) return;
-      retryQueueRef.current = rest;
-      setRetryQueue(rest);
-      setItem(next);
-      setLoading(false);
-      setMessage("세션 오답 큐에서 재출제했습니다.");
-      setAnswer("");
-      setFeedback(null);
-      return;
-    }
     setLoading(true);
     setMessage("");
     setAnswer("");
@@ -203,15 +182,6 @@ export function WordbookQuizClient({
           target.tagName === "A" ||
           target.getAttribute("contenteditable") === "true" ||
           Boolean(target.closest("input, textarea, select, button, a, [contenteditable='true']")));
-
-      if (event.key.toLowerCase() === "r" && feedback && !feedback.isCorrect) {
-        event.preventDefault();
-        setFeedback(null);
-        setAnswer("");
-        setMessage("");
-        answerInputRef.current?.focus();
-        return;
-      }
 
       if (event.key === "Escape" && !feedback && answer.trim()) {
         event.preventDefault();
@@ -300,13 +270,6 @@ export function WordbookQuizClient({
       });
       if (json.correct) {
         setCorrects((v) => v + 1);
-        if (item) {
-          setRetryQueue((prev) => {
-            const next = prev.filter((queued) => queued.id !== item.id);
-            retryQueueRef.current = next;
-            return next;
-          });
-        }
       } else {
         setWrongs((v) => v + 1);
       }
@@ -320,12 +283,6 @@ export function WordbookQuizClient({
       if (typeof window !== "undefined") {
         window.localStorage.removeItem(draftKey);
       }
-      if (!json.correct && item) {
-        setRetryQueue((prev) => {
-          if (prev.some((queued) => queued.id === item.id) || prev.length >= 20) return prev;
-          return [...prev, item];
-        });
-      }
       if (json.correct && autoNextOnCorrect) {
         window.setTimeout(() => {
           void loadNext();
@@ -336,13 +293,6 @@ export function WordbookQuizClient({
     } finally {
       setLoading(false);
     }
-  };
-
-  const retryCurrentItem = () => {
-    setFeedback(null);
-    setAnswer("");
-    setMessage("");
-    answerInputRef.current?.focus();
   };
 
   const activeTab = mode === "MEANING" ? "quiz-meaning" : "quiz-word";
@@ -384,14 +334,11 @@ export function WordbookQuizClient({
   const solvedInPart = partSolvedIds.length;
   const currentPartProgress = partItemCount > 0 ? Math.min(100, Math.round((solvedInPart / partItemCount) * 100)) : 0;
   const remainingInPart = Math.max(partItemCount - solvedInPart, 0);
-  const remainingInPartWithRetry = remainingInPart + retryQueue.length;
-  const remainingBreakdown =
-    retryQueue.length > 0 ? `${remainingInPart}(신규) + ${retryQueue.length}(재도전)` : `${remainingInPart}(신규)`;
   const remainingParts = Math.max(partCount - partIndex, 0);
   const totalItemsLabel = loading && totalItems === 0 ? "-" : String(totalItems);
   const partCountLabel = loading && totalItems === 0 ? "-" : String(partCount);
   const remainingPartsLabel = loading && totalItems === 0 ? "-" : String(remainingParts);
-  const remainingInPartLabel = loading && totalItems === 0 ? "-" : String(remainingInPartWithRetry);
+  const remainingInPartLabel = loading && totalItems === 0 ? "-" : String(remainingInPart);
   const acceptedMeaningPreview = useMemo(() => {
     if (!feedback || feedback.isCorrect || mode !== "MEANING") return [];
     const list = feedback.acceptedMeaningAnswers ?? [];
@@ -472,10 +419,8 @@ export function WordbookQuizClient({
             · 정답률 {accuracy}% ({corrects}/{attempts})
           </span>
           <span className="text-slate-500">· 남은 파트 {remainingPartsLabel}개</span>
-          <span className="text-slate-500">
-            · 현재 파트 남은 문제(재도전 포함) {remainingInPartLabel}개{loading && totalItems === 0 ? "" : ` · ${remainingBreakdown}`}
-          </span>
-          <span className="text-slate-500">· 단축키: `/` 입력 포커스 · `S` 건너뛰기 · `N`/`Enter` 다음 · `R` 오답 재시도 · `Esc` 입력 비우기 · `[`/`]` 파트 이동 · `Home`/`End` 처음/끝</span>
+            <span className="text-slate-500">· 현재 파트 남은 문제 {remainingInPartLabel}개</span>
+            <span className="text-slate-500">· 단축키: `/` 입력 포커스 · `S` 건너뛰기 · `N`/`Enter` 다음 · `Esc` 입력 비우기 · `[`/`]` 파트 이동 · `Home`/`End` 처음/끝</span>
           <button
             type="button"
             onClick={() => {
@@ -721,7 +666,7 @@ export function WordbookQuizClient({
               <span>· 오답 {wrongs}</span>
               <span>· 현재 파트 고유 풀이 {solvedInPart}/{partItemCount}</span>
               <span>· 현재 파트 시도 {partAttempts}</span>
-              <span>· 오답 큐 {retryQueue.length} (신규 {remainingInPart} + 재도전 {retryQueue.length})</span>
+              <span>· 현재 파트 남은 문제 {remainingInPart}</span>
             </div>
             {feedback ? (
               <div
@@ -759,21 +704,12 @@ export function WordbookQuizClient({
                   </p>
                 ) : null}
                 <div className="mt-2 flex flex-wrap gap-2">
-                  {!feedback.isCorrect ? (
-                    <button
-                      type="button"
-                      onClick={retryCurrentItem}
-                      className="ui-btn-primary px-3 py-1.5 text-xs"
-                    >
-                      다시 풀기
-                    </button>
-                  ) : null}
                   <button
                     type="button"
                     onClick={() => void loadNext()}
                     className="ui-btn-primary px-3 py-1.5 text-xs"
                   >
-                    다음 {retryQueue.length > 0 ? `(오답 큐 ${retryQueue.length})` : ""}
+                    다음
                   </button>
                 </div>
               </div>
