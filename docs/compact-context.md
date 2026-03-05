@@ -52,15 +52,15 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `a346fef2749a`
-- HEAD: `bd883b7` chore: add skill bundles and trigger mappings
+- Source hash: `f96067df3b66`
+- HEAD: `b6dd494` feat: rebrand core UI color tokens for calm focus
 
 ### Scope Digests
 - api-routes: 104 files, `163816810916`
 - api-helpers: 19 files, `d7388a13c595`
 - domain-services: 44 files, `1714cfbe1f2e`
-- automation-policy: 267 files, `f721d0c1195c`
-- tracking-docs: 10 files, `db9515f64c28`
+- automation-policy: 267 files, `c770541bb934`
+- tracking-docs: 10 files, `bb06f4919b56`
 
 ### Legacy Route Migration Status
 - base: `app/api/`, total: 71, migrated: 53, remaining: 18

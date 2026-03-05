@@ -35,6 +35,11 @@
       "type": "local",
       "command": ["cmd", "/c", "scripts\\ops\\start-context7-mcp.cmd"],
       "enabled": true
+    },
+    "monet-mcp": {
+      "type": "local",
+      "command": ["cmd", "/c", "scripts\\ops\\start-monet-mcp.cmd"],
+      "enabled": false
     }
   }
 }
