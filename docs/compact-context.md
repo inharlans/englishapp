@@ -52,11 +52,11 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `7a32d0be9eb8`
-- HEAD: `ac24564` align quiz requeue UX with server policy
+- Source hash: `4e9fc06adc0d`
+- HEAD: `c23674a` feat: add normalizeTerm util + de-dupe policy
 
 ### Scope Digests
-- api-routes: 91 files, `8225e5741d2a`
+- api-routes: 91 files, `14c38f82ccc4`
 - api-helpers: 17 files, `bc7a41e2a688`
 - domain-services: 44 files, `8aa18fd378a7`
 - automation-policy: 90 files, `9e4671947820`

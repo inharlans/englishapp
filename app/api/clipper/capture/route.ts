@@ -11,8 +11,8 @@ const bodySchema = z.object({
   term: z.string().trim().min(1).max(clipperAddSchema.CLIPPER_TERM_MAX_LEN),
   meaning: z.string().trim().max(clipperAddSchema.CLIPPER_MEANING_MAX_LEN).nullable().optional(),
   context: z.string().trim().max(clipperAddSchema.CLIPPER_EXAMPLE_MAX_LEN).nullable().optional(),
-  sourceUrl: z.string().trim().url().max(2000).optional(),
-  sourceTitle: z.string().trim().max(clipperAddSchema.CLIPPER_SOURCE_TITLE_MAX_LEN).optional(),
+  sourceUrl: z.string().trim().url().max(2000).nullable().optional(),
+  sourceTitle: z.string().trim().max(clipperAddSchema.CLIPPER_SOURCE_TITLE_MAX_LEN).nullable().optional(),
   wordbookId: z.number().int().positive().optional()
 });
 
@@ -40,7 +40,14 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const result = await clipperService.captureWord({ user, data: parsed.data });
+    const result = await clipperService.captureWord({
+      user,
+      data: {
+        ...parsed.data,
+        sourceUrl: parsed.data.sourceUrl ?? undefined,
+        sourceTitle: parsed.data.sourceTitle ?? undefined
+      }
+    });
     if (!result.ok) {
       return returnWithMetric({
         response: NextResponse.json({ error: result.error }, { status: result.status }),
