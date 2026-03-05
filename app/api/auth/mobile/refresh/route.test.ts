@@ -137,4 +137,52 @@ describe("POST /api/auth/mobile/refresh", () => {
       errorCode: "AUTH_REFRESH_INVALID"
     });
   });
+
+  it("returns AUTH_REFRESH_INVALID when rotated session device id is not a string", async () => {
+    mockRotateRefreshToken.mockResolvedValue({
+      userId: 1,
+      email: "user@test.com",
+      deviceId: null,
+      newRefreshToken: "new-refresh-token",
+      newRefreshExpiresAt: new Date()
+    });
+
+    const { POST } = await import("./route");
+
+    const res = await POST(
+      new NextRequest("http://localhost/api/auth/mobile/refresh", {
+        method: "POST",
+        body: JSON.stringify({
+          refreshToken: "r".repeat(32),
+          deviceId: "device-12345"
+        })
+      })
+    );
+
+    expect(res.status).toBe(401);
+    await expect(res.json()).resolves.toMatchObject({
+      errorCode: "AUTH_REFRESH_INVALID"
+    });
+  });
+
+  it("returns AUTH_REFRESH_INVALID when rotated session is missing", async () => {
+    mockRotateRefreshToken.mockResolvedValue(null);
+
+    const { POST } = await import("./route");
+
+    const res = await POST(
+      new NextRequest("http://localhost/api/auth/mobile/refresh", {
+        method: "POST",
+        body: JSON.stringify({
+          refreshToken: "r".repeat(32),
+          deviceId: "device-12345"
+        })
+      })
+    );
+
+    expect(res.status).toBe(401);
+    await expect(res.json()).resolves.toMatchObject({
+      errorCode: "AUTH_REFRESH_INVALID"
+    });
+  });
 });

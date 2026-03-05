@@ -52,11 +52,11 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `cf6eee78105f`
-- HEAD: `3737cb2` merge: clipper capture + enrichment robustness
+- Source hash: `94a8261e3ac8`
+- HEAD: `d720fed` feat: add mobile-web parity auth and clipper APIs
 
 ### Scope Digests
-- api-routes: 104 files, `2c352da11af0`
+- api-routes: 104 files, `163816810916`
 - api-helpers: 17 files, `bc7a41e2a688`
 - domain-services: 44 files, `1714cfbe1f2e`
 - automation-policy: 264 files, `ea67912134a9`
