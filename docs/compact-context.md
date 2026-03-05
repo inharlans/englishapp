@@ -52,15 +52,15 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `75cac1cee5ed`
-- HEAD: `1ba4538` feat(ui): simplify extension install copy for webstore
+- Source hash: `85e861ffb0b9`
+- HEAD: `bc2576e` feat(ui): anchor business footer and simplify global shell
 
 ### Scope Digests
 - api-routes: 104 files, `2ee00e7098d9`
-- api-helpers: 19 files, `d7388a13c595`
-- domain-services: 44 files, `1714cfbe1f2e`
+- api-helpers: 20 files, `5eb7f7d1917b`
+- domain-services: 44 files, `d80e6606297d`
 - automation-policy: 267 files, `c770541bb934`
-- tracking-docs: 10 files, `adc47b3b7333`
+- tracking-docs: 10 files, `0803ebbc91df`
 
 ### Legacy Route Migration Status
 - base: `app/api/`, total: 71, migrated: 53, remaining: 18

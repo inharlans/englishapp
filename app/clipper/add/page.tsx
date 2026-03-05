@@ -123,10 +123,9 @@ export default function ClipperAddBridgePage() {
 
       {status === "failed" ? (
         <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
-          저장에 실패했습니다. 로그인 상태와 기본 단어장 설정을 확인해 주세요.
+          저장에 실패했습니다. 로그인 상태를 확인하고, 지정된 단어장이 없다면 단어장을 지정해 주세요.
         </p>
       ) : null}
     </section>
   );
 }
-

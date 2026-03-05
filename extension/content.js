@@ -142,7 +142,7 @@
       return;
     }
     if (statusCode === 422) {
-      createOrUpdateToast("저장 실패: 기본 단어장을 먼저 설정해 주세요.", "warn");
+      createOrUpdateToast("지정된 단어장이 없습니다. 단어장을 지정해 주세요", "error");
       return;
     }
     if (result?.errorCode === "timeout") {
@@ -458,7 +458,7 @@
         const payload = {
           term,
           exampleSentenceEn,
-          sourceUrl: location.href,
+          sourceUrl: location.protocol === "file:" ? undefined : location.href,
           sourceTitle: document.title
         };
         resolveBridgeOrigin((bridgeOrigin) => {

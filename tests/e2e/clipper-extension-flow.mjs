@@ -618,7 +618,7 @@ async function runFlow(context, swLogs) {
     } else if (statusCode === 401 || statusCode === 403) {
       assert(toastText.includes("로그인"), `${label}: auth toast mismatch (${toastText})`);
     } else if (statusCode === 422) {
-      assert(toastText.includes("기본 단어장"), `${label}: default wordbook toast mismatch (${toastText})`);
+      assert(toastText.includes("지정된 단어장이 없습니다"), `${label}: default wordbook toast mismatch (${toastText})`);
     } else if (statusCode >= 500 || statusCode === 0) {
       assert(toastText.includes("저장 실패"), `${label}: error toast mismatch (${toastText})`);
     } else {

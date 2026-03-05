@@ -33,7 +33,6 @@ type CaptureInput = {
 
 const CLIPPER_MEANING_MAX_LEN = 1000;
 const CLIPPER_SOURCE_TITLE_MAX_LEN = 300;
-const DEFAULT_PERSONAL_WORDBOOK_TITLE = "개인 기본 단어장";
 const APOSTROPHE_IN_TERM_RE = /['\u2018\u2019\u02BC]/;
 const EDGE_SYMBOL_RE = /(^[\p{S}])|([\p{S}]$)/u;
 const NON_ASCII_RE = /[^\x00-\x7F]/;
@@ -370,80 +369,36 @@ export class ClipperService {
       return { ok: true as const, wordbookId: owned.id };
     }
 
-    return prisma.$transaction(async (tx) => {
-      await tx.$queryRaw<Array<{ id: number }>>(Prisma.sql`
-        SELECT "id"
-        FROM "User"
-        WHERE "id" = ${input.userId}
-        FOR UPDATE
-      `);
-
-      const user = await tx.user.findUnique({
-        where: { id: input.userId },
-        select: { defaultWordbookId: true }
-      });
-
-      const defaultWordbookId = user?.defaultWordbookId ?? null;
-      if (defaultWordbookId) {
-        const ownedDefault = await tx.wordbook.findFirst({
-          where: { id: defaultWordbookId, ownerId: input.userId },
-          select: { id: true }
-        });
-        if (ownedDefault) {
-          return { ok: true as const, wordbookId: ownedDefault.id };
-        }
-      }
-
-      const existingOwned = await tx.wordbook.findFirst({
-        where: { ownerId: input.userId },
-        orderBy: [{ createdAt: "asc" }, { id: "asc" }],
-        select: { id: true }
-      });
-
-      if (existingOwned) {
-        await tx.user.update({
-          where: { id: input.userId },
-          data: { defaultWordbookId: existingOwned.id }
-        });
-        return { ok: true as const, wordbookId: existingOwned.id };
-      }
-
-      const created = await tx.wordbook.create({
-        data: {
-          ownerId: input.userId,
-          title: DEFAULT_PERSONAL_WORDBOOK_TITLE,
-          description: null,
-          fromLang: "en",
-          toLang: "ko",
-          isPublic: false
-        },
-        select: { id: true }
-      });
-
-      const claim = await tx.user.updateMany({
-        where: { id: input.userId, defaultWordbookId: null },
-        data: { defaultWordbookId: created.id }
-      });
-
-      if (claim.count !== 1) {
-        const latestUser = await tx.user.findUnique({
-          where: { id: input.userId },
-          select: { defaultWordbookId: true }
-        });
-        const latestDefaultWordbookId = latestUser?.defaultWordbookId ?? null;
-        if (latestDefaultWordbookId) {
-          await tx.wordbook.delete({ where: { id: created.id } });
-          return { ok: true as const, wordbookId: latestDefaultWordbookId };
-        }
-
-        await tx.user.update({
-          where: { id: input.userId },
-          data: { defaultWordbookId: created.id }
-        });
-      }
-
-      return { ok: true as const, wordbookId: created.id };
+    const settings = await prisma.user.findUnique({
+      where: { id: input.userId },
+      select: { defaultWordbookId: true }
     });
+    const defaultWordbookId = settings?.defaultWordbookId ?? null;
+    if (!defaultWordbookId) {
+      return {
+        ok: false as const,
+        status: 422,
+        error: "지정된 단어장이 없습니다. 단어장을 지정해 주세요"
+      };
+    }
+
+    const ownedDefault = await prisma.wordbook.findFirst({
+      where: { id: defaultWordbookId, ownerId: input.userId },
+      select: { id: true }
+    });
+    if (!ownedDefault) {
+      await prisma.user.updateMany({
+        where: { id: input.userId, defaultWordbookId },
+        data: { defaultWordbookId: null }
+      });
+      return {
+        ok: false as const,
+        status: 422,
+        error: "지정된 단어장이 없습니다. 단어장을 지정해 주세요"
+      };
+    }
+
+    return { ok: true as const, wordbookId: ownedDefault.id };
   }
 
   private async mergeExistingDuplicateById(input: {

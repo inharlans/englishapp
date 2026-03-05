@@ -18,7 +18,7 @@
 - 변경 요청 보안 가드(`assertTrustedMutationRequest`)는 쿠키 세션(CSRF) 흐름은 유지하면서 모바일 Bearer 전용 요청은 정상 통과하도록 분기해 모바일 API 호출 호환성을 보강했습니다.
 - 미들웨어 입구 인증도 모바일 Bearer를 정식 검증하도록 보강해(`Authorization: Bearer` + `x-auth-mode: bearer` 필수), 쿠키 없는 모바일 `/api/*` 요청이 JWT 검증 후 통과되도록 맞췄고 헤더 누락/토큰 불일치 요청은 기존처럼 401로 차단합니다.
 - 내부 수집 API(`/api/internal/client-metrics`) 인증은 쿠키 단독 검증에서 쿠키+모바일 Bearer 공통 검증 분기로 보강해, 미들웨어를 통과한 모바일 Bearer 요청이 라우트 단계에서 다시 401로 떨어지지 않도록 정합성을 맞췄습니다(동일 호스트 검증은 유지).
-- 클리퍼 개인 캡처 표준 엔드포인트를 `POST /api/clipper/capture`로 고정하고, `defaultWordbookId`가 비어 있으면 개인 기본 단어장을 자동 부트스트랩하도록 보강했습니다. 동일 단어 재저장은 409 대신 비어 있는 필드만 보강하는 idempotent 병합 정책으로 처리합니다.
+- 클리퍼 개인 캡처 표준 엔드포인트를 `POST /api/clipper/capture`로 고정하고, 클리퍼 저장은 사용자가 지정한 단어장(`defaultWordbookId`)이 있을 때만 허용하도록 정리했습니다. 동일 단어 재저장은 409 대신 비어 있는 필드만 보강하는 idempotent 병합 정책으로 처리합니다.
 - 모바일 홈 화면 연동 복구를 위해 `/api/home/summary`, `/api/llm/quota`, `/api/users/me/study-preferences`, `/api/ads/config` 경로를 추가하고 최소 응답(요약 기본값+내 단어장/단어 수, quota fallback, 최근 단어장 ID, 광고 슬롯 OFF)을 반환하도록 정렬해 404로 인한 홈 섹션 실패를 우선 해소했습니다.
 - 클리퍼 웹스토어 메타데이터 템플릿을 Option A 기준으로 교정해, 저장 플로우를 `/api/clipper/capture` 직접 저장 + 토스트 피드백 중심으로 명시하고 권한 안내를 `storage` only 기준으로 정리했습니다.
 - 개인정보처리방침(`/privacy`)에 `Chrome 확장(Englishapp PDF Clipper)` 섹션을 추가해 전송 데이터 범위, 세션 인증 방식(비밀번호 미저장), 저장 목적/문의 경로를 확장 관점에서 명시했습니다.

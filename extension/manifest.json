@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "description": "Englishapp 페이지에서 선택한 영어 단어를 단어장으로 저장합니다.",
   "minimum_chrome_version": "114",
-  "permissions": ["storage"],
+  "permissions": ["storage", "contextMenus"],
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
@@ -27,10 +27,14 @@
       "matches": [
         "https://www.oingapp.com/*",
         "https://oingapp.com/*",
+        "https://www.themoonlight.io/*",
+        "https://themoonlight.io/*",
+        "https://arxiv.org/*",
         "https://127.0.0.1/*",
         "https://localhost/*",
         "http://127.0.0.1/*",
-        "http://localhost/*"
+        "http://localhost/*",
+        "file:///*"
       ],
       "js": ["content.js"],
       "css": ["styles.css"],
@@ -41,12 +45,16 @@
     {
       "resources": ["page-bridge.js"],
       "matches": [
-        "https://oingapp.com/*",
         "https://www.oingapp.com/*",
+        "https://oingapp.com/*",
+        "https://www.themoonlight.io/*",
+        "https://themoonlight.io/*",
+        "https://arxiv.org/*",
         "https://127.0.0.1/*",
         "https://localhost/*",
         "http://127.0.0.1/*",
-        "http://localhost/*"
+        "http://localhost/*",
+        "file:///*"
       ]
     }
   ]

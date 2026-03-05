@@ -5,23 +5,19 @@ const {
   mockUserUpdate,
   mockUserUpdateMany,
   mockWordbookFindFirst,
-  mockWordbookCreate,
   mockWordbookItemFindFirst,
   mockWordbookItemFindUnique,
   mockWordbookItemCreate,
-  mockWordbookItemUpdate,
-  mockTransaction
+  mockWordbookItemUpdate
 } = vi.hoisted(() => ({
   mockUserFindUnique: vi.fn(),
   mockUserUpdate: vi.fn(),
   mockUserUpdateMany: vi.fn(),
   mockWordbookFindFirst: vi.fn(),
-  mockWordbookCreate: vi.fn(),
   mockWordbookItemFindFirst: vi.fn(),
   mockWordbookItemFindUnique: vi.fn(),
   mockWordbookItemCreate: vi.fn(),
-  mockWordbookItemUpdate: vi.fn(),
-  mockTransaction: vi.fn()
+  mockWordbookItemUpdate: vi.fn()
 }));
 
 vi.mock("@/lib/prisma", () => ({
@@ -32,8 +28,7 @@ vi.mock("@/lib/prisma", () => ({
       updateMany: mockUserUpdateMany
     },
     wordbook: {
-      findFirst: mockWordbookFindFirst,
-      create: mockWordbookCreate
+      findFirst: mockWordbookFindFirst
     },
     wordbookItem: {
       findFirst: mockWordbookItemFindFirst,
@@ -41,7 +36,6 @@ vi.mock("@/lib/prisma", () => ({
       create: mockWordbookItemCreate,
       update: mockWordbookItemUpdate
     },
-    $transaction: mockTransaction
   }
 }));
 
@@ -57,36 +51,10 @@ const user = {
 describe("ClipperService captureWord", () => {
   beforeEach(() => {
     vi.resetAllMocks();
-
-    mockTransaction.mockImplementation(async (callback) => {
-      const tx = {
-        user: {
-          findUnique: mockUserFindUnique,
-          update: mockUserUpdate,
-          updateMany: mockUserUpdateMany
-        },
-        $queryRaw: vi.fn().mockResolvedValue([{ id: user.id }]),
-        wordbook: {
-          findFirst: mockWordbookFindFirst,
-          create: mockWordbookCreate
-        }
-      };
-      return callback(tx);
-    });
   });
 
-  it("자동으로 기본 단어장을 생성하고 QUEUED 아이템을 저장한다", async () => {
+  it("기본 단어장이 지정되지 않았으면 422를 반환한다", async () => {
     mockUserFindUnique.mockResolvedValue({ defaultWordbookId: null });
-    mockWordbookFindFirst.mockResolvedValue(null);
-    mockWordbookCreate.mockResolvedValue({ id: 101 });
-    mockUserUpdateMany.mockResolvedValue({ count: 1 });
-    mockWordbookItemFindFirst.mockResolvedValue(null);
-    mockWordbookItemFindUnique.mockReset();
-    mockWordbookItemCreate.mockResolvedValue({
-      id: 900,
-      wordbookId: 101,
-      enrichmentStatus: "QUEUED"
-    });
 
     const { ClipperService } = await import("./service");
     const service = new ClipperService();
@@ -99,21 +67,37 @@ describe("ClipperService captureWord", () => {
       }
     });
 
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.status).toBe(201);
-      expect(result.payload).toMatchObject({
-        itemId: 900,
-        wordbookId: 101,
-        enrichmentStatus: "QUEUED"
-      });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.status).toBe(422);
+      expect(result.error).toBe("지정된 단어장이 없습니다. 단어장을 지정해 주세요");
     }
-    expect(mockWordbookCreate).toHaveBeenCalledWith(
-      expect.objectContaining({ data: expect.objectContaining({ title: "개인 기본 단어장" }) })
-    );
+    expect(mockWordbookItemCreate).not.toHaveBeenCalled();
+  });
+
+  it("기본 단어장이 유효하지 않으면 설정을 비우고 422를 반환한다", async () => {
+    mockUserFindUnique.mockResolvedValue({ defaultWordbookId: 88 });
+    mockWordbookFindFirst.mockResolvedValue(null);
+    mockUserUpdateMany.mockResolvedValue({ count: 1 });
+
+    const { ClipperService } = await import("./service");
+    const service = new ClipperService();
+
+    const result = await service.captureWord({
+      user,
+      data: {
+        term: "abandoned"
+      }
+    });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.status).toBe(422);
+      expect(result.error).toBe("지정된 단어장이 없습니다. 단어장을 지정해 주세요");
+    }
     expect(mockUserUpdateMany).toHaveBeenCalledWith({
-      where: { id: 7, defaultWordbookId: null },
-      data: { defaultWordbookId: 101 }
+      where: { id: 7, defaultWordbookId: 88 },
+      data: { defaultWordbookId: null }
     });
   });
 

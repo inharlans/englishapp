@@ -7,6 +7,7 @@ import { OfflineSaveButton } from "@/components/wordbooks/OfflineSaveButton";
 import { SyncDownloadButton } from "@/components/wordbooks/SyncDownloadButton";
 import { PostDownloadOnboardingBanner } from "@/components/wordbooks/PostDownloadOnboardingBanner";
 import { LearningDashboardHeader } from "@/components/wordbooks/LearningDashboardHeader";
+import { ClipperDefaultWordbookPicker } from "@/components/wordbooks/ClipperDefaultWordbookPicker";
 import { FREE_DOWNLOAD_WORD_LIMIT } from "@/lib/planLimits";
 import { aggregateVersionLogs } from "@/lib/wordbookVersion";
 import { EmptyStateCard } from "@/components/ui/EmptyStateCard";
@@ -159,24 +160,6 @@ export default async function WordbooksPage() {
             새 단어장
           </Link>
           <Link
-            href={{ pathname: "/wordbooks/market" }}
-            className="ui-btn-secondary px-4 py-2 text-sm"
-          >
-            마켓
-          </Link>
-          <Link
-            href={{ pathname: "/clipper/extension" }}
-            className="ui-btn-secondary px-4 py-2 text-sm"
-          >
-            확장자 설치
-          </Link>
-          <Link
-            href={{ pathname: "/offline" }}
-            className="ui-btn-secondary px-4 py-2 text-sm"
-          >
-            오프라인
-          </Link>
-          <Link
             href={{ pathname: "/wordbooks/blocked" }}
             className="ui-btn-secondary px-4 py-2 text-sm"
           >
@@ -184,6 +167,9 @@ export default async function WordbooksPage() {
           </Link>
         </div>
       </header>
+
+      <ClipperDefaultWordbookPicker wordbooks={mine.map((wordbook) => ({ id: wordbook.id, title: wordbook.title }))} />
+
       {staleDecks > 0 && firstStaleDownload ? (
         <div
           className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
