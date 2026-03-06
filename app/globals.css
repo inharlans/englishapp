@@ -3,19 +3,18 @@
 @tailwind utilities;
 
 :root {
-  --token-brand-primary: #18324b;
-  --token-brand-secondary: #c4872f;
-  --token-surface-background: #fbf8f2;
-  --token-surface-base: #fffdf9;
-  --token-surface-raised: #ffffff;
-  --token-surface-subtle: #eef3f7;
-  --token-text-primary: #14202b;
-  --token-text-secondary: #596675;
-  --token-border-default: #d9e1e8;
-  --token-status-success: #2e6f56;
-  --token-status-warning: #8f6500;
-  --token-status-danger: #b64a4a;
-  --token-status-info: #355f86;
+  --token-brand-primary: #2f5b8a;
+  --token-brand-secondary: #5e7b68;
+  --token-surface-background: #f3f6fa;
+  --token-surface-base: #ffffff;
+  --token-surface-raised: #f9fbfd;
+  --token-text-primary: #172535;
+  --token-text-secondary: #5c6b7c;
+  --token-border-default: #d5dee8;
+  --token-status-success: #2f7b63;
+  --token-status-warning: #9a6c2d;
+  --token-status-danger: #b14b4b;
+  --token-status-info: #2e6a9e;
   --token-focus-ring: color-mix(in srgb, var(--token-brand-primary) 72%, white);
 
   --ds-color-brand-primary: var(--token-brand-primary);
@@ -23,7 +22,6 @@
   --ds-color-background: var(--token-surface-background);
   --ds-color-surface: var(--token-surface-base);
   --ds-color-surface-raised: var(--token-surface-raised);
-  --ds-color-surface-subtle: var(--token-surface-subtle);
   --ds-color-text: var(--token-text-primary);
   --ds-color-text-muted: var(--token-text-secondary);
   --ds-color-border: var(--token-border-default);
@@ -41,17 +39,16 @@
   --ds-space-xxl: 2rem;
 
   --ds-radius-sm: 0.625rem;
-  --ds-radius-md: 1rem;
-  --ds-radius-lg: 1.5rem;
+  --ds-radius-md: 0.875rem;
+  --ds-radius-lg: 1.25rem;
   --ds-radius-pill: 999px;
 
-  --ds-shadow-sm: 0 1px 2px rgba(16, 27, 38, 0.06);
-  --ds-shadow-md: 0 18px 40px -28px rgba(16, 27, 38, 0.32);
-  --ds-shadow-lg: 0 30px 80px -46px rgba(16, 27, 38, 0.38);
+  --ds-shadow-sm: 0 1px 2px rgba(20, 32, 51, 0.08);
+  --ds-shadow-md: 0 8px 20px rgba(20, 32, 51, 0.1);
 
-  --ds-motion-fast: 140ms;
-  --ds-motion-base: 220ms;
-  --ds-motion-slow: 320ms;
+  --ds-motion-fast: 120ms;
+  --ds-motion-base: 180ms;
+  --ds-motion-slow: 240ms;
   --ds-ease-standard: cubic-bezier(0.2, 0, 0, 1);
 
   --primary: var(--ds-color-brand-primary);
@@ -62,9 +59,9 @@
   --border: var(--ds-color-border);
   --text: var(--ds-color-text);
 
-  --color-neutral-50: #f8f7f3;
-  --color-neutral-100: #f1ede6;
-  --color-neutral-200: #e4ddd2;
+  --color-neutral-50: #f8fafc;
+  --color-neutral-100: #eef2f6;
+  --color-neutral-200: #e3e9f1;
   --color-neutral-700: var(--ds-color-text-muted);
   --color-neutral-900: var(--ds-color-text);
 
@@ -72,96 +69,32 @@
   --radius-pill: 9999px;
   --shadow-card: var(--ds-shadow-sm);
   --shadow-soft: var(--ds-shadow-md);
-  --radius: 1rem;
 
-  --background: var(--ds-color-background);
-  --foreground: var(--ds-color-text);
-  --card: var(--ds-color-surface);
-  --card-foreground: var(--ds-color-text);
-  --popover: var(--ds-color-surface-raised);
-  --popover-foreground: var(--ds-color-text);
-  --primary-foreground: #fffdf7;
-  --secondary-foreground: var(--ds-color-text);
-  --muted-foreground: var(--ds-color-text-muted);
-  --accent-foreground: #fffaf3;
-  --destructive-foreground: #fff8f6;
-  --input: var(--ds-color-border);
-  --ring: var(--ds-color-focus);
-
-  --type-h1: clamp(2.4rem, 5vw, 3.75rem);
-  --type-h2: clamp(1.7rem, 3vw, 2.4rem);
-  --type-h3: clamp(1.25rem, 2vw, 1.7rem);
-  --type-body-lg: 1.0625rem;
-  --type-body: 1rem;
-  --type-body-sm: 0.875rem;
+  --type-h1: clamp(1.85rem, 2.8vw, 2.8rem);
+  --type-h2: clamp(1.35rem, 2.2vw, 2rem);
+  --type-h3: clamp(1.1rem, 1.7vw, 1.45rem);
+  --type-body-lg: 1rem;
+  --type-body: 0.9375rem;
+  --type-body-sm: 0.8125rem;
 }
 
 body {
   min-height: 100vh;
-  background:
-    radial-gradient(circle at top left, color-mix(in srgb, var(--ds-color-brand-secondary) 14%, transparent), transparent 28%),
-    radial-gradient(circle at top right, color-mix(in srgb, var(--ds-color-info) 10%, transparent), transparent 32%),
-    linear-gradient(180deg, #fcfaf5 0%, var(--bg) 18%, #f4efe5 100%);
+  background: var(--bg);
   color: var(--text);
   font-family: var(--font-manrope), var(--font-noto-kr), "Segoe UI", sans-serif;
-  line-height: 1.5;
-  letter-spacing: -0.01em;
-}
-
-::selection {
-  background: color-mix(in srgb, var(--ds-color-brand-primary) 22%, white);
-  color: var(--ds-color-text);
-}
-
-main {
-  position: relative;
-}
-
-.site-shell {
-  position: relative;
-}
-
-.site-shell::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background-image:
-    linear-gradient(to right, rgba(22, 33, 43, 0.018) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(22, 33, 43, 0.018) 1px, transparent 1px);
-  background-size: 32px 32px;
-  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.3), transparent 85%);
-}
-
-.page-stack {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.section-frame {
-  position: relative;
-  overflow: hidden;
-}
-
-.section-frame::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  border: 1px solid rgba(255, 255, 255, 0.42);
-  pointer-events: none;
+  line-height: 1.45;
 }
 
 .home-bg-mesh {
   background:
-    radial-gradient(circle at 12% 18%, color-mix(in srgb, var(--ds-color-brand-primary) 20%, transparent), transparent 42%),
-    radial-gradient(circle at 88% 82%, color-mix(in srgb, var(--ds-color-brand-secondary) 20%, transparent), transparent 40%),
-    linear-gradient(140deg, color-mix(in srgb, var(--ds-color-surface) 96%, transparent), color-mix(in srgb, var(--ds-color-background) 90%, transparent));
+    radial-gradient(circle at 12% 18%, color-mix(in srgb, var(--ds-color-brand-primary) 18%, transparent), transparent 42%),
+    radial-gradient(circle at 88% 82%, color-mix(in srgb, var(--ds-color-brand-secondary) 16%, transparent), transparent 40%),
+    linear-gradient(140deg, color-mix(in srgb, var(--ds-color-surface) 92%, transparent), color-mix(in srgb, var(--ds-color-background) 84%, transparent));
 }
 
 .home-hero-shell {
-  box-shadow: var(--ds-shadow-lg);
+  box-shadow: 0 32px 72px -42px rgba(15, 23, 42, 0.65);
 }
 
 .home-editorial-shell {
@@ -296,19 +229,16 @@ textarea:focus-visible {
 @layer components {
   .ui-surface {
     border-radius: var(--ds-radius-lg);
-    border: 1px solid color-mix(in srgb, var(--ds-color-border) 92%, white);
-    background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.98)),
-      var(--ds-color-surface);
-    box-shadow: var(--ds-shadow-md);
-    backdrop-filter: blur(14px);
+    border: 1px solid var(--ds-color-border);
+    background: var(--ds-color-surface);
+    box-shadow: var(--ds-shadow-sm);
   }
 
   .ui-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border-radius: 999px;
+    border-radius: var(--ds-radius-md);
     border: 1px solid transparent;
     font-size: 0.875rem;
     font-weight: 600;
@@ -334,38 +264,38 @@ textarea:focus-visible {
 
   .ui-btn--sm {
     min-height: 2.75rem;
-    padding: 0.5rem 0.9rem;
+    padding: 0.5rem 0.75rem;
   }
 
   .ui-btn--md {
-    min-height: 3.125rem;
-    padding: 0.75rem 1.125rem;
+    min-height: 3rem;
+    padding: 0.625rem 1rem;
   }
 
   .ui-btn--lg {
-    min-height: 3.5rem;
-    padding: 0.9rem 1.35rem;
+    min-height: 3.25rem;
+    padding: 0.75rem 1.125rem;
   }
 
   .ui-btn--primary {
-    background: linear-gradient(135deg, color-mix(in srgb, var(--ds-color-brand-primary) 94%, white), color-mix(in srgb, var(--ds-color-brand-primary) 78%, black 22%));
-    color: #fffdf7;
-    box-shadow: 0 18px 32px -24px color-mix(in srgb, var(--ds-color-brand-primary) 80%, black 20%);
+    background: var(--ds-color-brand-primary);
+    color: #fff;
+    box-shadow: 0 12px 22px -20px color-mix(in srgb, var(--ds-color-brand-primary) 90%, black);
   }
 
   .ui-btn--primary:hover:not(:disabled) {
-    background: linear-gradient(135deg, color-mix(in srgb, var(--ds-color-brand-primary) 92%, white), color-mix(in srgb, var(--ds-color-brand-primary) 68%, black 32%));
+    background: color-mix(in srgb, var(--ds-color-brand-primary) 88%, black 12%);
   }
 
   .ui-btn--secondary {
-    border-color: color-mix(in srgb, var(--ds-color-border) 88%, white);
-    background: rgba(255, 252, 247, 0.76);
+    border-color: var(--ds-color-border);
+    background: var(--ds-color-surface);
     color: var(--ds-color-text);
   }
 
   .ui-btn--secondary:hover:not(:disabled) {
-    border-color: color-mix(in srgb, var(--ds-color-border) 56%, var(--ds-color-brand-primary) 44%);
-    background: color-mix(in srgb, var(--ds-color-surface-subtle) 55%, white);
+    border-color: color-mix(in srgb, var(--ds-color-border) 62%, var(--ds-color-brand-primary) 38%);
+    background: var(--ds-color-surface-raised);
   }
 
   .ui-btn--ghost {
@@ -388,11 +318,11 @@ textarea:focus-visible {
 
   .ui-input {
     width: 100%;
-    border-radius: 1rem;
-    border: 1px solid color-mix(in srgb, var(--ds-color-border) 88%, white);
-    background: rgba(255, 252, 247, 0.88);
-    padding: 0.825rem 1rem;
-    font-size: 1rem;
+    border-radius: var(--ds-radius-md);
+    border: 1px solid var(--ds-color-border);
+    background: var(--ds-color-surface);
+    padding: 0.625rem 0.75rem;
+    font-size: 0.9375rem;
     color: var(--ds-color-text);
     transition:
       border-color var(--ds-motion-base) var(--ds-ease-standard),
@@ -406,7 +336,7 @@ textarea:focus-visible {
 
   .ui-input:focus {
     border-color: color-mix(in srgb, var(--ds-color-info) 68%, var(--ds-color-border));
-    box-shadow: 0 0 0 4px color-mix(in srgb, var(--ds-color-info) 18%, transparent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--ds-color-info) 22%, transparent);
   }
 
   .ui-input[data-invalid="true"] {
@@ -415,10 +345,10 @@ textarea:focus-visible {
   }
 
   .ui-feedback {
-    border-radius: 1rem;
-    border: 1px solid color-mix(in srgb, var(--ds-color-border) 82%, white);
-    background: color-mix(in srgb, var(--ds-color-surface) 88%, white);
-    padding: 0.9rem 1rem;
+    border-radius: var(--ds-radius-md);
+    border: 1px solid var(--ds-color-border);
+    background: var(--ds-color-surface-raised);
+    padding: 0.75rem;
     font-size: 0.875rem;
     color: var(--ds-color-text-muted);
   }
@@ -449,15 +379,15 @@ textarea:focus-visible {
 
   .ui-card {
     border-radius: var(--radius-card);
-    border: 1px solid color-mix(in srgb, var(--border) 88%, white);
-    background: color-mix(in srgb, var(--card) 96%, white);
+    border: 1px solid var(--border);
+    background: var(--card);
     box-shadow: var(--shadow-card);
   }
 
   .ui-card-soft {
     border-radius: var(--radius-card);
-    border: 1px solid color-mix(in srgb, var(--border) 84%, white);
-    background: color-mix(in srgb, var(--ds-color-surface-subtle) 66%, white);
+    border: 1px solid var(--border);
+    background: var(--card);
     box-shadow: var(--shadow-soft);
   }
 
@@ -547,7 +477,7 @@ textarea:focus-visible {
     font-size: 0.7rem;
     letter-spacing: 0.2em;
     text-transform: uppercase;
-    color: var(--ds-color-brand-secondary);
+    color: var(--ds-color-info);
     font-weight: 700;
   }
 
@@ -577,27 +507,6 @@ textarea:focus-visible {
 
   .ui-body {
     font-size: var(--type-body);
-    color: var(--ds-color-text-muted);
-    max-width: 62ch;
-  }
-
-  .ui-rule {
-    height: 1px;
-    width: 100%;
-    background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--ds-color-brand-secondary) 60%, var(--ds-color-border)), transparent);
-  }
-
-  .ui-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    min-height: 2rem;
-    border-radius: 999px;
-    border: 1px solid color-mix(in srgb, var(--ds-color-border) 84%, white);
-    background: color-mix(in srgb, var(--ds-color-surface) 88%, white);
-    padding: 0.35rem 0.85rem;
-    font-size: 0.75rem;
-    font-weight: 600;
     color: var(--ds-color-text-muted);
   }
 

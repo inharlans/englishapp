@@ -52,15 +52,15 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `7701767ee5f0`
-- HEAD: `3b19e2f` feat(ui): refresh global footer with policy-first layout
+- Source hash: `e3e4c9482428`
+- HEAD: `4c6fe3f` feat(clipper): support arxiv/moonlight capture with explicit wordbook setting
 
 ### Scope Digests
 - api-routes: 106 files, `77f1adcdfdff`
 - api-helpers: 20 files, `5eb7f7d1917b`
 - domain-services: 44 files, `d80e6606297d`
-- automation-policy: 268 files, `ece64d38bcb1`
-- tracking-docs: 10 files, `4c464624ce70`
+- automation-policy: 268 files, `73a57b680b17`
+- tracking-docs: 10 files, `bf4b6b710526`
 
 ### Legacy Route Migration Status
 - base: `app/api/`, total: 72, migrated: 54, remaining: 18
