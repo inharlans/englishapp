@@ -1,8 +1,13 @@
 # Englishapp
 
+## 최근 업데이트 (2026-03-07)
+
+- 웹·앱 리디자인 마스터 플랜과 체크리스트를 문서로 고정했고(`docs/web-mobile-redesign-master-plan-2026-03-07.md`), 모바일 앱은 네이티브 중심 리디자인에 맞춰 홈/로그인/단어장/암기/퀴즈/결과 화면을 새 토큰과 카드 규칙 위로 재정렬했습니다.
+
 ## 최근 업데이트 (2026-03-04)
 
 - 마켓 품질 파이프라인 1차를 적용해 노출/운영 기준 문서를 고정했고(`docs/market-quality-policy.md`), `GET /api/wordbooks/market`에 `quality=all|curated` 필터를 추가했습니다. 기본값은 `all`로 유지하고, `quality=curated`에서는 `DONE 비율 80% 이상 + ratingCount 3 이상` 조건을 DB 조회 단계에서 적용합니다.
+- 클리퍼 저장 동선을 페이지 이동 방식에서 "무이동 직접 저장"으로 전환했습니다. 외부 사이트/PDF에서 선택한 영어 단어는 확장 백그라운드가 `POST /api/clipper/capture`를 직접 호출해 저장하며, 로그인 토큰은 oingapp 페이지 접속 시 `/api/users/me/clipper-extension-token`으로 동기화합니다.
 - 전역 푸터를 카드형 레이아웃에서 플랫한 하단 바 레이아웃으로 재구성해, 좌측 사업자 정보 + 우측 정책 링크(개인정보처리방침/서비스 이용약관) 중심의 깔끔한 정보 구조로 정리했습니다.
 - 클리퍼 확장 적용 범위를 `http/https` 전역으로 확장하고(`content_scripts`), 프레임 문맥 대응(`all_frames`, `match_about_blank`, `match_origin_as_fallback`)을 추가해 구글 검색 결과/일반 외부 사이트에서도 선택 저장 버튼이 뜨도록 보강했습니다.
 - PDF 문맥 대응을 위해 컨텍스트 메뉴 저장 경로를 강화하고(`단어장에 추가`), 브리지 열기 실패 시 `tabs.create`로 자동 폴백하도록 재구성했으며, 단축키 `Alt+Shift+S` 빠른 저장을 추가했습니다.
