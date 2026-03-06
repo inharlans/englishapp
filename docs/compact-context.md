@@ -52,18 +52,18 @@
 <!-- compact:auto:start -->
 ## Auto Synced Snapshot
 
-- Source hash: `85e861ffb0b9`
-- HEAD: `bc2576e` feat(ui): anchor business footer and simplify global shell
+- Source hash: `e3e4c9482428`
+- HEAD: `4c6fe3f` feat(clipper): support arxiv/moonlight capture with explicit wordbook setting
 
 ### Scope Digests
-- api-routes: 104 files, `2ee00e7098d9`
+- api-routes: 106 files, `77f1adcdfdff`
 - api-helpers: 20 files, `5eb7f7d1917b`
 - domain-services: 44 files, `d80e6606297d`
-- automation-policy: 267 files, `c770541bb934`
-- tracking-docs: 10 files, `0803ebbc91df`
+- automation-policy: 268 files, `73a57b680b17`
+- tracking-docs: 10 files, `bf4b6b710526`
 
 ### Legacy Route Migration Status
-- base: `app/api/`, total: 71, migrated: 53, remaining: 18
+- base: `app/api/`, total: 72, migrated: 54, remaining: 18
 - remaining files:
   - `app/api/auth/google/callback/route.ts`
   - `app/api/auth/google/route.ts`

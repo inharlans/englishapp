@@ -3,6 +3,9 @@
 ## 최근 업데이트 (2026-03-04)
 
 - 마켓 품질 파이프라인 1차를 적용해 노출/운영 기준 문서를 고정했고(`docs/market-quality-policy.md`), `GET /api/wordbooks/market`에 `quality=all|curated` 필터를 추가했습니다. 기본값은 `all`로 유지하고, `quality=curated`에서는 `DONE 비율 80% 이상 + ratingCount 3 이상` 조건을 DB 조회 단계에서 적용합니다.
+- 전역 푸터를 카드형 레이아웃에서 플랫한 하단 바 레이아웃으로 재구성해, 좌측 사업자 정보 + 우측 정책 링크(개인정보처리방침/서비스 이용약관) 중심의 깔끔한 정보 구조로 정리했습니다.
+- 클리퍼 확장 적용 범위를 `http/https` 전역으로 확장하고(`content_scripts`), 프레임 문맥 대응(`all_frames`, `match_about_blank`, `match_origin_as_fallback`)을 추가해 구글 검색 결과/일반 외부 사이트에서도 선택 저장 버튼이 뜨도록 보강했습니다.
+- PDF 문맥 대응을 위해 컨텍스트 메뉴 저장 경로를 강화하고(`단어장에 추가`), 브리지 열기 실패 시 `tabs.create`로 자동 폴백하도록 재구성했으며, 단축키 `Alt+Shift+S` 빠른 저장을 추가했습니다.
 - 확장 소개 동선을 `클리퍼 설치`에서 `확장자 설치`로 통일하고, `/clipper/extension` 페이지를 설치 절차 안내 대신 "어떤 확장자인지/왜 쓰는지/언제 쓰는지/사용법" 중심의 간결한 웹스토어 설치 안내로 재구성했습니다.
 - 크롤러 트래픽 급증 대응을 위해 강경 차단 모드를 기본 활성화했습니다. `CRAWLER_LOCKDOWN_MODE`가 `on`(기본값)인 동안 `/wordbooks/market`, `/wordbooks/:id`, `/clipper/extension` 및 관련 공개 API는 로그인 사용자만 접근할 수 있고, `app/robots.ts`는 전체 경로 크롤링을 금지합니다. 배포 단계에서 해제하려면 `CRAWLER_LOCKDOWN_MODE=off`로 전환하세요.
 - 마켓 페이지 조회는 요청 페이지에 필요한 데이터만 DB에서 가져오도록 재구성했습니다. 기존처럼 후보 전체를 메모리로 읽지 않고 SQL 레벨에서 count/offset/limit을 적용해 크롤링 트래픽 상황에서도 불필요한 대량 조회를 줄였습니다.
